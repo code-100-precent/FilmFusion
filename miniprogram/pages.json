@@ -1,0 +1,64 @@
+{
+	"pages": [
+		{
+			"path": "pages/scenes/scenes",
+			"style": {
+				"navigationBarTitleText": "拍摄场景",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/services/services",
+			"style": {
+				"navigationBarTitleText": "协拍服务",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/news/news",
+			"style": {
+				"navigationBarTitleText": "影视资讯",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/filing/filing",
+			"style": {
+				"navigationBarTitleText": "剧组报备",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/profile/profile",
+			"style": {
+				"navigationBarTitleText": "个人中心",
+				"navigationStyle": "default"
+			}
+		},
+		{
+			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "default"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "雅安影视服务",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"navigationStyle": "default",
+		"backgroundColor": "#F8F8F8"
+	},
+	"uniIdRouter": {},
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^NavBar$": "@/components/NavBar/NavBar.vue",
+			"^TabBar$": "@/components/TabBar/TabBar.vue",
+			"^Loading$": "@/components/Loading/Loading.vue",
+			"^Empty$": "@/components/Empty/Empty.vue"
+		}
+	},
+	"lazyCodeLoading": "requiredComponents"
+}

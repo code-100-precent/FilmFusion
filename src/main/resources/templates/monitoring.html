@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">系统监控</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">Hibiscus</span>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">首页</a>
+                    <a href="/rate-limiters" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">限流器管理</a>
+                    <a href="/monitoring" class="text-blue-600 px-3 py-2 text-sm font-medium">系统监控</a>
+                    <a href="/config" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">配置管理</a>
+                    <a href="/reports" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">统计报告</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 页面标题 -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    系统监控
+                </h1>
+                <p class="mt-2 text-gray-600">实时监控系统资源使用情况和性能指标</p>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="mb-8 flex flex-wrap gap-4">
+                <button onclick="refreshData()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    刷新数据
+                </button>
+                <button onclick="generateReport()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    生成报告
+                </button>
+            </div>
+
+            <!-- 实时指标卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">CPU使用率</p>
+                            <p class="text-2xl font-bold text-gray-900" id="cpu-usage" th:text="${systemMetrics.cpuUsage + '%'}">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">内存使用率</p>
+                            <p class="text-2xl font-bold text-gray-900" id="memory-usage" th:text="${systemMetrics.memoryUsage + '%'}">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">活跃线程数</p>
+                            <p class="text-2xl font-bold text-gray-900" id="thread-count" th:text="${systemMetrics.threadCount}">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-violet-500 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">系统负载</p>
+                            <p class="text-2xl font-bold text-gray-900" id="system-load" th:text="${systemMetrics.systemLoad}">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 内存信息 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">内存使用情况</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">总内存:</span>
+                            <span class="font-medium" id="total-memory" th:text="${systemMetrics.totalMemory}">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">可用内存:</span>
+                            <span class="font-medium" id="available-memory" th:text="${systemMetrics.availableMemory}">--</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                                 id="memory-bar" 
+                                 th:style="'width: ' + ${systemMetrics.memoryUsage} + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">系统状态</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">监控状态:</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                正常
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">最后更新:</span>
+                            <span class="font-medium" id="last-update">刚刚</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">更新频率:</span>
+                            <span class="font-medium">5秒</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史数据图表 -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">资源使用趋势</h3>
+                <div class="h-64">
+                    <canvas id="resourceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let resourceChart;
+        let updateTimer;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChart();
+            startAutoUpdate();
+        });
+
+        // 初始化图表
+        function initializeChart() {
+            const ctx = document.getElementById('resourceChart').getContext('2d');
+            
+            // 获取Thymeleaf传递的历史数据
+            const cpuHistory = /*[[${cpuHistory}]]*/ [];
+            const memoryHistory = /*[[${memoryHistory}]]*/ [];
+            const timeLabels = /*[[${timeLabels}]]*/ [];
+            
+            resourceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [
+                        {
+                            label: 'CPU使用率 (%)',
+                            data: cpuHistory,
+                            borderColor: 'rgb(239, 68, 68)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: '内存使用率 (%)',
+                            data: memoryHistory,
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 刷新数据
+        async function refreshData() {
+            try {
+                const response = await fetch('/api/system/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateMetrics(data.data);
+                    updateLastUpdate();
+                } else {
+                    console.error('获取系统状态失败:', data.message);
+                }
+            } catch (error) {
+                console.error('刷新数据失败:', error);
+            }
+        }
+
+        // 更新指标显示
+        function updateMetrics(metrics) {
+            if (metrics.cpuUsage !== undefined) {
+                document.getElementById('cpu-usage').textContent = metrics.cpuUsage + '%';
+            }
+            if (metrics.memoryUsage !== undefined) {
+                document.getElementById('memory-usage').textContent = metrics.memoryUsage + '%';
+                document.getElementById('memory-bar').style.width = metrics.memoryUsage + '%';
+            }
+            if (metrics.threadCount !== undefined) {
+                document.getElementById('thread-count').textContent = metrics.threadCount;
+            }
+            if (metrics.systemLoad !== undefined) {
+                document.getElementById('system-load').textContent = metrics.systemLoad;
+            }
+            if (metrics.totalMemory !== undefined) {
+                document.getElementById('total-memory').textContent = metrics.totalMemory;
+            }
+            if (metrics.availableMemory !== undefined) {
+                document.getElementById('available-memory').textContent = metrics.availableMemory;
+            }
+        }
+
+        // 更新最后更新时间
+        function updateLastUpdate() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN');
+            document.getElementById('last-update').textContent = timeString;
+        }
+
+        // 开始自动更新
+        function startAutoUpdate() {
+            updateTimer = setInterval(refreshData, 5000); // 每5秒更新一次
+        }
+
+        // 停止自动更新
+        function stopAutoUpdate() {
+            if (updateTimer) {
+                clearInterval(updateTimer);
+            }
+        }
+
+        // 生成报告
+        function generateReport() {
+            alert('报告生成功能开发中...');
+        }
+
+        // 页面卸载时清理定时器
+        window.addEventListener('beforeunload', function() {
+            stopAutoUpdate();
+        });
+    </script>
+</body>
+</html>

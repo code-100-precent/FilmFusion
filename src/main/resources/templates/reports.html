@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">统计报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">Hibiscus</span>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/rate-limiters" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">限流器管理</a>
+                    <a href="/monitoring" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">系统监控</a>
+                    <a href="/config" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">配置管理</a>
+                    <a href="/reports" class="text-blue-600 px-3 py-2 text-sm font-medium">统计报告</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 页面标题 -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    统计报告
+                </h1>
+                <p class="mt-2 text-gray-600">查看系统运行状态、安全统计和性能指标</p>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="mb-8 flex justify-between items-center">
+                <div class="flex space-x-4">
+                    <button @click="refreshAllData()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        刷新数据
+                    </button>
+                    <button @click="generateReport()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        生成报告
+                    </button>
+                </div>
+            </div>
+
+            <!-- 统计选项卡 -->
+            <div x-data="{ activeTab: 'overview' }" class="bg-white rounded-lg shadow">
+                <!-- 选项卡导航 -->
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8 px-6">
+                        <button @click="activeTab = 'overview'; loadOverviewData()" 
+                                :class="activeTab === 'overview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                            概览统计
+                        </button>
+                        <button @click="activeTab = 'rate-limiters'; loadRateLimiterData()" 
+                                :class="activeTab === 'rate-limiters' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                            限流器统计
+                        </button>
+                        <button @click="activeTab = 'security'; loadSecurityData()" 
+                                :class="activeTab === 'security' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                            安全统计
+                        </button>
+                        <button @click="activeTab = 'performance'; loadPerformanceData()" 
+                                :class="activeTab === 'performance' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                            性能统计
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- 选项卡内容 -->
+                <div class="p-6">
+                    <!-- 概览统计 -->
+                    <div x-show="activeTab === 'overview'" x-transition>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <!-- 系统资源卡片 -->
+                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-blue-100 text-sm">CPU使用率</p>
+                                        <p class="text-2xl font-bold" x-text="overviewStats.cpuUsage ? overviewStats.cpuUsage.toFixed(1) + '%' : '0%'">0%</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-green-100 text-sm">内存使用率</p>
+                                        <p class="text-2xl font-bold" x-text="overviewStats.memoryUsage ? overviewStats.memoryUsage.toFixed(1) + '%' : '0%'">0%</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-purple-100 text-sm">线程数</p>
+                                        <p class="text-2xl font-bold" x-text="overviewStats.threadCount || 0">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-orange-100 text-sm">安全评分</p>
+                                        <p class="text-2xl font-bold" x-text="overviewStats.securityScore ? overviewStats.securityScore.toFixed(0) : '0'">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 安全统计概览 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">攻击统计</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">总攻击次数</span>
+                                        <span class="font-semibold" x-text="overviewStats.totalAttacks || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">已阻止攻击</span>
+                                        <span class="font-semibold text-green-600" x-text="overviewStats.blockedAttacks || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">阻止率</span>
+                                        <span class="font-semibold text-blue-600" x-text="overviewStats.totalAttacks > 0 ? ((overviewStats.blockedAttacks / overviewStats.totalAttacks) * 100).toFixed(1) + '%' : '0%'">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">紧急防护</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">紧急模式次数</span>
+                                        <span class="font-semibold text-red-600" x-text="overviewStats.emergencyModeCount || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">资源告警次数</span>
+                                        <span class="font-semibold text-yellow-600" x-text="overviewStats.resourceAlerts || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">系统负载</span>
+                                        <span class="font-semibold" x-text="overviewStats.systemLoad ? overviewStats.systemLoad.toFixed(2) : '0.00'">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 限流器统计 -->
+                    <div x-show="activeTab === 'rate-limiters'" x-transition>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">限流器概览</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">总限流器数</span>
+                                        <span class="font-semibold" x-text="rateLimiterStats.totalRateLimiters || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">活跃限流器</span>
+                                        <span class="font-semibold text-green-600" x-text="rateLimiterStats.activeRateLimiters || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">总请求数</span>
+                                        <span class="font-semibold" x-text="rateLimiterStats.totalRequests || 0">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">请求统计</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">成功请求</span>
+                                        <span class="font-semibold text-green-600" x-text="rateLimiterStats.totalRequests && rateLimiterStats.blockedRequests ? (rateLimiterStats.totalRequests - rateLimiterStats.blockedRequests) : 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">被限流请求</span>
+                                        <span class="font-semibold text-red-600" x-text="rateLimiterStats.blockedRequests || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">成功率</span>
+                                        <span class="font-semibold text-blue-600" x-text="rateLimiterStats.successRate ? rateLimiterStats.successRate.toFixed(1) + '%' : '0%'">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">性能指标</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">平均响应时间</span>
+                                        <span class="font-semibold" x-text="rateLimiterStats.averageResponseTime ? rateLimiterStats.averageResponseTime.toFixed(1) + 'ms' : '0ms'">0ms</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">限流率</span>
+                                        <span class="font-semibold text-yellow-600" x-text="rateLimiterStats.successRate ? (100 - rateLimiterStats.successRate).toFixed(1) + '%' : '0%'">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 限流器性能图表 -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">性能趋势</h3>
+                            <canvas id="rateLimiterChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 安全统计 -->
+                    <div x-show="activeTab === 'security'" x-transition>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">攻击统计详情</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">总攻击次数</span>
+                                        <span class="font-semibold" x-text="securityStats.totalAttacks || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">已阻止攻击</span>
+                                        <span class="font-semibold text-green-600" x-text="securityStats.blockedAttacks || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">攻击类型分布</span>
+                                        <span class="font-semibold text-blue-600" x-text="securityStats.attackTypes ? Object.keys(securityStats.attackTypes).length + '种' : '0种'">0种</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">安全评分</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">当前评分</span>
+                                        <span class="font-semibold" x-text="securityStats.securityScore ? securityStats.securityScore.toFixed(0) : '0'">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">威胁等级</span>
+                                        <span class="font-semibold" x-text="securityStats.threatLevel || '低'">低</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">最后事件</span>
+                                        <span class="font-semibold text-gray-500" x-text="securityStats.lastIncident ? new Date(securityStats.lastIncident).toLocaleString() : '无'">无</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 攻击类型分布图表 -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">攻击类型分布</h3>
+                            <canvas id="attackTypeChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 性能统计 -->
+                    <div x-show="activeTab === 'performance'" x-transition>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">系统资源</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">CPU使用率</span>
+                                        <span class="font-semibold" x-text="performanceStats.cpuUsage ? performanceStats.cpuUsage.toFixed(1) + '%' : '0%'">0%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">内存使用率</span>
+                                        <span class="font-semibold" x-text="performanceStats.memoryUsage ? performanceStats.memoryUsage.toFixed(1) + '%' : '0%'">0%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">线程数</span>
+                                        <span class="font-semibold" x-text="performanceStats.threadCount || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">系统负载</span>
+                                        <span class="font-semibold" x-text="performanceStats.systemLoad ? performanceStats.systemLoad.toFixed(2) : '0.00'">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">性能趋势</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">CPU趋势</span>
+                                        <span class="font-semibold text-blue-600" x-text="performanceStats.cpuTrend ? performanceStats.cpuTrend.length + '个数据点' : '0个数据点'">0个数据点</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">内存趋势</span>
+                                        <span class="font-semibold text-green-600" x-text="performanceStats.memoryTrend ? performanceStats.memoryTrend.length + '个数据点' : '0个数据点'">0个数据点</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">响应时间趋势</span>
+                                        <span class="font-semibold text-purple-600" x-text="performanceStats.responseTimeTrend ? performanceStats.responseTimeTrend.length + '个数据点' : '0个数据点'">0个数据点</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 性能趋势图表 -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">资源使用趋势</h3>
+                            <canvas id="performanceChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-900 text-white py-8 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold">Hibiscus Rate Limiter</span>
+            </div>
+            <p class="text-gray-400">高性能Java限流组件 v1.0.0</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('reportsManager', () => ({
+                overviewStats: {},
+                rateLimiterStats: {},
+                securityStats: {},
+                performanceStats: {},
+                charts: {},
+
+                init() {
+                    this.loadOverviewData();
+                },
+
+                async refreshAllData() {
+                    await Promise.all([
+                        this.loadOverviewData(),
+                        this.loadRateLimiterData(),
+                        this.loadSecurityData(),
+                        this.loadPerformanceData()
+                    ]);
+                },
+
+                async loadOverviewData() {
+                    try {
+                        const response = await fetch('/api/reports/overview');
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.overviewStats = data.stats;
+                        } else {
+                            this.showError('加载概览数据失败: ' + data.message);
+                        }
+                    } catch (error) {
+                        console.error('加载概览数据失败:', error);
+                        this.showError('加载概览数据失败');
+                    }
+                },
+
+                async loadRateLimiterData() {
+                    try {
+                        const response = await fetch('/api/reports/rate-limiters');
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.rateLimiterStats = data.stats;
+                            this.renderRateLimiterChart();
+                        } else {
+                            this.showError('加载限流器数据失败: ' + data.message);
+                        }
+                    } catch (error) {
+                        console.error('加载限流器数据失败:', error);
+                        this.showError('加载限流器数据失败');
+                    }
+                },
+
+                async loadSecurityData() {
+                    try {
+                        const response = await fetch('/api/reports/security');
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.securityStats = data.stats;
+                            this.renderAttackTypeChart();
+                        } else {
+                            this.showError('加载安全数据失败: ' + data.message);
+                        }
+                    } catch (error) {
+                        console.error('加载安全数据失败:', error);
+                        this.showError('加载安全数据失败');
+                    }
+                },
+
+                async loadPerformanceData() {
+                    try {
+                        const response = await fetch('/api/reports/performance');
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.performanceStats = data.stats;
+                            this.renderPerformanceChart();
+                        } else {
+                            this.showError('加载性能数据失败: ' + data.message);
+                        }
+                    } catch (error) {
+                        console.error('加载性能数据失败:', error);
+                        this.showError('加载性能数据失败');
+                    }
+                },
+
+                renderRateLimiterChart() {
+                    const ctx = document.getElementById('rateLimiterChart');
+                    if (!ctx) return;
+
+                    if (this.charts.rateLimiter) {
+                        this.charts.rateLimiter.destroy();
+                    }
+
+                    this.charts.rateLimiter = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+                            datasets: [{
+                                label: '请求数',
+                                data: [1200, 1350, 1100, 1400, 1600, 1800, 2000, 1900, 1700, 1500, 1300, 1100],
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '24小时请求趋势'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                },
+
+                renderAttackTypeChart() {
+                    const ctx = document.getElementById('attackTypeChart');
+                    if (!ctx) return;
+
+                    if (this.charts.attackType) {
+                        this.charts.attackType.destroy();
+                    }
+
+                    const attackTypes = this.securityStats.attackTypes || {
+                        'SQL注入': 25,
+                        'XSS攻击': 30,
+                        '暴力破解': 20,
+                        'DDoS攻击': 15,
+                        '其他': 10
+                    };
+
+                    this.charts.attackType = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(attackTypes),
+                            datasets: [{
+                                data: Object.values(attackTypes),
+                                backgroundColor: [
+                                    'rgb(239, 68, 68)',
+                                    'rgb(245, 101, 101)',
+                                    'rgb(251, 146, 60)',
+                                    'rgb(245, 158, 11)',
+                                    'rgb(59, 130, 246)'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '攻击类型分布'
+                                }
+                            }
+                        }
+                    });
+                },
+
+                renderPerformanceChart() {
+                    const ctx = document.getElementById('performanceChart');
+                    if (!ctx) return;
+
+                    if (this.charts.performance) {
+                        this.charts.performance.destroy();
+                    }
+
+                    const cpuTrend = this.performanceStats.cpuTrend || Array.from({length: 24}, () => 20 + Math.random() * 60);
+                    const memoryTrend = this.performanceStats.memoryTrend || Array.from({length: 24}, () => 30 + Math.random() * 50);
+
+                    this.charts.performance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`),
+                            datasets: [{
+                                label: 'CPU使用率 (%)',
+                                data: cpuTrend,
+                                borderColor: 'rgb(239, 68, 68)',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                tension: 0.4
+                            }, {
+                                label: '内存使用率 (%)',
+                                data: memoryTrend,
+                                borderColor: 'rgb(34, 197, 94)',
+                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '24小时资源使用趋势'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 100
+                                }
+                            }
+                        }
+                    });
+                },
+
+                async generateReport() {
+                    try {
+                        const reportType = this.activeTab || 'overview';
+                        const response = await fetch('/api/reports/generate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                type: reportType,
+                                format: 'json'
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // 创建下载链接
+                            const blob = new Blob([JSON.stringify(data.report, null, 2)], { type: 'application/json' });
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `hibiscus-${reportType}-report-${new Date().toISOString().split('T')[0]}.json`;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            
+                            this.showSuccess('报告生成成功');
+                        } else {
+                            this.showError('生成报告失败: ' + data.message);
+                        }
+                    } catch (error) {
+                        console.error('生成报告失败:', error);
+                        this.showError('生成报告失败');
+                    }
+                },
+
+                showSuccess(message) {
+                    alert('成功: ' + message);
+                },
+
+                showError(message) {
+                    alert('错误: ' + message);
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">限流器管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">Hibiscus</span>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">首页</a>
+                    <a href="/rate-limiters" class="text-blue-600 px-3 py-2 text-sm font-medium">限流器管理</a>
+                    <a href="/monitoring" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">系统监控</a>
+                    <a href="/config" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">配置管理</a>
+                    <a href="/reports" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">统计报告</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 页面标题和操作按钮 -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900" th:text="${title}">限流器管理</h1>
+                    <p class="text-gray-600 mt-2">创建、配置和管理各种类型的限流器</p>
+                </div>
+                <button onclick="openCreateModal()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    创建限流器
+                </button>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-gray-900" th:text="${totalCount}">0</p>
+                            <p class="text-sm text-gray-600">总限流器数量</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-gray-900" th:text="${activeCount}">0</p>
+                            <p class="text-sm text-gray-600">活跃限流器</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-gray-900" th:text="${totalCount - activeCount}">0</p>
+                            <p class="text-sm text-gray-600">非活跃限流器</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 限流器列表 -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">限流器列表</h3>
+                </div>
+                <div class="overflow-hidden">
+                    <div th:if="${#lists.isEmpty(rateLimiters)}" class="text-center py-12">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-lg text-gray-500">暂无限流器</p>
+                        <p class="text-sm text-gray-400 mt-2">点击上方"创建限流器"按钮开始创建</p>
+                    </div>
+                    
+                    <div th:if="${!#lists.isEmpty(rateLimiters)}" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QPS</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr th:each="limiter : ${rateLimiters}">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900" th:text="${limiter.name}">-</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                                              th:classappend="${limiter.type == 'TOKEN_BUCKET' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}"
+                                              th:text="${limiter.type}">-</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" th:text="${limiter.qps}">-</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                                              th:classappend="${limiter.status == 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}"
+                                              th:text="${limiter.status == 'active' ? '活跃' : '非活跃'}">-</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-900" onclick="viewDetails(this)" th:data-name="${limiter.name}">查看</button>
+                                            <button class="text-green-600 hover:text-green-900" onclick="testRateLimiter(this)" th:data-name="${limiter.name}">测试</button>
+                                            <button class="text-yellow-600 hover:text-yellow-900" onclick="resetRateLimiter(this)" th:data-name="${limiter.name}">重置</button>
+                                            <button class="text-red-600 hover:text-red-900" onclick="destroyRateLimiter(this)" th:data-name="${limiter.name}">销毁</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 创建限流器模态框 -->
+    <div id="createModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">创建限流器</h3>
+                <form id="createForm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">名称</label>
+                        <input type="text" id="limiterName" name="name" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">类型</label>
+                        <select id="limiterType" name="type" required 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="TOKEN_BUCKET">令牌桶</option>
+                            <option value="SLIDING_WINDOW">滑动窗口</option>
+                            <option value="ADAPTIVE">自适应</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">QPS</label>
+                        <input type="number" id="limiterQps" name="qps" min="1" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">容量</label>
+                        <input type="number" id="limiterCapacity" name="capacity" min="1" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeCreateModal()" 
+                                class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                            取消
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            创建
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试限流器模态框 -->
+    <div id="testModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">测试限流器</h3>
+                <form id="testForm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">限流器名称</label>
+                        <input type="text" id="testLimiterName" readonly 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">请求数量</label>
+                        <input type="number" id="testRequestCount" name="requestCount" min="1" max="10000" value="100" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeTestModal()" 
+                                class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                            取消
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            开始测试
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试结果模态框 -->
+    <div id="resultModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">测试结果</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">成功请求:</span>
+                        <span id="successCount" class="font-medium text-green-600">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">被限流请求:</span>
+                        <span id="blockedCount" class="font-medium text-red-600">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">实际QPS:</span>
+                        <span id="actualQps" class="font-medium text-blue-600">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">测试耗时:</span>
+                        <span id="testDuration" class="font-medium text-gray-600">-</span>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button onclick="closeResultModal()" 
+                            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 创建限流器
+        function openCreateModal() {
+            document.getElementById('createModal').classList.remove('hidden');
+        }
+        
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.add('hidden');
+            document.getElementById('createForm').reset();
+        }
+        
+        // 测试限流器
+        function openTestModal(limiterName) {
+            document.getElementById('testLimiterName').value = limiterName;
+            document.getElementById('testModal').classList.remove('hidden');
+        }
+        
+        function closeTestModal() {
+            document.getElementById('testModal').classList.add('hidden');
+            document.getElementById('testForm').reset();
+        }
+        
+        // 显示测试结果
+        function showTestResult(result) {
+            document.getElementById('successCount').textContent = result.successCount;
+            document.getElementById('blockedCount').textContent = result.blockedCount;
+            document.getElementById('actualQps').textContent = result.qps.toFixed(2);
+            document.getElementById('testDuration').textContent = result.duration + 'ms';
+            document.getElementById('resultModal').classList.remove('hidden');
+        }
+        
+        function closeResultModal() {
+            document.getElementById('resultModal').classList.add('hidden');
+        }
+        
+        // 表单提交处理
+        document.getElementById('createForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                name: formData.get('name'),
+                type: formData.get('type'),
+                qps: parseFloat(formData.get('qps')),
+                capacity: parseInt(formData.get('capacity'))
+            };
+            
+            try {
+                const response = await fetch('/api/rate-limiters', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    alert('限流器创建成功！');
+                    closeCreateModal();
+                    location.reload(); // 刷新页面显示新创建的限流器
+                } else {
+                    const error = await response.json();
+                    alert('创建失败: ' + error.message);
+                }
+            } catch (error) {
+                alert('创建失败: ' + error.message);
+            }
+        });
+        
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const limiterName = document.getElementById('testLimiterName').value;
+            const requestCount = parseInt(document.getElementById('testRequestCount').value);
+            
+            try {
+                const response = await fetch(`/api/rate-limiters/${limiterName}/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ requestCount })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    closeTestModal();
+                    showTestResult(result);
+                } else {
+                    const error = await response.json();
+                    alert('测试失败: ' + error.message);
+                }
+            } catch (error) {
+                alert('测试失败: ' + error.message);
+            }
+        });
+        
+        // 操作函数
+        function viewDetails(button) {
+            const name = button.getAttribute('data-name');
+            alert('查看限流器详情: ' + name);
+            // 这里可以实现查看详情的功能
+        }
+        
+        function testRateLimiter(button) {
+            const name = button.getAttribute('data-name');
+            openTestModal(name);
+        }
+        
+        async function resetRateLimiter(button) {
+            const name = button.getAttribute('data-name');
+            if (confirm(`确定要重置限流器 "${name}" 吗？`)) {
+                try {
+                    const response = await fetch(`/api/rate-limiters/${name}/reset`, {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        alert('限流器重置成功！');
+                        location.reload();
+                    } else {
+                        const error = await response.json();
+                        alert('重置失败: ' + error.message);
+                    }
+                } catch (error) {
+                    alert('重置失败: ' + error.message);
+                }
+            }
+        }
+        
+        async function destroyRateLimiter(button) {
+            const name = button.getAttribute('data-name');
+            if (confirm(`确定要销毁限流器 "${name}" 吗？此操作不可恢复！`)) {
+                try {
+                    const response = await fetch(`/api/rate-limiters/${name}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        alert('限流器销毁成功！');
+                        location.reload();
+                    } else {
+                        const error = await response.json();
+                        alert('销毁失败: ' + error.message);
+                    }
+                } catch (error) {
+                    alert('销毁失败: ' + error.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
