@@ -1,372 +1,211 @@
 <template>
-	<view class="login-container">
-		<!-- 背景装饰 -->
-		<view class="bg-decoration">
-			<view class="decoration-circle circle-1"></view>
-			<view class="decoration-circle circle-2"></view>
-			<view class="decoration-circle circle-3"></view>
+  <view class="login-page">
+    <view class="login-card">
+      <view class="login-card__header">
+        <view class="brand-icon">
+          <uni-icons type="contact-filled" color="#6366f1" size="60" />
 		</view>
-		
-		<view class="login-content">
-			<view class="login-header">
-				<view class="logo-wrapper">
-					<view class="logo">
-						<uni-icons type="contact-filled" color="#9D8DF1" size="56"></uni-icons>
-					</view>
-					<view class="logo-ring"></view>
-				</view>
-				<text class="title">欢迎回来</text>
-				<text class="subtitle">登录以继续使用校园导览</text>
+        <view class="title">欢迎回来</view>
+        <view class="subtitle">登录影务服务平台，管理报备与协拍需求</view>
 			</view>
 			
-			<view class="login-form">
-				<view class="form-item">
-					<view class="input-wrapper">
-						<uni-icons type="phone" color="#9D8DF1" size="20"></uni-icons>
+      <view class="form">
+        <view class="field">
+          <text class="label">手机号</text>
 						<input 
+            v-model="form.phone"
 							class="input" 
 							type="number" 
-							placeholder="请输入手机号"
-							v-model="formData.phone"
-							placeholder-style="color: #B8A9E8"
 							maxlength="11"
+            placeholder="请输入 11 位手机号"
 						/>
-					</view>
 				</view>
 				
-				<view class="form-item">
-					<view class="input-wrapper">
-						<uni-icons type="locked" color="#9D8DF1" size="20"></uni-icons>
+        <view class="field">
+          <text class="label">密码</text>
 						<input 
+            v-model="form.password"
 							class="input" 
 							type="password" 
 							placeholder="请输入密码"
-							v-model="formData.password"
-							placeholder-style="color: #B8A9E8"
+            maxlength="20"
 						/>
-					</view>
 				</view>
 				
-				<view class="form-item">
-					<view class="identity-wrapper">
-						<text class="identity-label">身份类型</text>
+        <view class="identity">
+          <text class="label">身份类型</text>
 						<view class="identity-options">
 							<view 
-								v-for="(item, index) in identityOptions" 
-								:key="index"
-								class="identity-item"
-								:class="{ active: formData.identity === item.value }"
-								@click="formData.identity = item.value"
-							>
-								{{ item.label }}
-							</view>
+              v-for="option in identityOptions"
+              :key="option.value"
+              class="identity-option"
+              :class="{ active: form.identity === option.value }"
+              @click="form.identity = option.value"
+            >
+              {{ option.label }}
 						</view>
 					</view>
 				</view>
 				
-				<button class="login-btn" @click="handleLogin" :loading="loading" :disabled="loading || !canLogin">
-					<text v-if="!loading">登录</text>
-					<text v-else>登录中...</text>
+        <button class="submit-btn" :loading="loading" :disabled="!canSubmit" @click="submit">
+          {{ loading ? '登录中...' : '登录' }}
 				</button>
-				
-				<view class="login-footer">
-					<text class="footer-text">还没有账号？</text>
-					<text class="register-text" @click="handleRegister">立即注册</text>
-				</view>
+      </view>
+
+      <view class="extra">
+        <text>首次使用？</text>
+        <text class="link" @click="goRegister">创建账号</text>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script>
-	import { visitorLogin } from '../../services/api.ts'
+import { visitorLogin } from '../../services/api'
+
+const IDENTITY_OPTIONS = [
+  { label: '剧组', value: '剧组' },
+  { label: '制作人', value: '制作人' },
+  { label: '其他', value: '其他' }
+]
 	
 	export default {
-		name: 'Login',
 		data() {
 			return {
-				loading: false,
-				identityOptions: [
-					{ label: '新生', value: '新生' },
-					{ label: '家长', value: '家长' },
-					{ label: '其他', value: '其他' }
-				],
-				formData: {
+      form: {
 					phone: '',
 					password: '',
-					identity: '新生'
-				}
+        identity: '剧组'
+      },
+      identityOptions: IDENTITY_OPTIONS,
+      loading: false
 			}
 		},
 		computed: {
-			canLogin() {
-				return this.formData.phone.length === 11 && this.formData.password.length >= 6 && this.formData.identity
+    canSubmit() {
+      return /^1\d{10}$/.test(this.form.phone) && this.form.password.length >= 6 && !!this.form.identity
 			}
 		},
 		methods: {
-			// 登录
-			async handleLogin() {
-				if (!this.formData.phone) {
-					uni.showToast({
-						title: '请输入手机号',
-						icon: 'none'
-					})
-					return
-				}
-				
-				if (this.formData.phone.length !== 11) {
-					uni.showToast({
-						title: '请输入正确的手机号',
-						icon: 'none'
-					})
-					return
-				}
-				
-				if (!this.formData.password) {
-					uni.showToast({
-						title: '请输入密码',
-						icon: 'none'
-					})
-					return
-				}
-				
-				if (this.formData.password.length < 6) {
-					uni.showToast({
-						title: '密码长度至少6位',
-						icon: 'none'
-					})
-					return
-				}
-				
-				if (!this.formData.identity) {
-					uni.showToast({
-						title: '请选择身份类型',
-						icon: 'none'
-					})
+    async submit() {
+      if (!this.canSubmit) {
+        uni.showToast({ title: '请完善登录信息', icon: 'none' })
 					return
 				}
 				
 				this.loading = true
-				
-				try {
-					console.log('开始登录请求:', {
-						phone: this.formData.phone,
-						password: '***',
-						identity: this.formData.identity
-					})
-					
-					const res = await visitorLogin({
-						phone: this.formData.phone,
-						password: this.formData.password
-					})
-					
-					console.log('登录响应:', res)
-					
-					// 保存登录信息
-					uni.setStorageSync('token', res.data.token)
-					uni.setStorageSync('visitorId', res.data.visitorId)
-					uni.setStorageSync('identity', res.data.identity)
-					
-					this.loading = false
-					uni.showToast({
-						title: res.message || '登录成功',
-						icon: 'success'
-					})
-					
-					// 跳转到首页
+      try {
+        const { data } = await visitorLogin({
+          phone: this.form.phone,
+          password: this.form.password
+        })
+
+        if (data && data.token) {
+          uni.setStorageSync('token', data.token)
+          uni.setStorageSync('visitorInfo', data)
+        }
+
+        uni.showToast({ title: '登录成功', icon: 'success' })
 					setTimeout(() => {
-						uni.reLaunch({
-							url: '/pages/index/index'
-						})
-					}, 1500)
+          uni.reLaunch({ url: '/pages/scenes/scenes' })
+        }, 800)
 				} catch (error) {
+        uni.showToast({ title: (error && error.message) || '登录失败', icon: 'none' })
+      } finally {
 					this.loading = false
-					uni.showToast({
-						title: error.message || '登录失败',
-						icon: 'none'
-					})
-				}
-			},
-			
-			handleRegister() {
-				uni.navigateTo({
-					url: '/pages/register/register'
-				})
+      }
+    },
+    goRegister() {
+      uni.navigateTo({ url: '/pages/register/register' })
 			}
 		}
 	}
 </script>
 
-<style lang="scss" scoped>
-	.login-container {
-		height: 100vh;
-		background: linear-gradient(180deg, #F8F6FF 0%, #E8E1FF 100%);
+<style scoped lang="scss">
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eef2ff 0%, #ede9fe 100%);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 30rpx;
-		position: relative;
-		overflow: hidden;
+  padding: 60rpx 40rpx;
 		box-sizing: border-box;
 	}
 	
-	.bg-decoration {
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		overflow: hidden;
-		z-index: 0;
-	}
-	
-	.decoration-circle {
-		position: absolute;
-		border-radius: 50%;
-		background: rgba(157, 141, 241, 0.1);
-	}
-	
-	.circle-1 {
-		width: 350rpx;
-		height: 350rpx;
-		top: -80rpx;
-		right: -80rpx;
-		background: rgba(157, 141, 241, 0.08);
-	}
-	
-	.circle-2 {
-		width: 250rpx;
-		height: 250rpx;
-		bottom: -40rpx;
-		left: -40rpx;
-		background: rgba(184, 169, 232, 0.1);
-	}
-	
-	.circle-3 {
-		width: 180rpx;
-		height: 180rpx;
-		top: 25%;
-		left: 10%;
-		background: rgba(157, 141, 241, 0.06);
-	}
-	
-	.login-content {
+.login-card {
 		width: 100%;
-		max-width: 600rpx;
-		background-color: #fff;
-		border-radius: 32rpx;
-		padding: 60rpx 50rpx 50rpx;
-		box-shadow: 0 8rpx 40rpx rgba(157, 141, 241, 0.15);
-		position: relative;
-		z-index: 1;
-	}
-	
-	.login-header {
+  max-width: 640rpx;
+  background: #fff;
+  border-radius: 36rpx;
+  padding: 48rpx 44rpx 40rpx;
+  box-shadow: 0 28rpx 68rpx rgba(99, 102, 241, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 42rpx;
+}
+
+.login-card__header {
 		text-align: center;
-		margin-bottom: 50rpx;
-	}
-	
-	.logo-wrapper {
-		position: relative;
-		display: inline-block;
-		margin-bottom: 28rpx;
-	}
-	
-	.logo {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  color: #1f2937;
+}
+
+.brand-icon {
 		width: 120rpx;
 		height: 120rpx;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.12);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: linear-gradient(135deg, #F8F6FF 0%, #E8E1FF 100%);
-		border-radius: 50%;
-		position: relative;
-		z-index: 2;
-		border: 2rpx solid rgba(157, 141, 241, 0.2);
-	}
-	
-	.logo-ring {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 140rpx;
-		height: 140rpx;
-		border-radius: 50%;
-		border: 2rpx solid rgba(157, 141, 241, 0.15);
-		animation: pulse 2s ease-in-out infinite;
-	}
-	
-	@keyframes pulse {
-		0%, 100% {
-			transform: translate(-50%, -50%) scale(1);
-			opacity: 1;
-		}
-		50% {
-			transform: translate(-50%, -50%) scale(1.1);
-			opacity: 0.7;
-		}
 	}
 	
 	.title {
-		display: block;
 		font-size: 44rpx;
-		font-weight: 600;
-		color: #6B5B95;
-		margin-bottom: 12rpx;
-		letter-spacing: 1rpx;
+  font-weight: 700;
 	}
 	
 	.subtitle {
-		display: block;
-		font-size: 24rpx;
-		color: #B8A9E8;
-		font-weight: 400;
-	}
-	
-	.login-form {
-		.form-item {
-			margin-bottom: 28rpx;
-		}
-		
-		.input-wrapper {
+  font-size: 26rpx;
+  color: #6b7280;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+}
+
+.field {
 			display: flex;
-			align-items: center;
-			background-color: #F8F6FF;
-			border-radius: 16rpx;
-			padding: 0 28rpx;
-			height: 88rpx;
-			border: 2rpx solid transparent;
-			transition: all 0.3s;
-			
-			&:focus-within {
-				border-color: #9D8DF1;
-				background-color: #fff;
-				box-shadow: 0 4rpx 16rpx rgba(157, 141, 241, 0.15);
-			}
-		}
-		
-		.input-wrapper uni-icons {
-			margin-right: 20rpx;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.label {
+  font-size: 26rpx;
+  color: #4b5563;
 		}
 		
 		.input {
-			flex: 1;
-			height: 100%;
+  width: 100%;
+  height: 88rpx;
+  border-radius: 18rpx;
+  background: #f9fafb;
+  border: 1rpx solid rgba(226, 232, 240, 0.6);
+  padding: 0 24rpx;
 			font-size: 28rpx;
-			color: #6B5B95;
-		}
-		
-		.identity-wrapper {
-			width: 100%;
-		}
-		
-		.identity-label {
-			display: block;
-			font-size: 26rpx;
-			color: #6B5B95;
-			margin-bottom: 16rpx;
-			font-weight: 500;
+  color: #1f2937;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
 		}
 		
 		.identity-options {
@@ -374,69 +213,54 @@
 			gap: 16rpx;
 		}
 		
-		.identity-item {
+.identity-option {
 			flex: 1;
-			height: 72rpx;
-			background-color: #F8F6FF;
-			border-radius: 12rpx;
+  height: 80rpx;
+  border-radius: 18rpx;
+  background: #f5f3ff;
+  color: #6655d4;
 			display: flex;
 			align-items: center;
 			justify-content: center;
 			font-size: 26rpx;
-			color: #B8A9E8;
-			border: 2rpx solid transparent;
-			transition: all 0.3s;
+  border: 1rpx solid transparent;
+}
 			
-			&.active {
-				background: linear-gradient(135deg, #9D8DF1 0%, #B8A9E8 100%);
+.identity-option.active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
 				color: #fff;
-				border-color: #9D8DF1;
-			}
-		}
-	}
-	
-	.login-btn {
-		width: 100%;
-		height: 88rpx;
-		background: linear-gradient(135deg, #9D8DF1 0%, #B8A9E8 100%);
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 12rpx 28rpx rgba(99, 102, 241, 0.25);
+}
+
+.submit-btn {
+  margin-top: 12rpx;
+  height: 92rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
 		color: #fff;
-		border-radius: 16rpx;
 		font-size: 32rpx;
-		font-weight: 500;
+  font-weight: 600;
 		border: none;
-		box-shadow: 0 8rpx 24rpx rgba(157, 141, 241, 0.3);
-		transition: all 0.3s;
-		margin-top: 20rpx;
-		
-		&:active {
-			transform: translateY(2rpx);
-			box-shadow: 0 4rpx 16rpx rgba(157, 141, 241, 0.25);
-		}
-		
-		&[disabled] {
-			opacity: 0.7;
-		}
-	}
-	
-	.login-footer {
-		margin-top: 32rpx;
-		text-align: center;
+  letter-spacing: 2rpx;
+  box-shadow: 0 22rpx 38rpx rgba(99, 102, 241, 0.32);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+}
+
+.extra {
 		display: flex;
 		justify-content: center;
-		align-items: center;
-	}
-	
-	.footer-text {
+  gap: 10rpx;
 		font-size: 24rpx;
-		color: #B8A9E8;
-		margin-right: 8rpx;
-	}
-	
-	.register-text {
-		font-size: 24rpx;
-		color: #9D8DF1;
-		font-weight: 500;
+  color: #6b7280;
+}
+
+.link {
+  color: #4f46e5;
+  font-weight: 600;
 	}
 </style>
-
 

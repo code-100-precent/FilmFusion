@@ -1,94 +1,169 @@
 <template>
-	<view class="tabbar">
-		<view 
-			v-for="(item, index) in tabList" 
-			:key="index"
-			class="tabbar-item"
-			:class="{ active: active === item.key }"
-			@click="switchTab(item)"
-		>
-			<view class="icon-wrap" :class="{ bounce: active === item.key }">
-				<uni-icons :type="item.icon" :color="active === item.key ? '#5b75ff' : '#B8A9E8'" size="22"></uni-icons>
-			</view>
-			<text class="tabbar-text">{{ item.text }}</text>
-		</view>
-	</view>
+  <view class="tabbar">
+    <view
+      v-for="item in normalizedItems"
+      :key="item.key"
+      class="tabbar-item"
+      :class="{ active: active === item.key }"
+      @click="handleSwitch(item)"
+    >
+      <view class="icon-wrap" :class="{ bounce: active === item.key }">
+        <uni-icons :type="item.icon" :color="active === item.key ? activeColor : inactiveColor" size="22" />
+      </view>
+      <text class="tabbar-text">{{ item.text }}</text>
+    </view>
+  </view>
 </template>
 
 <script>
-	export default {
-		name: 'TabBar',
-		props: {
-			active: { type: String, default: 'scenes' }
-		},
-		emits: ['change'],
-		data() {
-			return {
-				tabList: [
-					{ key: 'scenes', path: '/pages/scenes/scenes', text: '场景', icon: 'home' },
-					{ key: 'services', path: '/pages/services/services', text: '协拍', icon: 'map' },
-					{ key: 'news', path: '/pages/news/news', text: '资讯', icon: 'chat' },
-					{ key: 'filing', path: '/pages/filing/filing', text: '报备', icon: 'paperplane' }
-				]
-			}
-		},
-		methods: {
-			switchTab(item) {
-				if (this.active === item.key) return
-				this.$emit('change', item.key)
-				// custom tabbar uses reLaunch to mimic native tabbar navigation
-				uni.reLaunch({ url: item.path })
-			}
-		}
-	}
+const DEFAULT_ITEMS = [
+  { key: 'scenes', path: '/pages/scenes/scenes', text: '场景', icon: 'home' },
+  { key: 'services', path: '/pages/services/services', text: '协拍', icon: 'map' },
+  { key: 'news', path: '/pages/news/news', text: '资讯', icon: 'chat' },
+  { key: 'profile', path: '/pages/profile/profile', text: '我的', icon: 'person' }
+]
+
+export default {
+  name: 'TabBar',
+  props: {
+    active: {
+      type: String,
+      default: 'scenes'
+    },
+    items: {
+      type: Array,
+      default: () => []
+    },
+    activeColor: {
+      type: String,
+      default: '#4F46E5'
+    },
+    inactiveColor: {
+      type: String,
+      default: '#A9A7B7'
+    }
+  },
+  computed: {
+    normalizedItems() {
+      return this.items && this.items.length ? this.items : DEFAULT_ITEMS
+    }
+  },
+  methods: {
+    handleSwitch(item) {
+      if (this.active === item.key) return
+      this.$emit('change', item.key)
+      uni.reLaunch({ url: item.path })
+    }
+  }
+}
 </script>
 
-<style lang="scss" scoped>
-	.tabbar {
-		position: fixed;
-		bottom: 0rpx;
-		left: 8rpx;
-		right: 8rpx;
-		height: 68rpx;
-		background: rgba(255,255,255,0.85);
-		backdrop-filter: blur(12rpx);
-		border: 0.2rpx solid rgba(239, 241, 249, 0.9);
-		border-radius: 16rpx;
-		display: flex;
-		align-items: center;
-		justify-content: space-around;
-		z-index: 999;
-		padding: 0 2rpx;
-		padding-bottom: env(safe-area-inset-bottom);
-		box-shadow: 0 8rpx 28rpx rgba(20, 20, 40, 0.08);
-	}
-	
-	.tabbar-item {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 10rpx 0;
-		position: relative;
-	}
-	.icon-wrap { transition: transform .25s ease; }
-	.icon-wrap.bounce { transform: translateY(-6rpx) scale(1.08); }
-	
-	.tabbar-text {
-		font-size: 18rpx;
-		color: #8A8FA0;
-		margin-top: 4rpx;
-	}
-	
-	.tabbar-item.active .tabbar-text { color: #4F46E5; font-weight: 700; }
-	.tabbar-item.active::after {
-		content:'';
-		position: absolute;
-		bottom: 8rpx;
-		width: 36rpx;
-		height: 6rpx;
-		border-radius: 999rpx;
-		background: linear-gradient(90deg,#5b75ff,#8f9bff);
-	}
+<style scoped lang="scss">
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24rpx) saturate(180%);
+  -webkit-backdrop-filter: blur(24rpx) saturate(180%);
+  border: none;
+  border-top: 1rpx solid rgba(234, 236, 244, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 999;
+  padding: 13rpx 32rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.tabbar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  color: #8a8fa0;
+  min-height: 64rpx;
+}
+
+.icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 16rpx;
+  background: rgba(79, 70, 229, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.icon-wrap::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icon-wrap.bounce {
+  transform: translateY(-4rpx) scale(1.05);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  box-shadow: 0 4rpx 16rpx rgba(99, 102, 241, 0.2);
+}
+
+.icon-wrap.bounce::before {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.tabbar-text {
+  font-size: 22rpx;
+  margin-top: 8rpx;
+  font-weight: 500;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tabbar-item.active .tabbar-text {
+  color: #4f46e5;
+}
+
+.tabbar-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 8rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40rpx;
+  height: 6rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+  box-shadow: 0 2rpx 8rpx rgba(99, 102, 241, 0.4);
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 40rpx;
+    opacity: 1;
+  }
+}
 </style>
