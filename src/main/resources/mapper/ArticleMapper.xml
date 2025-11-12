@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.cxdproject.coder.mapper.ArticleMapper">
+
+    <resultMap id="BaseResultMap" type="cn.cxdproject.coder.model.entity.Article">
+        <id column="id" property="id" />
+        <result column="title" property="title" />
+        <result column="issue_unit" property="issueUnit" />
+        <result column="issue_time" property="issueTime" />
+        <result column="content" property="content" />
+        <result column="deleted" property="deleted" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+            `id`,
+            `title`,
+            `issue_unit`,
+            `issue_time`,
+            `content`,
+            `deleted`,
+            `created_at`,
+            `updated_at`
+    </sql>
+
+</mapper>

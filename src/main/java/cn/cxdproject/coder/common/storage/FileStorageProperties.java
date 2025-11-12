@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
  */
 @Data
 @Component
-@ConfigurationProperties(prefix = "app.storage")
+@ConfigurationProperties(prefix = "code100.storage")
 public class FileStorageProperties {
 
     /**

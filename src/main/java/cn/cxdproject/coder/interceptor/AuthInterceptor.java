@@ -61,19 +61,19 @@ public class AuthInterceptor implements HandlerInterceptor {
             if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
-            if (!jwtConfig.validateToken(token)) {
-                throw new AuthorizationException("token无效");
-            }
-            
-            // 根据token类型设置对应的上下文
-            String tokenType = getTokenType(token);
-            if ("admin".equals(tokenType)) {
-                AuthContext.setCurrentAdmin(jwtConfig.getAdminFromToken(token));
-            } else {
-                throw new AuthorizationException("token类型无效");
-            }
-            
-            AuthContext.setCurrentToken(token);
+//            if (!jwtConfig.validateToken(token)) {
+//                throw new AuthorizationException("token无效");
+//            }
+//
+//            // 根据token类型设置对应的上下文
+//            String tokenType = getTokenType(token);
+//            if ("admin".equals(tokenType)) {
+//                AuthContext.setCurrentAdmin(jwtConfig.getAdminFromToken(token));
+//            } else {
+//                throw new AuthorizationException("token类型无效");
+//            }
+//
+//            AuthContext.setCurrentToken(token);
             return true;
         } catch (AuthorizationException e) {
             if (!(handler instanceof HandlerMethod)) {
@@ -96,7 +96,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         try {
-            AuthContext.clear();
+//            AuthContext.clear();
         } catch (Exception e) {
             log.warn("清理AuthContext失败", e);
         }

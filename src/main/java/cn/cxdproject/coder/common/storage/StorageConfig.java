@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import static cn.cxdproject.coder.common.constants.Constants.STORAGE_TYPE_LOCAL;
 import static cn.cxdproject.coder.common.constants.Constants.STORAGE_TYPE_MINIO;
 
+
 /**
  * 存储服务配置
  */

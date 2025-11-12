@@ -1,7 +1,6 @@
 package cn.cxdproject.coder.interceptor;
 
 import cn.cxdproject.coder.common.context.AuthContext;
-import cn.cxdproject.coder.model.entity.Admin;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -54,10 +53,10 @@ public class RegistrationInterceptor implements HandlerInterceptor {
 
         // 第三步：注册成功，获取管理员ID并记录
         // 从 AuthContext 获取（若注册成功后会自动将管理员信息存入 AuthContext）
-        Admin registeredAdmin = AuthContext.getCurrentAdmin();
-        if (registeredAdmin != null && registeredAdmin.getId() != null) {
-            String adminId = registeredAdmin.getId().toString();
-        }
+//        Admin registeredAdmin = AuthContext.getCurrentAdmin();
+//        if (registeredAdmin != null && registeredAdmin.getId() != null) {
+//            String adminId = registeredAdmin.getId().toString();
+//        }
 
         // 关键：将包装后的响应内容写回，避免前端无法获取响应（因为 ContentCachingResponseWrapper 读过后需重置）
         responseWrapper.copyBodyToResponse();

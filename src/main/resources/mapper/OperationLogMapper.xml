@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.cxdproject.coder.mapper.OperationLogMapper">
+
+    <resultMap id="BaseResultMap" type="cn.cxdproject.coder.model.entity.OperationLog">
+        <id column="id" property="id" />
+        <result column="type" property="type" />
+        <result column="description" property="description" />
+        <result column="user_id" property="userId" />
+        <result column="operator" property="operator" />
+        <result column="success" property="success" />
+        <result column="params" property="params" />
+        <result column="result" property="result" />
+        <result column="timestamp" property="timestamp" />
+        <result column="deleted" property="deleted" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+            `id`,
+            `type`,
+            `description`,
+            `user_id`,
+            `operator`,
+            `success`,
+            `params`,
+            `result`,
+            `timestamp`,
+            `deleted`,
+            `created_at`,
+            `updated_at`
+    </sql>
+
+</mapper>

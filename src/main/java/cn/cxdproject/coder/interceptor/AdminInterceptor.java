@@ -4,7 +4,6 @@ import cn.cxdproject.coder.common.anno.PublicAccess;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.config.JwtConfig;
 import cn.cxdproject.coder.exception.AuthorizationException;
-import cn.cxdproject.coder.model.entity.Admin;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
@@ -44,16 +43,16 @@ public class AdminInterceptor implements HandlerInterceptor {
             if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
-            if (!jwtConfig.validateToken(token)) {
-                throw new AuthorizationException("token无效");
-            }
-            Admin adminFromToken = jwtConfig.getAdminFromToken(token);
-            if (!adminFromToken.getRole().equals(ADMIN)){
-                throw new AuthorizationException("insufficient authority");
-            }
-
-            AuthContext.setCurrentAdmin(adminFromToken);
-            AuthContext.setCurrentToken(token);
+//            if (!jwtConfig.validateToken(token)) {
+//                throw new AuthorizationException("token无效");
+//            }
+//            Admin adminFromToken = jwtConfig.getAdminFromToken(token);
+//            if (!adminFromToken.getRole().equals(ADMIN)){
+//                throw new AuthorizationException("insufficient authority");
+//            }
+//
+//            AuthContext.setCurrentAdmin(adminFromToken);
+//            AuthContext.setCurrentToken(token);
             return true;
         } catch (AuthorizationException e) {
             if (!(handler instanceof HandlerMethod)) {
@@ -79,7 +78,7 @@ public class AdminInterceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         try {
-            AuthContext.clear();
+//            AuthContext.clear();
         } catch (Exception e) {
             log.warn("清理AuthContext失败", e);
         }

@@ -1,14 +1,14 @@
-CREATE DATABASE if not exists campus_guide_db;
+CREATE DATABASE if not exists film_fusion;
 
-USE campus_guide_db;
+USE film_fusion;
 
-# admin 管理员表
-CREATE TABLE `admin`
+# user 用户表
+CREATE TABLE `fi_users`
 (
     `id`         BIGINT       NOT NULL AUTO_INCREMENT COMMENT '管理员ID',
     `username`   VARCHAR(255) NOT NULL COMMENT '用户名',
     `password`   VARCHAR(255) NOT NULL COMMENT '密码',
-    `email`      VARCHAR(255) DEFAULT NULL COMMENT '邮箱',
+    `phoneNumber` VARCHAR(15) DEFAULT NULL COMMENT '电话号码',
     `avatar`     VARCHAR(255) DEFAULT NULL COMMENT '头像',
     `role`       VARCHAR(255) DEFAULT NULL COMMENT '角色',
     `enabled`    BOOLEAN      DEFAULT TRUE COMMENT '是否启用',
@@ -17,10 +17,10 @@ CREATE TABLE `admin`
     `updated_at` DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='管理员表';
+  DEFAULT CHARSET = utf8mb4 COMMENT ='用户表';
 
 # Operation Log 操作日志表
-CREATE TABLE `co_operation_log`
+CREATE TABLE `fi_operation_logs`
 (
     `id`          BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
     `type`        VARCHAR(100) NOT NULL COMMENT '操作类型（如：LOGIN、DOC_EDIT）',
@@ -39,7 +39,7 @@ CREATE TABLE `co_operation_log`
   COLLATE = utf8mb4_unicode_ci COMMENT ='操作日志表';
 
 # co_feedback 反馈表
-CREATE TABLE `co_feedback`
+CREATE TABLE `fi_feedbacks`
 (
     `id`         BIGINT AUTO_INCREMENT PRIMARY KEY NOT NULL COMMENT '主键ID',
     `user_id`    BIGINT                            NOT NULL COMMENT '用户ID，关联到用户表',
@@ -53,174 +53,105 @@ CREATE TABLE `co_feedback`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='用户反馈表';
 
--- ----------------------------
--- 1. 游客表（visitor）
--- ----------------------------
-DROP TABLE IF EXISTS `visitor`;
-CREATE TABLE `visitor` (
-                           `visitor_id` VARCHAR(64) NOT NULL COMMENT '游客唯一ID（主键）',
-                           `name` VARCHAR(32) NOT NULL COMMENT '游客姓名',
-                           `phone` VARCHAR(11) NOT NULL COMMENT '手机号（唯一）',
-                           `password` VARCHAR(64) NOT NULL COMMENT '加密后的密码（MD5/BCrypt）',
-                           `identity` VARCHAR(16) NOT NULL COMMENT '身份类型：新生/家长/其他',
-                           `register_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
-                           `last_login_time` DATETIME DEFAULT NULL COMMENT '最后登录时间',
-                           PRIMARY KEY (`visitor_id`),
-                           UNIQUE KEY `uk_phone` (`phone`),
-                           KEY `idx_identity` (`identity`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='游客信息表';
+# report 影视剧备案表
+CREATE TABLE `fi_reports`
+(
+    `id`            BIGINT        NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name`          VARCHAR(50)   NOT NULL COMMENT '影视剧名称',
+    `type`          VARCHAR(50)   NOT NULL COMMENT '类型',
+    `genre`         VARCHAR(50)   NOT NULL COMMENT '题材',
+    `episodes`      INT           NOT NULL COMMENT '集数',
+    `invest_amount` DECIMAL(15,2) NOT NULL COMMENT '投资金额（万元）',
+    `main_creators` VARCHAR(255)  NOT NULL COMMENT '主创人员',
+    `lead_producer` VARCHAR(100)  NOT NULL COMMENT '第一出品单位',
+    `producer_unit` VARCHAR(100)  NOT NULL COMMENT '制片单位',
+    `start_date`    DATE          NOT NULL COMMENT '拍摄开始日期',
+    `end_date`      DATE          NOT NULL COMMENT '拍摄结束日期',
+    `crew_scale`    VARCHAR(50)   NOT NULL COMMENT '剧组规模',
+    `contact`       VARCHAR(50)   NOT NULL COMMENT '联系人',
+    `phone_number`  VARCHAR(20)   NOT NULL COMMENT '联系电话',
+    `crew_position` VARCHAR(50)   NOT NULL COMMENT '剧组职务',
+    `deleted`       TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
+    `created_at`    DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`    DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='影视剧备案信息表';
 
--- ----------------------------
--- 2. 校友表（alumni）
--- ----------------------------
-DROP TABLE IF EXISTS `alumni`;
-CREATE TABLE `alumni` (
-                          `alumni_id` VARCHAR(64) NOT NULL COMMENT '校友唯一ID（主键）',
-                          `name` VARCHAR(32) NOT NULL COMMENT '校友姓名',
-                          `grad_year` VARCHAR(8) NOT NULL COMMENT '毕业届数（如：2010届）',
-                          `major` VARCHAR(64) NOT NULL COMMENT '所学专业',
-                          `career` VARCHAR(64) DEFAULT NULL COMMENT '现职业',
-                          `contact` VARCHAR(32) DEFAULT NULL COMMENT '联系方式（手机号/微信）',
-                          `avatar_url` VARCHAR(255) DEFAULT NULL COMMENT '头像图片URL',
-                          PRIMARY KEY (`alumni_id`),
-                          KEY `idx_grad_year` (`grad_year`),
-                          KEY `idx_major` (`major`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='校友信息表';
+# locations 拍摄场地表
+CREATE TABLE `fi_locations`
+(
+    `id`                   BIGINT        NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name`                 VARCHAR(50)   NOT NULL COMMENT '场地名称',
+    `type`                 VARCHAR(20)   NOT NULL COMMENT '类型',
+    `status`               TINYINT       NOT NULL DEFAULT 1 COMMENT '可用状态（0：不可用，1：可用）',
+    `location_description` VARCHAR(500)  NOT NULL COMMENT '场地介绍',
+    `contact_phone`        VARCHAR(20)   NOT NULL COMMENT '联系人电话',
+    `contact_name`         VARCHAR(50)   NOT NULL COMMENT '联系人',
+    `address`              VARCHAR(255)  NOT NULL COMMENT '地址',
+    `price`                DECIMAL(10,2) NOT NULL COMMENT '价格（元）',
+    `deleted`              TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
+    `created_at`           DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`           DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='拍摄场地表';
 
--- ----------------------------
--- 3. POI表（兴趣点，point_of_interest）
--- ----------------------------
-DROP TABLE IF EXISTS `point_of_interest`;
-CREATE TABLE `point_of_interest` (
-                                     `poi_id` VARCHAR(64) NOT NULL COMMENT 'POI唯一ID（主键）',
-                                     `name` VARCHAR(64) NOT NULL COMMENT 'POI名称（如：图书馆）',
-                                     `x` DECIMAL(10,6) NOT NULL COMMENT '坐标X（经度）',
-                                     `y` DECIMAL(10,6) NOT NULL COMMENT '坐标Y（纬度）',
-                                     `type` VARCHAR(16) NOT NULL COMMENT 'POI类型：建筑/景观/场馆',
-                                     `intro` TEXT DEFAULT NULL COMMENT 'POI简介',
-                                     `image_url` VARCHAR(255) DEFAULT NULL COMMENT 'POI图片URL',
-                                     `open_time` VARCHAR(64) DEFAULT NULL COMMENT '开放时间（如：08:00-22:00）',
-                                     PRIMARY KEY (`poi_id`),
-                                     KEY `idx_type` (`type`),
-                                     KEY `idx_name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='校园兴趣点（POI）表';
+# article 资讯文章表
+CREATE TABLE `fi_articles`
+(
+    `id`         BIGINT      NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `title`      VARCHAR(100) NOT NULL COMMENT '文章标题',
+    `issue_unit` VARCHAR(100) NOT NULL COMMENT '发布单位',
+    `issue_time` DATETIME     NOT NULL COMMENT '发布时间',
+    `content`    TEXT         NOT NULL COMMENT '内容',
+    `deleted`    TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
+    `created_at` DATETIME              DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='资讯文章表';
 
--- ----------------------------
--- 4. 路线表（route）
--- ----------------------------
-DROP TABLE IF EXISTS `route`;
-CREATE TABLE `route` (
-                         `route_id` VARCHAR(64) NOT NULL COMMENT '路线唯一ID（主键）',
-                         `route_name` VARCHAR(128) NOT NULL COMMENT '路线名称（如：新生校园初体验路线）',
-                         `route_desc` TEXT DEFAULT NULL COMMENT '路线描述',
-                         `duration` INT NOT NULL COMMENT '预计时长（分钟）',
-                         `suitable_identity` VARCHAR(16) NOT NULL COMMENT '适合身份：新生/家长/其他',
-                         `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                         PRIMARY KEY (`route_id`),
-                         KEY `idx_suitable_identity` (`suitable_identity`),
-                         KEY `idx_duration` (`duration`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='校园导览路线表';
+# shoot 协拍服务表
+CREATE TABLE `fi_shoots`
+(
+    `id`           BIGINT        NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name`         VARCHAR(100)  NOT NULL COMMENT '服务名称',
+    `description`  VARCHAR(500)  NOT NULL COMMENT '服务简介',
+    `price`        DECIMAL(10,2) NOT NULL COMMENT '价格（元）',
+    `status`       TINYINT       NOT NULL DEFAULT 1 COMMENT '状态（0：下线，1：上线）',
+    `address`      VARCHAR(255)  NOT NULL COMMENT '服务地址',
+    `phone`        VARCHAR(20)   NOT NULL COMMENT '联系电话',
+    `contact_name` VARCHAR(50)   NOT NULL COMMENT '联系人',
+    `deleted`      TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
+    `created_at`   DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`   DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='协拍服务表';
 
--- ----------------------------
--- 5. 校友故事表（alumni_story）
--- ----------------------------
-DROP TABLE IF EXISTS `alumni_story`;
-CREATE TABLE `alumni_story` (
-                                `story_id` VARCHAR(64) NOT NULL COMMENT '故事唯一ID（主键）',
-                                `title` VARCHAR(128) NOT NULL COMMENT '故事标题',
-                                `content` LONGTEXT NOT NULL COMMENT '故事内容',
-                                `publish_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间',
-                                `status` VARCHAR(16) NOT NULL DEFAULT '待审核' COMMENT '状态：待审核/已发布/已驳回',
-                                `image_url` VARCHAR(255) DEFAULT NULL COMMENT '故事配图URL',
-                                `alumni_id` VARCHAR(64) NOT NULL COMMENT '关联校友ID（业务关联）',
-                                PRIMARY KEY (`story_id`),
-                                KEY `idx_status` (`status`),
-                                KEY `idx_publish_time` (`publish_time`),
-                                KEY `idx_alumni_id` (`alumni_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='校友故事表';
-
--- ----------------------------
--- 6. 情感标签表（emotion_tag）
--- ----------------------------
-DROP TABLE IF EXISTS `emotion_tag`;
-CREATE TABLE `emotion_tag` (
-                               `tag_id` VARCHAR(64) NOT NULL COMMENT '标签唯一ID（主键）',
-                               `tag_name` VARCHAR(32) NOT NULL COMMENT '标签名称（如：励志/青春）',
-                               `tag_desc` VARCHAR(255) DEFAULT NULL COMMENT '标签描述',
-                               PRIMARY KEY (`tag_id`),
-                               UNIQUE KEY `uk_tag_name` (`tag_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='情感标签表';
-
--- ----------------------------
--- 7. 路线-POI关联表（route_poi_relation）（多对多）
--- ----------------------------
-DROP TABLE IF EXISTS `route_poi_relation`;
-CREATE TABLE `route_poi_relation` (
-                                      `id` VARCHAR(64) NOT NULL COMMENT '关联记录唯一ID（主键）',
-                                      `route_id` VARCHAR(64) NOT NULL COMMENT '关联路线ID（业务关联）',
-                                      `poi_id` VARCHAR(64) NOT NULL COMMENT '关联POIID（业务关联）',
-                                      `sort_order` INT NOT NULL COMMENT 'POI在路线中的顺序（1,2,3...）',
-                                      PRIMARY KEY (`id`),
-                                      UNIQUE KEY `uk_route_poi` (`route_id`, `poi_id`) COMMENT '避免路线与POI重复关联',
-                                      KEY `idx_route_id` (`route_id`),
-                                      KEY `idx_poi_id` (`poi_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='路线与POI的多对多关联表';
-
--- ----------------------------
--- 8. POI-故事关联表（poi_story_relation）（多对多）
--- ----------------------------，
-DROP TABLE IF EXISTS `poi_story_relation`;
-CREATE TABLE `poi_story_relation` (
-                                      `id` VARCHAR(64) NOT NULL COMMENT '关联记录唯一ID（主键）',
-                                      `poi_id` VARCHAR(64) NOT NULL COMMENT '关联POIID（业务关联）',
-                                      `story_id` VARCHAR(64) NOT NULL COMMENT '关联故事ID（业务关联）',
-                                      PRIMARY KEY (`id`),
-                                      UNIQUE KEY `uk_poi_story` (`poi_id`, `story_id`) COMMENT '避免POI与故事重复关联',
-                                      KEY `idx_poi_story_poi` (`poi_id`),
-                                      KEY `idx_poi_story_story` (`story_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='POI与校友故事的多对多关联表';
-
--- ----------------------------
--- 9. 故事-标签关联表（story_tag_relation）（多对多）
--- ----------------------------
-DROP TABLE IF EXISTS `story_tag_relation`;
-CREATE TABLE `story_tag_relation` (
-                                      `id` VARCHAR(64) NOT NULL COMMENT '关联记录唯一ID（主键）',
-                                      `story_id` VARCHAR(64) NOT NULL COMMENT '关联故事ID（业务关联）',
-                                      `tag_id` VARCHAR(64) NOT NULL COMMENT '关联标签ID（业务关联）',
-                                      PRIMARY KEY (`id`),
-                                      UNIQUE KEY `uk_story_tag` (`story_id`, `tag_id`) COMMENT '避免故事与标签重复关联',
-                                      KEY `idx_story_tag_story` (`story_id`),
-                                      KEY `idx_story_tag_tag` (`tag_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='校友故事与情感标签的多对多关联表';
-
--- ----------------------------
--- 10. 游客收藏表（visitor_collection）（多对多）
--- ----------------------------
-DROP TABLE IF EXISTS `visitor_collection`;
-CREATE TABLE `visitor_collection` (
-                                      `id` VARCHAR(64) NOT NULL COMMENT '收藏记录唯一ID（主键）',
-                                      `visitor_id` VARCHAR(64) NOT NULL COMMENT '关联游客ID（业务关联）',
-                                      `poi_id` VARCHAR(64) NOT NULL COMMENT '关联POIID（业务关联）',
-                                      `collect_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
-                                      PRIMARY KEY (`id`),
-                                      UNIQUE KEY `uk_visitor_poi` (`visitor_id`, `poi_id`) COMMENT '避免游客重复收藏同一POI',
-                                      KEY `idx_collection_visitor` (`visitor_id`),
-                                      KEY `idx_collection_poi` (`poi_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='游客收藏POI表';
-
--- ----------------------------
--- 11. 游客浏览记录表（visitor_browse_record）
--- ----------------------------
-DROP TABLE IF EXISTS `visitor_browse_record`;
-CREATE TABLE `visitor_browse_record` (
-                                         `record_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '记录唯一ID（主键）',
-                                         `visitor_id` VARCHAR(64) NOT NULL COMMENT '关联游客ID（业务关联）',
-                                         `poi_id` VARCHAR(64) NOT NULL COMMENT '关联POIID（业务关联）',
-                                         `browse_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '浏览时间',
-                                         PRIMARY KEY (`record_id`),
-                                         KEY `idx_visitor_poi` (`visitor_id`, `poi_id`),
-                                         KEY `idx_browse_time` (`browse_time`),
-                                         KEY `idx_browse_visitor` (`visitor_id`),
-                                         KEY `idx_browse_poi` (`poi_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='游客浏览POI记录表';
+# drama 电视剧备案表
+CREATE TABLE `fi_dramas`
+(
+    `id`                BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name`              VARCHAR(100) NOT NULL COMMENT '电视剧名称',
+    `filing_num`        VARCHAR(50)  NOT NULL COMMENT '备案号',
+    `prod_company`      VARCHAR(255) NOT NULL COMMENT '出品公司',
+    `crew_description`  TEXT         NOT NULL COMMENT '公司简介',
+    `drama_description` TEXT         NOT NULL COMMENT '电视剧简介',
+    `cast`              VARCHAR(255) NOT NULL COMMENT '演员名单',
+    `shoot_location`    VARCHAR(255) NOT NULL COMMENT '拍摄地',
+    `location_id`       BIGINT       NOT NULL COMMENT '拍摄地ID，关联locations表',
+    `service`           VARCHAR(255) NOT NULL COMMENT '协拍服务',
+    `service_id`        BIGINT       NOT NULL COMMENT '协拍服务ID，关联shoot表',
+    `deleted`           TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
+    `created_at`        DATETIME              DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`        DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='电视剧备案表';
