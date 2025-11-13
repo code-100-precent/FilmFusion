@@ -1,0 +1,6 @@
+        ${AnsiStyle.BOLD}${AnsiColor.BRIGHT_BLUE}   __________  ____  _____________  ____
+        ${AnsiColor.BRIGHT_BLUE}  / ____/ __ \/ __ \/ ____<  / __ \/ __ \      Java Version:${java.version}
+        ${AnsiColor.BLUE} / /   / / / / / / / __/  / / / / / / / /      Spring Boot Version:${spring-boot.version}${AnsiColor.BRIGHT_CYAN}
+        ${AnsiColor.CYAN}/ /___/ /_/ / /_/ / /___ / / /_/ / /_/ /       版权: ${code100.copyright.owner}
+        ${AnsiColor.BRIGHT_CYAN}\____/\____/_____/_____//_/\____/\____/        ${code100.copyright.since-year} ${code100.copyright.license}
+              ${AnsiStyle.BOLD} ${code100.name} Version: ${code100.version} ${AnsiColor.BRIGHT_GREEN}

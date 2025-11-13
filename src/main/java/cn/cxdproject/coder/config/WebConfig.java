@@ -38,6 +38,7 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 用户认证拦截器 - 需要登录的接口
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/api/interview-submission/**").excludePathPatterns("/api/interview-submission/list/**")
                 .addPathPatterns("/api/courses/add/course/**","/api/courses/course/**")
@@ -50,9 +51,22 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .addPathPatterns("/api/admin/**")
                 .excludePathPatterns("/api/admin/register", "/api/admin/register/email", "/api/admin/login/**")
                 .addPathPatterns("/api/visitor/info", "/api/visitor/update", "/api/visitor/logout")
-                .addPathPatterns("/api/achievement/**");
+                .addPathPatterns("/api/achievement/**")
+                // 用户模块 - 排除登录和注册
+                .addPathPatterns("/api/user/**")
+                .excludePathPatterns("/api/user/login", "/api/user/register")
+                // 文章模块 - 排除公开接口
+                .addPathPatterns("/api/article/**")
+                .excludePathPatterns("/api/article/page", "/api/article/*");
+        
+        // 管理员权限拦截器
         registry.addInterceptor(adminInterceptor)
-                .addPathPatterns("/api/admin/info");
+                .addPathPatterns("/api/admin/info")
+                // 用户模块的管理员接口
+                .addPathPatterns("/api/user/admin/**")
+                // 文章模块的管理员接口
+                .addPathPatterns("/api/article/admin/**");
+        
         registry.addInterceptor(registrationInterceptor)
                 .addPathPatterns("/api/admin/register/email");
     }
