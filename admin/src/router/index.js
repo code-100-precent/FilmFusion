@@ -65,7 +65,15 @@ const routes = [
           name: 'report',
           component: () => import('../views/report/ReportList.vue'),
           meta: {
-            title: '拍摄报告管理'
+            title: '报备管理'
+          }
+        },
+        {
+          path: 'feedback',
+          name: 'feedback',
+          component: () => import('../views/feedback/FeedbackList.vue'),
+          meta: {
+            title: '反馈管理'
           }
         }
     ]
@@ -91,23 +99,25 @@ router.beforeEach(async (to, from, next) => {
     if (!userStore.token) {
       next('/login')
     } else {
-      // 模拟验证token有效
+      // 验证token有效并获取用户信息
       try {
-        // 延迟一小段时间模拟网络请求
-        await new Promise(resolve => setTimeout(resolve, 300))
+        const { getAdminInfo } = await import('@/api')
+        const res = await getAdminInfo()
         
-        // 模拟用户信息
-        const mockUserInfo = {
-          id: 1,
-          username: '管理员',
-          email: 'admin@example.com',
-          avatar: '',
-          role: 'ADMIN'
+        if (res.code === 200 && res.data) {
+          // 检查用户角色是否为管理员
+          if (res.data.role !== 'ADMIN') {
+            userStore.logout()
+            next('/login')
+            return
+          }
+          
+          // 更新用户信息
+          userStore.setUserInfo(res.data)
+          next()
+        } else {
+          throw new Error('获取用户信息失败')
         }
-        
-        // 更新用户信息
-        userStore.setUserInfo(mockUserInfo)
-        next()
       } catch (error) {
         console.error('验证失败:', error)
         userStore.logout()

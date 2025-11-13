@@ -112,9 +112,6 @@ public class AuthInterceptor implements HandlerInterceptor {
             log.debug("成功设置token到上下文");
             return true;
         } catch (AuthorizationException e) {
-            if (!(handler instanceof HandlerMethod)) {
-                return true;
-            }
             // 返回401未授权错误
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
