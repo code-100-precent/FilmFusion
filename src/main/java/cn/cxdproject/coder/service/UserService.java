@@ -7,6 +7,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * User 服务接口
  * @author Hibiscus-code-generate
  */
-public interface UserService extends IService<User.User> {
+public interface UserService extends IService<User> {
 
 }

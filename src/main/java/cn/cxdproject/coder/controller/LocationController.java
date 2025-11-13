@@ -2,8 +2,8 @@ package cn.cxdproject.coder.controller;
 
 import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.service.LocationService;
-import cn.code100.coder.common.request.PageRequest;
-import cn.code100.coder.common.response.ApiResponse;
+import cn.cxdproject.coder.common.ApiResponse;
+import cn.cxdproject.coder.common.PageRequest;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.bind.annotation.*;

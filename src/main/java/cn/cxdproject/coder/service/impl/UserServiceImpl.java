@@ -11,6 +11,6 @@ import org.springframework.stereotype.Service;
  * @author Hibiscus-code-generate
  */
 @Service
-public class UserServiceImpl extends ServiceImpl<UserMapper, User.User> implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
 }

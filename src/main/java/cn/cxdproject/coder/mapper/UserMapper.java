@@ -9,6 +9,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @author Hibiscus-code-generate
  */
 @Mapper
-public interface UserMapper extends BaseMapper<User.User> {
+public interface UserMapper extends BaseMapper<User> {
 
 }

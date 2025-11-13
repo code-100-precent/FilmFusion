@@ -1,8 +1,8 @@
 package cn.cxdproject.coder.controller;
 
 import cn.cxdproject.coder.service.UserService;
-import cn.code100.coder.common.request.PageRequest;
-import cn.code100.coder.common.response.ApiResponse;
+import cn.cxdproject.coder.common.ApiResponse;
+import cn.cxdproject.coder.common.PageRequest;
 import cn.cxdproject.coder.model.entity.User;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -30,7 +30,7 @@ public class UserController {
      * @return 是否新增成功
      */
     @PostMapping
-    public ApiResponse<Boolean> add(@RequestBody cn.cxdproject.coder.model.entity.User.User entity) {
+    public ApiResponse<Boolean> add(@RequestBody User entity) {
         return ApiResponse.success(userService.save(entity));
     }
 
@@ -40,7 +40,7 @@ public class UserController {
      * @return 是否更新成功
      */
     @PutMapping
-    public ApiResponse<Boolean> update(@RequestBody cn.cxdproject.coder.model.entity.User.User entity) {
+    public ApiResponse<Boolean> update(@RequestBody User entity) {
         return ApiResponse.success(userService.updateById(entity));
     }
 
@@ -60,7 +60,7 @@ public class UserController {
      * @return 匹配的实体对象
      */
     @GetMapping("/{id}")
-    public ApiResponse<cn.cxdproject.coder.model.entity.User.User> getById(@PathVariable("id") Integer id) {
+    public ApiResponse<User> getById(@PathVariable("id") Integer id) {
         return ApiResponse.success(userService.getById(id));
     }
 
@@ -69,7 +69,7 @@ public class UserController {
      * @return 实体列表
      */
     @GetMapping
-    public ApiResponse<List<cn.cxdproject.coder.model.entity.User.User>> list() {
+    public ApiResponse<List<User>> list() {
         return ApiResponse.success(userService.list());
     }
 
@@ -80,9 +80,9 @@ public class UserController {
      * @return 分页结果
      */
     @PostMapping("/page")
-    public ApiResponse<Page<cn.cxdproject.coder.model.entity.User.User>> getPage(@RequestBody PageRequest pageRequest) {
-        Page<cn.cxdproject.coder.model.entity.User.User> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
-        QueryWrapper<User.User> wrapper = new QueryWrapper<>();
+    public ApiResponse<Page<User>> getPage(@RequestBody PageRequest pageRequest) {
+        Page<User> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
 
         if (pageRequest.getKeyword() != null && !pageRequest.getKeyword().isEmpty()) {
             wrapper.like("name", pageRequest.getKeyword()); // 可自定义字段
