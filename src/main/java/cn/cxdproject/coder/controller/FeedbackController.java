@@ -1,21 +1,31 @@
 package cn.cxdproject.coder.controller;
 
-import cn.cxdproject.coder.model.entity.Feedback;
-import cn.cxdproject.coder.service.FeedbackService;
 import cn.cxdproject.coder.common.ApiResponse;
-import cn.cxdproject.coder.common.PageRequest;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import cn.cxdproject.coder.common.PageResponse;
+import cn.cxdproject.coder.common.context.AuthContext;
+import cn.cxdproject.coder.model.dto.CreateFeedbackDTO;
+import cn.cxdproject.coder.model.dto.UpdateFeedbackDTO;
+import cn.cxdproject.coder.model.entity.Feedback;
+import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.FeedbackVO;
+import cn.cxdproject.coder.service.FeedbackService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
- * Feedback 控制器，提供基础增删改查接口
- * @author Hibiscus-code-generate
+ * 反馈控制器
+ * 
+ * @author heathcetide
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/feedback")
+@Validated
 public class FeedbackController {
 
     private final FeedbackService feedbackService;
@@ -24,74 +34,102 @@ public class FeedbackController {
         this.feedbackService = feedbackService;
     }
 
+    // ==================== 普通用户接口 ====================
+
     /**
-     * 新增 Feedback 记录
-     * @param entity 实体对象
-     * @return 是否新增成功
+     * 创建反馈
      */
     @PostMapping
-    public ApiResponse<Boolean> add(@RequestBody Feedback entity) {
-        return ApiResponse.success(feedbackService.save(entity));
-    }
-
-    /**
-     * 更新 Feedback 记录
-     * @param entity 实体对象（必须包含主键 ID）
-     * @return 是否更新成功
-     */
-    @PutMapping
-    public ApiResponse<Boolean> update(@RequestBody Feedback entity) {
-        return ApiResponse.success(feedbackService.updateById(entity));
-    }
-
-    /**
-     * 删除指定 ID 的 Feedback 记录
-     * @param id 主键 ID
-     * @return 是否删除成功
-     */
-    @DeleteMapping("/{id}")
-    public ApiResponse<Boolean> delete(@PathVariable("id") Integer id) {
-        return ApiResponse.success(feedbackService.removeById(id));
-    }
-
-    /**
-     * 根据 ID 获取 Feedback 详情
-     * @param id 主键 ID
-     * @return 匹配的实体对象
-     */
-    @GetMapping("/{id}")
-    public ApiResponse<Feedback> getById(@PathVariable("id") Integer id) {
-        return ApiResponse.success(feedbackService.getById(id));
-    }
-
-    /**
-     * 获取所有 Feedback 列表（不分页）
-     * @return 实体列表
-     */
-    @GetMapping
-    public ApiResponse<List<Feedback>> list() {
-        return ApiResponse.success(feedbackService.list());
-    }
-
-    /**
-     * 分页查询 Feedback 列表
-     * 支持关键字模糊搜索与排序
-     * @param pageRequest 分页与筛选请求参数
-     * @return 分页结果
-     */
-    @PostMapping("/page")
-    public ApiResponse<Page<Feedback>> getPage(@RequestBody PageRequest pageRequest) {
-        Page<Feedback> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
-        QueryWrapper<Feedback> wrapper = new QueryWrapper<>();
-
-        if (pageRequest.getKeyword() != null && !pageRequest.getKeyword().isEmpty()) {
-            wrapper.like("name", pageRequest.getKeyword()); // 可自定义字段
+    public ApiResponse<FeedbackVO> createFeedback(@Valid @RequestBody CreateFeedbackDTO createDTO) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
         }
+        FeedbackVO feedbackVO = feedbackService.createFeedback(currentUser.getId(), createDTO);
+        return ApiResponse.success(feedbackVO);
+    }
 
-        if (pageRequest.getSortBy() != null && !pageRequest.getSortBy().isEmpty()) {
-            wrapper.orderBy(true, "asc".equalsIgnoreCase(pageRequest.getSortOrder()), pageRequest.getSortBy());
+    /**
+     * 获取自己的反馈列表
+     */
+    @GetMapping("/my")
+    public ApiResponse<PageResponse<FeedbackVO>> getMyFeedbackPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
         }
+        Page<Feedback> page = new Page<>(current, size);
+        Page<FeedbackVO> feedbackPage = feedbackService.getMyFeedbackPage(currentUser.getId(), page);
+        return ApiResponse.success(PageResponse.of(
+                (int) feedbackPage.getCurrent(),
+                (int) feedbackPage.getSize(),
+                feedbackPage.getTotal(),
+                feedbackPage.getRecords()
+        ));
+    }
 
-        return ApiResponse.success(feedbackService.page(page, wrapper));
+    /**
+     * 获取自己的反馈详情
+     */
+    @GetMapping("/my/{id}")
+    public ApiResponse<FeedbackVO> getMyFeedbackById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        FeedbackVO feedbackVO = feedbackService.getMyFeedbackById(currentUser.getId(), id);
+        return ApiResponse.success(feedbackVO);
+    }
+
+    // ==================== 管理员接口 ====================
+
+    /**
+     * 管理员更新反馈状态
+     */
+    @PutMapping("/admin/{id}")
+    public ApiResponse<FeedbackVO> updateFeedbackByAdmin(
+            @PathVariable @NotNull(message = "ID不能为空") Long id,
+            @Valid @RequestBody UpdateFeedbackDTO updateDTO) {
+        FeedbackVO feedbackVO = feedbackService.updateFeedbackByAdmin(id, updateDTO);
+        return ApiResponse.success(feedbackVO);
+    }
+
+    /**
+     * 管理员删除反馈
+     */
+    @DeleteMapping("/admin/{id}")
+    public ApiResponse<Void> deleteFeedbackByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        feedbackService.deleteFeedbackByAdmin(id);
+        return ApiResponse.success();
+    }
+
+    /**
+     * 管理员分页查询反馈
+     */
+    @GetMapping("/admin/page")
+    public ApiResponse<PageResponse<FeedbackVO>> getFeedbackPageByAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status) {
+        Page<Feedback> page = new Page<>(current, size);
+        Page<FeedbackVO> feedbackPage = feedbackService.getFeedbackPageByAdmin(page, keyword, status);
+        return ApiResponse.success(PageResponse.of(
+                (int) feedbackPage.getCurrent(),
+                (int) feedbackPage.getSize(),
+                feedbackPage.getTotal(),
+                feedbackPage.getRecords()
+        ));
+    }
+
+    /**
+     * 管理员获取反馈详情
+     */
+    @GetMapping("/admin/{id}")
+    public ApiResponse<FeedbackVO> getFeedbackByIdByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        FeedbackVO feedbackVO = feedbackService.getFeedbackByIdByAdmin(id);
+        return ApiResponse.success(feedbackVO);
     }
 }

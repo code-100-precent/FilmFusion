@@ -1,21 +1,32 @@
 package cn.cxdproject.coder.controller;
 
-import cn.cxdproject.coder.model.entity.Shoot;
-import cn.cxdproject.coder.service.ShootService;
 import cn.cxdproject.coder.common.ApiResponse;
-import cn.cxdproject.coder.common.PageRequest;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import cn.cxdproject.coder.common.PageResponse;
+import cn.cxdproject.coder.common.anno.PublicAccess;
+import cn.cxdproject.coder.common.context.AuthContext;
+import cn.cxdproject.coder.model.dto.CreateShootDTO;
+import cn.cxdproject.coder.model.dto.UpdateShootDTO;
+import cn.cxdproject.coder.model.entity.Shoot;
+import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.ShootVO;
+import cn.cxdproject.coder.service.ShootService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
- * Shoot 控制器，提供基础增删改查接口
- * @author Hibiscus-code-generate
+ * 协拍服务控制器
+ * 
+ * @author heathcetide
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/shoot")
+@Validated
 public class ShootController {
 
     private final ShootService shootService;
@@ -24,74 +35,135 @@ public class ShootController {
         this.shootService = shootService;
     }
 
-    /**
-     * 新增 Shoot 记录
-     * @param entity 实体对象
-     * @return 是否新增成功
-     */
-    @PostMapping
-    public ApiResponse<Boolean> add(@RequestBody Shoot entity) {
-        return ApiResponse.success(shootService.save(entity));
-    }
+    // ==================== 公开接口 ====================
 
     /**
-     * 更新 Shoot 记录
-     * @param entity 实体对象（必须包含主键 ID）
-     * @return 是否更新成功
-     */
-    @PutMapping
-    public ApiResponse<Boolean> update(@RequestBody Shoot entity) {
-        return ApiResponse.success(shootService.updateById(entity));
-    }
-
-    /**
-     * 删除指定 ID 的 Shoot 记录
-     * @param id 主键 ID
-     * @return 是否删除成功
-     */
-    @DeleteMapping("/{id}")
-    public ApiResponse<Boolean> delete(@PathVariable("id") Integer id) {
-        return ApiResponse.success(shootService.removeById(id));
-    }
-
-    /**
-     * 根据 ID 获取 Shoot 详情
-     * @param id 主键 ID
-     * @return 匹配的实体对象
+     * 获取协拍服务详情（公开）
      */
     @GetMapping("/{id}")
-    public ApiResponse<Shoot> getById(@PathVariable("id") Integer id) {
-        return ApiResponse.success(shootService.getById(id));
+    @PublicAccess
+    public ApiResponse<ShootVO> getShootById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        ShootVO shootVO = shootService.getShootById(id);
+        return ApiResponse.success(shootVO);
     }
 
     /**
-     * 获取所有 Shoot 列表（不分页）
-     * @return 实体列表
+     * 分页获取协拍服务列表（按时间倒序，公开，只显示上线的）
      */
-    @GetMapping
-    public ApiResponse<List<Shoot>> list() {
-        return ApiResponse.success(shootService.list());
+    @GetMapping("/page")
+    @PublicAccess
+    public ApiResponse<PageResponse<ShootVO>> getShootPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+        Page<Shoot> page = new Page<>(current, size);
+        Page<ShootVO> shootPage = shootService.getShootPage(page, keyword);
+        return ApiResponse.success(PageResponse.of(
+                (int) shootPage.getCurrent(),
+                (int) shootPage.getSize(),
+                shootPage.getTotal(),
+                shootPage.getRecords()
+        ));
+    }
+
+    // ==================== 普通用户接口 ====================
+
+    /**
+     * 创建协拍服务
+     */
+    @PostMapping
+    public ApiResponse<ShootVO> createShoot(@Valid @RequestBody CreateShootDTO createDTO) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        ShootVO shootVO = shootService.createShoot(currentUser.getId(), createDTO);
+        return ApiResponse.success(shootVO);
     }
 
     /**
-     * 分页查询 Shoot 列表
-     * 支持关键字模糊搜索与排序
-     * @param pageRequest 分页与筛选请求参数
-     * @return 分页结果
+     * 更新协拍服务（只能更新自己的）
      */
-    @PostMapping("/page")
-    public ApiResponse<Page<Shoot>> getPage(@RequestBody PageRequest pageRequest) {
-        Page<Shoot> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
-        QueryWrapper<Shoot> wrapper = new QueryWrapper<>();
-
-        if (pageRequest.getKeyword() != null && !pageRequest.getKeyword().isEmpty()) {
-            wrapper.like("name", pageRequest.getKeyword()); // 可自定义字段
+    @PutMapping("/{id}")
+    public ApiResponse<ShootVO> updateShoot(
+            @PathVariable @NotNull(message = "ID不能为空") Long id,
+            @Valid @RequestBody UpdateShootDTO updateDTO) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
         }
+        ShootVO shootVO = shootService.updateShoot(currentUser.getId(), id, updateDTO);
+        return ApiResponse.success(shootVO);
+    }
 
-        if (pageRequest.getSortBy() != null && !pageRequest.getSortBy().isEmpty()) {
-            wrapper.orderBy(true, "asc".equalsIgnoreCase(pageRequest.getSortOrder()), pageRequest.getSortBy());
+    /**
+     * 删除协拍服务（只能删除自己的）
+     */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteShoot(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
         }
+        shootService.deleteShoot(currentUser.getId(), id);
+        return ApiResponse.success();
+    }
 
-        return ApiResponse.success(shootService.page(page, wrapper));
+    // ==================== 管理员接口 ====================
+
+    /**
+     * 管理员创建协拍服务
+     */
+    @PostMapping("/admin/create")
+    public ApiResponse<ShootVO> createShootByAdmin(@Valid @RequestBody CreateShootDTO createDTO) {
+        ShootVO shootVO = shootService.createShootByAdmin(createDTO);
+        return ApiResponse.success(shootVO);
+    }
+
+    /**
+     * 管理员更新协拍服务
+     */
+    @PutMapping("/admin/{id}")
+    public ApiResponse<ShootVO> updateShootByAdmin(
+            @PathVariable @NotNull(message = "ID不能为空") Long id,
+            @Valid @RequestBody UpdateShootDTO updateDTO) {
+        ShootVO shootVO = shootService.updateShootByAdmin(id, updateDTO);
+        return ApiResponse.success(shootVO);
+    }
+
+    /**
+     * 管理员删除协拍服务
+     */
+    @DeleteMapping("/admin/{id}")
+    public ApiResponse<Void> deleteShootByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        shootService.deleteShootByAdmin(id);
+        return ApiResponse.success();
+    }
+
+    /**
+     * 管理员分页查询协拍服务
+     */
+    @GetMapping("/admin/page")
+    public ApiResponse<PageResponse<ShootVO>> getShootPageByAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+        Page<Shoot> page = new Page<>(current, size);
+        Page<ShootVO> shootPage = shootService.getShootPageByAdmin(page, keyword);
+        return ApiResponse.success(PageResponse.of(
+                (int) shootPage.getCurrent(),
+                (int) shootPage.getSize(),
+                shootPage.getTotal(),
+                shootPage.getRecords()
+        ));
+    }
+
+    /**
+     * 管理员获取协拍服务详情
+     */
+    @GetMapping("/admin/{id}")
+    public ApiResponse<ShootVO> getShootByIdByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        ShootVO shootVO = shootService.getShootByIdByAdmin(id);
+        return ApiResponse.success(shootVO);
     }
 }

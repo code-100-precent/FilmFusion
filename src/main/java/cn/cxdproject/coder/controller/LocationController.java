@@ -1,21 +1,32 @@
 package cn.cxdproject.coder.controller;
 
-import cn.cxdproject.coder.model.entity.Location;
-import cn.cxdproject.coder.service.LocationService;
 import cn.cxdproject.coder.common.ApiResponse;
-import cn.cxdproject.coder.common.PageRequest;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import cn.cxdproject.coder.common.PageResponse;
+import cn.cxdproject.coder.common.anno.PublicAccess;
+import cn.cxdproject.coder.common.context.AuthContext;
+import cn.cxdproject.coder.model.dto.CreateLocationDTO;
+import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
+import cn.cxdproject.coder.model.entity.Location;
+import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.LocationVO;
+import cn.cxdproject.coder.service.LocationService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
- * Location 控制器，提供基础增删改查接口
- * @author Hibiscus-code-generate
+ * 拍摄场地控制器
+ * 
+ * @author heathcetide
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/location")
+@Validated
 public class LocationController {
 
     private final LocationService locationService;
@@ -24,74 +35,135 @@ public class LocationController {
         this.locationService = locationService;
     }
 
-    /**
-     * 新增 Location 记录
-     * @param entity 实体对象
-     * @return 是否新增成功
-     */
-    @PostMapping
-    public ApiResponse<Boolean> add(@RequestBody Location entity) {
-        return ApiResponse.success(locationService.save(entity));
-    }
+    // ==================== 公开接口 ====================
 
     /**
-     * 更新 Location 记录
-     * @param entity 实体对象（必须包含主键 ID）
-     * @return 是否更新成功
-     */
-    @PutMapping
-    public ApiResponse<Boolean> update(@RequestBody Location entity) {
-        return ApiResponse.success(locationService.updateById(entity));
-    }
-
-    /**
-     * 删除指定 ID 的 Location 记录
-     * @param id 主键 ID
-     * @return 是否删除成功
-     */
-    @DeleteMapping("/{id}")
-    public ApiResponse<Boolean> delete(@PathVariable("id") Integer id) {
-        return ApiResponse.success(locationService.removeById(id));
-    }
-
-    /**
-     * 根据 ID 获取 Location 详情
-     * @param id 主键 ID
-     * @return 匹配的实体对象
+     * 获取拍摄场地详情（公开）
      */
     @GetMapping("/{id}")
-    public ApiResponse<Location> getById(@PathVariable("id") Integer id) {
-        return ApiResponse.success(locationService.getById(id));
+    @PublicAccess
+    public ApiResponse<LocationVO> getLocationById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        LocationVO locationVO = locationService.getLocationById(id);
+        return ApiResponse.success(locationVO);
     }
 
     /**
-     * 获取所有 Location 列表（不分页）
-     * @return 实体列表
+     * 分页获取拍摄场地列表（按时间倒序，公开，只显示可用的）
      */
-    @GetMapping
-    public ApiResponse<List<Location>> list() {
-        return ApiResponse.success(locationService.list());
+    @GetMapping("/page")
+    @PublicAccess
+    public ApiResponse<PageResponse<LocationVO>> getLocationPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+        Page<Location> page = new Page<>(current, size);
+        Page<LocationVO> locationPage = locationService.getLocationPage(page, keyword);
+        return ApiResponse.success(PageResponse.of(
+                (int) locationPage.getCurrent(),
+                (int) locationPage.getSize(),
+                locationPage.getTotal(),
+                locationPage.getRecords()
+        ));
+    }
+
+    // ==================== 普通用户接口 ====================
+
+    /**
+     * 创建拍摄场地
+     */
+    @PostMapping
+    public ApiResponse<LocationVO> createLocation(@Valid @RequestBody CreateLocationDTO createDTO) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        LocationVO locationVO = locationService.createLocation(currentUser.getId(), createDTO);
+        return ApiResponse.success(locationVO);
     }
 
     /**
-     * 分页查询 Location 列表
-     * 支持关键字模糊搜索与排序
-     * @param pageRequest 分页与筛选请求参数
-     * @return 分页结果
+     * 更新拍摄场地（只能更新自己的）
      */
-    @PostMapping("/page")
-    public ApiResponse<Page<Location>> getPage(@RequestBody PageRequest pageRequest) {
-        Page<Location> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
-        QueryWrapper<Location> wrapper = new QueryWrapper<>();
-
-        if (pageRequest.getKeyword() != null && !pageRequest.getKeyword().isEmpty()) {
-            wrapper.like("name", pageRequest.getKeyword()); // 可自定义字段
+    @PutMapping("/{id}")
+    public ApiResponse<LocationVO> updateLocation(
+            @PathVariable @NotNull(message = "ID不能为空") Long id,
+            @Valid @RequestBody UpdateLocationDTO updateDTO) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
         }
+        LocationVO locationVO = locationService.updateLocation(currentUser.getId(), id, updateDTO);
+        return ApiResponse.success(locationVO);
+    }
 
-        if (pageRequest.getSortBy() != null && !pageRequest.getSortBy().isEmpty()) {
-            wrapper.orderBy(true, "asc".equalsIgnoreCase(pageRequest.getSortOrder()), pageRequest.getSortBy());
+    /**
+     * 删除拍摄场地（只能删除自己的）
+     */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteLocation(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
         }
+        locationService.deleteLocation(currentUser.getId(), id);
+        return ApiResponse.success();
+    }
 
-        return ApiResponse.success(locationService.page(page, wrapper));
+    // ==================== 管理员接口 ====================
+
+    /**
+     * 管理员创建拍摄场地
+     */
+    @PostMapping("/admin/create")
+    public ApiResponse<LocationVO> createLocationByAdmin(@Valid @RequestBody CreateLocationDTO createDTO) {
+        LocationVO locationVO = locationService.createLocationByAdmin(createDTO);
+        return ApiResponse.success(locationVO);
+    }
+
+    /**
+     * 管理员更新拍摄场地
+     */
+    @PutMapping("/admin/{id}")
+    public ApiResponse<LocationVO> updateLocationByAdmin(
+            @PathVariable @NotNull(message = "ID不能为空") Long id,
+            @Valid @RequestBody UpdateLocationDTO updateDTO) {
+        LocationVO locationVO = locationService.updateLocationByAdmin(id, updateDTO);
+        return ApiResponse.success(locationVO);
+    }
+
+    /**
+     * 管理员删除拍摄场地
+     */
+    @DeleteMapping("/admin/{id}")
+    public ApiResponse<Void> deleteLocationByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        locationService.deleteLocationByAdmin(id);
+        return ApiResponse.success();
+    }
+
+    /**
+     * 管理员分页查询拍摄场地
+     */
+    @GetMapping("/admin/page")
+    public ApiResponse<PageResponse<LocationVO>> getLocationPageByAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+        Page<Location> page = new Page<>(current, size);
+        Page<LocationVO> locationPage = locationService.getLocationPageByAdmin(page, keyword);
+        return ApiResponse.success(PageResponse.of(
+                (int) locationPage.getCurrent(),
+                (int) locationPage.getSize(),
+                locationPage.getTotal(),
+                locationPage.getRecords()
+        ));
+    }
+
+    /**
+     * 管理员获取拍摄场地详情
+     */
+    @GetMapping("/admin/{id}")
+    public ApiResponse<LocationVO> getLocationByIdByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        LocationVO locationVO = locationService.getLocationByIdByAdmin(id);
+        return ApiResponse.success(locationVO);
     }
 }

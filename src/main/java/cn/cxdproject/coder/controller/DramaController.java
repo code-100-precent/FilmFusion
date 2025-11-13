@@ -1,21 +1,32 @@
 package cn.cxdproject.coder.controller;
 
-import cn.cxdproject.coder.model.entity.Drama;
-import cn.cxdproject.coder.service.DramaService;
 import cn.cxdproject.coder.common.ApiResponse;
-import cn.cxdproject.coder.common.PageRequest;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import cn.cxdproject.coder.common.PageResponse;
+import cn.cxdproject.coder.common.anno.PublicAccess;
+import cn.cxdproject.coder.common.context.AuthContext;
+import cn.cxdproject.coder.model.dto.CreateDramaDTO;
+import cn.cxdproject.coder.model.dto.UpdateDramaDTO;
+import cn.cxdproject.coder.model.entity.Drama;
+import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.DramaVO;
+import cn.cxdproject.coder.service.DramaService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
- * Drama 控制器，提供基础增删改查接口
- * @author Hibiscus-code-generate
+ * 电视剧备案控制器
+ * 
+ * @author heathcetide
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/drama")
+@Validated
 public class DramaController {
 
     private final DramaService dramaService;
@@ -24,74 +35,135 @@ public class DramaController {
         this.dramaService = dramaService;
     }
 
-    /**
-     * 新增 Drama 记录
-     * @param entity 实体对象
-     * @return 是否新增成功
-     */
-    @PostMapping
-    public ApiResponse<Boolean> add(@RequestBody Drama entity) {
-        return ApiResponse.success(dramaService.save(entity));
-    }
+    // ==================== 公开接口 ====================
 
     /**
-     * 更新 Drama 记录
-     * @param entity 实体对象（必须包含主键 ID）
-     * @return 是否更新成功
-     */
-    @PutMapping
-    public ApiResponse<Boolean> update(@RequestBody Drama entity) {
-        return ApiResponse.success(dramaService.updateById(entity));
-    }
-
-    /**
-     * 删除指定 ID 的 Drama 记录
-     * @param id 主键 ID
-     * @return 是否删除成功
-     */
-    @DeleteMapping("/{id}")
-    public ApiResponse<Boolean> delete(@PathVariable("id") Integer id) {
-        return ApiResponse.success(dramaService.removeById(id));
-    }
-
-    /**
-     * 根据 ID 获取 Drama 详情
-     * @param id 主键 ID
-     * @return 匹配的实体对象
+     * 获取电视剧备案详情（公开）
      */
     @GetMapping("/{id}")
-    public ApiResponse<Drama> getById(@PathVariable("id") Integer id) {
-        return ApiResponse.success(dramaService.getById(id));
+    @PublicAccess
+    public ApiResponse<DramaVO> getDramaById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        DramaVO dramaVO = dramaService.getDramaById(id);
+        return ApiResponse.success(dramaVO);
     }
 
     /**
-     * 获取所有 Drama 列表（不分页）
-     * @return 实体列表
+     * 分页获取电视剧备案列表（按时间倒序，公开）
      */
-    @GetMapping
-    public ApiResponse<List<Drama>> list() {
-        return ApiResponse.success(dramaService.list());
+    @GetMapping("/page")
+    @PublicAccess
+    public ApiResponse<PageResponse<DramaVO>> getDramaPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+        Page<Drama> page = new Page<>(current, size);
+        Page<DramaVO> dramaPage = dramaService.getDramaPage(page, keyword);
+        return ApiResponse.success(PageResponse.of(
+                (int) dramaPage.getCurrent(),
+                (int) dramaPage.getSize(),
+                dramaPage.getTotal(),
+                dramaPage.getRecords()
+        ));
+    }
+
+    // ==================== 普通用户接口 ====================
+
+    /**
+     * 创建电视剧备案
+     */
+    @PostMapping
+    public ApiResponse<DramaVO> createDrama(@Valid @RequestBody CreateDramaDTO createDTO) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        DramaVO dramaVO = dramaService.createDrama(currentUser.getId(), createDTO);
+        return ApiResponse.success(dramaVO);
     }
 
     /**
-     * 分页查询 Drama 列表
-     * 支持关键字模糊搜索与排序
-     * @param pageRequest 分页与筛选请求参数
-     * @return 分页结果
+     * 更新电视剧备案（只能更新自己的）
      */
-    @PostMapping("/page")
-    public ApiResponse<Page<Drama>> getPage(@RequestBody PageRequest pageRequest) {
-        Page<Drama> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
-        QueryWrapper<Drama> wrapper = new QueryWrapper<>();
-
-        if (pageRequest.getKeyword() != null && !pageRequest.getKeyword().isEmpty()) {
-            wrapper.like("name", pageRequest.getKeyword()); // 可自定义字段
+    @PutMapping("/{id}")
+    public ApiResponse<DramaVO> updateDrama(
+            @PathVariable @NotNull(message = "ID不能为空") Long id,
+            @Valid @RequestBody UpdateDramaDTO updateDTO) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
         }
+        DramaVO dramaVO = dramaService.updateDrama(currentUser.getId(), id, updateDTO);
+        return ApiResponse.success(dramaVO);
+    }
 
-        if (pageRequest.getSortBy() != null && !pageRequest.getSortBy().isEmpty()) {
-            wrapper.orderBy(true, "asc".equalsIgnoreCase(pageRequest.getSortOrder()), pageRequest.getSortBy());
+    /**
+     * 删除电视剧备案（只能删除自己的）
+     */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteDrama(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
         }
+        dramaService.deleteDrama(currentUser.getId(), id);
+        return ApiResponse.success();
+    }
 
-        return ApiResponse.success(dramaService.page(page, wrapper));
+    // ==================== 管理员接口 ====================
+
+    /**
+     * 管理员创建电视剧备案
+     */
+    @PostMapping("/admin/create")
+    public ApiResponse<DramaVO> createDramaByAdmin(@Valid @RequestBody CreateDramaDTO createDTO) {
+        DramaVO dramaVO = dramaService.createDramaByAdmin(createDTO);
+        return ApiResponse.success(dramaVO);
+    }
+
+    /**
+     * 管理员更新电视剧备案
+     */
+    @PutMapping("/admin/{id}")
+    public ApiResponse<DramaVO> updateDramaByAdmin(
+            @PathVariable @NotNull(message = "ID不能为空") Long id,
+            @Valid @RequestBody UpdateDramaDTO updateDTO) {
+        DramaVO dramaVO = dramaService.updateDramaByAdmin(id, updateDTO);
+        return ApiResponse.success(dramaVO);
+    }
+
+    /**
+     * 管理员删除电视剧备案
+     */
+    @DeleteMapping("/admin/{id}")
+    public ApiResponse<Void> deleteDramaByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        dramaService.deleteDramaByAdmin(id);
+        return ApiResponse.success();
+    }
+
+    /**
+     * 管理员分页查询电视剧备案
+     */
+    @GetMapping("/admin/page")
+    public ApiResponse<PageResponse<DramaVO>> getDramaPageByAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+        Page<Drama> page = new Page<>(current, size);
+        Page<DramaVO> dramaPage = dramaService.getDramaPageByAdmin(page, keyword);
+        return ApiResponse.success(PageResponse.of(
+                (int) dramaPage.getCurrent(),
+                (int) dramaPage.getSize(),
+                dramaPage.getTotal(),
+                dramaPage.getRecords()
+        ));
+    }
+
+    /**
+     * 管理员获取电视剧备案详情
+     */
+    @GetMapping("/admin/{id}")
+    public ApiResponse<DramaVO> getDramaByIdByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        DramaVO dramaVO = dramaService.getDramaByIdByAdmin(id);
+        return ApiResponse.success(dramaVO);
     }
 }

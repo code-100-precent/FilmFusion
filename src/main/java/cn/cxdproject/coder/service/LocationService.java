@@ -14,15 +14,23 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface LocationService extends IService<Location> {
     
     LocationVO createLocation(Long userId, CreateLocationDTO createDTO);
+    
     LocationVO updateLocation(Long userId, Long locationId, UpdateLocationDTO updateDTO);
+
     void deleteLocation(Long userId, Long locationId);
+
     LocationVO getLocationById(Long locationId);
+
     Page<LocationVO> getLocationPage(Page<Location> page, String keyword);
     
     LocationVO createLocationByAdmin(CreateLocationDTO createDTO);
+
     LocationVO updateLocationByAdmin(Long locationId, UpdateLocationDTO updateDTO);
+
     void deleteLocationByAdmin(Long locationId);
+
     Page<LocationVO> getLocationPageByAdmin(Page<Location> page, String keyword);
+
     LocationVO getLocationByIdByAdmin(Long locationId);
     
     LocationVO toLocationVO(Location location);
