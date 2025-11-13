@@ -87,7 +87,7 @@ public class DramaController {
      * @return 分页结果
      */
     @PostMapping("/page")
-    @ApiOperation("分页查询")
+    @ApiOperation("分页查询git ")
     public ApiResponse<Page<Drama>> getPage(@RequestBody PageRequest pageRequest) {
         Page<Drama> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
         QueryWrapper<Drama> wrapper = new QueryWrapper<>();
