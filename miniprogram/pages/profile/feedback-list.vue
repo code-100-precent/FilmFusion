@@ -13,7 +13,7 @@
       <view v-if="loading && feedbacks.length === 0" class="loading-wrapper">
         <Loading></Loading>
       </view>
-      <view v-else-if="feedbacks.length === 0" class="empty-wrapper">
+      <view v-else-if="!loading && feedbacks.length === 0" class="empty-wrapper">
         <Empty text="暂无反馈记录"></Empty>
       </view>
       <view v-else>
@@ -23,8 +23,8 @@
           class="feedback-card"
         >
           <view class="feedback-header">
-            <view class="feedback-type">{{ feedback.type }}</view>
-            <view class="feedback-status" :class="getStatusClass(feedback.status)">
+            <view class="feedback-type">{{ getTypeText(feedback.type) }}</view>
+            <view class="feedback-status" :class="statusClassMap[feedback.status] || 'status-pending'">
               {{ getStatusText(feedback.status) }}
             </view>
           </view>
@@ -58,7 +58,13 @@ export default {
       total: 0,
       loading: false,
       refreshing: false,
-      hasMore: true
+      hasMore: true,
+      statusClassMap: {
+        'PENDING': 'status-pending',
+        'PROCESSING': 'status-processing',
+        'RESOLVED': 'status-resolved',
+        'REJECTED': 'status-rejected'
+      }
     }
   },
   onLoad() {
@@ -81,9 +87,15 @@ export default {
           size: this.size
         })
 
-        if (res.code === 200) {
-          const dataList = Array.isArray(res.data) ? res.data : []
+        console.log('反馈列表响应:', res)
+
+        if (res && res.code === 200) {
+          // 处理响应数据
+          const dataList = Array.isArray(res.data) ? res.data : (res.data ? [res.data] : [])
           const pagination = res.pagination || {}
+          
+          console.log('解析后的数据列表:', dataList)
+          console.log('分页信息:', pagination)
           
           if (reset) {
             this.feedbacks = dataList
@@ -92,6 +104,15 @@ export default {
           }
           this.total = pagination.totalItems || 0
           this.hasMore = this.feedbacks.length < this.total
+          
+          console.log('当前反馈列表:', this.feedbacks)
+          console.log('总数:', this.total)
+          console.log('是否还有更多:', this.hasMore)
+        } else {
+          console.warn('响应格式异常:', res)
+          if (reset) {
+            this.feedbacks = []
+          }
         }
       } catch (error) {
         console.error('加载反馈失败:', error)
@@ -99,6 +120,9 @@ export default {
           title: '加载失败，请稍后重试',
           icon: 'none'
         })
+        if (reset) {
+          this.feedbacks = []
+        }
       } finally {
         this.loading = false
         this.refreshing = false
@@ -117,37 +141,61 @@ export default {
       if (status === 'PENDING') return 'status-pending'
       if (status === 'PROCESSING') return 'status-processing'
       if (status === 'RESOLVED') return 'status-resolved'
+      if (status === 'REJECTED') return 'status-rejected'
       return 'status-pending'
     },
     getStatusText(status) {
       const statusMap = {
         'PENDING': '待处理',
         'PROCESSING': '处理中',
-        'RESOLVED': '已解决'
+        'RESOLVED': '已解决',
+        'REJECTED': '已拒绝'
       }
       return statusMap[status] || '待处理'
+    },
+    getTypeText(type) {
+      const typeMap = {
+        'SUGGESTION': '建议',
+        'BUG': 'Bug',
+        'FEATURE': '功能',
+        'OTHER': '其他'
+      }
+      return typeMap[type] || type || '其他'
     },
     formatDate(dateStr) {
       if (!dateStr) return ''
       let date
       if (Array.isArray(dateStr)) {
-        if (dateStr.length >= 3) {
-          date = new Date(dateStr[0], dateStr[1] - 1, dateStr[2])
+        // 处理数组格式 [2025, 11, 14, 0, 46, 35]
+        if (dateStr.length >= 6) {
+          const year = dateStr[0]
+          const month = String(dateStr[1]).padStart(2, '0')
+          const day = String(dateStr[2]).padStart(2, '0')
+          const hour = String(dateStr[3] || 0).padStart(2, '0')
+          const minute = String(dateStr[4] || 0).padStart(2, '0')
+          const second = String(dateStr[5] || 0).padStart(2, '0')
+          return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+        } else if (dateStr.length >= 3) {
+          const year = dateStr[0]
+          const month = String(dateStr[1]).padStart(2, '0')
+          const day = String(dateStr[2]).padStart(2, '0')
+          return `${year}-${month}-${day}`
         } else {
           return ''
         }
       } else if (typeof dateStr === 'string') {
         date = new Date(dateStr)
+        if (isNaN(date.getTime())) return ''
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hour = String(date.getHours()).padStart(2, '0')
+        const minute = String(date.getMinutes()).padStart(2, '0')
+        const second = String(date.getSeconds()).padStart(2, '0')
+        return `${year}-${month}-${day} ${hour}:${minute}:${second}`
       } else {
         return ''
       }
-      
-      if (isNaN(date.getTime())) return ''
-      
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
     }
   }
 }
@@ -211,6 +259,11 @@ export default {
   &.status-resolved {
     background: #d1fae5;
     color: #059669;
+  }
+  
+  &.status-rejected {
+    background: #fee2e2;
+    color: #dc2626;
   }
 }
 

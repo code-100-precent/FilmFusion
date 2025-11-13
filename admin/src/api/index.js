@@ -431,6 +431,16 @@ export const getFeedbackById = (id) => {
   })
 }
 
+export const updateFeedbackStatus = (id, status) => {
+  return request({
+    url: `/feedback/admin/${id}`,
+    method: 'put',
+    data: {
+      status
+    }
+  })
+}
+
 export const deleteFeedback = (id) => {
   return request({
     url: `/feedback/admin/${id}`,
@@ -456,7 +466,7 @@ export const addArticle = (data) => {
  */
 export const updateArticle = (data) => {
   return request({
-    url: '/article/admin/update',
+    url: `/article/admin/${data.id}`,
     method: 'put',
     data
   })
@@ -525,7 +535,7 @@ export const addDrama = (data) => {
  */
 export const updateDrama = (data) => {
   return request({
-    url: '/drama/admin/update',
+    url: `/drama/admin/${data.id}`,
     method: 'put',
     data
   })
@@ -643,7 +653,7 @@ export const addLocation = (data) => {
  */
 export const updateLocation = (data) => {
   return request({
-    url: '/location/admin/update',
+    url: `/location/admin/${data.id}`,
     method: 'put',
     data
   })
@@ -712,7 +722,7 @@ export const addService = (data) => {
  */
 export const updateService = (data) => {
   return request({
-    url: '/shoot/admin/update',
+    url: `/shoot/admin/${data.id}`,
     method: 'put',
     data
   })
@@ -781,7 +791,7 @@ export const addReport = (data) => {
  */
 export const updateReport = (data) => {
   return request({
-    url: '/report/admin/update',
+    url: `/report/admin/${data.id}`,
     method: 'put',
     data
   })

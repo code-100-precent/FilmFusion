@@ -1,573 +1,438 @@
 <template>
-  <div class="report-management animate-fade-in">
-    <el-card class="card animate-slide-in-up">
-      <template #header>
-        <div class="card-header">
-          <span class="card-title">电视剧拍摄报告管理</span>
-          <el-button type="primary" @click="handleAdd" class="btn-transition">
-            <el-icon><Plus /></el-icon>
-            新增报告
-          </el-button>
-        </div>
-      </template>
+  <div class="report-management">
+    <n-card class="management-card">
+      <n-form :model="searchForm" inline class="search-form">
+        <n-form-item label="关键词">
+          <n-input v-model:value="searchForm.keyword" placeholder="请输入剧名或关键词" clearable @keyup.enter="handleSearch" />
+        </n-form-item>
+        <n-form-item>
+          <n-button type="primary" @click="handleSearch">
+            <template #icon>
+              <Icon icon="mdi:magnify" />
+            </template>
+            搜索
+          </n-button>
+          <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
+        </n-form-item>
+      </n-form>
       
-      <!-- 搜索区域 -->
-      <div class="search-section">
-        <el-form :inline="true" :model="searchForm" class="search-form">
-          <el-form-item label="剧名">
-            <el-input v-model="searchForm.tvName" placeholder="请输入剧名" />
-          </el-form-item>
-          <el-form-item label="剧种">
-            <el-input v-model="searchForm.tvType" placeholder="请输入剧种" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handleSearch" class="mr-2">搜索</el-button>
-            <el-button @click="handleReset">重置</el-button>
-          </el-form-item>
-        </el-form>
+      <div class="action-bar">
+        <n-button type="primary" @click="handleAdd">
+          <template #icon>
+            <Icon icon="mdi:plus" />
+          </template>
+          新增报备
+        </n-button>
       </div>
       
-      <!-- 数据表格 -->
-      <el-table 
-        v-loading="loading" 
-        :data="reportList" 
-        style="width: 100%"
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="tv_id" label="报告ID" width="80" />
-        <el-table-column prop="tv_name" label="剧名" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="tv_type" label="剧种" width="120" />
-        <el-table-column prop="tv_genre" label="题材" width="120" />
-        <el-table-column prop="tv_episodes" label="集数" width="80" />
-        <el-table-column prop="invest_amount" label="投资金额" width="120" />
-        <el-table-column prop="start_date" label="开机日期" width="120">
-          <template #default="scope">
-            {{ formatDate(scope.row.start_date) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="end_date" label="关机日期" width="120">
-          <template #default="scope">
-            {{ formatDate(scope.row.end_date) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="scope">
-            <el-dropdown>
-              <el-button size="small" type="text">
-                <el-icon><More /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleView(scope.row)">查看</el-dropdown-item>
-                  <el-dropdown-item @click="handleEdit(scope.row)">编辑</el-dropdown-item>
-                  <el-dropdown-item @click="handleDelete(scope.row.tv_id)" danger>删除</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </template>
-        </el-table-column>
-      </el-table>
-      
-      <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="pagination.currentPage"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="pagination.total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+      <n-data-table
+        :columns="columns"
+        :data="reportList"
+        :loading="loading"
+        :pagination="pagination"
+        :row-key="row => row.id"
+        @update:page="handlePageChange"
+        @update:page-size="handlePageSizeChange"
+      />
+    </n-card>
     
-    <!-- 报告详情对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="dialogTitle"
-      width="900px"
-      destroy-on-close
-      fullscreen
-    >
-      <el-form
-        ref="reportFormRef"
-        :model="reportForm"
-        :rules="formRules"
-        label-width="120px"
-        class="report-form"
-      >
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="剧名" prop="tv_name">
-              <el-input v-model="reportForm.tv_name" placeholder="请输入剧名" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="剧种" prop="tv_type">
-              <el-input v-model="reportForm.tv_type" placeholder="请输入剧种" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="题材" prop="tv_genre">
-              <el-input v-model="reportForm.tv_genre" placeholder="请输入题材" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="集数" prop="tv_episodes">
-              <el-input v-model="reportForm.tv_episodes" type="number" placeholder="请输入集数" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="投资金额" prop="invest_amount">
-              <el-input v-model="reportForm.invest_amount" placeholder="请输入投资金额" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="开机日期" prop="start_date">
-              <el-date-picker
-                v-model="reportForm.start_date"
-                type="date"
-                placeholder="请选择开机日期"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="关机日期" prop="end_date">
-              <el-date-picker
-                v-model="reportForm.end_date"
-                type="date"
-                placeholder="请选择关机日期"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="剧组规模" prop="crew_scale">
-              <el-input v-model="reportForm.crew_scale" placeholder="请输入剧组规模" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="主要创作人员" prop="main_creators">
-              <el-input v-model="reportForm.main_creators" placeholder="请输入主要创作人员" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="主要制作人" prop="lead_producer">
-              <el-input v-model="reportForm.lead_producer" placeholder="请输入主要制作人" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="制作单位" prop="producer_unit">
-              <el-input v-model="reportForm.producer_unit" placeholder="请输入制作单位" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="联系人" prop="contact">
-              <el-input v-model="reportForm.contact" placeholder="请输入联系人" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="联系电话" prop="phone_number">
-              <el-input v-model="reportForm.phone_number" placeholder="请输入联系电话" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="剧组职务" prop="crew_position">
-              <el-input v-model="reportForm.crew_position" placeholder="请输入剧组职务" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</el-button>
+    <n-modal v-model:show="dialogVisible" preset="dialog" :title="dialogTitle" style="width: 900px">
+      <n-form ref="formRef" :model="reportForm" :rules="formRules" label-placement="left" label-width="100">
+        <n-grid :cols="2" :x-gap="24">
+          <n-gi>
+            <n-form-item label="剧名" path="name">
+              <n-input v-model:value="reportForm.name" placeholder="请输入剧名" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="类型" path="type">
+              <n-select v-model:value="reportForm.type" :options="typeOptions" placeholder="请选择类型" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="题材" path="genre">
+              <n-input v-model:value="reportForm.genre" placeholder="请输入题材" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="集数" path="episodes">
+              <n-input-number v-model:value="reportForm.episodes" placeholder="请输入集数" :min="1" style="width: 100%" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="投资金额" path="investAmount">
+              <n-input-number v-model:value="reportForm.investAmount" placeholder="请输入投资金额" :min="0" style="width: 100%" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="主创人员" path="mainCreators">
+              <n-input v-model:value="reportForm.mainCreators" placeholder="请输入主创人员" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="第一出品单位" path="leadProducer">
+              <n-input v-model:value="reportForm.leadProducer" placeholder="请输入第一出品单位" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="制片单位" path="producerUnit">
+              <n-input v-model:value="reportForm.producerUnit" placeholder="请输入制片单位" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="拍摄开始日期" path="startDate">
+              <n-date-picker v-model:value="reportForm.startDate" type="date" style="width: 100%" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="拍摄结束日期" path="endDate">
+              <n-date-picker v-model:value="reportForm.endDate" type="date" style="width: 100%" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="剧组规模" path="crewScale">
+              <n-input v-model:value="reportForm.crewScale" placeholder="请输入剧组规模" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="联系人" path="contact">
+              <n-input v-model:value="reportForm.contact" placeholder="请输入联系人" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="联系电话" path="phoneNumber">
+              <n-input v-model:value="reportForm.phoneNumber" placeholder="请输入联系电话" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="剧组职务" path="crewPosition">
+              <n-input v-model:value="reportForm.crewPosition" placeholder="请输入剧组职务" />
+            </n-form-item>
+          </n-gi>
+        </n-grid>
+      </n-form>
+      <template #action>
+        <n-button @click="dialogVisible = false">取消</n-button>
+        <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
       </template>
-    </el-dialog>
+    </n-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, More } from '@element-plus/icons-vue'
+import { ref, reactive, h, onMounted } from 'vue'
+import { Icon } from '@iconify/vue'
+import {
+  NCard,
+  NButton,
+  NForm,
+  NFormItem,
+  NInput,
+  NInputNumber,
+  NSelect,
+  NDataTable,
+  NTag,
+  NPopconfirm,
+  NModal,
+  NGrid,
+  NGi,
+  NDatePicker,
+  useMessage
+} from 'naive-ui'
+import { getReportPage, addReport, updateReport, deleteReport, getReportById } from '@/api'
+import dayjs from 'dayjs'
 
-// 模拟数据
-const reportList = ref([])
+const message = useMessage()
+
 const loading = ref(false)
+const reportList = ref([])
 const dialogVisible = ref(false)
 const dialogLoading = ref(false)
-const dialogTitle = ref('')
-const currentAction = ref('')
-const reportFormRef = ref(null)
-const selectedRows = ref([])
+const dialogTitle = ref('新增报备')
+const formRef = ref(null)
 
-// 分页配置
-const pagination = reactive({
-  currentPage: 1,
-  pageSize: 10,
-  total: 0
-})
-
-// 搜索表单
 const searchForm = reactive({
-  tvName: '',
-  tvType: ''
+  keyword: ''
 })
 
-// 报告表单
 const reportForm = reactive({
-  tv_id: '',
-  tv_name: '',
-  tv_type: '',
-  tv_genre: '',
-  tv_episodes: '',
-  invest_amount: '',
-  main_creators: '',
-  lead_producer: '',
-  producer_unit: '',
-  start_date: '',
-  end_date: '',
-  crew_scale: '',
+  id: null,
+  name: '',
+  type: '',
+  genre: '',
+  episodes: 0,
+  investAmount: 0,
+  mainCreators: '',
+  leadProducer: '',
+  producerUnit: '',
+  startDate: null,
+  endDate: null,
+  crewScale: '',
   contact: '',
-  phone_number: '',
-  crew_position: ''
+  phoneNumber: '',
+  crewPosition: ''
 })
 
-// 表单验证规则
+const typeOptions = [
+  { label: '电视剧', value: 'TV_SERIES' },
+  { label: '电影', value: 'MOVIE' },
+  { label: '网络剧', value: 'WEB_SERIES' },
+  { label: '其他', value: 'OTHER' }
+]
+
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  itemCount: 0,
+  showSizePicker: true,
+  pageSizes: [10, 20, 50, 100]
+})
+
 const formRules = {
-  tv_name: [
-    { required: true, message: '请输入剧名', trigger: 'blur' },
-    { max: 50, message: '剧名长度不能超过50个字符', trigger: 'blur' }
-  ],
-  tv_type: [
-    { required: true, message: '请输入剧种', trigger: 'blur' },
-    { max: 20, message: '剧种长度不能超过20个字符', trigger: 'blur' }
-  ],
-  tv_genre: [
-    { required: true, message: '请输入题材', trigger: 'blur' },
-    { max: 20, message: '题材长度不能超过20个字符', trigger: 'blur' }
-  ],
-  tv_episodes: [
-    { required: true, message: '请输入集数', trigger: 'blur' }
-  ],
-  invest_amount: [
-    { required: true, message: '请输入投资金额', trigger: 'blur' },
-    { max: 20, message: '投资金额长度不能超过20个字符', trigger: 'blur' }
-  ],
-  main_creators: [
-    { required: true, message: '请输入主要创作人员', trigger: 'blur' },
-    { max: 100, message: '主要创作人员长度不能超过100个字符', trigger: 'blur' }
-  ],
-  lead_producer: [
-    { required: true, message: '请输入主要制作人', trigger: 'blur' },
-    { max: 50, message: '主要制作人长度不能超过50个字符', trigger: 'blur' }
-  ],
-  producer_unit: [
-    { required: true, message: '请输入制作单位', trigger: 'blur' },
-    { max: 100, message: '制作单位长度不能超过100个字符', trigger: 'blur' }
-  ],
-  start_date: [
-    { required: true, message: '请选择开机日期', trigger: 'change' }
-  ],
-  end_date: [
-    { required: true, message: '请选择关机日期', trigger: 'change' }
-  ],
-  crew_scale: [
-    { required: true, message: '请输入剧组规模', trigger: 'blur' },
-    { max: 50, message: '剧组规模长度不能超过50个字符', trigger: 'blur' }
-  ],
-  contact: [
-    { required: true, message: '请输入联系人', trigger: 'blur' },
-    { max: 20, message: '联系人长度不能超过20个字符', trigger: 'blur' }
-  ],
-  phone_number: [
-    { required: true, message: '请输入联系电话', trigger: 'blur' },
-    { max: 20, message: '联系电话长度不能超过20个字符', trigger: 'blur' }
-  ],
-  crew_position: [
-    { required: true, message: '请输入剧组职务', trigger: 'blur' },
-    { max: 20, message: '剧组职务长度不能超过20个字符', trigger: 'blur' }
-  ]
+  name: [{ required: true, message: '请输入剧名', trigger: 'blur' }],
+  type: [{ required: true, message: '请选择类型', trigger: 'change' }],
+  genre: [{ required: true, message: '请输入题材', trigger: 'blur' }],
+  episodes: [{ required: true, message: '请输入集数', trigger: 'blur' }],
+  investAmount: [{ required: true, message: '请输入投资金额', trigger: 'blur' }],
+  mainCreators: [{ required: true, message: '请输入主创人员', trigger: 'blur' }],
+  leadProducer: [{ required: true, message: '请输入第一出品单位', trigger: 'blur' }],
+  producerUnit: [{ required: true, message: '请输入制片单位', trigger: 'blur' }],
+  startDate: [{ required: true, message: '请选择拍摄开始日期', trigger: 'change' }],
+  endDate: [{ required: true, message: '请选择拍摄结束日期', trigger: 'change' }],
+  crewScale: [{ required: true, message: '请输入剧组规模', trigger: 'blur' }],
+  contact: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
+  phoneNumber: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+  crewPosition: [{ required: true, message: '请输入剧组职务', trigger: 'blur' }]
 }
 
-// 初始加载数据
+const columns = [
+  { title: 'ID', key: 'id', width: 80 },
+  { title: '剧名', key: 'name', ellipsis: { tooltip: true } },
+  {
+    title: '类型',
+    key: 'type',
+    width: 120,
+    render: (row) => {
+      const typeMap = {
+        'TV_SERIES': '电视剧',
+        'MOVIE': '电影',
+        'WEB_SERIES': '网络剧',
+        'OTHER': '其他'
+      }
+      return typeMap[row.type] || row.type
+    }
+  },
+  { title: '集数', key: 'episodes', width: 100 },
+  { title: '投资金额', key: 'investAmount', width: 120, render: (row) => `¥${row.investAmount || 0}` },
+  {
+    title: '创建时间',
+    key: 'createdAt',
+    width: 180,
+    render: (row) => {
+      if (Array.isArray(row.createdAt)) {
+        return dayjs(row.createdAt[0] + '-' + String(row.createdAt[1]).padStart(2, '0') + '-' + String(row.createdAt[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
+      }
+      return row.createdAt ? dayjs(row.createdAt).format('YYYY-MM-DD HH:mm:ss') : '-'
+    }
+  },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 180,
+    fixed: 'right',
+    render: (row) => {
+      return h('div', { style: 'display: flex; gap: 8px;' }, [
+        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
+        h(
+          NPopconfirm,
+          { onPositiveClick: () => handleDelete(row.id) },
+          {
+            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+          }
+        )
+      ])
+    }
+  }
+]
+
 onMounted(() => {
-  loadReportList()
+  loadData()
 })
 
-// 格式化日期
-const formatDate = (date) => {
-  if (!date) return ''
-  const d = new Date(date)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-// 加载报告列表
-const loadReportList = async () => {
+const loadData = async () => {
   try {
     loading.value = true
-    // 这里应该调用API接口，暂时使用模拟数据
-    // const res = await getReportPage({
-    //   page: pagination.currentPage,
-    //   pageSize: pagination.pageSize,
-    //   tvName: searchForm.tvName,
-    //   tvType: searchForm.tvType
-    // })
-    
-    // 模拟数据
-    await new Promise(resolve => setTimeout(resolve, 500))
-    reportList.value = [
-      {
-        tv_id: 1,
-        tv_name: '川西故事',
-        tv_type: '电视剧',
-        tv_genre: '都市情感',
-        tv_episodes: 30,
-        invest_amount: '5000万',
-        main_creators: '张艺谋、李安',
-        lead_producer: '张伟',
-        producer_unit: '北京电影制片厂',
-        start_date: '2023-01-15',
-        end_date: '2023-06-30',
-        crew_scale: '100人',
-        contact: '李明',
-        phone_number: '13800138000',
-        crew_position: '副导演'
-      },
-      {
-        tv_id: 2,
-        tv_name: '雅安往事',
-        tv_type: '纪录片',
-        tv_genre: '历史人文',
-        tv_episodes: 8,
-        invest_amount: '800万',
-        main_creators: '陈凯歌',
-        lead_producer: '王丽',
-        producer_unit: '中央电视台',
-        start_date: '2023-03-10',
-        end_date: '2023-05-20',
-        crew_scale: '50人',
-        contact: '赵刚',
-        phone_number: '13900139000',
-        crew_position: '制片主任'
-      },
-      {
-        tv_id: 3,
-        tv_name: '熊猫传奇',
-        tv_type: '动画片',
-        tv_genre: '科幻冒险',
-        tv_episodes: 26,
-        invest_amount: '2000万',
-        main_creators: '宫崎骏、久石让',
-        lead_producer: '刘伟',
-        producer_unit: '上海动画制片厂',
-        start_date: '2023-02-01',
-        end_date: '2023-10-31',
-        crew_scale: '80人',
-        contact: '钱小红',
-        phone_number: '13700137000',
-        crew_position: '执行导演'
-      }
-    ]
-    pagination.total = reportList.value.length
+    const res = await getReportPage(pagination.page, pagination.pageSize, searchForm.keyword)
+    if (res.code === 200) {
+      reportList.value = res.data || []
+      pagination.itemCount = res.pagination?.totalItems || 0
+    }
   } catch (error) {
-    ElMessage.error('加载报告列表失败')
+    console.error('加载报备列表失败:', error)
   } finally {
     loading.value = false
   }
 }
 
-// 处理搜索
 const handleSearch = () => {
-  pagination.currentPage = 1
-  loadReportList()
+  pagination.page = 1
+  loadData()
 }
 
-// 处理重置
 const handleReset = () => {
-  searchForm.tvName = ''
-  searchForm.tvType = ''
-  pagination.currentPage = 1
-  loadReportList()
+  searchForm.keyword = ''
+  pagination.page = 1
+  loadData()
 }
 
-// 处理分页大小变化
-const handleSizeChange = (size) => {
-  pagination.pageSize = size
-  loadReportList()
+const handlePageChange = (page) => {
+  pagination.page = page
+  loadData()
 }
 
-// 处理页码变化
-const handleCurrentChange = (current) => {
-  pagination.currentPage = current
-  loadReportList()
+const handlePageSizeChange = (pageSize) => {
+  pagination.pageSize = pageSize
+  pagination.page = 1
+  loadData()
 }
 
-// 处理选择变化
-const handleSelectionChange = (rows) => {
-  selectedRows.value = rows
-}
-
-// 处理新增
 const handleAdd = () => {
-  dialogTitle.value = '新增报告'
-  currentAction.value = 'add'
-  resetForm()
+  dialogTitle.value = '新增报备'
+  Object.assign(reportForm, {
+    id: null,
+    name: '',
+    type: '',
+    genre: '',
+    episodes: 0,
+    investAmount: 0,
+    mainCreators: '',
+    leadProducer: '',
+    producerUnit: '',
+    startDate: null,
+    endDate: null,
+    crewScale: '',
+    contact: '',
+    phoneNumber: '',
+    crewPosition: ''
+  })
   dialogVisible.value = true
 }
 
-// 处理编辑
-const handleEdit = (row) => {
-  dialogTitle.value = '编辑报告'
-  currentAction.value = 'edit'
-  Object.assign(reportForm, row)
-  dialogVisible.value = true
+const handleEdit = async (row) => {
+  try {
+    const res = await getReportById(row.id)
+    if (res.code === 200 && res.data) {
+      dialogTitle.value = '编辑报备'
+      Object.assign(reportForm, {
+        id: res.data.id,
+        name: res.data.name,
+        type: res.data.type,
+        genre: res.data.genre,
+        episodes: res.data.episodes,
+        investAmount: res.data.investAmount,
+        mainCreators: res.data.mainCreators,
+        leadProducer: res.data.leadProducer,
+        producerUnit: res.data.producerUnit,
+        startDate: res.data.startDate ? dayjs(res.data.startDate).valueOf() : null,
+        endDate: res.data.endDate ? dayjs(res.data.endDate).valueOf() : null,
+        crewScale: res.data.crewScale,
+        contact: res.data.contact,
+        phoneNumber: res.data.phoneNumber,
+        crewPosition: res.data.crewPosition
+      })
+      dialogVisible.value = true
+    }
+  } catch (error) {
+    console.error('获取报备详情失败:', error)
+  }
 }
 
-// 处理查看
-const handleView = (row) => {
-  dialogTitle.value = '查看报告'
-  currentAction.value = 'view'
-  Object.assign(reportForm, row)
-  dialogVisible.value = true
+const handleDialogSave = async () => {
+  if (!formRef.value) return
+  try {
+    await formRef.value.validate()
+  } catch (error) {
+    return
+  }
+  
+  try {
+    dialogLoading.value = true
+    const data = {
+      name: reportForm.name,
+      type: reportForm.type,
+      genre: reportForm.genre,
+      episodes: reportForm.episodes,
+      investAmount: reportForm.investAmount,
+      mainCreators: reportForm.mainCreators,
+      leadProducer: reportForm.leadProducer,
+      producerUnit: reportForm.producerUnit,
+      startDate: reportForm.startDate ? dayjs(reportForm.startDate).format('YYYY-MM-DD') : null,
+      endDate: reportForm.endDate ? dayjs(reportForm.endDate).format('YYYY-MM-DD') : null,
+      crewScale: reportForm.crewScale,
+      contact: reportForm.contact,
+      phoneNumber: reportForm.phoneNumber,
+      crewPosition: reportForm.crewPosition
+    }
+    
+    let res
+    if (reportForm.id) {
+      res = await updateReport({ ...data, id: reportForm.id })
+    } else {
+      res = await addReport(data)
+    }
+    
+    if (res.code === 200) {
+      message.success(reportForm.id ? '更新成功' : '创建成功')
+      dialogVisible.value = false
+      loadData()
+    }
+  } catch (error) {
+    console.error('保存失败:', error)
+  } finally {
+    dialogLoading.value = false
+  }
 }
 
-// 处理删除
 const handleDelete = async (id) => {
   try {
-    await ElMessageBox.confirm('确定要删除这个报告吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    
-    // 这里应该调用API接口
-    // const res = await deleteReport(id)
-    
-    // 模拟删除
-    await new Promise(resolve => setTimeout(resolve, 300))
-    ElMessage.success('删除成功')
-    loadReportList()
+    const res = await deleteReport(id)
+    if (res.code === 200) {
+      message.success('删除成功')
+      loadData()
+    }
   } catch (error) {
-    // 用户取消删除时不显示错误信息
-    if (error !== 'cancel') {
-      ElMessage.error('删除失败')
-    }
+    console.error('删除失败:', error)
   }
-}
-
-// 重置表单
-const resetForm = () => {
-  if (reportFormRef.value) {
-    reportFormRef.value.resetFields()
-  }
-  Object.assign(reportForm, {
-    tv_id: '',
-    tv_name: '',
-    tv_type: '',
-    tv_genre: '',
-    tv_episodes: '',
-    invest_amount: '',
-    main_creators: '',
-    lead_producer: '',
-    producer_unit: '',
-    start_date: '',
-    end_date: '',
-    crew_scale: '',
-    contact: '',
-    phone_number: '',
-    crew_position: ''
-  })
-}
-
-// 处理对话框保存
-const handleDialogSave = async () => {
-  if (!reportFormRef.value) return
-  
-  await reportFormRef.value.validate(async (valid) => {
-    if (valid) {
-      try {
-        dialogLoading.value = true
-        
-        if (currentAction.value === 'add') {
-          // 这里应该调用API接口
-          // const res = await addReport(reportForm)
-          
-          // 模拟添加
-          await new Promise(resolve => setTimeout(resolve, 500))
-          ElMessage.success('新增成功')
-        } else if (currentAction.value === 'edit') {
-          // 这里应该调用API接口
-          // const res = await updateReport(reportForm)
-          
-          // 模拟更新
-          await new Promise(resolve => setTimeout(resolve, 500))
-          ElMessage.success('更新成功')
-        }
-        
-        dialogVisible.value = false
-        loadReportList()
-      } catch (error) {
-        ElMessage.error(currentAction.value === 'add' ? '新增失败' : '更新失败')
-      } finally {
-        dialogLoading.value = false
-      }
-    }
-  })
 }
 </script>
 
 <style scoped lang="scss">
 .report-management {
-  padding: 0;
+  animation: fadeIn 0.3s ease;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #ebe6ff;
-  background: linear-gradient(135deg, #f9f7ff 0%, #f3f0ff 100%);
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #9c88ff 0%, #b8abff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.search-section {
-  padding: 16px 20px;
-  border-bottom: 1px solid #ebe6ff;
+.management-card {
+  :deep(.n-card__content) {
+    padding: 16px;
+  }
 }
 
 .search-form {
-  :deep(.el-form-item) {
-    margin-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.action-bar {
+  margin-bottom: 16px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-}
-
-.pagination-container {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.report-form {
-  :deep(.el-form-item) {
-    margin-bottom: 18px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-}
-
-.mr-2 {
-  margin-right: 8px;
 }
 </style>

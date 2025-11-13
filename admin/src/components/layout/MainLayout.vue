@@ -1,5 +1,5 @@
 <template>
-  <n-layout class="main-layout">
+  <n-layout has-sider class="main-layout">
     <n-layout-sider
       bordered
       :width="240"
@@ -207,6 +207,7 @@ const handleUserSelect = (key) => {
 <style scoped lang="scss">
 .main-layout {
   height: 100vh;
+  display: flex;
 }
 
 .sidebar {
@@ -284,12 +285,12 @@ const handleUserSelect = (key) => {
 
 .main-content {
   background: #f9fafb;
-  padding: 24px;
+  padding: 16px;
   overflow-y: auto;
   
   .page-wrapper {
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
   }
 }
 
