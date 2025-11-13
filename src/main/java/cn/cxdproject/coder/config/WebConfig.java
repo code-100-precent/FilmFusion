@@ -45,7 +45,7 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .excludePathPatterns("/api/user/login", "/api/user/register")
                 // 文章模块 - 只拦截需要登录的接口（创建、更新、删除），排除公开接口
                 .addPathPatterns("/api/article/**")
-                .excludePathPatterns("/api/article/page", "/api/article/*")
+                .excludePathPatterns("/api/article/page")
                 // 电视剧备案模块 - 只拦截需要登录的接口，排除公开接口
                 .addPathPatterns("/api/drama/**")
                 .excludePathPatterns("/api/drama/page", "/api/drama/*")
