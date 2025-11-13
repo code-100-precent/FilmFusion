@@ -78,13 +78,6 @@
         </view>
 
         <view class="menu-group">
-          <view class="menu-item" @click="goToPrivacy">
-            <view class="menu-icon" style="background: #fef3c7;">
-              <uni-icons type="locked-filled" size="24" color="#f59e0b"></uni-icons>
-            </view>
-            <text class="menu-text">隐私设置</text>
-            <uni-icons type="right" size="16" color="#d1d5db"></uni-icons>
-          </view>
           <view class="menu-item" @click="goToFeedback">
             <view class="menu-icon" style="background: #f3e8ff;">
               <uni-icons type="chatboxes" size="24" color="#8b5cf6"></uni-icons>
@@ -182,15 +175,13 @@ export default {
       })
     },
     goToMyReports() {
-      uni.showToast({
-        title: '功能开发中',
-        icon: 'none'
+      uni.navigateTo({
+        url: '/pages/profile/reports'
       })
     },
     goToMyFeedback() {
-      uni.showToast({
-        title: '功能开发中',
-        icon: 'none'
+      uni.navigateTo({
+        url: '/pages/profile/feedback-list'
       })
     },
     goToEditProfile() {
@@ -203,28 +194,19 @@ export default {
         url: '/pages/profile/password'
       })
     },
-    goToPrivacy() {
-      uni.showToast({
-        title: '隐私设置功能开发中',
-        icon: 'none'
-      })
-    },
     goToFeedback() {
       uni.navigateTo({
         url: '/pages/feedback/feedback'
       })
     },
     goToHelp() {
-      uni.showToast({
-        title: '帮助中心功能开发中',
-        icon: 'none'
+      uni.navigateTo({
+        url: '/pages/profile/help'
       })
     },
     goToAbout() {
-      uni.showModal({
-        title: '关于我们',
-        content: '雅安影视服务\n专业影视拍摄一站式服务平台\n版本：1.0.0',
-        showCancel: false
+      uni.navigateTo({
+        url: '/pages/profile/about'
       })
     },
     async handleLogout() {

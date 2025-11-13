@@ -1,7 +1,7 @@
 {
   "name": "campus-guide-admin",
   "version": "1.0.0",
-  "description": "校园导览管理后台",
+  "description": "拍在雅安管理后台",
   "private": true,
   "scripts": {
     "dev": "vite",

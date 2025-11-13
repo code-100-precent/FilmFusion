@@ -18,6 +18,7 @@ public interface ReportService extends IService<Report> {
     void deleteReport(Long userId, Long reportId);
     ReportVO getReportById(Long reportId);
     Page<ReportVO> getReportPage(Page<Report> page, String keyword);
+    Page<ReportVO> getMyReportPage(Long userId, Page<Report> page);
     
     ReportVO createReportByAdmin(CreateReportDTO createDTO);
     ReportVO updateReportByAdmin(Long reportId, UpdateReportDTO updateDTO);

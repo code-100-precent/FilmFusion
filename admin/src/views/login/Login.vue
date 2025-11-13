@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
-        <h2 class="login-title">校园导览</h2>
+        <h2 class="login-title">拍在雅安</h2>
         <p class="login-subtitle">管理后台</p>
       </div>
       <el-form
@@ -96,7 +96,6 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
-import { adminLogin, adminRegister } from '@/api'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -107,8 +106,8 @@ const registerLoading = ref(false)
 const showRegister = ref(false)
 
 const loginForm = reactive({
-  email: '',
-  password: ''
+  email: 'admin@example.com',
+  password: '123456'
 })
 
 const registerForm = reactive({
@@ -157,36 +156,33 @@ const registerRules = {
   ]
 }
 
+
 const handleLogin = async () => {
   if (!loginFormRef.value) return
-  
-  await loginFormRef.value.validate(async (valid) => {
+  await loginFormRef.value.validate((valid) => {
     if (valid) {
       loading.value = true
       try {
-        const res = await adminLogin(loginForm.email, loginForm.password)
+        // 模拟登录成功，无需调用真实API
+        const mockToken = 'mock_token_' + Date.now()
+        userStore.setToken(mockToken)
         
-        if (res.code === 200 && res.data) {
-          // 保存token
-          const token = res.data.token
-          userStore.setToken(token)
-          
-          // 保存用户信息
-          userStore.setUserInfo({
-            id: res.data.id,
-            username: res.data.username,
-            email: res.data.email,
-            avatar: res.data.avatar,
-            role: res.data.role
-          })
-          
-          ElMessage.success('登录成功')
+        // 保存模拟的用户信息
+        userStore.setUserInfo({
+          id: '1',
+          username: '管理员',
+          email: loginForm.email,
+          avatar: '',
+          role: 'admin'
+        })
+        
+        ElMessage.success('登录成功')
+        // 延迟一小段时间再跳转，让用户看到成功提示
+        setTimeout(() => {
           router.push('/')
-        } else {
-          ElMessage.error(res.message || '登录失败')
-        }
+        }, 1000)
       } catch (error) {
-        ElMessage.error(error.message || '登录失败，请检查邮箱和密码')
+        ElMessage.error('登录失败，请稍后重试')
       } finally {
         loading.value = false
       }
@@ -197,31 +193,22 @@ const handleLogin = async () => {
 const handleRegister = async () => {
   if (!registerFormRef.value) return
   
-  await registerFormRef.value.validate(async (valid) => {
+  await registerFormRef.value.validate((valid) => {
     if (valid) {
       registerLoading.value = true
       try {
-        const res = await adminRegister({
-          username: registerForm.username,
-          email: registerForm.email,
-          password: registerForm.password
-        })
-        
-        if (res.code === 200 && res.data) {
-          ElMessage.success('注册成功')
-          showRegister.value = false
-          // 自动填充登录表单
-          loginForm.email = registerForm.email
-          // 清空注册表单
-          registerForm.username = ''
-          registerForm.email = ''
-          registerForm.password = ''
-          registerForm.confirmPassword = ''
-        } else {
-          ElMessage.error(res.message || '注册失败')
-        }
+        // 模拟注册成功，无需调用真实API
+        ElMessage.success('注册成功')
+        showRegister.value = false
+        // 自动填充登录表单
+        loginForm.email = registerForm.email
+        // 清空注册表单
+        registerForm.username = ''
+        registerForm.email = ''
+        registerForm.password = ''
+        registerForm.confirmPassword = ''
       } catch (error) {
-        ElMessage.error(error.message || '注册失败')
+        ElMessage.error('注册失败，请稍后重试')
       } finally {
         registerLoading.value = false
       }

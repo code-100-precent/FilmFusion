@@ -261,6 +261,15 @@ export const createReport = (data: CreateReportDTO): Promise<ApiResponse<Report>
   })
 }
 
+// 获取我的报备列表
+export const getMyReportPage = (params: { current?: number; size?: number }): Promise<PageResponse<Report>> => {
+  return http<Report[]>({
+    url: '/report/my',
+    method: 'GET',
+    data: params
+  }) as Promise<PageResponse<Report>>
+}
+
 // ==================== 反馈相关 ====================
 
 export interface Feedback {

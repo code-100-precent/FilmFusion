@@ -168,9 +168,8 @@ export default {
       this.loadShoots()
     },
     goToDetail(id) {
-      uni.showToast({
-        title: '功能开发中',
-        icon: 'none'
+      uni.navigateTo({
+        url: `/pages/shoot/detail?id=${id}`
       })
     }
   }

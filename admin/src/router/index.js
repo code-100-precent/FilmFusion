@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/store/user'
-import { getAdminInfo } from '@/api'
+// import { getAdminInfo } from '@/api'
 
 const routes = [
   {
@@ -19,7 +19,55 @@ const routes = [
         name: 'Profile',
         component: () => import('@/views/profile/Profile.vue'),
         meta: { title: '个人中心', icon: 'UserFilled', transition: 'slide' }
-      }
+      },
+        {
+          path: 'article',
+          name: 'article',
+          component: () => import('../views/article/ArticleList.vue'),
+          meta: {
+            title: '文章管理'
+          }
+        },
+        {
+          path: 'drama',
+          name: 'drama',
+          component: () => import('../views/drama/DramaList.vue'),
+          meta: {
+            title: '电视剧管理'
+          }
+        },
+        {
+          path: 'image',
+          name: 'image',
+          component: () => import('../views/image/ImageList.vue'),
+          meta: {
+            title: '图片管理'
+          }
+        },
+        {
+          path: 'location',
+          name: 'location',
+          component: () => import('../views/location/LocationList.vue'),
+          meta: {
+            title: '场地管理'
+          }
+        },
+        {
+          path: 'service',
+          name: 'service',
+          component: () => import('../views/service/ServiceList.vue'),
+          meta: {
+            title: '服务管理'
+          }
+        },
+        {
+          path: 'report',
+          name: 'report',
+          component: () => import('../views/report/ReportList.vue'),
+          meta: {
+            title: '拍摄报告管理'
+          }
+        }
     ]
   }
 ]
@@ -43,20 +91,25 @@ router.beforeEach(async (to, from, next) => {
     if (!userStore.token) {
       next('/login')
     } else {
-      // 验证token是否有效
+      // 模拟验证token有效
       try {
-        const res = await getAdminInfo()
-        if (res.code === 200 && res.data) {
-          // 更新用户信息
-          userStore.setUserInfo(res.data)
-          next()
-        } else {
-          // token无效，清除并跳转登录
-          userStore.logout()
-          next('/login')
+        // 延迟一小段时间模拟网络请求
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // 模拟用户信息
+        const mockUserInfo = {
+          id: 1,
+          username: '管理员',
+          email: 'admin@example.com',
+          avatar: '',
+          role: 'ADMIN'
         }
+        
+        // 更新用户信息
+        userStore.setUserInfo(mockUserInfo)
+        next()
       } catch (error) {
-        // token验证失败，清除并跳转登录
+        console.error('验证失败:', error)
         userStore.logout()
         next('/login')
       }

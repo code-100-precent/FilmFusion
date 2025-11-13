@@ -132,6 +132,23 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
     @Override
+    public Page<ReportVO> getMyReportPage(Long userId, Page<Report> page) {
+        QueryWrapper<Report> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", userId);
+        wrapper.eq("deleted", false);
+        wrapper.orderByDesc("created_at");
+
+        Page<Report> reportPage = this.page(page, wrapper);
+        Page<ReportVO> voPage = new Page<>(reportPage.getCurrent(), reportPage.getSize(), reportPage.getTotal());
+        List<ReportVO> voList = reportPage.getRecords().stream()
+                .map(this::toReportVO)
+                .collect(Collectors.toList());
+        voPage.setRecords(voList);
+
+        return voPage;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ReportVO createReportByAdmin(CreateReportDTO createDTO) {
         User currentUser = AuthContext.getCurrentUser();

@@ -181,7 +181,7 @@ import { useUserStore } from '@/store/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Edit, Camera } from '@element-plus/icons-vue'
 import EnhancedTextarea from '@/components/EnhancedTextarea.vue'
-import { getAdminInfo, updateAdminInfo, changePassword, uploadAvatar, getRecentOperationLogs } from '@/api'
+// import { getAdminInfo, updateAdminInfo, changePassword, uploadAvatar, getRecentOperationLogs } from '@/api'
 
 const userStore = useUserStore()
 const formRef = ref(null)
@@ -247,15 +247,38 @@ onMounted(async () => {
 
 const loadOperationLogs = async () => {
   try {
-    const res = await getRecentOperationLogs(10)
-    if (res.code === 200 && res.data) {
-      operationLogs.value = res.data.map(log => ({
-        action: log.description || '未知操作',
-        detail: log.type ? `操作类型: ${typeof log.type === 'string' ? log.type : log.type.description || log.type}` : '',
-        time: log.timestamp ? formatDateTime(log.timestamp) : '',
-        success: log.success !== undefined ? log.success : true
-      }))
-    }
+    // const res = await getRecentOperationLogs(10)
+    // if (res.code === 200 && res.data) {
+    //   operationLogs.value = res.data.map(log => ({
+    //     action: log.description || '未知操作',
+    //     detail: log.type ? `操作类型: ${typeof log.type === 'string' ? log.type : log.type.description || log.type}` : '',
+    //     time: log.timestamp ? formatDateTime(log.timestamp) : '',
+    //     success: log.success !== undefined ? log.success : true
+    //   }))
+    // }
+    
+    // 模拟数据
+    await new Promise(resolve => setTimeout(resolve, 500))
+    operationLogs.value = [
+      {
+        action: '登录系统',
+        detail: '操作类型: 登录',
+        time: formatDateTime(new Date().getTime() - 3600000),
+        success: true
+      },
+      {
+        action: '修改个人信息',
+        detail: '操作类型: 更新',
+        time: formatDateTime(new Date().getTime() - 7200000),
+        success: true
+      },
+      {
+        action: '查看电视剧列表',
+        detail: '操作类型: 查询',
+        time: formatDateTime(new Date().getTime() - 10800000),
+        success: true
+      }
+    ]
   } catch (error) {
     console.error('加载操作日志失败:', error)
   }
@@ -276,19 +299,33 @@ const formatDateTime = (dateStr) => {
 const loadAdminInfo = async () => {
   try {
     loading.value = true
-    const res = await getAdminInfo()
-    if (res.code === 200 && res.data) {
-      Object.assign(formData, {
-        id: res.data.id,
-        username: res.data.username || '',
-        email: res.data.email || '',
-        avatar: res.data.avatar || '',
-        role: res.data.role || '',
-        identity: res.data.role === 'ADMIN' ? '管理员' : '普通用户'
-      })
-      // 更新store
-      userStore.setUserInfo(res.data)
+    // const res = await getAdminInfo()
+    // if (res.code === 200 && res.data) {
+    //   Object.assign(formData, {
+    //     id: res.data.id,
+    //     username: res.data.username || '',
+    //     email: res.data.email || '',
+    //     avatar: res.data.avatar || '',
+    //     role: res.data.role || '',
+    //     identity: res.data.role === 'ADMIN' ? '管理员' : '普通用户'
+    //   })
+    //   // 更新store
+    //   userStore.setUserInfo(res.data)
+    // }
+    
+    // 模拟数据
+    await new Promise(resolve => setTimeout(resolve, 500))
+    const mockUserInfo = {
+      id: 1,
+      username: 'admin',
+      email: 'admin@example.com',
+      avatar: '',
+      role: 'ADMIN',
+      identity: '管理员'
     }
+    Object.assign(formData, mockUserInfo)
+    // 更新store
+    userStore.setUserInfo(mockUserInfo)
   } catch (error) {
     ElMessage.error('加载用户信息失败')
   } finally {
@@ -328,14 +365,25 @@ const handleSave = async () => {
           email: formData.email,
           avatar: formData.avatar
         }
-        const res = await updateAdminInfo(updateData)
-        if (res.code === 200) {
-          ElMessage.success('保存成功')
-          await loadAdminInfo()
-          isEditing.value = false
-        } else {
-          ElMessage.error(res.message || '保存失败')
+        // const res = await updateAdminInfo(updateData)
+        // if (res.code === 200) {
+        //   ElMessage.success('保存成功')
+        //   await loadAdminInfo()
+        //   isEditing.value = false
+        // } else {
+        //   ElMessage.error(res.message || '保存失败')
+        // }
+        
+        // 模拟保存
+        await new Promise(resolve => setTimeout(resolve, 500))
+        ElMessage.success('保存成功')
+        // 更新store中的数据
+        const updatedUserInfo = {
+          ...userStore.userInfo,
+          ...updateData
         }
+        userStore.setUserInfo(updatedUserInfo)
+        isEditing.value = false
       } catch (error) {
         ElMessage.error(error.message || '保存失败')
       } finally {
@@ -346,24 +394,9 @@ const handleSave = async () => {
 }
 
 const handleAvatarSuccess = async (response) => {
-  if (response.code === 200) {
-    formData.avatar = response.data
-    // 立即更新到后端
-    try {
-      await updateAdminInfo({
-        id: formData.id,
-        username: formData.username,
-        email: formData.email,
-        avatar: formData.avatar
-      })
-      await loadAdminInfo()
-      ElMessage.success('头像上传成功')
-    } catch (error) {
-      ElMessage.error('头像更新失败')
-    }
-  } else {
-    ElMessage.error('头像上传失败')
-  }
+  // 模拟头像上传成功
+  formData.avatar = 'https://randomuser.me/api/portraits/men/32.jpg'
+  ElMessage.success('头像上传成功')
 }
 
 const handleChangePassword = async () => {
@@ -373,13 +406,18 @@ const handleChangePassword = async () => {
     if (valid) {
       try {
         loading.value = true
-        const res = await changePassword(passwordForm.oldPassword, passwordForm.newPassword)
-        if (res.code === 200) {
-          ElMessage.success('密码修改成功')
-          handleResetPassword()
-        } else {
-          ElMessage.error(res.message || '密码修改失败')
-        }
+        // const res = await changePassword(passwordForm.oldPassword, passwordForm.newPassword)
+        // if (res.code === 200) {
+        //   ElMessage.success('密码修改成功')
+        //   handleResetPassword()
+        // } else {
+        //   ElMessage.error(res.message || '密码修改失败')
+        // }
+        
+        // 模拟密码修改
+        await new Promise(resolve => setTimeout(resolve, 500))
+        ElMessage.success('密码修改成功')
+        handleResetPassword()
       } catch (error) {
         ElMessage.error(error.message || '密码修改失败')
       } finally {

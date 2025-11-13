@@ -477,14 +477,444 @@ export const batchUpdateFeedbackStatus = (ids, status) => {
     }
   })
 }
+// ==================== 雅安相关接口 ====================
 
-export const batchDeleteFeedback = (ids) => {
+// 文章管理
+/**
+ * 添加文章
+ */
+export const addArticle = (data) => {
   return request({
-    url: '/admin/feedback/batch-delete',
+    url: '/admin/article/add',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新文章
+ */
+export const updateArticle = (data) => {
+  return request({
+    url: '/admin/article/update',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除文章
+ */
+export const deleteArticle = (id) => {
+  return request({
+    url: `/admin/article/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 批量删除文章
+ */
+export const batchDeleteArticle = (ids) => {
+  return request({
+    url: '/admin/article/batch-delete',
     method: 'post',
     data: {
       ids
     }
+  })
+}
+
+/**
+ * 根据ID获取文章
+ */
+export const getArticleById = (id) => {
+  return request({
+    url: `/admin/article/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取文章列表
+ */
+export const getArticleList = (params) => {
+  return request({
+    url: '/admin/article/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取文章
+ */
+export const getArticlePage = (pageRequest) => {
+  return request({
+    url: '/admin/article/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 电视剧管理
+/**
+ * 添加电视剧
+ */
+export const addDrama = (data) => {
+  return request({
+    url: '/admin/drama/add',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新电视剧
+ */
+export const updateDrama = (data) => {
+  return request({
+    url: '/admin/drama/update',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除电视剧
+ */
+export const deleteDrama = (id) => {
+  return request({
+    url: `/admin/drama/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 批量删除电视剧
+ */
+export const batchDeleteDrama = (ids) => {
+  return request({
+    url: '/admin/drama/batch-delete',
+    method: 'post',
+    data: {
+      ids
+    }
+  })
+}
+
+/**
+ * 根据ID获取电视剧
+ */
+export const getDramaById = (id) => {
+  return request({
+    url: `/admin/drama/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取电视剧列表
+ */
+export const getDramaList = (params) => {
+  return request({
+    url: '/admin/drama/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取电视剧
+ */
+export const getDramaPage = (pageRequest) => {
+  return request({
+    url: '/admin/drama/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 图片管理
+/**
+ * 上传图片
+ */
+export const uploadImage = (formData) => {
+  return request({
+    url: '/admin/image/upload',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+/**
+ * 删除图片
+ */
+export const deleteImage = (id) => {
+  return request({
+    url: `/admin/image/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 批量删除图片
+ */
+export const batchDeleteImage = (ids) => {
+  return request({
+    url: '/admin/image/batch-delete',
+    method: 'post',
+    data: {
+      ids
+    }
+  })
+}
+
+/**
+ * 分页获取图片
+ */
+export const getImagePage = (pageRequest) => {
+  return request({
+    url: '/admin/image/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 场地管理
+/**
+ * 添加场地
+ */
+export const addLocation = (data) => {
+  return request({
+    url: '/admin/location/add',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新场地
+ */
+export const updateLocation = (data) => {
+  return request({
+    url: '/admin/location/update',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除场地
+ */
+export const deleteLocation = (id) => {
+  return request({
+    url: `/admin/location/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 批量删除场地
+ */
+export const batchDeleteLocation = (ids) => {
+  return request({
+    url: '/admin/location/batch-delete',
+    method: 'post',
+    data: {
+      ids
+    }
+  })
+}
+
+/**
+ * 根据ID获取场地
+ */
+export const getLocationById = (id) => {
+  return request({
+    url: `/admin/location/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取场地列表
+ */
+export const getLocationList = (params) => {
+  return request({
+    url: '/admin/location/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取场地
+ */
+export const getLocationPage = (pageRequest) => {
+  return request({
+    url: '/admin/location/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 服务管理
+/**
+ * 添加服务
+ */
+export const addService = (data) => {
+  return request({
+    url: '/admin/service/add',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新服务
+ */
+export const updateService = (data) => {
+  return request({
+    url: '/admin/service/update',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除服务
+ */
+export const deleteService = (id) => {
+  return request({
+    url: `/admin/service/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 批量删除服务
+ */
+export const batchDeleteService = (ids) => {
+  return request({
+    url: '/admin/service/batch-delete',
+    method: 'post',
+    data: {
+      ids
+    }
+  })
+}
+
+/**
+ * 根据ID获取服务
+ */
+export const getServiceById = (id) => {
+  return request({
+    url: `/admin/service/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取服务列表
+ */
+export const getServiceList = (params) => {
+  return request({
+    url: '/admin/service/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取服务
+ */
+export const getServicePage = (pageRequest) => {
+  return request({
+    url: '/admin/service/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 电视剧拍摄报告管理
+/**
+ * 添加报告
+ */
+export const addReport = (data) => {
+  return request({
+    url: '/admin/report/add',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新报告
+ */
+export const updateReport = (data) => {
+  return request({
+    url: '/admin/report/update',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除报告
+ */
+export const deleteReport = (id) => {
+  return request({
+    url: `/admin/report/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 批量删除报告
+ */
+export const batchDeleteReport = (ids) => {
+  return request({
+    url: '/admin/report/batch-delete',
+    method: 'post',
+    data: {
+      ids
+    }
+  })
+}
+
+/**
+ * 根据ID获取报告
+ */
+export const getReportById = (id) => {
+  return request({
+    url: `/admin/report/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取报告列表
+ */
+export const getReportList = (params) => {
+  return request({
+    url: '/admin/report/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取报告
+ */
+export const getReportPage = (pageRequest) => {
+  return request({
+    url: '/admin/report/page',
+    method: 'post',
+    data: pageRequest
   })
 }
 

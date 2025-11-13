@@ -3,7 +3,7 @@
     <el-container class="layout-container">
       <el-aside width="220px" class="sidebar">
         <div class="logo">
-          <h3>校园导览</h3>
+          <h3>拍在雅安</h3>
           <p class="logo-subtitle">管理后台</p>
         </div>
         <el-menu
@@ -12,6 +12,39 @@
           class="sidebar-menu"
           :collapse="false"
         >
+          <!-- 雅安相关管理菜单 -->
+          <el-sub-menu index="/yaan">
+            <template #title>
+              <el-icon><Location /></el-icon>
+              <span>雅安影视管理</span>
+            </template>
+            <el-menu-item index="/article">
+              <el-icon><Document /></el-icon>
+              <span>文章管理</span>
+            </el-menu-item>
+            <el-menu-item index="/drama">
+              <el-icon><VideoPlay /></el-icon>
+              <span>电视剧管理</span>
+            </el-menu-item>
+            <el-menu-item index="/image">
+              <el-icon><Picture /></el-icon>
+              <span>图片管理</span>
+            </el-menu-item>
+            <el-menu-item index="/location">
+              <el-icon><MapLocation /></el-icon>
+              <span>场地管理</span>
+            </el-menu-item>
+            <el-menu-item index="/service">
+              <el-icon><Service /></el-icon>
+              <span>服务管理</span>
+            </el-menu-item>
+            <el-menu-item index="/report">
+              <el-icon><DataAnalysis /></el-icon>
+              <span>拍摄报告管理</span>
+            </el-menu-item>
+          </el-sub-menu>
+          
+          <!-- 个人中心 -->
           <el-menu-item index="/profile">
             <el-icon><UserFilled /></el-icon>
             <span>个人中心</span>

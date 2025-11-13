@@ -56,13 +56,8 @@ public class FeedbackController {
     public PageResponse<FeedbackVO> getMyFeedbackPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size) {
+        // 拦截器已经验证了登录状态，这里直接获取用户信息
         User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            PageResponse<FeedbackVO> errorResponse = new PageResponse<>();
-            errorResponse.setCode(401);
-            errorResponse.setMessage("未登录");
-            return errorResponse;
-        }
         Page<Feedback> page = new Page<>(current, size);
         Page<FeedbackVO> feedbackPage = feedbackService.getMyFeedbackPage(currentUser.getId(), page);
         return PageResponse.of(
