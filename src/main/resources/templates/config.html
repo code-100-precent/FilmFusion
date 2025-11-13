@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">配置管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">Hibiscus</span>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/rate-limiters" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">限流器管理</a>
+                    <a href="/monitoring" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">系统监控</a>
+                    <a href="/config" class="text-blue-600 px-3 py-2 text-sm font-medium">配置管理</a>
+                    <a href="/reports" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">统计报告</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 页面标题 -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    配置管理
+                </h1>
+                <p class="mt-2 text-gray-600">管理系统配置和安全策略</p>
+            </div>
+
+            <!-- 配置分类 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 限流器配置 -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        限流器配置
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">QPS:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${rateLimiterConfig.qps}">100.0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">容量:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${rateLimiterConfig.capacity}">1000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">补充速率:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${rateLimiterConfig.refillRate}">100.0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">类型:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${rateLimiterConfig.type}">TOKEN_BUCKET</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">公平模式:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${rateLimiterConfig.fair}">true</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">队列大小:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${rateLimiterConfig.queueSize}">1000</span>
+                        </div>
+                    </div>
+                    <button class="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        编辑配置
+                    </button>
+                </div>
+
+                <!-- 监控配置 -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        监控配置
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">启用监控:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${monitoringConfig.enabled}">true</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">监控间隔:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${monitoringConfig.interval}">5000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">CPU阈值:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${monitoringConfig.cpuThreshold}">80.0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">内存阈值:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${monitoringConfig.memoryThreshold}">85.0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">线程阈值:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${monitoringConfig.threadThreshold}">1000</span>
+                        </div>
+                    </div>
+                    <button class="mt-4 w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                        编辑配置
+                    </button>
+                </div>
+
+                <!-- 安全配置 -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        安全配置
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">启用安全:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${securityConfig.enabled}">true</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">异常检测:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${securityConfig.anomalyDetection}">true</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">紧急防护:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${securityConfig.emergencyProtection}">true</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">最大IP异常:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${securityConfig.maxIpViolations}">10</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">最大用户异常:</span>
+                            <span class="text-sm font-medium text-gray-900" th:text="${securityConfig.maxUserViolations}">15</span>
+                        </div>
+                    </div>
+                    <button class="mt-4 w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">
+                        编辑配置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="mt-8 flex justify-center space-x-4">
+                <button class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    导出配置
+                </button>
+                <button class="bg-gray-600 text-white px-6 py-3 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    重置配置
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-900 text-white py-8 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold">Hibiscus Rate Limiter</span>
+            </div>
+            <p class="text-gray-400">高性能Java限流组件 v1.0.0</p>
+        </div>
+    </footer>
+</body>
+</html>

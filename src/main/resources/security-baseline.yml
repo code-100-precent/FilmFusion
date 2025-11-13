@@ -1,0 +1,41 @@
+# code100项目安全基线配置
+code100:
+  security:
+    # JWT安全配置
+    jwt:
+      secret-rotation-enabled: true
+      min-secret-length: 32
+      allowed-algorithms:
+        - HS256
+        - HS512
+
+    # 用户安全
+    user:
+      password:
+        min-length: 8
+        require-mixed-case: true
+        require-numbers: true
+        require-special-chars: true
+        max-age-days: 90
+        reuse-history: 5
+
+    # 文档访问控制
+    document:
+      max-sharing-links-per-doc: 10
+      sharing-link-expire-days: 30
+      audit-enabled: true
+
+    # 邀请链接安全
+    invite:
+      link-expire-hours: 24
+      max-invites-per-user: 50
+
+    # 文件上传安全
+    upload:
+      allowed-types:
+        - "text/plain"
+        - "application/pdf"
+        - "image/jpeg"
+        - "image/png"
+      max-size-mb: 100
+      virus-scan-enabled: true

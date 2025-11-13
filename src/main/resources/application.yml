@@ -1,0 +1,114 @@
+# 应用信息配置
+code100:
+  # 基础信息
+  name: Code100
+  version: @project.version@  # Maven属性注入
+  build-time: "2025-04-27 20:15:23"
+  copyright:
+    owner: Code100 Team
+    since-year: 2025
+    license: MIT
+
+  # 自定义JWT配置
+  jwt:
+    secret: 6Vvq8$fG3jKlP2mNpQs5tRwUyXzA7B+C9D-E)
+    expiration: 86400000
+    header: Authorization
+    token-start: Bearer
+
+  # 对象存储
+  storage:
+    type: local  # 支持 local、minio
+    minio-endpoint: https://codeonezerozero.cn:19000
+    minio-access-key: minio
+    minio-secret-key: 6fRHxhNJa3Zt2WAP
+    minio-bucket: code100
+    local-base-path: ./tmp/uploads
+
+# 基础服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path:
+  compression:
+    enabled: true  # 启用压缩
+    mime-types: application/java-archive,application/octet-stream  # 对JAR文件压缩
+    min-response-size: 1024  # 大于1KB的文件才压缩（避免小文件压缩开销）
+
+# spring系列配置
+spring:
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+      # location: D:/  # 移除此配置，使用默认临时目录
+  datasource:
+    url: jdbc:mysql://cd-cynosdbmysql-grp-lfa6zfg0.sql.tencentcdb.com:23771/campus_guide_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=10000&socketTimeout=30000
+    username: root
+    password: ct288513832##
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  redis:
+    host: 139.155.132.244
+    port: 26379
+    database: 0
+    password: 123456
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+
+# ORM 配置
+mybatis-plus:
+  type-handlers-package: com.cowrite.project.common.typehandler
+  mapper-locations: classpath*:/mapper/**/*.xml               # Mapper XML 文件路径
+  configuration:
+    map-underscore-to-camel-case: true                        # 开启驼峰命名自动映射
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl     # 控制台打印 SQL
+    lazy-loading-enabled: true
+    aggressive-lazy-loading: false
+    local-cache-scope: session
+    cache-enabled: true
+  global-config:
+    banner: false                                             # 关闭启动时的 banner
+    enable-sql-runner: false                                  # 是否启用 SqlRunner
+    db-config:
+      id-type: auto                                           # 主键策略
+      logic-delete-value: 1                                   # 逻辑删除值
+      logic-not-delete-value: 0                               # 正常值
+
+# 日志配置
+logging:
+  level:
+    com.cetide.blog.security: DEBUG
+  file:
+    path: ./logs
+  logstash:
+    enabled: true
+    host: localhost
+    port: 5000
+    queue-size: 512
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Spring Boot Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
