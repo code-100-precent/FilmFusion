@@ -17,7 +17,7 @@ public class CodeGenerateService {
 
         DatabaseConfig config = new DatabaseConfig();
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        config.setUrl("jdbc:mysql://cd-cynosdbmysql-grp-lfa6zfg0.sql.tencentcdb.com:23771/co_code100_db");
+        config.setUrl("jdbc:mysql://cd-cynosdbmysql-grp-lfa6zfg0.sql.tencentcdb.com:23771/film_fusion");
         config.setUsername("root");
         config.setPassword("ct288513832##");
 

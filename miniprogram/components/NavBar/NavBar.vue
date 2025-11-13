@@ -1,18 +1,27 @@
 <template>
-	<view class="navbar" :style="{ height: navbarHeight + 'px', paddingTop: statusBarHeight + 'px' }">
-		<view class="navbar-content">
-			<!-- 左侧返回按钮 -->
-			<view v-if="showBack" class="navbar-left" @click="handleBack">
-				<uni-icons type="left" color="#6B5B95" size="18"></uni-icons>
+  <view
+    class="navbar"
+    :class="{ 
+      'navbar--shadow': shadow,
+      'navbar--scrolled': isScrolled
+    }"
+    :style="{
+      background: background,
+      paddingTop: (statusBarHeight / 2) + 'px'
+    }"
+  >
+    <view class="navbar__content">
+      <view class="navbar__curve navbar__curve--top"></view>
+      <view v-if="showBack" class="navbar__left" @click="handleBack">
+        <uni-icons type="left" color="#4F46E5" size="20" />
+      </view>
+      <view class="navbar__title">
+        <slot>{{ title }}</slot>
 			</view>
-			
-			<!-- 标题 -->
-			<view class="navbar-title">{{ title }}</view>
-			
-			<!-- 右侧插槽 -->
-			<view class="navbar-right">
-				<slot name="right"></slot>
+      <view class="navbar__right">
+        <slot name="right" />
 			</view>
+      <view class="navbar__curve navbar__curve--bottom"></view>
 		</view>
 	</view>
 </template>
@@ -26,91 +35,157 @@
 				default: ''
 			},
 			showBack: {
+      type: Boolean,
+      default: true
+    },
+    background: {
+      type: String,
+      default: 'rgba(255, 255, 255, 0.92)'
+    },
+    shadow: {
 				type: Boolean,
 				default: true
 			}
 		},
 		data() {
 			return {
+				isScrolled: false,
 				statusBarHeight: 0,
-				navbarHeight: 36
+				navbarHeight: 0
 			}
 		},
 		mounted() {
 			// 获取系统信息
-			try {
-				const windowInfo = uni.getWindowInfo()
-				this.statusBarHeight = windowInfo.statusBarHeight || 0
-				// navbarHeight = statusBarHeight + 导航栏内容高度(36px)
-				this.navbarHeight = this.statusBarHeight + 36
-			} catch (e) {
-				// 兼容旧版本
-				const systemInfo = uni.getSystemInfoSync()
-				this.statusBarHeight = systemInfo.statusBarHeight || 0
-				this.navbarHeight = this.statusBarHeight + 36
-			}
+			const systemInfo = uni.getSystemInfoSync()
+			// 状态栏高度，单位转换为rpx（1px = 2rpx）
+			this.statusBarHeight = (systemInfo.statusBarHeight || 22) * 2
+			this.navbarHeight = this.statusBarHeight + 88
 		},
 		methods: {
 			handleBack() {
-				// 检查是否可以返回
+      this.$emit('back')
 				const pages = getCurrentPages()
 				if (pages.length > 1) {
 					uni.navigateBack()
 				} else {
-					// 如果没有上一页，跳转到首页
-					uni.reLaunch({
-						url: '/pages/index/index'
-					})
+        uni.reLaunch({ url: '/pages/scenes/scenes' })
 				}
+			},
+			updateScrollState(scrollTop) {
+				this.isScrolled = (scrollTop || 0) > 20
+			}
+		},
+		created() {
+			// 使用全局事件总线监听滚动
+			if (typeof uni !== 'undefined' && uni.$on) {
+				uni.$on('pageScroll', this.updateScrollState)
+			}
+		},
+		beforeDestroy() {
+			if (typeof uni !== 'undefined' && uni.$off) {
+				uni.$off('pageScroll', this.updateScrollState)
 			}
 		}
 	}
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 	.navbar {
 		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
-		z-index: 999;
-		background-color: transparent;
-		backdrop-filter: blur(10rpx);
+		z-index: 998;
+		backdrop-filter: blur(20rpx) saturate(180%);
+		-webkit-backdrop-filter: blur(20rpx) saturate(180%);
+		box-sizing: border-box;
+		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+		overflow: hidden;
+		margin: 0;
 	}
-	
-	.navbar-content {
+
+	.navbar__status-bar {
+		height: var(--status-bar-height, 44rpx);
+		background: transparent;
+	}
+
+	.navbar--shadow {
+		box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+	}
+
+	.navbar--scrolled {
+		box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.12);
+	}
+
+	.navbar__content {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		height: 36px;
-		padding: 0 30rpx;
+		height: 88rpx; /* 固定导航栏内容高度 */
+		padding: 0 32rpx;
 		box-sizing: border-box;
+		position: relative;
+		margin: 0;
 	}
 	
-	.navbar-left {
-		width: 60rpx;
-		height: 36px;
+	.navbar__curve {
+		position: absolute;
+		left: 0;
+		right: 0;
+		height: 24rpx;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.navbar__curve--top {
+		top: -24rpx;
+		background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+	}
+
+	.navbar__curve--bottom {
+		bottom: -24rpx;
+		background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+	}
+
+	.navbar--scrolled .navbar__curve {
+		opacity: 1;
+	}
+
+	.navbar__left,
+	.navbar__right {
+		width: 80rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		cursor: pointer;
+		position: relative;
+		z-index: 2;
 	}
 	
+	.navbar__left {
+		height: 80rpx;
+		border-radius: 20rpx;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.navbar__left:active {
+		background: rgba(99, 102, 241, 0.1);
+		transform: scale(0.95);
+	}
 	
-	.navbar-title {
+	.navbar__title {
 		flex: 1;
 		text-align: center;
-		font-size: 28rpx;
-		font-weight: 600;
-		color: #6B5B95;
-	}
-	
-	.navbar-right {
-		width: 60rpx;
-		height: 36px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		font-size: 34rpx;
+		font-weight: 700;
+		color: #1f2937;
+		letter-spacing: 0.5rpx;
+		background: linear-gradient(135deg, #1f2937 0%, #4b5563 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+		position: relative;
+		z-index: 2;
 	}
 </style>
 

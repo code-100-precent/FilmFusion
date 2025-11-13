@@ -38,21 +38,47 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 用户认证拦截器 - 需要登录的接口
         registry.addInterceptor(jwtInterceptor)
-                .addPathPatterns("/api/interview-submission/**").excludePathPatterns("/api/interview-submission/list/**")
-                .addPathPatterns("/api/courses/add/course/**","/api/courses/course/**")
-                .addPathPatterns("/api/articles/**")
-                .addPathPatterns("/api/admin/update","/api/admin/consecutive-days","/api/admin/upload-avatar","/api/admin/change-password","/api/admin/set-password","/api/admin/contributions")
-                .addPathPatterns("/api/userfollower/**")
-                .addPathPatterns("/api/userPreferences/**")
-                .addPathPatterns("/api/resume/**")
-                .addPathPatterns("/api/feedback/**")
-                .addPathPatterns("/api/admin/**")
-                .excludePathPatterns("/api/admin/register", "/api/admin/register/email", "/api/admin/login/**")
-                .addPathPatterns("/api/visitor/info", "/api/visitor/update", "/api/visitor/logout")
-                .addPathPatterns("/api/achievement/**");
+                // 用户模块 - 排除登录和注册
+                .addPathPatterns("/api/user/**")
+                .excludePathPatterns("/api/user/login", "/api/user/register")
+                // 文章模块 - 只拦截需要登录的接口（创建、更新、删除），排除公开接口
+                .addPathPatterns("/api/article/**")
+                .excludePathPatterns("/api/article/page", "/api/article/*")
+                // 电视剧备案模块 - 只拦截需要登录的接口，排除公开接口
+                .addPathPatterns("/api/drama/**")
+                .excludePathPatterns("/api/drama/page", "/api/drama/*")
+                // 影视剧备案模块 - 只拦截需要登录的接口，排除公开接口
+                .addPathPatterns("/api/report/**")
+                .excludePathPatterns("/api/report/page", "/api/report/*")
+                // 拍摄场地模块 - 只拦截需要登录的接口，排除公开接口
+                .addPathPatterns("/api/location/**")
+                .excludePathPatterns("/api/location/page", "/api/location/*")
+                // 协拍服务模块 - 只拦截需要登录的接口，排除公开接口
+                .addPathPatterns("/api/shoot/**")
+                .excludePathPatterns("/api/shoot/page", "/api/shoot/*")
+                // 反馈模块 - 全部需要登录
+                .addPathPatterns("/api/feedback/**");
+        
+        // 管理员权限拦截器
         registry.addInterceptor(adminInterceptor)
-                .addPathPatterns("/api/admin/info");
+                .addPathPatterns("/api/admin/info")
+                // 用户模块的管理员接口
+                .addPathPatterns("/api/user/admin/**")
+                // 文章模块的管理员接口
+                .addPathPatterns("/api/article/admin/**")
+                // 电视剧备案模块的管理员接口
+                .addPathPatterns("/api/drama/admin/**")
+                // 影视剧备案模块的管理员接口
+                .addPathPatterns("/api/report/admin/**")
+                // 拍摄场地模块的管理员接口
+                .addPathPatterns("/api/location/admin/**")
+                // 协拍服务模块的管理员接口
+                .addPathPatterns("/api/shoot/admin/**")
+                // 反馈模块的管理员接口
+                .addPathPatterns("/api/feedback/admin/**");
+        
         registry.addInterceptor(registrationInterceptor)
                 .addPathPatterns("/api/admin/register/email");
     }

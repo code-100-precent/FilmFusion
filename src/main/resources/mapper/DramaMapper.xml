@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.cxdproject.coder.mapper.DramaMapper">
+
+    <resultMap id="BaseResultMap" type="cn.cxdproject.coder.model.entity.Drama">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="filing_num" property="filingNum" />
+        <result column="prod_company" property="prodCompany" />
+        <result column="crew_description" property="crewDescription" />
+        <result column="drama_description" property="dramaDescription" />
+        <result column="cast" property="cast" />
+        <result column="shoot_location" property="shootLocation" />
+        <result column="location_id" property="locationId" />
+        <result column="service" property="service" />
+        <result column="service_id" property="serviceId" />
+        <result column="user_id" property="userId" />
+        <result column="deleted" property="deleted" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+            `id`,
+            `name`,
+            `filing_num`,
+            `prod_company`,
+            `crew_description`,
+            `drama_description`,
+            `cast`,
+            `shoot_location`,
+            `location_id`,
+            `service`,
+            `service_id`,
+            `user_id`,
+            `deleted`,
+            `created_at`,
+            `updated_at`
+    </sql>
+
+</mapper>

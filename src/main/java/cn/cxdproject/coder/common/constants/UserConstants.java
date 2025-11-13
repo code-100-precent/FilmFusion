@@ -2,8 +2,6 @@ package cn.cxdproject.coder.common.constants;
 
 
 
-import cn.cxdproject.coder.model.entity.Admin;
-
 import java.security.SecureRandom;
 import java.util.UUID;
 
@@ -97,33 +95,6 @@ public interface UserConstants {
     String NEW_USER_NICKNAME = "Coder-" + UUID.randomUUID().toString().replace("-", "").substring(22);
 
     Long DEFAULT_USERID = 0L;
-    /**
-     * 构建新管理员
-     */
-    static Admin BuildNewAdmin(String email) {
-        return Admin.builder()
-                .username(NEW_USER_NICKNAME)
-                .email(email)
-                .password(NEW_USER_PASSWORD)
-                .avatar(DEFAULT_USER)
-                .role(USER)
-                .enabled(true)
-                .build();
-    }
-
-    /**
-     * 构建新管理员
-     */
-    static Admin BuildNewAdmin(String username, String email, String avatarUrl) {
-        return Admin.builder()
-                .username(username != null ? username : email)
-                .email(email)
-                .password(NEW_USER_PASSWORD + EMPTY_PASSWORD_HASH)
-                .avatar(avatarUrl)
-                .role(USER)
-                .enabled(true)
-                .build();
-    }
 
     static String generateComplexPassword() {
         String upperCaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

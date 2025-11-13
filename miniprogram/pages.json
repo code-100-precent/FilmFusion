@@ -1,9 +1,16 @@
 {
 	"pages": [
 		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "雅安影视服务",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/scenes/scenes",
 			"style": {
-				"navigationBarTitleText": "拍摄场景",
+				"navigationBarTitleText": "拍摄场地",
 				"navigationStyle": "custom"
 			}
 		},
@@ -32,7 +39,7 @@
 			"path": "pages/profile/profile",
 			"style": {
 				"navigationBarTitleText": "个人中心",
-				"navigationStyle": "default"
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -40,6 +47,27 @@
 			"style": {
 				"navigationBarTitleText": "登录",
 				"navigationStyle": "default"
+			}
+		},
+		{
+			"path": "pages/register/register",
+			"style": {
+				"navigationBarTitleText": "注册",
+				"navigationStyle": "default"
+			}
+		},
+		{
+			"path": "pages/profile/edit",
+			"style": {
+				"navigationBarTitleText": "个人信息",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/profile/password",
+			"style": {
+				"navigationBarTitleText": "修改密码",
+				"navigationStyle": "custom"
 			}
 		}
 	],
@@ -50,7 +78,6 @@
 		"navigationStyle": "default",
 		"backgroundColor": "#F8F8F8"
 	},
-	"uniIdRouter": {},
 	"easycom": {
 		"autoscan": true,
 		"custom": {

@@ -47,14 +47,20 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (handler instanceof HandlerMethod) {
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             if (handlerMethod.hasMethodAnnotation(PublicAccess.class)) {
+                log.debug("接口 {} 标记为公开访问，直接放行", request.getRequestURI());
                 return true;
             }
+        }
+        
+        // 如果不是HandlerMethod（如静态资源），直接放行
+        if (!(handler instanceof HandlerMethod)) {
+            return true;
         }
         
         try {
             // 从请求头中获取token
             String token = request.getHeader("Authorization");
-            if (token == null) {
+            if (token == null || token.trim().isEmpty()) {
                 throw new AuthorizationException("未登录或token已过期");
             }
             // 验证token
@@ -64,15 +70,15 @@ public class AuthInterceptor implements HandlerInterceptor {
             if (!jwtConfig.validateToken(token)) {
                 throw new AuthorizationException("token无效");
             }
-            
+
             // 根据token类型设置对应的上下文
             String tokenType = getTokenType(token);
-            if ("admin".equals(tokenType)) {
-                AuthContext.setCurrentAdmin(jwtConfig.getAdminFromToken(token));
+            if ("user".equals(tokenType)) {
+                AuthContext.setCurrentUser(jwtConfig.getUserFromToken(token));
             } else {
                 throw new AuthorizationException("token类型无效");
             }
-            
+
             AuthContext.setCurrentToken(token);
             return true;
         } catch (AuthorizationException e) {

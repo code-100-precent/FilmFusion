@@ -2,6 +2,7 @@ package cn.cxdproject.coder.common.generate;
 
 /**
  * 索引信息模型类
+ *
  * 表示数据库中某个字段对应的索引元信息。
  * 通常由 JDBC 的 DatabaseMetaData#getIndexInfo() 获取。
  * 用于代码生成时判断字段是否具有索引、是否唯一。
