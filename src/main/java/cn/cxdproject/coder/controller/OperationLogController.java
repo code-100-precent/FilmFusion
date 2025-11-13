@@ -15,7 +15,7 @@ import java.util.List;
  * @author Hibiscus-code-generate
  */
 @RestController
-@RequestMapping("/api/operationlog")
+@RequestMapping("/api/operation-log")
 public class OperationLogController {
 
     private final OperationLogService operationLogService;

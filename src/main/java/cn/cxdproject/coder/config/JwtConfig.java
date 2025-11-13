@@ -46,53 +46,63 @@ public class JwtConfig {
     }
 
     /**
-     * 为管理员生成Token
+     * 为用户生成Token
      */
-//    public String generateToken(Admin admin) {
-//        if (admin == null) {
-//            return null;
-//        }
-//        HashMap<String, Object> objectObjectHashMap = new HashMap<>();
-//        objectObjectHashMap.put("id", admin.getId());
-//        objectObjectHashMap.put("username", admin.getUsername());
-//        objectObjectHashMap.put("email", admin.getEmail());
-//        objectObjectHashMap.put("avatar", admin.getAvatar());
-//        objectObjectHashMap.put("role", admin.getRole());
-//        objectObjectHashMap.put("type", "admin");
-//        return Jwts.builder()
-//            .setSubject(String.valueOf(admin.getId()))
-//            .setClaims(objectObjectHashMap)
-//            .setIssuedAt(new Date())
-//            .setExpiration(new Date(System.currentTimeMillis() + expiration))
-//            .signWith(SignatureAlgorithm.HS512, secret)
-//            .compact();
-//    }
-//
-//    public boolean validateToken(String token) {
-//        try {
-//            Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
-//            return !isTokenBlacklisted(token);
-//        } catch (ExpiredJwtException e) {
-//            log.debug("JWT token expired: {}", e.getMessage());
-//            return false;
-//        } catch (Exception e) {
-//            log.warn("Invalid JWT token: {}", e.getMessage());
-//            return false;
-//        }
-//    }
+    public String generateToken(cn.cxdproject.coder.model.entity.User user) {
+        if (user == null) {
+            return null;
+        }
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("id", user.getId());
+        claims.put("username", user.getUsername());
+        claims.put("phoneNumber", user.getPhoneNumber());
+        claims.put("avatar", user.getAvatar());
+        claims.put("role", user.getRole());
+        claims.put("enabled", user.getEnabled());
+        claims.put("type", "user");
+        return Jwts.builder()
+            .setSubject(String.valueOf(user.getId()))
+            .setClaims(claims)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + expiration))
+            .signWith(SignatureAlgorithm.HS512, secret)
+            .compact();
+    }
 
-//    private boolean isTokenBlacklisted(String token) {
-//        try {
-//                Admin admin = getAdminFromToken(token);
-//                return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember("jwt:blacklist:" + admin.getEmail(), token));
-//        } catch (Exception e) {
-//            log.debug("Cannot check token blacklist due to invalid token: {}", e.getMessage());
-//            return false;
-//        }
-//    }
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
+            return !isTokenBlacklisted(token);
+        } catch (ExpiredJwtException e) {
+            log.debug("JWT token expired: {}", e.getMessage());
+            return false;
+        } catch (Exception e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
+            return false;
+        }
+    }
 
-    // token type is always admin in template
-    public String getTokenType(String token) { return "admin"; }
+    private boolean isTokenBlacklisted(String token) {
+        try {
+            cn.cxdproject.coder.model.entity.User user = getUserFromToken(token);
+            return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember("jwt:blacklist:" + user.getUsername(), token));
+        } catch (Exception e) {
+            log.debug("Cannot check token blacklist due to invalid token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 获取Token类型
+     */
+    public String getTokenType(String token) {
+        try {
+            Claims claims = getClaimsFromToken(token);
+            return claims.get("type", String.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     /**
      * 从Token中获取Claims（供内部使用）
@@ -104,21 +114,21 @@ public class JwtConfig {
                 .getBody();
     }
 
-//    public String refreshToken(String oldToken) {
-//        if (validateToken(oldToken)) {
-//            Date now = new Date();
-//            Date expiryDate = getExpirationDateFromToken(oldToken);
-//            if (expiryDate.getTime() - now.getTime() < 300000) {
-//                    return generateToken(getAdminFromToken(oldToken));
-//            }
-//        }
-//        return null;
-//    }
+    public String refreshToken(String oldToken) {
+        if (validateToken(oldToken)) {
+            Date now = new Date();
+            Date expiryDate = getExpirationDateFromToken(oldToken);
+            if (expiryDate.getTime() - now.getTime() < 300000) {
+                    return generateToken(getUserFromToken(oldToken));
+            }
+        }
+        return null;
+    }
     
-//    public void invalidateToken(String token) {
-//            Admin admin = getAdminFromToken(token);
-//            redisTemplate.opsForSet().add("jwt:blacklist:" + admin.getEmail(), token);
-//    }
+    public void invalidateToken(String token) {
+            cn.cxdproject.coder.model.entity.User user = getUserFromToken(token);
+            redisTemplate.opsForSet().add("jwt:blacklist:" + user.getUsername(), token);
+    }
 
     // template omits scheduled cleanup; rely on TTL policies if needed
 
@@ -130,44 +140,36 @@ public class JwtConfig {
             .getExpiration();
     }
 //
-//    public Admin getAdminFromToken(String token) {
-//        try {
-//            Claims claims = Jwts.parser()
-//                    .setSigningKey(secret)
-//                    .parseClaimsJws(token)
-//                    .getBody();
-//
-//            Long adminId = claims.get("id", Long.class);
-//            String username = claims.get("username", String.class);
-//            if (username == null || username.isEmpty()) {
-//                throw new IllegalArgumentException("Username is missing or empty in the token");
-//            }
-//
-//            String email = claims.get("email", String.class);
-//            String avatarUrl = claims.get("avatar", String.class);
-//            String role = claims.get("role", String.class);
-//
-//            return Admin.builder()
-//                    .id(adminId)
-//                    .username(username)
-//                    .email(email)
-//                    .avatar(avatarUrl)
-//                    .role(role)
-//                    .build();
-//        } catch (JwtException e) {
-//            log.error("Invalid JWT token: {}", token, e);
-//            throw new JwtException("Invalid token provided.");
-//        }
-//    }
-//
-//    // visitor token operations removed in template
-//
-//    /**
-//     * @deprecated Use getAdminFromToken instead
-//     */
-//    @Deprecated
-//    public Admin getUserFromToken(String token) {
-//        return getAdminFromToken(token);
-//    }
+    public cn.cxdproject.coder.model.entity.User getUserFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(secret)
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            Long userId = claims.get("id", Long.class);
+            String username = claims.get("username", String.class);
+            if (username == null || username.isEmpty()) {
+                throw new IllegalArgumentException("Username is missing or empty in the token");
+            }
+
+            String phoneNumber = claims.get("phoneNumber", String.class);
+            String avatarUrl = claims.get("avatar", String.class);
+            String role = claims.get("role", String.class);
+            Boolean enabled = claims.get("enabled", Boolean.class);
+
+            return cn.cxdproject.coder.model.entity.User.builder()
+                    .id(userId)
+                    .username(username)
+                    .phoneNumber(phoneNumber)
+                    .avatar(avatarUrl)
+                    .role(role)
+                    .enabled(enabled)
+                    .build();
+        } catch (JwtException e) {
+            log.error("Invalid JWT token: {}", token, e);
+            throw new JwtException("Invalid token provided.");
+        }
+    }
 
 }
