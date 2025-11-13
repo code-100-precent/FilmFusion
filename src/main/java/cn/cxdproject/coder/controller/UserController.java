@@ -4,6 +4,7 @@ import cn.cxdproject.coder.common.ApiResponse;
 import cn.cxdproject.coder.common.PageResponse;
 import cn.cxdproject.coder.common.anno.PublicAccess;
 import cn.cxdproject.coder.common.context.AuthContext;
+import cn.cxdproject.coder.config.JwtConfig;
 import cn.cxdproject.coder.model.dto.*;
 import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.UserVO;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -28,9 +30,11 @@ import javax.validation.constraints.NotNull;
 public class UserController {
 
     private final UserService userService;
+    private final JwtConfig jwtConfig;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, JwtConfig jwtConfig) {
         this.userService = userService;
+        this.jwtConfig = jwtConfig;
     }
 
     /**
@@ -122,6 +126,22 @@ public class UserController {
         return ApiResponse.success(isAdmin);
     }
 
+    /**
+     * 用户退出登录
+     */
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(HttpServletRequest request) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        String token = jwtConfig.getTokenFromHeader(request);
+        if (token != null) {
+            jwtConfig.invalidateToken(token);
+        }
+        return ApiResponse.success();
+    }
+
     // ==================== 管理员接口 ====================
 
     /**
@@ -161,19 +181,19 @@ public class UserController {
      * 管理员分页查询用户
      */
     @GetMapping("/admin/page")
-    public ApiResponse<PageResponse<UserVO>> getUserPageByAdmin(
+    public PageResponse<UserVO> getUserPageByAdmin(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         // 权限检查在拦截器中完成
         Page<User> page = new Page<>(current, size);
         Page<UserVO> userPage = userService.getUserPageByAdmin(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) userPage.getCurrent(),
                 (int) userPage.getSize(),
                 userPage.getTotal(),
                 userPage.getRecords()
-        ));
+        );
     }
 
     /**

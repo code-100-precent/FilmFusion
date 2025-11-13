@@ -1,392 +1,347 @@
 <template>
-  <PageShell
-    style="margin-top: 50px"
-    title="雅安取景手册"
-    :show-back="false"
-    :show-tab="true"
-    tab-key="scenes"
-    :refresher-enabled="false"
-  >
-    <view class="hero-card">
-      <view>
-        <view class="hero-card__title">雅安取景手册</view>
-        <view class="hero-card__subtitle">文化、山水、年代、建筑与特色资源一站汇总</view>
-		</view>
-      <view class="hero-card__meta">
-        <view class="hero-card__tag">实时同步</view>
-        <view class="hero-card__tag">资源共建</view>
-				</view>
-			</view>
+  <view class="scenes-page">
+    <NavBar title="拍摄场地" :show-back="false"></NavBar>
 
-    <view v-if="error" class="error-block">
-      <text class="error-block__title">数据加载失败</text>
-      <text class="error-block__desc">{{ error }}</text>
-      <button class="error-block__btn" @click="fetchScenes">重新加载</button>
+    <view class="content">
+      <!-- 搜索栏 -->
+      <view class="search-bar">
+        <view class="search-input-wrapper">
+          <uni-icons type="search" size="18" color="#9ca3af"></uni-icons>
+          <input
+            v-model="keyword"
+            class="search-input"
+            type="text"
+            placeholder="搜索场地名称、类型、地址..."
+            @confirm="handleSearch"
+            @input="handleSearch"
+          />
+        </view>
+      </view>
+
+      <!-- 场地列表 -->
+      <scroll-view
+        class="location-list"
+        scroll-y
+        @scrolltolower="loadMore"
+        :refresher-enabled="true"
+        :refresher-triggered="refreshing"
+        @refresherrefresh="handleRefresh"
+      >
+        <view v-if="loading && locations.length === 0" class="loading-wrapper">
+          <Loading></Loading>
+        </view>
+        <view v-else-if="locations.length === 0" class="empty-wrapper">
+          <Empty text="暂无场地"></Empty>
+        </view>
+        <view v-else>
+          <view
+            v-for="location in locations"
+            :key="location.id"
+            class="location-card"
+            @click="goToDetail(location.id)"
+          >
+            <view class="location-header">
+              <view class="location-title-row">
+                <text class="location-name">{{ location.name }}</text>
+                <view class="location-badge">{{ location.type }}</view>
+              </view>
+              <view class="location-status" :class="{ 'status-available': location.status === 1 }">
+                {{ location.status === 1 ? '可用' : '不可用' }}
+              </view>
+            </view>
+            <text class="location-desc">{{ location.locationDescription }}</text>
+            <view class="location-info">
+              <view class="info-item">
+                <uni-icons type="location" size="16" color="#6366f1"></uni-icons>
+                <text>{{ location.address }}</text>
+              </view>
+              <view class="info-item">
+                <uni-icons type="phone" size="16" color="#6366f1"></uni-icons>
+                <text>{{ location.contactPhone }}</text>
+              </view>
+              <view class="info-item">
+                <uni-icons type="person" size="16" color="#6366f1"></uni-icons>
+                <text>{{ location.contactName }}</text>
+              </view>
+            </view>
+            <view class="location-footer">
+              <text class="location-price">¥{{ location.price }}/天</text>
+              <text class="view-detail">查看详情</text>
+            </view>
+          </view>
+        </view>
+
+        <view v-if="hasMore && !loading" class="load-more">
+          <text>上拉加载更多</text>
+        </view>
+        <view v-if="!hasMore && locations.length > 0" class="no-more">
+          <text>没有更多了</text>
+        </view>
+      </scroll-view>
     </view>
 
-    <view v-else>
-      <view v-for="group in groups" :key="group.key" class="section">
-        <view class="section__header">
-          <view class="section__title">
-            <text>{{ group.title }}</text>
-            <text v-if="group.description" class="section__hint">{{ group.description }}</text>
-						</view>
-          <view class="section__badge">{{ group.items.length }} 处</view>
-					</view>
-
-        <view v-if="loading" class="grid">
-          <view v-for="n in 4" :key="n" class="card-skeleton">
-            <view class="card-skeleton__thumb" />
-            <view class="card-skeleton__line card-skeleton__line--lg" />
-            <view class="card-skeleton__line" />
-				</view>
-			</view>
-
-        <view v-else-if="group.items.length === 0" class="empty">
-          <Empty text="暂无资源，稍后再来看看" />
-			</view>
-
-        <view v-else class="grid">
-          <view v-for="item in group.items" :key="item.poiId" class="card" @click="openPoiDetail(item)">
-            <image class="card__thumb" :src="item.imageUrl || placeholders[group.key] || defaultCover" mode="aspectFill" />
-            <view class="card__body">
-              <view class="card__title">{{ item.name }}</view>
-              <text class="card__desc">{{ item.intro || '暂无介绍' }}</text>
-              <view class="card__tags" v-if="item.tags && item.tags.length">
-                <text v-for="tag in item.tags" :key="tag" class="card__tag">#{{ tag }}</text>
-						</view>
-					</view>
-				</view>
-			</view>
-				</view>
-			</view>
-  </PageShell>
+    <!-- 底部导航栏 -->
+    <TabBar :current="'scenes'"></TabBar>
+  </view>
 </template>
 
 <script>
-import PageShell from '../../components/layout/PageShell.vue'
+import NavBar from '../../components/NavBar/NavBar.vue'
+import TabBar from '../../components/TabBar/TabBar.vue'
+import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
-import { getPoiList } from '../../services/api'
-
-const DEFAULT_COVER = 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=60'
-const PLACEHOLDERS = {
-  culture: 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=800&q=60',
-  nature: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=60',
-  arch: 'https://images.unsplash.com/photo-1600585154340-0ef3c08dcdb6?auto=format&fit=crop&w=800&q=60',
-  memory: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=60'
-}
-const TYPE_LABELS = {
-  culture: { title: '雅州文化', description: '传统人文与历史足迹' },
-  nature: { title: '生态山水', description: '峡谷飞瀑与自然生态' },
-  arch: { title: '建筑场景', description: '城市与民居空间' },
-  memory: { title: '年代记忆', description: '年代风貌与工业遗址' }
-}
+import { getLocationPage } from '../../services/api'
 
 export default {
   components: {
-    PageShell,
+    NavBar,
+    TabBar,
+    Loading,
     Empty
   },
-	data() {
-		return {
+  data() {
+    return {
+      keyword: '',
+      locations: [],
+      current: 1,
+      size: 10,
+      total: 0,
       loading: false,
       refreshing: false,
-      error: '',
-      poiList: [],
-      defaultCover: DEFAULT_COVER,
-      placeholders: PLACEHOLDERS
+      hasMore: true
     }
   },
-  computed: {
-    groups() {
-      const map = {}
-      this.poiList.forEach((item) => {
-        const key = (item.type || 'others').toLowerCase()
-        if (!map[key]) {
-          map[key] = []
-        }
-        map[key].push(item)
-      })
-
-      return Object.keys(map).map((key) => {
-        const meta = TYPE_LABELS[key] || { title: key.toUpperCase() }
-        return {
-          key,
-          title: meta.title,
-          description: meta.description,
-          items: map[key]
-        }
-      })
-    }
+  onLoad() {
+    this.loadLocations()
   },
   methods: {
-    async fetchScenes() {
+    async loadLocations(reset = false) {
+      if (this.loading) return
+
+      if (reset) {
+        this.current = 1
+        this.locations = []
+        this.hasMore = true
+      }
+
       this.loading = true
-      this.error = ''
       try {
-        const { data } = await getPoiList()
-        this.poiList = data || []
-      } catch (err) {
-        this.error = (err && err.message) || '无法获取取景点数据'
+        const res = await getLocationPage({
+          current: this.current,
+          size: this.size,
+          keyword: this.keyword || undefined
+        })
+
+        if (res.code === 200) {
+          // 后端返回格式: { code: 200, message: "请求成功", data: [...], pagination: {...} }
+          const dataList = Array.isArray(res.data) ? res.data : []
+          const pagination = res.pagination || {}
+          
+          if (reset) {
+            this.locations = dataList
+          } else {
+            this.locations = [...this.locations, ...dataList]
+          }
+          this.total = pagination.totalItems || 0
+          this.hasMore = this.locations.length < this.total
+        }
+      } catch (error) {
+        console.error('加载场地失败:', error)
+        uni.showToast({
+          title: '加载失败，请稍后重试',
+          icon: 'none'
+        })
       } finally {
         this.loading = false
         this.refreshing = false
       }
     },
-    handleRefresh() {
-      if (this.loading) return
-      this.refreshing = true
-      this.fetchScenes()
+    handleSearch() {
+      this.loadLocations(true)
     },
-    openPoiDetail(item) {
-      if (!item || !item.poiId) {
-        uni.showToast({
-          title: '数据异常',
-          icon: 'none'
-        })
-        return
-      }
-      // 记录浏览历史
-      const token = uni.getStorageSync('token')
-      if (token) {
-        const visitorInfo = uni.getStorageSync('visitorInfo')
-        if (visitorInfo && visitorInfo.visitorId) {
-          // 异步记录，不阻塞跳转
-          import('../../services/api').then(({ addBrowse }) => {
-            addBrowse({ poiId: item.poiId, visitorId: visitorInfo.visitorId }).catch(() => {
-              // 静默失败
-            })
-          })
-        }
-      }
-      // 跳转到详情页（如果存在）
-      uni.navigateTo({
-        url: `/pages/poi-detail/poi-detail?poiId=${item.poiId}`,
-        fail: () => {
-          uni.showToast({
-            title: '详情页开发中',
-            icon: 'none'
-          })
-        }
+    handleRefresh() {
+      this.refreshing = true
+      this.loadLocations(true)
+    },
+    loadMore() {
+      if (!this.hasMore || this.loading) return
+      this.current++
+      this.loadLocations()
+    },
+    goToDetail(id) {
+      uni.showToast({
+        title: '功能开发中',
+        icon: 'none'
       })
     }
-  },
-  onLoad() {
-    this.fetchScenes()
   }
 }
 </script>
 
-<style scoped lang="scss">
-.hero-card {
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-  border-radius: 32rpx;
-  padding: 48rpx 42rpx;
-  margin-bottom: 40rpx;
+<style lang="scss" scoped>
+.scenes-page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-top: 132rpx;
+  box-sizing: border-box;
+}
+
+.content {
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.search-bar {
+  margin-top: 24rpx;
+  margin-bottom: 32rpx;
+}
+
+.search-input-wrapper {
   display: flex;
-  flex-direction: column;
-  gap: 28rpx;
-  border: 1rpx solid rgba(99, 102, 241, 0.16);
-  box-shadow: 0 18rpx 48rpx rgba(99, 102, 241, 0.15);
-  color: #312e81;
-}
-
-.hero-card__title {
-  font-size: 40rpx;
-  font-weight: 700;
-  margin-bottom: 8rpx;
-}
-
-.hero-card__subtitle {
-  font-size: 26rpx;
-  color: rgba(49, 46, 129, 0.76);
-}
-
-.hero-card__meta {
-  display: flex;
+  align-items: center;
   gap: 16rpx;
+  padding: 0 24rpx;
+  height: 80rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.hero-card__tag {
-  padding: 12rpx 24rpx;
-  border-radius: 999rpx;
-  background: rgba(79, 70, 229, 0.12);
-  font-size: 22rpx;
-  color: #4338ca;
-}
-
-.error-block {
-  background: #fff5f5;
-  border-radius: 24rpx;
-  padding: 48rpx;
-  border: 1rpx solid rgba(248, 113, 113, 0.24);
-  text-align: center;
-  color: #b91c1c;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.error-block__title {
-  font-size: 32rpx;
-  font-weight: 600;
-}
-
-.error-block__desc {
-  font-size: 26rpx;
-  color: rgba(185, 28, 28, 0.78);
-}
-
-.error-block__btn {
-  margin-top: 12rpx;
-  height: 88rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(135deg, #f97316, #ef4444);
-  color: #fff;
+.search-input {
+  flex: 1;
   font-size: 28rpx;
-  border: none;
+  color: #1f2937;
 }
 
-.section {
-  margin-bottom: 48rpx;
+.location-list {
+  height: calc(100vh - 88rpx - 200rpx);
 }
 
-.section__header {
+.loading-wrapper,
+.empty-wrapper {
+  padding: 100rpx 0;
+  display: flex;
+  justify-content: center;
+}
+
+.location-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.location-card:active {
+  transform: translateY(-4rpx);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.location-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+.location-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+}
+
+.location-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.location-badge {
+  padding: 6rpx 16rpx;
+  background: #eef2ff;
+  color: #6366f1;
+  font-size: 22rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+
+.location-status {
+  padding: 6rpx 16rpx;
+  background: #fee2e2;
+  color: #ef4444;
+  font-size: 22rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+
+.status-available {
+  background: #d1fae5;
+  color: #10b981;
+}
+
+.location-desc {
+  display: block;
+  font-size: 28rpx;
+  color: #6b7280;
+  line-height: 1.8;
+  margin-bottom: 24rpx;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+  padding: 20rpx;
+  background: #f9fafb;
+  border-radius: 12rpx;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 26rpx;
+  color: #374151;
+}
+
+.location-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24rpx;
-  gap: 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f3f4f6;
 }
 
-.section__title {
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx;
-  font-size: 34rpx;
+.location-price {
+  font-size: 32rpx;
   font-weight: 700;
-  color: #1f2937;
+  color: #f59e0b;
 }
 
-.section__hint {
-  font-size: 24rpx;
-  color: #6b7280;
-  font-weight: 400;
+.view-detail {
+  font-size: 26rpx;
+  color: #6366f1;
+  font-weight: 500;
 }
 
-.section__badge {
-  padding: 10rpx 24rpx;
-  border-radius: 999rpx;
-  background: rgba(79, 70, 229, 0.08);
-  font-size: 24rpx;
-  color: #4338ca;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20rpx;
-}
-
-.card {
-  background: #ffffff;
-  border-radius: 28rpx;
-  overflow: hidden;
-  border: 1rpx solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 18rpx 36rpx rgba(30, 64, 175, 0.08);
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card:active {
-  transform: translateY(-4rpx);
-  box-shadow: 0 24rpx 48rpx rgba(30, 64, 175, 0.12);
-}
-
-.card__thumb {
-  width: 100%;
-  height: 220rpx;
-}
-
-.card__body {
-  padding: 26rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx;
-}
-
-.card__title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.card__desc {
-  font-size: 24rpx;
-  color: #6b7280;
-  line-height: 1.6;
-}
-
-.card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
-}
-
-.card__tag {
-  font-size: 22rpx;
-  color: #4338ca;
-  background: rgba(67, 56, 202, 0.08);
-  border-radius: 12rpx;
-  padding: 6rpx 16rpx;
-}
-
-.card-skeleton {
-  background: #fff;
-  border-radius: 28rpx;
-  padding: 24rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 18rpx;
-  border: 1rpx solid rgba(226, 232, 240, 0.6);
-}
-
-.card-skeleton__thumb {
-  height: 220rpx;
-  border-radius: 24rpx;
-  background: linear-gradient(90deg, #f3f4f6 25%, #edeef3 50%, #f3f4f6 75%);
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
-.card-skeleton__line {
-  height: 26rpx;
-  border-radius: 12rpx;
-  background: linear-gradient(90deg, #f3f4f6 25%, #edeef3 50%, #f3f4f6 75%);
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
-.card-skeleton__line--lg {
-  width: 80%;
-}
-
-.empty {
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 48rpx 24rpx;
-  border: 1rpx solid rgba(226, 232, 240, 0.6);
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+.load-more,
+.no-more {
+  text-align: center;
+  padding: 40rpx 0;
+  font-size: 26rpx;
+  color: #9ca3af;
 }
 </style>
-

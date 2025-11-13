@@ -53,21 +53,24 @@ public class FeedbackController {
      * 获取自己的反馈列表
      */
     @GetMapping("/my")
-    public ApiResponse<PageResponse<FeedbackVO>> getMyFeedbackPage(
+    public PageResponse<FeedbackVO> getMyFeedbackPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
+            PageResponse<FeedbackVO> errorResponse = new PageResponse<>();
+            errorResponse.setCode(401);
+            errorResponse.setMessage("未登录");
+            return errorResponse;
         }
         Page<Feedback> page = new Page<>(current, size);
         Page<FeedbackVO> feedbackPage = feedbackService.getMyFeedbackPage(currentUser.getId(), page);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) feedbackPage.getCurrent(),
                 (int) feedbackPage.getSize(),
                 feedbackPage.getTotal(),
                 feedbackPage.getRecords()
-        ));
+        );
     }
 
     /**
@@ -109,19 +112,19 @@ public class FeedbackController {
      * 管理员分页查询反馈
      */
     @GetMapping("/admin/page")
-    public ApiResponse<PageResponse<FeedbackVO>> getFeedbackPageByAdmin(
+    public PageResponse<FeedbackVO> getFeedbackPageByAdmin(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status) {
         Page<Feedback> page = new Page<>(current, size);
         Page<FeedbackVO> feedbackPage = feedbackService.getFeedbackPageByAdmin(page, keyword, status);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) feedbackPage.getCurrent(),
                 (int) feedbackPage.getSize(),
                 feedbackPage.getTotal(),
                 feedbackPage.getRecords()
-        ));
+        );
     }
 
     /**

@@ -1,82 +1,137 @@
-// 使用 Mock 数据，不调用真实后端接口
-import mockApi from '../utils/mockData'
+/**
+ * API 服务层 - 对接后端接口
+ */
+import { http } from '../utils/http'
 
+// 基础响应类型
 export interface ApiResponse<T> {
   code: number
   message: string
   data: T
 }
 
-export interface VisitorLoginParams {
-  phone: string
+// 分页响应类型（后端实际返回格式）
+export interface PageResponse<T> {
+  code: number
+  message: string
+  data: T[]  // 直接是数组
+  pagination: {
+    currentPage: number
+    pageSize: number
+    totalItems: number
+    totalPages: number
+  }
+}
+
+// ==================== 用户相关 ====================
+
+export interface LoginDTO {
+  username: string
   password: string
 }
 
-export interface VisitorRegisterParams {
-  phone: string
+export interface RegisterDTO {
+  username: string
   password: string
-  name: string
-  identity: string
+  phoneNumber: string
 }
 
-export interface VisitorVO {
-  visitorId: string
-  name: string
-  phone: string
-  identity: string
-  registerTime?: string
-  lastLoginTime?: string
-  token?: string
-  avatar?: string
+export interface UserInfo {
+  id: number
+  username: string
+  phoneNumber: string
+  avatar: string
+  role: string
+  enabled: boolean
 }
 
-export interface POI {
-  poiId: string
-  name: string
-  x?: number
-  y?: number
-  type: string
-  intro: string
-  imageUrl?: string
-  openTime?: string
-  tags?: string[]
+export interface LoginResponse {
+  token: string
+  userInfo: UserInfo
 }
 
-export interface Story {
-  storyId: number
+// 用户登录
+export const userLogin = (params: LoginDTO): Promise<ApiResponse<LoginResponse>> => {
+  return http<LoginResponse>({
+    url: '/user/login',
+    method: 'POST',
+    data: params
+  })
+}
+
+// 用户注册
+export const userRegister = (params: RegisterDTO): Promise<ApiResponse<LoginResponse>> => {
+  return http<LoginResponse>({
+    url: '/user/register',
+    method: 'POST',
+    data: params
+  })
+}
+
+// 获取当前用户信息
+export const getCurrentUserInfo = (): Promise<ApiResponse<UserInfo>> => {
+  return http<UserInfo>({
+    url: '/user/info',
+    method: 'GET'
+  })
+}
+
+// 更新用户信息
+export const updateUserInfo = (data: { username?: string; phoneNumber?: string }): Promise<ApiResponse<UserInfo>> => {
+  return http<UserInfo>({
+    url: '/user/info',
+    method: 'PUT',
+    data
+  })
+}
+
+// 修改密码
+export const changePassword = (data: { oldPassword: string; newPassword: string }): Promise<ApiResponse<void>> => {
+  return http<void>({
+    url: '/user/password',
+    method: 'PUT',
+    data
+  })
+}
+
+// 退出登录
+export const userLogout = (): Promise<ApiResponse<void>> => {
+  return http<void>({
+    url: '/user/logout',
+    method: 'POST'
+  })
+}
+
+// ==================== 文章相关 ====================
+
+export interface Article {
+  id: number
   title: string
+  issueUnit: string
+  issueTime: string
   content: string
-  publishTime?: string
-  alumniId?: number
-  poiId?: string
-  imageUrl?: string
-  emotionTags?: Array<{ tagId: number; tagName: string }>
+  createdAt?: string
+  updatedAt?: string
 }
 
-export interface Route {
-  routeId: number
-  routeName: string
-  routeDesc?: string
-  duration?: number
-  suitableIdentity?: string
-  poisCount?: number
+// 分页获取文章列表
+export const getArticlePage = (params: { current?: number; size?: number; keyword?: string }): Promise<PageResponse<Article>> => {
+  return http<Article[]>({
+    url: '/article/page',
+    method: 'GET',
+    data: params
+  }) as Promise<PageResponse<Article>>
 }
 
-export interface Collection {
-  id?: number
-  poiId: string
-  visitorId: string
-  name?: string
-  collectTime?: string
+// 获取文章详情
+export const getArticleById = (id: number): Promise<ApiResponse<Article>> => {
+  return http<Article>({
+    url: `/article/${id}`,
+    method: 'GET'
+  })
 }
 
-export interface BrowseRecord {
-  id?: number
-  poiId: string
-  visitorId: string
-  name?: string
-  browseTime?: string
-}
+// ==================== 拍摄场地相关 ====================
 
 export interface Location {
   id: number
@@ -88,10 +143,30 @@ export interface Location {
   contactName: string
   address: string
   price: number
+  createdAt?: string
   updatedAt?: string
 }
 
-export interface ShootService {
+// 分页获取拍摄场地列表
+export const getLocationPage = (params: { current?: number; size?: number; keyword?: string }): Promise<PageResponse<Location>> => {
+  return http<Location[]>({
+    url: '/location/page',
+    method: 'GET',
+    data: params
+  }) as Promise<PageResponse<Location>>
+}
+
+// 获取拍摄场地详情
+export const getLocationById = (id: number): Promise<ApiResponse<Location>> => {
+  return http<Location>({
+    url: `/location/${id}`,
+    method: 'GET'
+  })
+}
+
+// ==================== 协拍服务相关 ====================
+
+export interface Shoot {
   id: number
   name: string
   description: string
@@ -100,145 +175,123 @@ export interface ShootService {
   address: string
   phone: string
   contactName: string
+  createdAt?: string
   updatedAt?: string
 }
 
-export interface Article {
-  id: number
-  title: string
-  issueUnit: string
-  issueTime: string
-  content: string
-  coverUrl?: string
+// 分页获取协拍服务列表
+export const getShootPage = (params: { current?: number; size?: number; keyword?: string }): Promise<PageResponse<Shoot>> => {
+  return http<Shoot[]>({
+    url: '/shoot/page',
+    method: 'GET',
+    data: params
+  }) as Promise<PageResponse<Shoot>>
 }
 
-export interface ReportPayload {
+// 获取协拍服务详情
+export const getShootById = (id: number): Promise<ApiResponse<Shoot>> => {
+  return http<Shoot>({
+    url: `/shoot/${id}`,
+    method: 'GET'
+  })
+}
+
+// ==================== 影视剧备案相关 ====================
+
+export interface Report {
+  id: number
   name: string
-  contact: string
-  phoneNumber: string
+  type: string
+  genre: string
+  episodes: number
+  investAmount: number
+  mainCreators: string
+  leadProducer: string
+  producerUnit: string
   startDate: string
   endDate: string
   crewScale: string
+  contact: string
+  phoneNumber: string
+  crewPosition: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface CreateReportDTO {
+  name: string
+  type: string
+  genre: string
+  episodes: number
+  investAmount: number
+  mainCreators: string
   leadProducer: string
   producerUnit: string
-  location: string
-  remark?: string
-  fileIds?: string[]
+  startDate: string
+  endDate: string
+  crewScale: string
+  contact: string
+  phoneNumber: string
+  crewPosition: string
 }
 
-export interface FeedbackPayload {
-  type: string
+// 分页获取影视剧备案列表
+export const getReportPage = (params: { current?: number; size?: number; keyword?: string }): Promise<PageResponse<Report>> => {
+  return http<Report[]>({
+    url: '/report/page',
+    method: 'GET',
+    data: params
+  }) as Promise<PageResponse<Report>>
+}
+
+// 获取影视剧备案详情
+export const getReportById = (id: number): Promise<ApiResponse<Report>> => {
+  return http<Report>({
+    url: `/report/${id}`,
+    method: 'GET'
+  })
+}
+
+// 创建影视剧备案
+export const createReport = (data: CreateReportDTO): Promise<ApiResponse<Report>> => {
+  return http<Report>({
+    url: '/report',
+    method: 'POST',
+    data
+  })
+}
+
+// ==================== 反馈相关 ====================
+
+export interface Feedback {
+  id: number
+  userId: number
   content: string
+  status: string
+  type: string
+  createdAt?: string
+  updatedAt?: string
 }
 
-// 所有API调用已改为使用Mock数据，不再需要HTTP请求和认证头
-
-export const visitorLogin = async (params: VisitorLoginParams): Promise<ApiResponse<VisitorVO>> => {
-  return mockApi.visitorLogin(params) as Promise<ApiResponse<VisitorVO>>
+export interface CreateFeedbackDTO {
+  content: string
+  type: string
 }
 
-export const visitorRegister = async (params: VisitorRegisterParams): Promise<ApiResponse<VisitorVO>> => {
-  return mockApi.visitorRegister(params) as Promise<ApiResponse<VisitorVO>>
+// 创建反馈
+export const createFeedback = (data: CreateFeedbackDTO): Promise<ApiResponse<Feedback>> => {
+  return http<Feedback>({
+    url: '/feedback',
+    method: 'POST',
+    data
+  })
 }
 
-export const getVisitorInfo = async (): Promise<ApiResponse<VisitorVO>> => {
-  return mockApi.getVisitorInfo() as Promise<ApiResponse<VisitorVO>>
+// 获取我的反馈列表
+export const getMyFeedbackPage = (params: { current?: number; size?: number }): Promise<PageResponse<Feedback>> => {
+  return http<Feedback[]>({
+    url: '/feedback/my',
+    method: 'GET',
+    data: params
+  }) as Promise<PageResponse<Feedback>>
 }
-
-export const updateVisitorInfo = async (params: Partial<VisitorVO>): Promise<ApiResponse<VisitorVO>> => {
-  return mockApi.updateVisitorInfo(params) as Promise<ApiResponse<VisitorVO>>
-}
-
-export const visitorLogout = async (): Promise<ApiResponse<string>> => {
-  return mockApi.visitorLogout() as Promise<ApiResponse<string>>
-}
-
-export const getPoiList = async (params?: { type?: string; keyword?: string }): Promise<ApiResponse<POI[]>> => {
-  return mockApi.getPoiList(params) as Promise<ApiResponse<POI[]>>
-}
-
-export const getPoiDetail = async (poiId: string): Promise<ApiResponse<POI & { stories?: Story[] }>> => {
-  return mockApi.getPoiDetail(poiId) as Promise<ApiResponse<POI & { stories?: Story[] }>>
-}
-
-export const getStoryList = async (params?: { poiId?: string; keyword?: string }): Promise<ApiResponse<Story[]>> => {
-  return mockApi.getStoryList(params) as Promise<ApiResponse<Story[]>>
-}
-
-export const getStoryDetail = async (storyId: number): Promise<ApiResponse<Story>> => {
-  return mockApi.getStoryDetail(storyId) as Promise<ApiResponse<Story>>
-}
-
-export const getRouteList = async (params?: { identity?: string; duration?: number }): Promise<ApiResponse<Route[]>> => {
-  return mockApi.getRouteList(params) as Promise<ApiResponse<Route[]>>
-}
-
-export const getRouteDetail = async (routeId: number): Promise<ApiResponse<Route>> => {
-  return mockApi.getRouteDetail(routeId) as Promise<ApiResponse<Route>>
-}
-
-export const generateRoute = async (params: { identity: string; duration: number }): Promise<ApiResponse<Route>> => {
-  return mockApi.generateRoute(params) as Promise<ApiResponse<Route>>
-}
-
-export const getLocations = async (): Promise<ApiResponse<Location[]>> => {
-  return mockApi.getLocations() as Promise<ApiResponse<Location[]>>
-}
-
-export const getShootServices = async (): Promise<ApiResponse<ShootService[]>> => {
-  return mockApi.getShootServices() as Promise<ApiResponse<ShootService[]>>
-}
-
-export const getArticles = async (): Promise<ApiResponse<Article[]>> => {
-  return mockApi.getArticles() as Promise<ApiResponse<Article[]>>
-}
-
-export const submitReport = async (payload: ReportPayload): Promise<ApiResponse<boolean>> => {
-  return mockApi.submitReport(payload) as Promise<ApiResponse<boolean>>
-}
-
-export const uploadReportFile = async (filePath: string): Promise<ApiResponse<{ fileId: string; url: string }>> => {
-  return mockApi.uploadReportFile(filePath) as Promise<ApiResponse<{ fileId: string; url: string }>>
-}
-
-export const addCollect = async (params: { poiId: string; visitorId: string }): Promise<ApiResponse<boolean>> => {
-  return mockApi.addCollect(params) as Promise<ApiResponse<boolean>>
-}
-
-export const getCollectList = async (visitorId: string): Promise<ApiResponse<Collection[]>> => {
-  return mockApi.getCollectList(visitorId) as Promise<ApiResponse<Collection[]>>
-}
-
-export const addBrowse = async (params: { poiId: string; visitorId: string }): Promise<ApiResponse<boolean>> => {
-  return mockApi.addBrowse(params) as Promise<ApiResponse<boolean>>
-}
-
-export const getBrowseList = async (visitorId: string): Promise<ApiResponse<BrowseRecord[]>> => {
-  return mockApi.getBrowseList(visitorId) as Promise<ApiResponse<BrowseRecord[]>>
-}
-
-export const getTagList = async (): Promise<ApiResponse<Array<{ tagId: number; tagName: string }>>> => {
-  return mockApi.getTagList() as Promise<ApiResponse<Array<{ tagId: number; tagName: string }>>>
-}
-
-export const changePassword = async (oldPassword: string, newPassword: string): Promise<ApiResponse<string>> => {
-  return mockApi.changePassword(oldPassword, newPassword) as Promise<ApiResponse<string>>
-}
-
-export const submitFeedback = async (params: FeedbackPayload): Promise<ApiResponse<boolean>> => {
-  return mockApi.submitFeedback(params) as Promise<ApiResponse<boolean>>
-}
-
-export const getAlumniList = async (params?: { keyword?: string }): Promise<
-  ApiResponse<Array<{ alumniId: number; name: string; gradYear?: string; major?: string }>>
-> => {
-  return mockApi.getAlumniList(params) as Promise<ApiResponse<Array<{ alumniId: number; name: string; gradYear?: string; major?: string }>>>
-}
-
-
-
-
-
-
-
-

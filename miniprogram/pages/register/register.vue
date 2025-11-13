@@ -1,23 +1,37 @@
 <template>
-  <view class="login-page">
-    <view class="login-container">
+  <view class="register-page">
+    <view class="register-container">
       <view class="header">
-        <text class="title">欢迎登录</text>
-        <text class="subtitle">专业影视拍摄一站式服务平台</text>
+        <text class="title">注册账号</text>
+        <text class="subtitle">加入雅安影视服务平台</text>
       </view>
 
       <view class="form-container">
         <view class="form-item">
           <view class="form-label">
             <uni-icons type="person" size="18" color="#6b7280"></uni-icons>
-            <text>用户名/手机号</text>
+            <text>用户名</text>
           </view>
           <input
             v-model="form.username"
             class="form-input"
             type="text"
-            placeholder="请输入用户名或手机号"
-            maxlength="50"
+            placeholder="请输入用户名（3-20个字符）"
+            maxlength="20"
+          />
+        </view>
+
+        <view class="form-item">
+          <view class="form-label">
+            <uni-icons type="phone" size="18" color="#6b7280"></uni-icons>
+            <text>手机号</text>
+          </view>
+          <input
+            v-model="form.phoneNumber"
+            class="form-input"
+            type="number"
+            placeholder="请输入11位手机号"
+            maxlength="11"
           />
         </view>
 
@@ -30,23 +44,37 @@
             v-model="form.password"
             class="form-input"
             type="password"
-            placeholder="请输入密码"
+            placeholder="请输入密码（至少6位）"
+            maxlength="20"
+          />
+        </view>
+
+        <view class="form-item">
+          <view class="form-label">
+            <uni-icons type="locked" size="18" color="#6b7280"></uni-icons>
+            <text>确认密码</text>
+          </view>
+          <input
+            v-model="form.confirmPassword"
+            class="form-input"
+            type="password"
+            placeholder="请再次输入密码"
             maxlength="20"
           />
         </view>
 
         <button
-          class="login-btn"
-          :class="{ 'login-btn--disabled': !canSubmit || loading }"
+          class="register-btn"
+          :class="{ 'register-btn--disabled': !canSubmit || loading }"
           :loading="loading"
-          @click="handleLogin"
+          @click="handleRegister"
         >
-          {{ loading ? '登录中...' : '登录' }}
+          {{ loading ? '注册中...' : '注册' }}
         </button>
 
-        <view class="register-link">
-          <text>还没有账号？</text>
-          <text class="link-text" @click="goToRegister">立即注册</text>
+        <view class="login-link">
+          <text>已有账号？</text>
+          <text class="link-text" @click="goToLogin">立即登录</text>
         </view>
       </view>
     </view>
@@ -54,7 +82,7 @@
 </template>
 
 <script>
-import { userLogin } from '../../services/api'
+import { userRegister } from '../../services/api'
 import { mapActions } from 'vuex'
 
 export default {
@@ -62,22 +90,38 @@ export default {
     return {
       form: {
         username: '',
-        password: ''
+        phoneNumber: '',
+        password: '',
+        confirmPassword: ''
       },
       loading: false
     }
   },
   computed: {
     canSubmit() {
-      return this.form.username.trim().length > 0 && this.form.password.length >= 6
+      return (
+        this.form.username.trim().length >= 3 &&
+        this.form.username.trim().length <= 20 &&
+        /^1\d{10}$/.test(this.form.phoneNumber) &&
+        this.form.password.length >= 6 &&
+        this.form.password === this.form.confirmPassword
+      )
     }
   },
   methods: {
     ...mapActions(['login']),
-    async handleLogin() {
+    async handleRegister() {
       if (!this.canSubmit) {
         uni.showToast({
-          title: '请填写完整的登录信息',
+          title: '请填写完整的注册信息',
+          icon: 'none'
+        })
+        return
+      }
+
+      if (this.form.password !== this.form.confirmPassword) {
+        uni.showToast({
+          title: '两次输入的密码不一致',
           icon: 'none'
         })
         return
@@ -85,8 +129,9 @@ export default {
 
       this.loading = true
       try {
-        const res = await userLogin({
+        const res = await userRegister({
           username: this.form.username.trim(),
+          phoneNumber: this.form.phoneNumber,
           password: this.form.password
         })
 
@@ -97,7 +142,7 @@ export default {
           })
 
           uni.showToast({
-            title: '登录成功',
+            title: '注册成功',
             icon: 'success'
           })
 
@@ -108,31 +153,29 @@ export default {
           }, 1000)
         } else {
           uni.showToast({
-            title: res.message || '登录失败',
+            title: res.message || '注册失败',
             icon: 'none'
           })
         }
       } catch (error) {
-        console.error('登录失败:', error)
+        console.error('注册失败:', error)
         uni.showToast({
-          title: error.message || '登录失败，请稍后重试',
+          title: error.message || '注册失败，请稍后重试',
           icon: 'none'
         })
       } finally {
         this.loading = false
       }
     },
-    goToRegister() {
-      uni.navigateTo({
-        url: '/pages/register/register'
-      })
+    goToLogin() {
+      uni.navigateBack()
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.login-page {
+.register-page {
   min-height: 100vh;
   background: #f5f7fa;
   display: flex;
@@ -141,7 +184,7 @@ export default {
   padding: 40rpx 32rpx;
 }
 
-.login-container {
+.register-container {
   width: 100%;
   max-width: 600rpx;
   background: #fff;
@@ -210,7 +253,7 @@ export default {
   background: #fff;
 }
 
-.login-btn {
+.register-btn {
   width: 100%;
   height: 88rpx;
   background: #1f2937;
@@ -223,16 +266,16 @@ export default {
   transition: all 0.2s;
 }
 
-.login-btn:active {
+.register-btn:active {
   background: #374151;
 }
 
-.login-btn--disabled {
+.register-btn--disabled {
   opacity: 0.5;
   background: #d1d5db;
 }
 
-.register-link {
+.login-link {
   text-align: center;
   font-size: 26rpx;
   color: #6b7280;

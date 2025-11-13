@@ -52,18 +52,18 @@ public class ArticleController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public ApiResponse<PageResponse<ArticleVO>> getArticlePage(
+    public PageResponse<ArticleVO> getArticlePage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Article> page = new Page<>(current, size);
         Page<ArticleVO> articlePage = articleService.getArticlePage(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) articlePage.getCurrent(),
                 (int) articlePage.getSize(),
                 articlePage.getTotal(),
                 articlePage.getRecords()
-        ));
+        );
     }
 
     // ==================== 普通用户接口 ====================
@@ -147,19 +147,19 @@ public class ArticleController {
      * 管理员分页查询文章
      */
     @GetMapping("/admin/page")
-    public ApiResponse<PageResponse<ArticleVO>> getArticlePageByAdmin(
+    public PageResponse<ArticleVO> getArticlePageByAdmin(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         // 权限检查在拦截器中完成
         Page<Article> page = new Page<>(current, size);
         Page<ArticleVO> articlePage = articleService.getArticlePageByAdmin(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) articlePage.getCurrent(),
                 (int) articlePage.getSize(),
                 articlePage.getTotal(),
                 articlePage.getRecords()
-        ));
+        );
     }
 
     /**

@@ -52,18 +52,18 @@ public class LocationController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public ApiResponse<PageResponse<LocationVO>> getLocationPage(
+    public PageResponse<LocationVO> getLocationPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Location> page = new Page<>(current, size);
         Page<LocationVO> locationPage = locationService.getLocationPage(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) locationPage.getCurrent(),
                 (int) locationPage.getSize(),
                 locationPage.getTotal(),
                 locationPage.getRecords()
-        ));
+        );
     }
 
     // ==================== 普通用户接口 ====================
@@ -144,18 +144,18 @@ public class LocationController {
      * 管理员分页查询拍摄场地
      */
     @GetMapping("/admin/page")
-    public ApiResponse<PageResponse<LocationVO>> getLocationPageByAdmin(
+    public PageResponse<LocationVO> getLocationPageByAdmin(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Location> page = new Page<>(current, size);
         Page<LocationVO> locationPage = locationService.getLocationPageByAdmin(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) locationPage.getCurrent(),
                 (int) locationPage.getSize(),
                 locationPage.getTotal(),
                 locationPage.getRecords()
-        ));
+        );
     }
 
     /**

@@ -1,364 +1,525 @@
 <template>
-  <PageShell
-    title="在线剧组报备"
-    :show-back="false"
-    :show-tab="false"
-  >
-    <view class="intro-card">
-      <view class="intro-card__title">快速对接拍摄服务</view>
-      <view class="intro-card__desc">提交剧组信息、拍摄计划与资料，工作人员将在 1 个工作日内联系确认</view>
-      <view class="intro-card__tips">
-        <view class="tip-chip">支持分阶段补充材料</view>
-        <view class="tip-chip">提供政策辅导与现场协调</view>
-      </view>
-    </view>
+  <view class="filing-page">
+    <NavBar title="剧组报备" :show-back="true"></NavBar>
 
-    <view class="form-card">
-      <view class="form-group">
-        <view class="group-title">基本信息</view>
-        <view class="group-fields">
-          <view class="field">
-					<text class="label">剧组名称</text>
-            <input v-model="form.name" class="input" placeholder="请输入剧组名称" />
-				</view>
-          <view class="field-row">
-            <view class="field field--half">
-					<text class="label">联系人</text>
-              <input v-model="form.contact" class="input" placeholder="联系人姓名" />
-				</view>
-            <view class="field field--half">
-					<text class="label">联系电话</text>
-              <input v-model="form.phoneNumber" class="input" type="number" placeholder="手机号码" />
+    <scroll-view class="content" scroll-y>
+      <!-- 说明卡片 -->
+      <view class="intro-card">
+        <view class="intro-title">在线剧组报备</view>
+        <view class="intro-desc">提交剧组信息、拍摄计划与资料，工作人员将在1个工作日内联系确认</view>
+      </view>
+
+      <!-- 报备表单 -->
+      <view class="form-card">
+        <view class="form-section">
+          <view class="section-title">基本信息</view>
+          <view class="form-item">
+            <text class="label required">影视剧名称</text>
+            <input
+              v-model="form.name"
+              class="input"
+              type="text"
+              placeholder="请输入影视剧名称"
+              maxlength="50"
+            />
+          </view>
+          <view class="form-row">
+            <view class="form-item form-item--half">
+              <text class="label required">类型</text>
+              <picker
+                mode="selector"
+                :range="typeOptions"
+                :value="typeIndex"
+                @change="onTypeChange"
+              >
+                <view class="picker">{{ form.type || '请选择类型' }}</view>
+              </picker>
+            </view>
+            <view class="form-item form-item--half">
+              <text class="label required">题材</text>
+              <picker
+                mode="selector"
+                :range="genreOptions"
+                :value="genreIndex"
+                @change="onGenreChange"
+              >
+                <view class="picker">{{ form.genre || '请选择题材' }}</view>
+              </picker>
+            </view>
+          </view>
+          <view class="form-row">
+            <view class="form-item form-item--half">
+              <text class="label required">集数</text>
+              <input
+                v-model.number="form.episodes"
+                class="input"
+                type="number"
+                placeholder="请输入集数"
+              />
+            </view>
+            <view class="form-item form-item--half">
+              <text class="label required">投资金额（万元）</text>
+              <input
+                v-model.number="form.investAmount"
+                class="input"
+                type="digit"
+                placeholder="请输入投资金额"
+              />
             </view>
           </view>
         </view>
-      </view>
 
-      <view class="form-group">
-        <view class="group-title">拍摄计划</view>
-        <view class="group-fields">
-          <view class="field-row">
-            <view class="field field--half">
-              <text class="label">开机日期</text>
+        <view class="form-section">
+          <view class="section-title">拍摄计划</view>
+          <view class="form-row">
+            <view class="form-item form-item--half">
+              <text class="label required">拍摄开始日期</text>
               <picker mode="date" :value="form.startDate" @change="onDateChange($event, 'startDate')">
-                <view class="picker">{{ form.startDate || '选择日期' }}</view>
+                <view class="picker">{{ form.startDate || '请选择日期' }}</view>
               </picker>
             </view>
-            <view class="field field--half">
-              <text class="label">收官日期</text>
+            <view class="form-item form-item--half">
+              <text class="label required">拍摄结束日期</text>
               <picker mode="date" :value="form.endDate" @change="onDateChange($event, 'endDate')">
-                <view class="picker">{{ form.endDate || '选择日期' }}</view>
+                <view class="picker">{{ form.endDate || '请选择日期' }}</view>
               </picker>
             </view>
           </view>
-          <view class="field">
-            <text class="label">拟拍摄地点</text>
-            <input v-model="form.location" class="input" placeholder="请说明主要取景地" />
-          </view>
-          <view class="field">
-            <text class="label">剧组规模</text>
-            <picker :range="crewScaleOptions" :value="crewScaleIndex" @change="onCrewScaleChange">
-              <view class="picker">{{ form.crewScale || '选择规模范围' }}</view>
+          <view class="form-item">
+            <text class="label required">剧组规模</text>
+            <picker
+              mode="selector"
+              :range="crewScaleOptions"
+              :value="crewScaleIndex"
+              @change="onCrewScaleChange"
+            >
+              <view class="picker">{{ form.crewScale || '请选择剧组规模' }}</view>
             </picker>
           </view>
         </view>
+
+        <view class="form-section">
+          <view class="section-title">出品信息</view>
+          <view class="form-item">
+            <text class="label required">主创人员</text>
+            <input
+              v-model="form.mainCreators"
+              class="input"
+              type="text"
+              placeholder="请输入主创人员（导演、编剧等）"
+              maxlength="255"
+            />
+          </view>
+          <view class="form-item">
+            <text class="label required">第一出品单位</text>
+            <input
+              v-model="form.leadProducer"
+              class="input"
+              type="text"
+              placeholder="请输入第一出品单位"
+              maxlength="100"
+            />
+          </view>
+          <view class="form-item">
+            <text class="label required">制片单位</text>
+            <input
+              v-model="form.producerUnit"
+              class="input"
+              type="text"
+              placeholder="请输入制片单位"
+              maxlength="100"
+            />
+          </view>
+        </view>
+
+        <view class="form-section">
+          <view class="section-title">联系信息</view>
+          <view class="form-item">
+            <text class="label required">联系人</text>
+            <input
+              v-model="form.contact"
+              class="input"
+              type="text"
+              placeholder="请输入联系人姓名"
+              maxlength="50"
+            />
+          </view>
+          <view class="form-item">
+            <text class="label required">联系电话</text>
+            <input
+              v-model="form.phoneNumber"
+              class="input"
+              type="number"
+              placeholder="请输入联系电话"
+              maxlength="20"
+            />
+          </view>
+          <view class="form-item">
+            <text class="label required">剧组职务</text>
+            <input
+              v-model="form.crewPosition"
+              class="input"
+              type="text"
+              placeholder="请输入剧组职务（如：导演、制片人等）"
+              maxlength="50"
+            />
+          </view>
+        </view>
       </view>
 
-      <view class="form-group">
-        <view class="group-title">出品信息</view>
-        <view class="group-fields">
-          <view class="field">
-            <text class="label">第一出品单位</text>
-            <input v-model="form.leadProducer" class="input" placeholder="请输入第一出品单位" />
-          </view>
-          <view class="field">
-            <text class="label">联合出品 / 制片单位</text>
-            <input v-model="form.producerUnit" class="input" placeholder="请输入制片单位或协作公司" />
-          </view>
-				</view>
-				</view>
-
-      <view class="form-group">
-        <view class="group-title">附件材料</view>
-        <view class="group-fields">
-          <view class="field">
-            <text class="label">许可证、批文等资料</text>
-            <uni-file-picker v-model="files" fileMediatype="all" mode="grid" :limit="6" @select="onFileSelect" />
-            <view class="hint">支持上传许可证、立项批复、申报表等（最多 6 个文件）</view>
-				</view>
-          <view class="field">
-            <text class="label">备注说明</text>
-            <textarea
-              v-model="form.remark"
-              class="textarea"
-              placeholder="可补充特殊需求、主要演员、器材等信息"
-              maxlength="400"
-            />
-				</view>
-				</view>
-			</view>
-
-      <button class="submit-btn" :loading="submitting" :disabled="submitting" @click="submit">
-        {{ submitting ? '提交中...' : '提交报备' }}
-      </button>
-	</view>
-  </PageShell>
+      <!-- 提交按钮 -->
+      <view class="submit-section">
+        <button
+          class="submit-btn"
+          :class="{ 'submit-btn--disabled': !canSubmit || submitting }"
+          :loading="submitting"
+          @click="handleSubmit"
+        >
+          {{ submitting ? '提交中...' : '提交报备' }}
+        </button>
+        <text class="submit-tip">提交后，工作人员将在1个工作日内联系您</text>
+      </view>
+    </scroll-view>
+  </view>
 </template>
 
 <script>
-import PageShell from '../../components/layout/PageShell.vue'
-import { submitReport, uploadReportFile } from '../../services/api'
-
-const CREW_SCALE_OPTIONS = ['小型（30 人以内）', '中型（31-80 人）', '大型（81-150 人）', '超大型（150 人以上）']
+import NavBar from '../../components/NavBar/NavBar.vue'
+import { createReport } from '../../services/api'
+import { mapGetters } from 'vuex'
 
 export default {
   components: {
-    PageShell
+    NavBar
   },
-	data() {
-		return {
+  data() {
+    return {
+      submitting: false,
+      typeOptions: ['电视剧', '电影', '网络剧', '纪录片', '其他'],
+      genreOptions: ['历史', '现代', '古装', '悬疑', '爱情', '喜剧', '动作', '科幻', '文化', '其他'],
+      crewScaleOptions: ['小型', '中型', '大型'],
+      typeIndex: -1,
+      genreIndex: -1,
+      crewScaleIndex: -1,
       form: {
         name: '',
-        contact: '',
-        phoneNumber: '',
+        type: '',
+        genre: '',
+        episodes: null,
+        investAmount: null,
+        mainCreators: '',
+        leadProducer: '',
+        producerUnit: '',
         startDate: '',
         endDate: '',
         crewScale: '',
-        leadProducer: '',
-        producerUnit: '',
-        location: '',
-        remark: '',
-        fileIds: []
-      },
-			files: [],
-      submitting: false,
-      crewScaleOptions: CREW_SCALE_OPTIONS
+        contact: '',
+        phoneNumber: '',
+        crewPosition: ''
+      }
     }
   },
   computed: {
-    crewScaleIndex() {
-      const index = this.crewScaleOptions.indexOf(this.form.crewScale)
-      return index >= 0 ? index : 0
-		}
-	},
-	methods: {
-    onCrewScaleChange(event) {
-      const index = Number(event.detail.value)
-      this.form.crewScale = this.crewScaleOptions[index]
+    ...mapGetters(['isLoggedIn']),
+    canSubmit() {
+      return (
+        this.form.name &&
+        this.form.type &&
+        this.form.genre &&
+        this.form.episodes &&
+        this.form.investAmount &&
+        this.form.mainCreators &&
+        this.form.leadProducer &&
+        this.form.producerUnit &&
+        this.form.startDate &&
+        this.form.endDate &&
+        this.form.crewScale &&
+        this.form.contact &&
+        this.form.phoneNumber &&
+        this.form.crewPosition
+      )
+    }
+  },
+  onLoad() {
+    if (!this.isLoggedIn) {
+      uni.showModal({
+        title: '提示',
+        content: '请先登录',
+        showCancel: false,
+        success: () => {
+          uni.navigateTo({
+            url: '/pages/login/login'
+          })
+        }
+      })
+    }
+  },
+  methods: {
+    onTypeChange(e) {
+      this.typeIndex = e.detail.value
+      this.form.type = this.typeOptions[e.detail.value]
     },
-    onDateChange(event, field) {
-      this.form[field] = event.detail.value
+    onGenreChange(e) {
+      this.genreIndex = e.detail.value
+      this.form.genre = this.genreOptions[e.detail.value]
     },
-    onFileSelect(event) {
-      if (event.tempFiles && event.tempFiles.length > 0) {
-        this.files = event.tempFiles
-      }
+    onCrewScaleChange(e) {
+      this.crewScaleIndex = e.detail.value
+      this.form.crewScale = this.crewScaleOptions[e.detail.value]
     },
-    validate() {
-      if (!this.form.name || !this.form.name.trim()) return '请填写剧组名称'
-      if (!this.form.contact || !this.form.contact.trim()) return '请填写联系人'
-      if (!/^1\d{10}$/.test(this.form.phoneNumber || '')) return '请输入正确的手机号码'
-      if (!this.form.startDate) return '请选择开机日期'
-      if (!this.form.endDate) return '请选择收官日期'
-      if (!this.form.location || !this.form.location.trim()) return '请填写拟拍摄地点'
-      if (!this.form.crewScale) return '请选择剧组规模'
-      if (!this.form.leadProducer || !this.form.leadProducer.trim()) return '请填写第一出品单位'
-      if (!this.form.producerUnit || !this.form.producerUnit.trim()) return '请填写制片或协作单位'
-      return ''
+    onDateChange(e, field) {
+      this.form[field] = e.detail.value
     },
-		async submit() {
-      const token = uni.getStorageSync('token')
-      if (!token) {
+    async handleSubmit() {
+      if (!this.isLoggedIn) {
         uni.showModal({
           title: '提示',
-          content: '请先登录后再提交报备',
-          success: (res) => {
-            if (res.confirm) {
-              uni.navigateTo({ url: '/pages/login/login' })
-            }
+          content: '请先登录',
+          showCancel: false,
+          success: () => {
+            uni.navigateTo({
+              url: '/pages/login/login'
+            })
           }
         })
         return
       }
 
-      const message = this.validate()
-      if (message) {
-        uni.showToast({ title: message, icon: 'none' })
+      if (!this.canSubmit) {
+        uni.showToast({
+          title: '请填写完整的报备信息',
+          icon: 'none'
+        })
         return
       }
 
-			this.submitting = true
-      try {
-        const uploadedIds = []
-
-        for (const file of this.files) {
-          const path = file && (file.path || file.url || file.tempFilePath)
-          if (!path) continue
-          if (file.fileId) {
-            uploadedIds.push(file.fileId)
-            continue
-          }
-          const { data } = await uploadReportFile(path)
-          if (data && data.fileId) {
-            uploadedIds.push(data.fileId)
-          }
-        }
-
-        this.form.fileIds = uploadedIds
-
-        await submitReport({ ...this.form })
-
-        uni.showToast({ title: '提交成功', icon: 'success' })
-			setTimeout(() => {
-          uni.navigateTo({ url: '/pages/services/services' })
-        }, 1200)
-      } catch (error) {
-        uni.showToast({ title: (error && error.message) || '提交失败，请稍后重试', icon: 'none' })
-      } finally {
-				this.submitting = false
+      if (new Date(this.form.startDate) > new Date(this.form.endDate)) {
+        uni.showToast({
+          title: '结束日期不能早于开始日期',
+          icon: 'none'
+        })
+        return
       }
-		}
-	}
+
+      this.submitting = true
+      try {
+        const res = await createReport({
+          name: this.form.name,
+          type: this.form.type,
+          genre: this.form.genre,
+          episodes: this.form.episodes,
+          investAmount: this.form.investAmount,
+          mainCreators: this.form.mainCreators,
+          leadProducer: this.form.leadProducer,
+          producerUnit: this.form.producerUnit,
+          startDate: this.form.startDate,
+          endDate: this.form.endDate,
+          crewScale: this.form.crewScale,
+          contact: this.form.contact,
+          phoneNumber: this.form.phoneNumber,
+          crewPosition: this.form.crewPosition
+        })
+
+        if (res.code === 200) {
+          uni.showModal({
+            title: '提交成功',
+            content: '您的报备信息已提交，工作人员将在1个工作日内联系您',
+            showCancel: false,
+            success: () => {
+              this.resetForm()
+              uni.switchTab({
+                url: '/pages/index/index'
+              })
+            }
+          })
+        } else {
+          uni.showToast({
+            title: res.message || '提交失败',
+            icon: 'none'
+          })
+        }
+      } catch (error) {
+        console.error('提交报备失败:', error)
+        uni.showToast({
+          title: error.message || '提交失败，请稍后重试',
+          icon: 'none'
+        })
+      } finally {
+        this.submitting = false
+      }
+    },
+    resetForm() {
+      this.form = {
+        name: '',
+        type: '',
+        genre: '',
+        episodes: null,
+        investAmount: null,
+        mainCreators: '',
+        leadProducer: '',
+        producerUnit: '',
+        startDate: '',
+        endDate: '',
+        crewScale: '',
+        contact: '',
+        phoneNumber: '',
+        crewPosition: ''
+      }
+      this.typeIndex = -1
+      this.genreIndex = -1
+      this.crewScaleIndex = -1
+    }
+  }
 }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
+.filing-page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-top: 132rpx;
+  box-sizing: border-box;
+}
+
+.content {
+  height: calc(100vh - 132rpx - 100rpx);
+  padding: 32rpx;
+  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  width: 100%;
+}
+
 .intro-card {
-  background: linear-gradient(135deg, #fef3c7 0%, #f3f4ff 100%);
-  border-radius: 32rpx;
-  padding: 42rpx;
-  margin-bottom: 36rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 22rpx;
-  border: 1rpx solid rgba(251, 191, 36, 0.24);
-  box-shadow: 0 16rpx 42rpx rgba(250, 204, 21, 0.16);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  margin-bottom: 32rpx;
+  color: #fff;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.intro-card__title {
-  font-size: 38rpx;
+.intro-title {
+  font-size: 36rpx;
   font-weight: 700;
-  color: #92400e;
+  margin-bottom: 16rpx;
 }
 
-.intro-card__desc {
+.intro-desc {
   font-size: 26rpx;
-  color: #b45309;
+  opacity: 0.9;
   line-height: 1.6;
-}
-
-.intro-card__tips {
-  display: flex;
-  gap: 16rpx;
-  flex-wrap: wrap;
-}
-
-.tip-chip {
-  padding: 12rpx 22rpx;
-  border-radius: 999rpx;
-  background: rgba(217, 119, 6, 0.12);
-  color: #92400e;
-  font-size: 22rpx;
 }
 
 .form-card {
   background: #fff;
-  border-radius: 32rpx;
-  padding: 40rpx 34rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 38rpx;
-  border: 1rpx solid rgba(226, 232, 240, 0.64);
-  box-shadow: 0 22rpx 44rpx rgba(30, 64, 175, 0.08);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 22rpx;
+.form-section {
+  margin-bottom: 48rpx;
 }
 
-.group-title {
-  font-size: 30rpx;
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 32rpx;
   font-weight: 700;
   color: #1f2937;
+  margin-bottom: 32rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f3f4f6;
 }
 
-.group-fields {
+.form-item {
+  margin-bottom: 32rpx;
+}
+
+.form-item:last-child {
+  margin-bottom: 0;
+}
+
+.form-row {
   display: flex;
-  flex-direction: column;
-  gap: 28rpx;
+  gap: 24rpx;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 14rpx;
-}
-
-.field-row {
-  display: flex;
-  gap: 20rpx;
-  flex-wrap: wrap;
-}
-
-.field--half {
+.form-item--half {
   flex: 1;
 }
 
 .label {
-  font-size: 26rpx;
-  color: #4b5563;
+  display: block;
+  font-size: 28rpx;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 16rpx;
+}
+
+.label.required::after {
+  content: ' *';
+  color: #ef4444;
 }
 
 .input,
-.picker,
-.textarea {
+.picker {
   width: 100%;
+  height: 88rpx;
   background: #f9fafb;
-  border-radius: 18rpx;
-  padding: 26rpx 24rpx;
+  border: 2rpx solid #e5e7eb;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
   font-size: 28rpx;
   color: #1f2937;
-  border: 1rpx solid transparent;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  box-sizing: border-box;
+  margin: 0;
 }
 
-.picker {
-  color: #6b7280;
-}
-
-.input:focus,
-.textarea:focus {
+.input:focus {
   border-color: #6366f1;
   background: #fff;
 }
 
-.textarea {
-  min-height: 180rpx;
-  line-height: 1.6;
+.picker {
+  display: flex;
+  align-items: center;
+  color: #1f2937;
 }
 
-.hint {
-  font-size: 24rpx;
-  color: #9ca3af;
+.submit-section {
+  padding: 32rpx 0;
 }
 
 .submit-btn {
   width: 100%;
-  height: 92rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  height: 96rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   font-size: 32rpx;
   font-weight: 600;
+  border-radius: 16rpx;
   border: none;
-  letter-spacing: 2rpx;
-  box-shadow: 0 20rpx 40rpx rgba(99, 102, 241, 0.32);
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.4);
+  margin-bottom: 20rpx;
+  box-sizing: border-box;
 }
 
-.submit-btn:disabled {
-  opacity: 0.7;
+.submit-btn--disabled {
+  opacity: 0.6;
+  background: #d1d5db;
+}
+
+.submit-tip {
+  display: block;
+  text-align: center;
+  font-size: 24rpx;
+  color: #9ca3af;
 }
 </style>
-

@@ -6,10 +6,10 @@
       'navbar--scrolled': isScrolled
     }"
     :style="{
-      background: background
+      background: background,
+      paddingTop: (statusBarHeight / 2) + 'px'
     }"
   >
-    <view class="navbar__status-bar"></view>
     <view class="navbar__content">
       <view class="navbar__curve navbar__curve--top"></view>
       <view v-if="showBack" class="navbar__left" @click="handleBack">
@@ -49,8 +49,17 @@
 		},
 		data() {
 			return {
-      isScrolled: false
+				isScrolled: false,
+				statusBarHeight: 0,
+				navbarHeight: 0
 			}
+		},
+		mounted() {
+			// 获取系统信息
+			const systemInfo = uni.getSystemInfoSync()
+			// 状态栏高度，单位转换为rpx（1px = 2rpx）
+			this.statusBarHeight = (systemInfo.statusBarHeight || 22) * 2
+			this.navbarHeight = this.statusBarHeight + 88
 		},
 		methods: {
 			handleBack() {
@@ -93,12 +102,10 @@
 		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 		overflow: hidden;
 		margin: 0;
-		/* 总高度 = 状态栏高度 + 导航栏内容高度 */
-		padding-top: env(safe-area-inset-top, 44rpx);
 	}
 
 	.navbar__status-bar {
-		height: env(safe-area-inset-top, 44rpx);
+		height: var(--status-bar-height, 44rpx);
 		background: transparent;
 	}
 
@@ -115,7 +122,7 @@
 		align-items: center;
 		justify-content: space-between;
 		height: 88rpx; /* 固定导航栏内容高度 */
-		padding: 0 40rpx;
+		padding: 0 32rpx;
 		box-sizing: border-box;
 		position: relative;
 		margin: 0;

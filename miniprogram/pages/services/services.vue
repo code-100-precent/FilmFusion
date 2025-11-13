@@ -1,395 +1,333 @@
 <template>
-  <PageShell
-    title="一站式协拍对接"
-    :show-back="false"
-    :show-tab="true"
-    tab-key="services"
-    :refresher-enabled="false"
-  >
-    <view class="hero-banner">
-      <view class="hero-banner__content">
-        <view class="hero-banner__title">协拍服务总览</view>
-        <view class="hero-banner__subtitle">场地、住宿、车辆与器材，快速直连本地服务商</view>
-		</view>
-      <view class="hero-banner__chips">
-        <view class="chip">官方认证</view>
-        <view class="chip">需求撮合</view>
-				</view>
-			</view>
+  <view class="services-page">
+    <NavBar title="协拍服务" :show-back="false"></NavBar>
 
-    <view v-if="error" class="error-block">
-      <text class="error-block__title">服务数据加载失败</text>
-      <text class="error-block__desc">{{ error }}</text>
-      <button class="error-block__btn" @click="fetchAll">重新加载</button>
-						</view>
+    <view class="content">
+      <!-- 搜索栏 -->
+      <view class="search-bar">
+        <view class="search-input-wrapper">
+          <uni-icons type="search" size="18" color="#9ca3af"></uni-icons>
+          <input
+            v-model="keyword"
+            class="search-input"
+            type="text"
+            placeholder="搜索服务名称、描述..."
+            @confirm="handleSearch"
+            @input="handleSearch"
+          />
+        </view>
+      </view>
 
-    <view v-else>
-      <view v-for="group in groups" :key="group.key" class="group">
-        <view class="group__header">
-          <view>
-            <view class="group__title">{{ group.title }}</view>
-            <view class="group__hint">{{ group.description }}</view>
-						</view>
-          <view class="group__count">{{ group.items.length }} 家</view>
-					</view>
-
-        <view v-if="loading" class="service-skeleton">
-          <view v-for="n in 4" :key="n" class="service-skeleton__item">
-            <view class="service-skeleton__line service-skeleton__line--lg" />
-            <view class="service-skeleton__line" />
-				</view>
-			</view>
-
-        <view v-else-if="group.items.length === 0" class="empty">
-          <Empty text="暂无数据，欢迎入驻合作" />
+      <!-- 服务列表 -->
+      <scroll-view
+        class="shoot-list"
+        scroll-y
+        @scrolltolower="loadMore"
+        :refresher-enabled="true"
+        :refresher-triggered="refreshing"
+        @refresherrefresh="handleRefresh"
+      >
+        <view v-if="loading && shoots.length === 0" class="loading-wrapper">
+          <Loading></Loading>
+        </view>
+        <view v-else-if="shoots.length === 0" class="empty-wrapper">
+          <Empty text="暂无服务"></Empty>
+        </view>
+        <view v-else>
+          <view
+            v-for="shoot in shoots"
+            :key="shoot.id"
+            class="shoot-card"
+            @click="goToDetail(shoot.id)"
+          >
+            <view class="shoot-header">
+              <view class="shoot-title-row">
+                <text class="shoot-name">{{ shoot.name }}</text>
+                <view class="shoot-status" :class="{ 'status-online': shoot.status === 1 }">
+                  {{ shoot.status === 1 ? '上线' : '下线' }}
+                </view>
+              </view>
+            </view>
+            <text class="shoot-desc">{{ shoot.description }}</text>
+            <view class="shoot-info">
+              <view class="info-item">
+                <uni-icons type="location" size="16" color="#6366f1"></uni-icons>
+                <text>{{ shoot.address }}</text>
+              </view>
+              <view class="info-item">
+                <uni-icons type="phone" size="16" color="#6366f1"></uni-icons>
+                <text>{{ shoot.phone }}</text>
+              </view>
+              <view class="info-item">
+                <uni-icons type="person" size="16" color="#6366f1"></uni-icons>
+                <text>{{ shoot.contactName }}</text>
+              </view>
+            </view>
+            <view class="shoot-footer">
+              <text class="shoot-price">¥{{ shoot.price }}</text>
+              <text class="view-detail">查看详情</text>
+            </view>
+          </view>
         </view>
 
-        <view v-else class="service-list">
-          <view v-for="item in group.items" :key="item.id" class="service-card">
-            <view class="service-card__body">
-              <view class="service-card__title">
-                <text>{{ item.name }}</text>
-                <view v-if="item.status === 1" class="service-card__status">可用</view>
-              </view>
-              <view v-if="item.description" class="service-card__desc">{{ item.description }}</view>
-              <view v-if="item.address" class="service-card__meta">
-                <uni-icons type="map-pin" size="16" color="#6366f1" />
-                <text>{{ item.address }}</text>
-              </view>
-              <view v-if="item.price" class="service-card__meta">
-                <uni-icons type="wallet" size="16" color="#14b8a6" />
-                <text>{{ formatPrice(item.price) }}</text>
-              </view>
-              <view v-if="item.contactName" class="service-card__meta">
-                <uni-icons type="person" size="16" color="#6366f1" />
-                <text>{{ item.contactName }}</text>
-              </view>
-						</view>
-            <view class="service-card__actions">
-              <button class="service-card__btn" @click="call(item.contactPhone || item.phone)">
-                电话
-              </button>
-						</view>
-					</view>
-				</view>
-			</view>
-	</view>
-  </PageShell>
+        <view v-if="hasMore && !loading" class="load-more">
+          <text>上拉加载更多</text>
+        </view>
+        <view v-if="!hasMore && shoots.length > 0" class="no-more">
+          <text>没有更多了</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 底部导航栏 -->
+    <TabBar :current="'services'"></TabBar>
+  </view>
 </template>
 
 <script>
-import PageShell from '../../components/layout/PageShell.vue'
+import NavBar from '../../components/NavBar/NavBar.vue'
+import TabBar from '../../components/TabBar/TabBar.vue'
+import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
-import { getLocations, getShootServices } from '../../services/api'
+import { getShootPage } from '../../services/api'
 
 export default {
   components: {
-    PageShell,
+    NavBar,
+    TabBar,
+    Loading,
     Empty
   },
-	data() {
-		return {
+  data() {
+    return {
+      keyword: '',
+      shoots: [],
+      current: 1,
+      size: 10,
+      total: 0,
       loading: false,
       refreshing: false,
-      error: '',
-      locations: [],
-      shoots: []
+      hasMore: true
     }
   },
-  computed: {
-    groups() {
-      return [
-        {
-          key: 'locations',
-          title: '拍摄场地',
-          description: '市级推荐影视取景地，可预约踏勘与封控',
-          items: (this.locations || []).map((item) => ({
-            id: `location-${item.id}`,
-            name: item.name,
-            description: item.locationDescription,
-            price: item.price,
-            address: item.address,
-            status: item.status,
-            contactName: item.contactName,
-            contactPhone: item.contactPhone
-          }))
-        },
-        {
-          key: 'shoot',
-          title: '协拍服务',
-          description: '住宿餐饮、车辆器材、后勤保障一键联络',
-          items: (this.shoots || []).map((item) => ({
-            id: `shoot-${item.id}`,
-            name: item.name,
-            description: item.description,
-            price: item.price,
-            address: item.address,
-            status: item.status,
-            contactName: item.contactName,
-            contactPhone: item.phone
-          }))
-        }
-      ]
-		}
-	},
-	methods: {
-    async fetchAll() {
+  onLoad() {
+    this.loadShoots()
+  },
+  methods: {
+    async loadShoots(reset = false) {
+      if (this.loading) return
+
+      if (reset) {
+        this.current = 1
+        this.shoots = []
+        this.hasMore = true
+      }
+
       this.loading = true
-      this.error = ''
       try {
-        const [locationRes, shootRes] = await Promise.all([getLocations(), getShootServices()])
-        this.locations = (locationRes && locationRes.data) || []
-        this.shoots = (shootRes && shootRes.data) || []
-      } catch (err) {
-        this.error = (err && err.message) || '无法获取协拍服务数据'
+        const res = await getShootPage({
+          current: this.current,
+          size: this.size,
+          keyword: this.keyword || undefined
+        })
+
+        if (res.code === 200) {
+          // 后端返回格式: { code: 200, message: "请求成功", data: [...], pagination: {...} }
+          const dataList = Array.isArray(res.data) ? res.data : []
+          const pagination = res.pagination || {}
+          
+          if (reset) {
+            this.shoots = dataList
+          } else {
+            this.shoots = [...this.shoots, ...dataList]
+          }
+          this.total = pagination.totalItems || 0
+          this.hasMore = this.shoots.length < this.total
+        }
+      } catch (error) {
+        console.error('加载服务失败:', error)
+        uni.showToast({
+          title: '加载失败，请稍后重试',
+          icon: 'none'
+        })
       } finally {
         this.loading = false
         this.refreshing = false
       }
     },
+    handleSearch() {
+      this.loadShoots(true)
+    },
     handleRefresh() {
-      if (this.loading) return
       this.refreshing = true
-      this.fetchAll()
+      this.loadShoots(true)
     },
-    call(phone) {
-      if (!phone) {
-        uni.showToast({ title: '暂无联系电话', icon: 'none' })
-        return
-      }
-      uni.makePhoneCall({ phoneNumber: phone })
+    loadMore() {
+      if (!this.hasMore || this.loading) return
+      this.current++
+      this.loadShoots()
     },
-    formatPrice(price) {
-      if (price === undefined || price === null || price === '') return '价格面议'
-      const numeric = Number(price)
-      if (Number.isNaN(numeric)) {
-        return `${price}`
-      }
-      return `¥${numeric.toLocaleString('zh-CN')} 起`
+    goToDetail(id) {
+      uni.showToast({
+        title: '功能开发中',
+        icon: 'none'
+      })
     }
-  },
-  onLoad() {
-    this.fetchAll()
-	}
+  }
 }
 </script>
 
-<style scoped lang="scss">
-.hero-banner {
-  background: linear-gradient(135deg, #dcfce7 0%, #dbeafe 100%);
-  border-radius: 32rpx;
-  padding: 42rpx 38rpx;
-  margin-bottom: 36rpx;
+<style lang="scss" scoped>
+.services-page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-top: 132rpx;
+  box-sizing: border-box;
+}
+
+.content {
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.search-bar {
+  margin-top: 24rpx;
+  margin-bottom: 32rpx;
+}
+
+.search-input-wrapper {
   display: flex;
-  flex-direction: column;
-  gap: 24rpx;
-  border: 1rpx solid rgba(59, 130, 246, 0.12);
-  box-shadow: 0 16rpx 44rpx rgba(22, 163, 74, 0.1);
-  color: #0f172a;
-}
-
-.hero-banner__title {
-  font-size: 40rpx;
-  font-weight: 700;
-}
-
-.hero-banner__subtitle {
-  font-size: 26rpx;
-  color: rgba(15, 23, 42, 0.72);
-  margin-top: 8rpx;
-}
-
-.hero-banner__chips {
-  display: flex;
-  gap: 16rpx;
-}
-
-.chip {
-  padding: 12rpx 22rpx;
-  border-radius: 999rpx;
-  background: rgba(14, 165, 233, 0.14);
-  font-size: 22rpx;
-  color: #0ea5e9;
-}
-
-.error-block {
-  background: #fff5f5;
-  border-radius: 24rpx;
-  padding: 48rpx;
-  border: 1rpx solid rgba(248, 113, 113, 0.24);
-  text-align: center;
-  color: #b91c1c;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.error-block__title {
-  font-size: 32rpx;
-  font-weight: 600;
-}
-
-.error-block__desc {
-  font-size: 26rpx;
-  color: rgba(185, 28, 28, 0.78);
-}
-
-.error-block__btn {
-  margin-top: 12rpx;
-  height: 88rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(135deg, #f97316, #ef4444);
-  color: #fff;
-  font-size: 28rpx;
-  border: none;
-}
-
-.group {
-  margin-bottom: 42rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 24rpx;
-}
-
-.group__header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 24rpx;
-}
-
-.group__title {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #111827;
-}
-
-.group__hint {
-  font-size: 24rpx;
-  color: #6b7280;
-  margin-top: 8rpx;
-}
-
-.group__count {
-  padding: 10rpx 22rpx;
-  border-radius: 999rpx;
-  background: rgba(59, 130, 246, 0.08);
-  color: #2563eb;
-  font-size: 24rpx;
-}
-
-.service-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-}
-
-.service-card {
-  display: flex;
-  justify-content: space-between;
-  gap: 24rpx;
+  gap: 16rpx;
+  padding: 0 24rpx;
+  height: 80rpx;
   background: #fff;
-  border-radius: 24rpx;
-  border: 1rpx solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 16rpx 32rpx rgba(15, 23, 42, 0.08);
-  padding: 26rpx 28rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.service-card__body {
+.search-input {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
+  font-size: 28rpx;
+  color: #1f2937;
 }
 
-.service-card__title {
+.shoot-list {
+  height: calc(100vh - 88rpx - 200rpx);
+}
+
+.loading-wrapper,
+.empty-wrapper {
+  padding: 100rpx 0;
+  display: flex;
+  justify-content: center;
+}
+
+.shoot-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.shoot-card:active {
+  transform: translateY(-4rpx);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.shoot-header {
+  margin-bottom: 20rpx;
+}
+
+.shoot-title-row {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #0f172a;
+  justify-content: space-between;
 }
 
-.service-card__status {
+.shoot-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.shoot-status {
   padding: 6rpx 16rpx;
-  border-radius: 999rpx;
-  background: rgba(16, 185, 129, 0.12);
-  color: #0f766e;
+  background: #fee2e2;
+  color: #ef4444;
   font-size: 22rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
 }
 
-.service-card__desc {
-  font-size: 24rpx;
-  color: #4b5563;
-  line-height: 1.6;
+.status-online {
+  background: #d1fae5;
+  color: #10b981;
 }
 
-.service-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-  font-size: 24rpx;
-  color: #4b5563;
+.shoot-desc {
+  display: block;
+  font-size: 28rpx;
+  color: #6b7280;
+  line-height: 1.8;
+  margin-bottom: 24rpx;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
-.service-card__actions {
-  display: flex;
-  align-items: center;
-}
-
-.service-card__btn {
-  width: 120rpx;
-  height: 72rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  border: none;
-  font-size: 26rpx;
-}
-
-.service-skeleton {
+.shoot-info {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
-}
-
-.service-skeleton__item {
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 28rpx;
-  border: 1rpx solid rgba(226, 232, 240, 0.6);
-  display: flex;
-  flex-direction: column;
-  gap: 18rpx;
-}
-
-.service-skeleton__line {
-  height: 26rpx;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+  padding: 20rpx;
+  background: #f9fafb;
   border-radius: 12rpx;
-  background: linear-gradient(90deg, #f3f4f6 25%, #edeef3 50%, #f3f4f6 75%);
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
 }
 
-.service-skeleton__line--lg {
-  width: 70%;
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 26rpx;
+  color: #374151;
 }
 
-.empty {
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 48rpx 24rpx;
-  border: 1rpx solid rgba(226, 232, 240, 0.6);
+.shoot-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f3f4f6;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+.shoot-price {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.view-detail {
+  font-size: 26rpx;
+  color: #6366f1;
+  font-weight: 500;
+}
+
+.load-more,
+.no-more {
+  text-align: center;
+  padding: 40rpx 0;
+  font-size: 26rpx;
+  color: #9ca3af;
 }
 </style>
-

@@ -25,6 +25,8 @@ public class PageResponse<T> extends ApiResponse<List<T>> {
     public static <T> PageResponse<T> of(Page<T> page) {
         PageResponse<T> response = new PageResponse<>();
         response.setData(page.getRecords()); // 替换 getContent -> getRecords
+        response.setCode(200); // 设置成功状态码
+        response.setMessage("请求成功"); // 设置成功消息
         response.setPagination(new Pagination(
                 (int) page.getCurrent(),          // 当前页
                 (int) page.getSize(),             // 每页条数
@@ -37,6 +39,8 @@ public class PageResponse<T> extends ApiResponse<List<T>> {
     public static <T> PageResponse<T> of(int current, int size, long total, List<T> records) {
         PageResponse<T> response = new PageResponse<>();
         response.setData(records);
+        response.setCode(200); // 设置成功状态码
+        response.setMessage("请求成功"); // 设置成功消息
         response.setPagination(new Pagination(current, size, total,
                 (int) ((total + size - 1) / size)));
         return response;

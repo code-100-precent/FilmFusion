@@ -12,6 +12,10 @@ const app = new Vue({
 	store,
 	...App
 })
+
+// 初始化用户信息（从本地存储恢复）
+store.dispatch('initUserInfo')
+
 app.$mount()
 // #endif
 

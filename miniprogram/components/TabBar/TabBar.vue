@@ -4,11 +4,11 @@
       v-for="item in normalizedItems"
       :key="item.key"
       class="tabbar-item"
-      :class="{ active: active === item.key }"
+      :class="{ active: currentActive === item.key }"
       @click="handleSwitch(item)"
     >
-      <view class="icon-wrap" :class="{ bounce: active === item.key }">
-        <uni-icons :type="item.icon" :color="active === item.key ? activeColor : inactiveColor" size="22" />
+      <view class="icon-wrap" :class="{ bounce: currentActive === item.key }">
+        <uni-icons :type="item.icon" :color="currentActive === item.key ? activeColor : inactiveColor" size="22" />
       </view>
       <text class="tabbar-text">{{ item.text }}</text>
     </view>
@@ -17,18 +17,23 @@
 
 <script>
 const DEFAULT_ITEMS = [
-  { key: 'scenes', path: '/pages/scenes/scenes', text: '场景', icon: 'home' },
-  { key: 'services', path: '/pages/services/services', text: '协拍', icon: 'map' },
-  { key: 'news', path: '/pages/news/news', text: '资讯', icon: 'chat' },
+  { key: 'index', path: '/pages/index/index', text: '首页', icon: 'home' },
+  { key: 'scenes', path: '/pages/scenes/scenes', text: '场地', icon: 'location' },
+  { key: 'services', path: '/pages/services/services', text: '服务', icon: 'phone' },
+  { key: 'news', path: '/pages/news/news', text: '资讯', icon: 'chatbubble' },
   { key: 'profile', path: '/pages/profile/profile', text: '我的', icon: 'person' }
 ]
 
 export default {
   name: 'TabBar',
   props: {
+    current: {
+      type: String,
+      default: 'index'
+    },
     active: {
       type: String,
-      default: 'scenes'
+      default: ''
     },
     items: {
       type: Array,
@@ -46,12 +51,16 @@ export default {
   computed: {
     normalizedItems() {
       return this.items && this.items.length ? this.items : DEFAULT_ITEMS
+    },
+    currentActive() {
+      return this.active || this.current
     }
   },
   methods: {
     handleSwitch(item) {
-      if (this.active === item.key) return
+      if (this.currentActive === item.key) return
       this.$emit('change', item.key)
+      // 使用reLaunch确保页面切换，因为已移除原生tabBar
       uni.reLaunch({ url: item.path })
     }
   }

@@ -1,16 +1,28 @@
 <script>
 	export default {
+		globalData: {
+			statusBarHeight: 0,
+			navbarHeight: 0
+		},
 		onLaunch: function() {
 			console.log('App Launch')
 			// 获取系统信息
 			const systemInfo = uni.getSystemInfoSync()
 			// 计算导航栏总高度
-			const navbarHeight = systemInfo.statusBarHeight + 44
+			const statusBarHeight = systemInfo.statusBarHeight || 44
+			const navbarHeight = statusBarHeight + 44
 			// 全局存储导航栏高度，供页面使用
-			getApp().globalData = {
-				...getApp().globalData,
-				statusBarHeight: systemInfo.statusBarHeight,
-				navbarHeight: navbarHeight
+			const app = getApp()
+			if (app) {
+				app.globalData = {
+					...app.globalData,
+					statusBarHeight: statusBarHeight,
+					navbarHeight: navbarHeight
+				}
+			}
+			// 设置CSS变量
+			if (typeof document !== 'undefined') {
+				document.documentElement.style.setProperty('--status-bar-height', statusBarHeight + 'px')
 			}
 		},
 		onShow: function() {
@@ -28,6 +40,12 @@
 		background-color: #f8fafc;
 		font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimSun, sans-serif;
 		line-height: 1.6;
+		box-sizing: border-box;
+	}
+	
+	/* 全局box-sizing */
+	* {
+		box-sizing: border-box;
 	}
 
 	/* 为页面内容预留顶部导航栏空间 - 使用固定高度 */

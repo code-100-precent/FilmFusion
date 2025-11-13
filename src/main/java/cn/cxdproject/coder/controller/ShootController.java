@@ -52,18 +52,18 @@ public class ShootController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public ApiResponse<PageResponse<ShootVO>> getShootPage(
+    public PageResponse<ShootVO> getShootPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Shoot> page = new Page<>(current, size);
         Page<ShootVO> shootPage = shootService.getShootPage(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) shootPage.getCurrent(),
                 (int) shootPage.getSize(),
                 shootPage.getTotal(),
                 shootPage.getRecords()
-        ));
+        );
     }
 
     // ==================== 普通用户接口 ====================
@@ -144,18 +144,18 @@ public class ShootController {
      * 管理员分页查询协拍服务
      */
     @GetMapping("/admin/page")
-    public ApiResponse<PageResponse<ShootVO>> getShootPageByAdmin(
+    public PageResponse<ShootVO> getShootPageByAdmin(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Shoot> page = new Page<>(current, size);
         Page<ShootVO> shootPage = shootService.getShootPageByAdmin(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) shootPage.getCurrent(),
                 (int) shootPage.getSize(),
                 shootPage.getTotal(),
                 shootPage.getRecords()
-        ));
+        );
     }
 
     /**

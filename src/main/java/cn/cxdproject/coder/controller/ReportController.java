@@ -52,18 +52,18 @@ public class ReportController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public ApiResponse<PageResponse<ReportVO>> getReportPage(
+    public PageResponse<ReportVO> getReportPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Report> page = new Page<>(current, size);
         Page<ReportVO> reportPage = reportService.getReportPage(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) reportPage.getCurrent(),
                 (int) reportPage.getSize(),
                 reportPage.getTotal(),
                 reportPage.getRecords()
-        ));
+        );
     }
 
     // ==================== 普通用户接口 ====================
@@ -144,18 +144,18 @@ public class ReportController {
      * 管理员分页查询影视剧备案
      */
     @GetMapping("/admin/page")
-    public ApiResponse<PageResponse<ReportVO>> getReportPageByAdmin(
+    public PageResponse<ReportVO> getReportPageByAdmin(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Report> page = new Page<>(current, size);
         Page<ReportVO> reportPage = reportService.getReportPageByAdmin(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) reportPage.getCurrent(),
                 (int) reportPage.getSize(),
                 reportPage.getTotal(),
                 reportPage.getRecords()
-        ));
+        );
     }
 
     /**

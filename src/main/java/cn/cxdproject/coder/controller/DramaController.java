@@ -52,18 +52,18 @@ public class DramaController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public ApiResponse<PageResponse<DramaVO>> getDramaPage(
+    public PageResponse<DramaVO> getDramaPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Drama> page = new Page<>(current, size);
         Page<DramaVO> dramaPage = dramaService.getDramaPage(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) dramaPage.getCurrent(),
                 (int) dramaPage.getSize(),
                 dramaPage.getTotal(),
                 dramaPage.getRecords()
-        ));
+        );
     }
 
     // ==================== 普通用户接口 ====================
@@ -144,18 +144,18 @@ public class DramaController {
      * 管理员分页查询电视剧备案
      */
     @GetMapping("/admin/page")
-    public ApiResponse<PageResponse<DramaVO>> getDramaPageByAdmin(
+    public PageResponse<DramaVO> getDramaPageByAdmin(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Drama> page = new Page<>(current, size);
         Page<DramaVO> dramaPage = dramaService.getDramaPageByAdmin(page, keyword);
-        return ApiResponse.success(PageResponse.of(
+        return PageResponse.of(
                 (int) dramaPage.getCurrent(),
                 (int) dramaPage.getSize(),
                 dramaPage.getTotal(),
                 dramaPage.getRecords()
-        ));
+        );
     }
 
     /**

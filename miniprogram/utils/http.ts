@@ -2,7 +2,10 @@
  * HTTP 请求工具
  * 需要配置 baseURL
  */
-const baseURL = 'http://localhost:8080/api' // 请配置你的 API 基础地址
+// 根据环境配置API地址
+const baseURL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:8080/api'  // 开发环境
+  : 'https://your-production-domain.com/api'  // 生产环境，请替换为实际域名
 
 // 添加拦截器
 const httpInterceptor = {
@@ -62,30 +65,62 @@ type Data<T> = {
 export const http = <T>(options: UniApp.RequestOptions) => {
   // 返回 Promise 对象
   return new Promise<Data<T>>((resolve, reject) => {
+    // 处理GET请求的参数，将data转为query string
+    let url = options.url || ''
+    if (options.method === 'GET' && options.data) {
+      const params: string[] = []
+      // 确保data是对象类型
+      const dataObj = options.data as Record<string, any>
+      if (typeof dataObj === 'object' && !Array.isArray(dataObj) && dataObj !== null) {
+        Object.keys(dataObj).forEach(key => {
+          const value = dataObj[key]
+          if (value !== undefined && value !== null && value !== '') {
+            params.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+          }
+        })
+      }
+      if (params.length > 0) {
+        url += (url.includes('?') ? '&' : '?') + params.join('&')
+      }
+    }
+    
     console.log('HTTP请求:', {
-      url: options.url,
+      url: url,
       method: options.method,
       data: options.data
     })
     
     uni.request({
       ...options,
+      url: url,
+      // GET请求不需要data字段
+      data: options.method === 'GET' ? undefined : options.data,
       // 响应成功
       success(res) {
         console.log('HTTP响应:', {
-          url: options.url,
+          url: url,
           statusCode: res.statusCode,
           data: res.data
         })
         
         // 状态码 2xx
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          // 提取核心数据 res.data
-          resolve(res.data as Data<T>)
+          const responseData = res.data as Data<T>
+          // 检查业务状态码
+          if (responseData.code === 200) {
+            resolve(responseData)
+          } else {
+            // 业务错误
+            uni.showToast({
+              icon: 'none',
+              title: responseData.message || '请求失败',
+            })
+            reject(responseData)
+          }
         } else if (res.statusCode === 401) {
           // 401错误 -> 清理token并跳转到登录页
           uni.removeStorageSync('token')
-          uni.removeStorageSync('visitorInfo')
+          uni.removeStorageSync('userInfo')
           uni.showToast({
             icon: 'none',
             title: '登录已过期，请重新登录',
@@ -98,7 +133,8 @@ export const http = <T>(options: UniApp.RequestOptions) => {
           reject(res)
         } else {
           // 其他错误 -> 根据后端错误信息轻提示
-          const errorMsg = (res.data as Data<T>)?.message || '请求错误'
+          const responseData = res.data as Data<T>
+          const errorMsg = responseData?.message || '请求错误'
           uni.showToast({
             icon: 'none',
             title: errorMsg,
@@ -111,7 +147,7 @@ export const http = <T>(options: UniApp.RequestOptions) => {
         console.error('HTTP请求失败:', err)
         uni.showToast({
           icon: 'none',
-          title: '网络错误，换个网络试试',
+          title: '网络错误，请检查网络连接',
         })
         reject(err)
       },
