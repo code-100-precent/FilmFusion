@@ -6,10 +6,10 @@
       'navbar--scrolled': isScrolled
     }"
     :style="{
-      paddingTop: statusBarHeight + 'px',
       background: background
     }"
   >
+    <view class="navbar__status-bar"></view>
     <view class="navbar__content">
       <view class="navbar__curve navbar__curve--top"></view>
       <view v-if="showBack" class="navbar__left" @click="handleBack">
@@ -49,17 +49,7 @@
 		},
 		data() {
 			return {
-      statusBarHeight: 0,
       isScrolled: false
-			}
-		},
-		mounted() {
-			try {
-				const windowInfo = uni.getWindowInfo()
-				this.statusBarHeight = windowInfo.statusBarHeight || 0
-    } catch (error) {
-				const systemInfo = uni.getSystemInfoSync()
-				this.statusBarHeight = systemInfo.statusBarHeight || 0
 			}
 		},
 		methods: {
@@ -92,67 +82,72 @@
 
 <style scoped lang="scss">
 	.navbar {
-  position: fixed;
+		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
-  z-index: 998;
-  backdrop-filter: blur(20rpx) saturate(180%);
-  -webkit-backdrop-filter: blur(20rpx) saturate(180%);
-  box-sizing: border-box;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  margin: 0;
-  padding-top: env(safe-area-inset-top);
-}
+		z-index: 998;
+		backdrop-filter: blur(20rpx) saturate(180%);
+		-webkit-backdrop-filter: blur(20rpx) saturate(180%);
+		box-sizing: border-box;
+		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+		overflow: hidden;
+		margin: 0;
+		/* 总高度 = 状态栏高度 + 导航栏内容高度 */
+		padding-top: env(safe-area-inset-top, 44rpx);
+	}
 
-.navbar--shadow {
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
-}
+	.navbar__status-bar {
+		height: env(safe-area-inset-top, 44rpx);
+		background: transparent;
+	}
 
-.navbar--scrolled {
-  border-radius: 0 0 32rpx 32rpx;
-  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.12);
-}
+	.navbar--shadow {
+		box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+	}
 
-.navbar__content {
+	.navbar--scrolled {
+		box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.12);
+	}
+
+	.navbar__content {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-  height: 80rpx;
-  padding: 0 40rpx;
+		height: 88rpx; /* 固定导航栏内容高度 */
+		padding: 0 40rpx;
 		box-sizing: border-box;
 		position: relative;
 		margin: 0;
 	}
 	
-.navbar__curve {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 24rpx;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
+	.navbar__curve {
+		position: absolute;
+		left: 0;
+		right: 0;
+		height: 24rpx;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	}
 
-.navbar__curve--top {
-  top: -24rpx;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-}
+	.navbar__curve--top {
+		top: -24rpx;
+		background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+	}
 
-.navbar__curve--bottom {
-  bottom: -24rpx;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
-}
+	.navbar__curve--bottom {
+		bottom: -24rpx;
+		background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+	}
 
-.navbar--scrolled .navbar__curve {
-  opacity: 1;
-}
+	.navbar--scrolled .navbar__curve {
+		opacity: 1;
+	}
 
-.navbar__left,
-.navbar__right {
-  width: 80rpx;
+	.navbar__left,
+	.navbar__right {
+		width: 80rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -160,28 +155,28 @@
 		z-index: 2;
 	}
 	
-.navbar__left {
-  height: 80rpx;
-  border-radius: 20rpx;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+	.navbar__left {
+		height: 80rpx;
+		border-radius: 20rpx;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
 
-.navbar__left:active {
-  background: rgba(99, 102, 241, 0.1);
-  transform: scale(0.95);
-}
+	.navbar__left:active {
+		background: rgba(99, 102, 241, 0.1);
+		transform: scale(0.95);
+	}
 	
-.navbar__title {
+	.navbar__title {
 		flex: 1;
 		text-align: center;
-  font-size: 34rpx;
+		font-size: 34rpx;
 		font-weight: 700;
-  color: #1f2937;
-  letter-spacing: 0.5rpx;
-  background: linear-gradient(135deg, #1f2937 0%, #4b5563 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+		color: #1f2937;
+		letter-spacing: 0.5rpx;
+		background: linear-gradient(135deg, #1f2937 0%, #4b5563 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
 		position: relative;
 		z-index: 2;
 	}

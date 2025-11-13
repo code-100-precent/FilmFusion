@@ -2,13 +2,6 @@
 	<view class="index-container">
 		<!-- 导航栏 -->
 		<NavBar title="雅安影视服务" :show-back="false" class="index-navbar"></NavBar>
-		
-		<scroll-view 
-			class="content-scroll" 
-			scroll-y 
-			@scroll="onScroll"
-			:style="{ paddingTop: navbarHeight + 'px' }"
-		>
 			<view class="content">
 				<!-- Banner 轮播图区域 -->
 				<view class="banner-section" :class="{ 'banner-section--scrolled': scrollTop > 50 }">
@@ -154,7 +147,6 @@
 				<!-- 底部间距 -->
 				<view class="bottom-spacer"></view>
 			</view>
-		</scroll-view>
 		
 		<!-- 底部导航栏 -->
 		<TabBar :current="currentPath"></TabBar>
@@ -313,7 +305,7 @@
 	}
 	
 	.content {
-		padding: 0 32rpx;
+		padding: 0 16rpx;
 		padding-bottom: calc(96rpx + env(safe-area-inset-bottom));
 	}
 	

@@ -1,5 +1,6 @@
 <template>
   <PageShell
+    style="margin-top: 50px"
     title="雅安取景手册"
     :show-back="false"
     :show-tab="true"
