@@ -116,6 +116,9 @@ public class Report extends BaseEntity implements Serializable, Cloneable {
     @TableField("crew_position")
     private String crewPosition;
 
+    @TableField("userId")
+    private Long userId;
+
     @Override
     public Report clone() {
         try {

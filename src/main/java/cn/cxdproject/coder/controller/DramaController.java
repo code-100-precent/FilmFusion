@@ -6,6 +6,8 @@ import cn.cxdproject.coder.common.ApiResponse;
 import cn.cxdproject.coder.common.PageRequest;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/drama")
+@Api(tags = "影视剧")
 public class DramaController {
 
     private final DramaService dramaService;
@@ -29,9 +32,9 @@ public class DramaController {
      * @param entity 实体对象
      * @return 是否新增成功
      */
-    @PostMapping
-    public ApiResponse<Boolean> add(@RequestBody Drama entity) {
-        return ApiResponse.success(dramaService.save(entity));
+    @PostMapping("/add")
+    public ApiResponse<Boolean> add(@RequestBody Drama drama) {
+        return ApiResponse.success(dramaService.save(drama));
     }
 
     /**
@@ -39,9 +42,10 @@ public class DramaController {
      * @param entity 实体对象（必须包含主键 ID）
      * @return 是否更新成功
      */
-    @PutMapping
-    public ApiResponse<Boolean> update(@RequestBody Drama entity) {
-        return ApiResponse.success(dramaService.updateById(entity));
+    @PutMapping("/update")
+    @ApiOperation("更新影视剧信息")
+    public ApiResponse<Boolean> update(@RequestBody Drama drama) {
+        return ApiResponse.success(dramaService.updateById(drama));
     }
 
     /**
@@ -49,7 +53,8 @@ public class DramaController {
      * @param id 主键 ID
      * @return 是否删除成功
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
+    @ApiOperation("删除信息")
     public ApiResponse<Boolean> delete(@PathVariable("id") Integer id) {
         return ApiResponse.success(dramaService.removeById(id));
     }
@@ -59,7 +64,8 @@ public class DramaController {
      * @param id 主键 ID
      * @return 匹配的实体对象
      */
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
+    @ApiOperation("获取信息")
     public ApiResponse<Drama> getById(@PathVariable("id") Integer id) {
         return ApiResponse.success(dramaService.getById(id));
     }
@@ -68,7 +74,8 @@ public class DramaController {
      * 获取所有 Drama 列表（不分页）
      * @return 实体列表
      */
-    @GetMapping
+    @GetMapping("/get/all")
+    @ApiOperation("获取全部信息")
     public ApiResponse<List<Drama>> list() {
         return ApiResponse.success(dramaService.list());
     }
@@ -80,6 +87,7 @@ public class DramaController {
      * @return 分页结果
      */
     @PostMapping("/page")
+    @ApiOperation("分页查询git ")
     public ApiResponse<Page<Drama>> getPage(@RequestBody PageRequest pageRequest) {
         Page<Drama> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
         QueryWrapper<Drama> wrapper = new QueryWrapper<>();
