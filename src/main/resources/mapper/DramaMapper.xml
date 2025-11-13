@@ -16,6 +16,7 @@
         <result column="location_id" property="locationId" />
         <result column="service" property="service" />
         <result column="service_id" property="serviceId" />
+        <result column="user_id" property="userId" />
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
@@ -33,6 +34,7 @@
             `location_id`,
             `service`,
             `service_id`,
+            `user_id`,
             `deleted`,
             `created_at`,
             `updated_at`

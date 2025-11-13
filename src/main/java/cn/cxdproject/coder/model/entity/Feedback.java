@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 /**
  * Feedback 实体类
  * @author Hibiscus-code-generate
@@ -25,32 +23,32 @@ public class Feedback extends BaseEntity implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     /**
-    * 主键ID
-    */
+     * 主键ID
+     */
     @TableId
     private Long id;
 
     /**
-    * 用户ID，关联到用户表
-    */
+     * 用户ID，关联到用户表
+     */
     @TableField("user_id")
     private Long userId;
 
     /**
-    * 反馈内容
-    */
+     * 反馈内容
+     */
     @TableField("content")
     private String content;
 
     /**
-    * 反馈状态（未处理、处理中、已解决等）
-    */
+     * 反馈状态（未处理、处理中、已解决等）
+     */
     @TableField("status")
     private String status;
 
     /**
-    * 反馈类型（建议、投诉等）
-    */
+     * 反馈类型（建议、投诉等）
+     */
     @TableField("type")
     private String type;
 
@@ -60,7 +58,7 @@ public class Feedback extends BaseEntity implements Serializable, Cloneable {
             return (Feedback) super.clone();
         } catch (CloneNotSupportedException e) {
             // This should never happen since we implement Cloneable
-            throw new RuntimeException("Failed to clone User object", e);
+            throw new RuntimeException("Failed to clone Feedback object", e);
         }
     }
 }

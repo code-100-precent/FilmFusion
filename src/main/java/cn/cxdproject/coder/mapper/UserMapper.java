@@ -1,7 +1,7 @@
 package cn.cxdproject.coder.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import cn.cxdproject.coder.model.entity.User;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -9,6 +9,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @author Hibiscus-code-generate
  */
 @Mapper
-public interface UserMapper extends BaseMapper<User> {
+public interface UserMapper extends BaseMapper<User.User> {
 
 }

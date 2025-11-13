@@ -14,6 +14,7 @@
         <result column="contact_name" property="contactName" />
         <result column="address" property="address" />
         <result column="price" property="price" />
+        <result column="user_id" property="userId" />
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
@@ -29,6 +30,7 @@
             `contact_name`,
             `address`,
             `price`,
+            `user_id`,
             `deleted`,
             `created_at`,
             `updated_at`

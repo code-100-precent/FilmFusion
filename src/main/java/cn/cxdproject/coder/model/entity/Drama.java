@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 /**
  * Drama 实体类
  * @author Hibiscus-code-generate
@@ -25,70 +23,76 @@ public class Drama extends BaseEntity implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     /**
-    * 主键ID
-    */
+     * 主键ID
+     */
     @TableId
     private Long id;
 
     /**
-    * 电视剧名称
-    */
+     * 电视剧名称
+     */
     @TableField("name")
     private String name;
 
     /**
-    * 备案号
-    */
+     * 备案号
+     */
     @TableField("filing_num")
     private String filingNum;
 
     /**
-    * 出品公司
-    */
+     * 出品公司
+     */
     @TableField("prod_company")
     private String prodCompany;
 
     /**
-    * 公司简介
-    */
+     * 公司简介
+     */
     @TableField("crew_description")
     private String crewDescription;
 
     /**
-    * 电视剧简介
-    */
+     * 电视剧简介
+     */
     @TableField("drama_description")
     private String dramaDescription;
 
     /**
-    * 演员名单
-    */
+     * 演员名单
+     */
     @TableField("cast")
     private String cast;
 
     /**
-    * 拍摄地
-    */
+     * 拍摄地
+     */
     @TableField("shoot_location")
     private String shootLocation;
 
     /**
-    * 拍摄地ID，关联locations表
-    */
+     * 拍摄地ID，关联locations表
+     */
     @TableField("location_id")
     private Long locationId;
 
     /**
-    * 协拍服务
-    */
+     * 协拍服务
+     */
     @TableField("service")
     private String service;
 
     /**
-    * 协拍服务ID，关联shoot表
-    */
+     * 协拍服务ID，关联shoot表
+     */
     @TableField("service_id")
     private Long serviceId;
+
+    /**
+     * 用户ID，关联到用户表
+     */
+    @TableField("user_id")
+    private Long userId;
 
     @Override
     public Drama clone() {
@@ -96,7 +100,7 @@ public class Drama extends BaseEntity implements Serializable, Cloneable {
             return (Drama) super.clone();
         } catch (CloneNotSupportedException e) {
             // This should never happen since we implement Cloneable
-            throw new RuntimeException("Failed to clone User object", e);
+            throw new RuntimeException("Failed to clone Drama object", e);
         }
     }
 }

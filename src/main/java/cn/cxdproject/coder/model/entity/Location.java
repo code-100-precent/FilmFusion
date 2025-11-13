@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * Location 实体类
@@ -26,58 +25,64 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     /**
-    * 主键ID
-    */
+     * 主键ID
+     */
     @TableId
     private Long id;
 
     /**
-    * 场地名称
-    */
+     * 场地名称
+     */
     @TableField("name")
     private String name;
 
     /**
-    * 类型
-    */
+     * 类型
+     */
     @TableField("type")
     private String type;
 
     /**
-    * 可用状态（0：不可用，1：可用）
-    */
+     * 可用状态（0：不可用，1：可用）
+     */
     @TableField("status")
     private Byte status;
 
     /**
-    * 场地介绍
-    */
+     * 场地介绍
+     */
     @TableField("location_description")
     private String locationDescription;
 
     /**
-    * 联系人电话
-    */
+     * 联系人电话
+     */
     @TableField("contact_phone")
     private String contactPhone;
 
     /**
-    * 联系人
-    */
+     * 联系人
+     */
     @TableField("contact_name")
     private String contactName;
 
     /**
-    * 地址
-    */
+     * 地址
+     */
     @TableField("address")
     private String address;
 
     /**
-    * 价格（元）
-    */
+     * 价格（元）
+     */
     @TableField("price")
     private BigDecimal price;
+
+    /**
+     * 用户ID，关联到用户表
+     */
+    @TableField("user_id")
+    private Long userId;
 
     @Override
     public Location clone() {
@@ -85,7 +90,7 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
             return (Location) super.clone();
         } catch (CloneNotSupportedException e) {
             // This should never happen since we implement Cloneable
-            throw new RuntimeException("Failed to clone User object", e);
+            throw new RuntimeException("Failed to clone Location object", e);
         }
     }
 }

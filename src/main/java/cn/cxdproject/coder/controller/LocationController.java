@@ -2,12 +2,10 @@ package cn.cxdproject.coder.controller;
 
 import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.service.LocationService;
-import cn.cxdproject.coder.common.ApiResponse;
-import cn.cxdproject.coder.common.PageRequest;
+import cn.code100.coder.common.request.PageRequest;
+import cn.code100.coder.common.response.ApiResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,7 +16,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/location")
-@Api(tags = "拍摄场景")
 public class LocationController {
 
     private final LocationService locationService;
@@ -32,10 +29,9 @@ public class LocationController {
      * @param entity 实体对象
      * @return 是否新增成功
      */
-    @PostMapping("/add")
-    @ApiOperation("新增场景信息")
-    public ApiResponse<Boolean> add(@RequestBody Location location) {
-        return ApiResponse.success(locationService.save(location));
+    @PostMapping
+    public ApiResponse<Boolean> add(@RequestBody Location entity) {
+        return ApiResponse.success(locationService.save(entity));
     }
 
     /**
@@ -43,10 +39,9 @@ public class LocationController {
      * @param entity 实体对象（必须包含主键 ID）
      * @return 是否更新成功
      */
-    @PutMapping("/update")
-    @ApiOperation("更新场景信息")
-    public ApiResponse<Boolean> update(@RequestBody Location location) {
-        return ApiResponse.success(locationService.updateById(location));
+    @PutMapping
+    public ApiResponse<Boolean> update(@RequestBody Location entity) {
+        return ApiResponse.success(locationService.updateById(entity));
     }
 
     /**
@@ -54,8 +49,7 @@ public class LocationController {
      * @param id 主键 ID
      * @return 是否删除成功
      */
-    @DeleteMapping("/delete/{id}")
-    @ApiOperation("删除相关场景信息")
+    @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable("id") Integer id) {
         return ApiResponse.success(locationService.removeById(id));
     }
@@ -65,8 +59,7 @@ public class LocationController {
      * @param id 主键 ID
      * @return 匹配的实体对象
      */
-    @GetMapping("/get/{id}")
-    @ApiOperation("获取场景信息")
+    @GetMapping("/{id}")
     public ApiResponse<Location> getById(@PathVariable("id") Integer id) {
         return ApiResponse.success(locationService.getById(id));
     }
@@ -75,8 +68,7 @@ public class LocationController {
      * 获取所有 Location 列表（不分页）
      * @return 实体列表
      */
-    @GetMapping("/get/all")
-    @ApiOperation("获得所有场景信息")
+    @GetMapping
     public ApiResponse<List<Location>> list() {
         return ApiResponse.success(locationService.list());
     }
@@ -88,7 +80,6 @@ public class LocationController {
      * @return 分页结果
      */
     @PostMapping("/page")
-    @ApiOperation("分页查询")
     public ApiResponse<Page<Location>> getPage(@RequestBody PageRequest pageRequest) {
         Page<Location> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
         QueryWrapper<Location> wrapper = new QueryWrapper<>();

@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * Shoot 实体类
@@ -26,52 +25,58 @@ public class Shoot extends BaseEntity implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     /**
-    * 主键ID
-    */
+     * 主键ID
+     */
     @TableId
     private Long id;
 
     /**
-    * 服务名称
-    */
+     * 服务名称
+     */
     @TableField("name")
     private String name;
 
     /**
-    * 服务简介
-    */
+     * 服务简介
+     */
     @TableField("description")
     private String description;
 
     /**
-    * 价格（元）
-    */
+     * 价格（元）
+     */
     @TableField("price")
     private BigDecimal price;
 
     /**
-    * 状态（0：下线，1：上线）
-    */
+     * 状态（0：下线，1：上线）
+     */
     @TableField("status")
     private Byte status;
 
     /**
-    * 服务地址
-    */
+     * 服务地址
+     */
     @TableField("address")
     private String address;
 
     /**
-    * 联系电话
-    */
+     * 联系电话
+     */
     @TableField("phone")
     private String phone;
 
     /**
-    * 联系人
-    */
+     * 联系人
+     */
     @TableField("contact_name")
     private String contactName;
+
+    /**
+     * 用户ID，关联到用户表
+     */
+    @TableField("user_id")
+    private Long userId;
 
     @Override
     public Shoot clone() {
@@ -79,7 +84,7 @@ public class Shoot extends BaseEntity implements Serializable, Cloneable {
             return (Shoot) super.clone();
         } catch (CloneNotSupportedException e) {
             // This should never happen since we implement Cloneable
-            throw new RuntimeException("Failed to clone User object", e);
+            throw new RuntimeException("Failed to clone Shoot object", e);
         }
     }
 }

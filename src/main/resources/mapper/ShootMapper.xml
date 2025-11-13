@@ -13,6 +13,7 @@
         <result column="address" property="address" />
         <result column="phone" property="phone" />
         <result column="contact_name" property="contactName" />
+        <result column="user_id" property="userId" />
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
@@ -27,6 +28,7 @@
             `address`,
             `phone`,
             `contact_name`,
+            `user_id`,
             `deleted`,
             `created_at`,
             `updated_at`

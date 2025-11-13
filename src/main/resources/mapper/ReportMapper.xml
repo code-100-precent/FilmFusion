@@ -20,10 +20,10 @@
         <result column="contact" property="contact" />
         <result column="phone_number" property="phoneNumber" />
         <result column="crew_position" property="crewPosition" />
+        <result column="user_id" property="userId" />
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
-        <result column="user_id" property="userId" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -42,10 +42,10 @@
             `contact`,
             `phone_number`,
             `crew_position`,
+            `user_id`,
             `deleted`,
             `created_at`,
             `updated_at`
-            `user_id`
     </sql>
 
 </mapper>

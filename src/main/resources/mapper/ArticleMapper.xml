@@ -10,6 +10,7 @@
         <result column="issue_unit" property="issueUnit" />
         <result column="issue_time" property="issueTime" />
         <result column="content" property="content" />
+        <result column="user_id" property="userId" />
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
@@ -21,6 +22,7 @@
             `issue_unit`,
             `issue_time`,
             `content`,
+            `user_id`,
             `deleted`,
             `created_at`,
             `updated_at`

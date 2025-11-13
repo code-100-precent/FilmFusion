@@ -2,12 +2,10 @@ package cn.cxdproject.coder.controller;
 
 import cn.cxdproject.coder.model.entity.Report;
 import cn.cxdproject.coder.service.ReportService;
-import cn.cxdproject.coder.common.ApiResponse;
-import cn.cxdproject.coder.common.PageRequest;
+import cn.code100.coder.common.request.PageRequest;
+import cn.code100.coder.common.response.ApiResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,7 +16,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/report")
-@Api(tags = "剧组报备")
 public class ReportController {
 
     private final ReportService reportService;
@@ -29,12 +26,12 @@ public class ReportController {
 
     /**
      * 新增 Report 记录
+     * @param entity 实体对象
      * @return 是否新增成功
      */
-    @PostMapping("/add")
-    @ApiOperation("填写报备表")
-    public ApiResponse<Boolean> add(@RequestBody Report report) {
-        return ApiResponse.success(reportService.save(report));
+    @PostMapping
+    public ApiResponse<Boolean> add(@RequestBody Report entity) {
+        return ApiResponse.success(reportService.save(entity));
     }
 
     /**
@@ -42,10 +39,9 @@ public class ReportController {
      * @param entity 实体对象（必须包含主键 ID）
      * @return 是否更新成功
      */
-    @PutMapping("/update")
-    @ApiOperation("修改报备表")
-    public ApiResponse<Boolean> update(@RequestBody Report report) {
-        return ApiResponse.success(reportService.updateById(report));
+    @PutMapping
+    public ApiResponse<Boolean> update(@RequestBody Report entity) {
+        return ApiResponse.success(reportService.updateById(entity));
     }
 
     /**
@@ -53,8 +49,7 @@ public class ReportController {
      * @param id 主键 ID
      * @return 是否删除成功
      */
-    @DeleteMapping("/delete/{id}")
-    @ApiOperation("删除报备表")
+    @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable("id") Integer id) {
         return ApiResponse.success(reportService.removeById(id));
     }
@@ -64,8 +59,7 @@ public class ReportController {
      * @param id 主键 ID
      * @return 匹配的实体对象
      */
-    @GetMapping("/get/{id}")
-    @ApiOperation("查找报备表")
+    @GetMapping("/{id}")
     public ApiResponse<Report> getById(@PathVariable("id") Integer id) {
         return ApiResponse.success(reportService.getById(id));
     }
@@ -74,18 +68,9 @@ public class ReportController {
      * 获取所有 Report 列表（不分页）
      * @return 实体列表
      */
-    @GetMapping("/get/all")
-    @ApiOperation("查找全部报备表")
+    @GetMapping
     public ApiResponse<List<Report>> list() {
         return ApiResponse.success(reportService.list());
-    }
-
-    @GetMapping("/get/user/{userId}")
-    @ApiOperation("查找用户的报备信息")
-    public ApiResponse<List<Report>> getByUser(@PathVariable("userId") Long userId) {
-        QueryWrapper<Report> wrapper = new QueryWrapper<>();
-        wrapper.eq("user_id",userId);
-        return ApiResponse.success(reportService.list(wrapper));
     }
 
     /**
@@ -95,7 +80,6 @@ public class ReportController {
      * @return 分页结果
      */
     @PostMapping("/page")
-    @ApiOperation("分页查询")
     public ApiResponse<Page<Report>> getPage(@RequestBody PageRequest pageRequest) {
         Page<Report> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
         QueryWrapper<Report> wrapper = new QueryWrapper<>();

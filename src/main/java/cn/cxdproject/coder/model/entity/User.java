@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 /**
  * User 实体类
  * @author Hibiscus-code-generate
@@ -25,44 +23,44 @@ public class User extends BaseEntity implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     /**
-    * 管理员ID
-    */
+     * 管理员ID
+     */
     @TableId
     private Long id;
 
     /**
-    * 用户名
-    */
+     * 用户名
+     */
     @TableField("username")
     private String username;
 
     /**
-    * 密码
-    */
+     * 密码
+     */
     @TableField("password")
     private String password;
 
     /**
-    * 电话号码
-    */
+     * 电话号码
+     */
     @TableField("phoneNumber")
     private String phoneNumber;
 
     /**
-    * 头像
-    */
+     * 头像
+     */
     @TableField("avatar")
     private String avatar;
 
     /**
-    * 角色
-    */
+     * 角色
+     */
     @TableField("role")
     private String role;
 
     /**
-    * 是否启用
-    */
+     * 是否启用
+     */
     @TableField("enabled")
     private Boolean enabled;
 

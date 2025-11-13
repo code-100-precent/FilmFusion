@@ -9,7 +9,6 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * Report 实体类
@@ -27,96 +26,99 @@ public class Report extends BaseEntity implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     /**
-    * 主键ID
-    */
+     * 主键ID
+     */
     @TableId
     private Long id;
 
     /**
-    * 影视剧名称
-    */
+     * 影视剧名称
+     */
     @TableField("name")
     private String name;
 
     /**
-    * 类型
-    */
+     * 类型
+     */
     @TableField("type")
     private String type;
 
     /**
-    * 题材
-    */
+     * 题材
+     */
     @TableField("genre")
     private String genre;
 
     /**
-    * 集数
-    */
+     * 集数
+     */
     @TableField("episodes")
     private Integer episodes;
 
     /**
-    * 投资金额（万元）
-    */
+     * 投资金额（万元）
+     */
     @TableField("invest_amount")
     private BigDecimal investAmount;
 
     /**
-    * 主创人员
-    */
+     * 主创人员
+     */
     @TableField("main_creators")
     private String mainCreators;
 
     /**
-    * 第一出品单位
-    */
+     * 第一出品单位
+     */
     @TableField("lead_producer")
     private String leadProducer;
 
     /**
-    * 制片单位
-    */
+     * 制片单位
+     */
     @TableField("producer_unit")
     private String producerUnit;
 
     /**
-    * 拍摄开始日期
-    */
+     * 拍摄开始日期
+     */
     @TableField("start_date")
     private LocalDate startDate;
 
     /**
-    * 拍摄结束日期
-    */
+     * 拍摄结束日期
+     */
     @TableField("end_date")
     private LocalDate endDate;
 
     /**
-    * 剧组规模
-    */
+     * 剧组规模
+     */
     @TableField("crew_scale")
     private String crewScale;
 
     /**
-    * 联系人
-    */
+     * 联系人
+     */
     @TableField("contact")
     private String contact;
 
     /**
-    * 联系电话
-    */
+     * 联系电话
+     */
     @TableField("phone_number")
     private String phoneNumber;
 
     /**
-    * 剧组职务
-    */
+     * 剧组职务
+     */
     @TableField("crew_position")
     private String crewPosition;
 
-    @TableField("userId")
+    /**
+     * 用户ID，关联到用户表
+     */
+    @TableField("user_id")
     private Long userId;
 
     @Override
@@ -125,7 +127,7 @@ public class Report extends BaseEntity implements Serializable, Cloneable {
             return (Report) super.clone();
         } catch (CloneNotSupportedException e) {
             // This should never happen since we implement Cloneable
-            throw new RuntimeException("Failed to clone User object", e);
+            throw new RuntimeException("Failed to clone Report object", e);
         }
     }
 }

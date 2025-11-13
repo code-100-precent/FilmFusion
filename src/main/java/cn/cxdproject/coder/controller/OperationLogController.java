@@ -2,8 +2,8 @@ package cn.cxdproject.coder.controller;
 
 import cn.cxdproject.coder.model.entity.OperationLog;
 import cn.cxdproject.coder.service.OperationLogService;
-import cn.cxdproject.coder.common.ApiResponse;
-import cn.cxdproject.coder.common.PageRequest;
+import cn.code100.coder.common.request.PageRequest;
+import cn.code100.coder.common.response.ApiResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +15,7 @@ import java.util.List;
  * @author Hibiscus-code-generate
  */
 @RestController
-@RequestMapping("/api/operation-log")
+@RequestMapping("/api/operationlog")
 public class OperationLogController {
 
     private final OperationLogService operationLogService;
