@@ -1,10 +1,18 @@
 <template>
   <view class="index-page">
+    <!-- 渐变背景层 -->
+    <view class="gradient-bg"></view>
+    
     <!-- 自定义导航栏 -->
-    <NavBar title="雅安影视服务" :show-back="false"></NavBar>
+    <NavBar :show-back="false"></NavBar>
 
     <!-- 内容区域 -->
     <scroll-view class="content" scroll-y @scrolltolower="onScrollToLower">
+      <!-- 页面标题 -->
+      <view class="page-title">
+        <text class="title-text">雅安影视服务</text>
+      </view>
+
       <!-- Banner轮播 -->
       <view class="banner-section">
         <swiper
@@ -37,9 +45,10 @@
             @click="handleFunctionClick(item)"
           >
             <view class="function-icon" :style="{ background: item.bgColor }">
-              <uni-icons :type="item.icon" :color="item.color" size="32"></uni-icons>
+              <uni-icons :type="item.icon" :color="item.color" size="30"></uni-icons>
             </view>
             <text class="function-text">{{ item.text }}</text>
+            <text class="function-desc">{{ item.desc }}</text>
           </view>
         </view>
       </view>
@@ -136,24 +145,24 @@ export default {
         {
           title: '雅安影视服务',
           desc: '专业影视拍摄一站式服务平台',
-          bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E9%9B%85%E5%AE%89%E5%BD%B1%E8%A7%86%E6%9C%8D%E5%8A%A1.png") center/cover no-repeat'
         },
         {
           title: '发现精彩取景点',
           desc: '探索雅安最美拍摄场景',
-          bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%8F%91%E7%8E%B0%E7%B2%BE%E5%BD%A9%E5%8F%96%E6%99%AF%E7%82%B9.png") center/cover no-repeat'
         },
         {
           title: '专业协拍服务',
           desc: '提供全方位影视制作支持',
-          bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E4%B8%93%E4%B8%9A%E5%8D%8F%E6%8B%8D%E6%9C%8D%E5%8A%A1.png") center/cover no-repeat'
         }
       ],
       functions: [
-        { icon: 'location', text: '拍摄场地', color: '#6366f1', bgColor: '#eef2ff', path: '/pages/scenes/scenes' },
-        { icon: 'calendar', text: '剧组报备', color: '#8b5cf6', bgColor: '#f3e8ff', path: '/pages/filing/filing' },
-        { icon: 'phone', text: '协拍服务', color: '#ec4899', bgColor: '#fce7f3', path: '/pages/services/services' },
-        { icon: 'chatbubble', text: '影视资讯', color: '#06b6d4', bgColor: '#cffafe', path: '/pages/news/news' }
+        { icon: 'location', text: '拍摄场地', desc: '寻找完美取景地', color: '#f59e0b', bgColor: 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)', path: '/pages/scenes/scenes' },
+        { icon: 'calendar', text: '剧组报备', desc: '手续办理更便捷', color: '#8b5cf6', bgColor: 'linear-gradient(135deg, #f3e8ff 0%, #ddd6fe 100%)', path: '/pages/filing/filing' },
+        { icon: 'phone', text: '协拍服务', desc: '专业团队支持', color: '#ec4899', bgColor: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', path: '/pages/services/services' },
+        { icon: 'chatbubble', text: '影视资讯', desc: '掌握行业动态', color: '#06b6d4', bgColor: 'linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%)', path: '/pages/news/news' }
       ],
       articles: [],
       locations: []
@@ -254,6 +263,18 @@ export default {
   background: #f5f7fa;
   padding-top: 132rpx;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 33.33vh;
+  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  z-index: 0;
 }
 
 .content {
@@ -262,6 +283,21 @@ export default {
   padding-bottom: 40rpx;
   box-sizing: border-box;
   width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* 页面标题样式 */
+.page-title {
+  padding: 32rpx 0 8rpx 0;
+  width: 100%;
+}
+
+.title-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
 }
 
 .banner-section {
@@ -286,7 +322,25 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40rpx;
+  padding: 20rpx;  /* 减少内边距 */
+  position: relative;
+}
+
+.banner-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.banner-title,
+.banner-desc {
+  position: relative;
+  z-index: 2;
 }
 
 .banner-title {
@@ -295,17 +349,19 @@ export default {
   color: #fff;
   margin-bottom: 16rpx;
   text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
+  text-align: center;
 }
 
 .banner-desc {
   font-size: 28rpx;
   color: rgba(255, 255, 255, 0.9);
+  text-align: center;
 }
 
 .function-section {
   background: #fff;
   margin-bottom: 32rpx;
-  padding: 40rpx;
+  padding: 32rpx 24rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
   width: 100%;
@@ -316,36 +372,60 @@ export default {
   font-size: 36rpx;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
+  text-align: center;
 }
 
 .function-grid {
   display: flex;
   justify-content: space-between;
+  gap: 16rpx;
 }
 
 .function-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16rpx;
+  gap: 8rpx;
   flex: 1;
+  padding: 20rpx 12rpx;
+  border-radius: 16rpx;
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+  border: 1rpx solid rgba(229, 231, 235, 0.5);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.function-item:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
 }
 
 .function-icon {
-  width: 100rpx;
-  height: 100rpx;
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  margin-bottom: 4rpx;
 }
 
 .function-text {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #374151;
-  font-weight: 500;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.function-desc {
+  font-size: 20rpx;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.2;
+  margin-top: 2rpx;
 }
 
 .news-section,
@@ -489,5 +569,30 @@ export default {
 
 .bottom-spacer {
   height: 40rpx;
+}
+
+/* 隐藏滚动条样式 */
+.content {
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
+}
+
+.location-scroll {
+  white-space: nowrap;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 </style>

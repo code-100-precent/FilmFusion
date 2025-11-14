@@ -1,8 +1,12 @@
 <template>
   <view class="filing-page">
-    <NavBar title="剧组报备" :show-back="true"></NavBar>
+    <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y>
+      <!-- 页面标题 -->
+      <view class="page-title">
+        <text class="title-text">剧组报备</text>
+      </view>
       <!-- 说明卡片 -->
       <view class="intro-card">
         <view class="intro-title">在线剧组报备</view>
@@ -387,6 +391,28 @@ export default {
   padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   width: 100%;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
+}
+
+/* 页面标题样式 */
+.page-title {
+  padding: 32rpx 0 8rpx 0;
+  width: 100%;
+}
+
+.title-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
 }
 
 .intro-card {

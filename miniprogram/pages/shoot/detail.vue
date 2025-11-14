@@ -123,6 +123,15 @@ export default {
   padding: 32rpx;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .info-card {

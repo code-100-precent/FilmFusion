@@ -1,8 +1,16 @@
 <template>
   <view class="profile-page">
-    <NavBar title="个人中心" :show-back="false"></NavBar>
+    <!-- 渐变背景层 -->
+    <view class="gradient-bg"></view>
+    
+    <NavBar :show-back="false"></NavBar>
 
     <scroll-view class="content" scroll-y>
+      <!-- 页面标题 -->
+      <view class="page-title">
+        <text class="title-text">个人中心</text>
+      </view>
+      
       <!-- 用户信息卡片 -->
       <view class="user-card">
         <view v-if="isLoggedIn" class="user-info">
@@ -262,6 +270,18 @@ export default {
   background: #f5f7fa;
   padding-top: 132rpx;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 33.33vh;
+  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  z-index: 0;
 }
 
 .content {
@@ -270,6 +290,17 @@ export default {
   padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   width: 100%;
+  position: relative;
+  z-index: 1;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .user-card {
@@ -448,5 +479,18 @@ export default {
   border: 1rpx solid #fee2e2;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
   box-sizing: border-box;
+}
+
+/* 页面标题样式 */
+.page-title {
+  padding: 32rpx 0 8rpx 0;
+  width: 100%;
+}
+
+.title-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
 }
 </style>

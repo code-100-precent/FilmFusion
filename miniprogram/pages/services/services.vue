@@ -1,8 +1,15 @@
 <template>
   <view class="services-page">
-    <NavBar title="协拍服务" :show-back="false"></NavBar>
+    <!-- 渐变背景层 -->
+    <view class="gradient-bg"></view>
+    
+    <NavBar :show-back="false"></NavBar>
 
     <view class="content">
+      <!-- 页面标题 -->
+      <view class="page-title">
+        <text class="title-text">协拍服务</text>
+      </view>
       <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
@@ -182,6 +189,18 @@ export default {
   background: #f5f7fa;
   padding-top: 132rpx;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 33.33vh;
+  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  z-index: 0;
 }
 
 .content {
@@ -189,6 +208,30 @@ export default {
   padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   width: 100%;
+  position: relative;
+  z-index: 1;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
+}
+
+/* 页面标题样式 */
+.page-title {
+  padding: 32rpx 0 8rpx 0;
+  width: 100%;
+}
+
+.title-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
 }
 
 .search-bar {
@@ -217,6 +260,15 @@ export default {
 
 .shoot-list {
   height: calc(100vh - 88rpx - 200rpx);
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .loading-wrapper,
