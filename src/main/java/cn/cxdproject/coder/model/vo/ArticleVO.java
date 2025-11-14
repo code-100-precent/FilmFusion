@@ -1,5 +1,8 @@
 package cn.cxdproject.coder.model.vo;
 
+import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,6 +39,7 @@ public class ArticleVO {
     /**
      * 发布时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime issueTime;
     
     /**
@@ -47,15 +51,28 @@ public class ArticleVO {
      * 用户ID
      */
     private Long userId;
-    
+
+    private String cover;
+
     /**
      * 创建时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     
     /**
      * 更新时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
+
+
+    public ArticleVO(Long id, String title, String issueUnit, LocalDateTime issueTime, Long userId) {
+        this.id=id;
+        this.issueTime=issueTime;
+        this.title=title;
+        this.issueUnit=issueUnit;
+        this.userId=userId;
+    }
 }
 

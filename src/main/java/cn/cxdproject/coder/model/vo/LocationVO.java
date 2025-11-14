@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +30,7 @@ public class LocationVO {
     private String address;
     private BigDecimal price;
     private Long userId;
+    private String cover;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

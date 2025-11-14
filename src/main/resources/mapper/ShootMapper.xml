@@ -17,6 +17,7 @@
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
+        <result column="cover" property="cover" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -29,6 +30,7 @@
             `phone`,
             `contact_name`,
             `user_id`,
+            'cover',
             `deleted`,
             `created_at`,
             `updated_at`

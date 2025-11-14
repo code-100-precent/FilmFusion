@@ -94,6 +94,9 @@ public class Drama extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
+    @TableField("cover")
+    private String cover;
+
     @Override
     public Drama clone() {
         try {
