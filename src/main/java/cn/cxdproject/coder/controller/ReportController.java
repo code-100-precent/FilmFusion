@@ -109,6 +109,35 @@ public class ReportController {
         return ApiResponse.success();
     }
 
+    /**
+     * 获取我的报备列表
+     */
+    @GetMapping("/my")
+    public PageResponse<ReportVO> getMyReportPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size) {
+        // 拦截器已经验证了登录状态，这里直接获取用户信息
+        User currentUser = AuthContext.getCurrentUser();
+        log.debug("getMyReportPage - currentUser: {}", currentUser != null ? "userId=" + currentUser.getId() : "null");
+        
+        if (currentUser == null) {
+            // 防御性检查：如果拦截器没有正确设置用户信息，返回401
+            log.error("getMyReportPage - currentUser为null，拦截器可能未正确执行");
+            PageResponse<ReportVO> errorResponse = new PageResponse<>();
+            errorResponse.setCode(401);
+            errorResponse.setMessage("未登录或token已过期");
+            return errorResponse;
+        }
+        Page<Report> page = new Page<>(current, size);
+        Page<ReportVO> reportPage = reportService.getMyReportPage(currentUser.getId(), page);
+        return PageResponse.of(
+                (int) reportPage.getCurrent(),
+                (int) reportPage.getSize(),
+                reportPage.getTotal(),
+                reportPage.getRecords()
+        );
+    }
+
     // ==================== 管理员接口 ====================
 
     /**

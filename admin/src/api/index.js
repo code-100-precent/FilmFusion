@@ -7,38 +7,16 @@ const USE_MOCK = false
 // ==================== 管理员相关接口 ====================
 
 /**
- * 管理员密码登录
+ * 管理员登录（使用用户登录接口，但需要 ADMIN 角色）
  */
-export const adminLogin = (email, password) => {
+export const adminLogin = (username, password) => {
   return request({
-    url: '/admin/login/password',
+    url: '/user/login',
     method: 'post',
-    params: {
-      email,
+    data: {
+      username,
       password
     }
-  })
-}
-
-/**
- * 管理员邮箱登录（需要验证码）
- */
-export const adminLoginByEmail = (data) => {
-  return request({
-    url: '/admin/login/email',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 管理员注册（直接填写信息注册）
- */
-export const adminRegister = (data) => {
-  return request({
-    url: '/admin/register',
-    method: 'post',
-    data
   })
 }
 
@@ -47,7 +25,7 @@ export const adminRegister = (data) => {
  */
 export const getAdminInfo = () => {
   return request({
-    url: '/admin/info',
+    url: '/user/info',
     method: 'get'
   })
 }
@@ -57,7 +35,7 @@ export const getAdminInfo = () => {
  */
 export const adminLogout = () => {
   return request({
-    url: '/admin/logout',
+    url: '/user/logout',
     method: 'post'
   })
 }
@@ -67,7 +45,7 @@ export const adminLogout = () => {
  */
 export const updateAdminInfo = (data) => {
   return request({
-    url: '/admin/update',
+    url: '/user/info',
     method: 'put',
     data
   })
@@ -78,9 +56,9 @@ export const updateAdminInfo = (data) => {
  */
 export const changePassword = (oldPassword, newPassword) => {
   return request({
-    url: '/admin/change-password',
-    method: 'post',
-    params: {
+    url: '/user/password',
+    method: 'put',
+    data: {
       oldPassword,
       newPassword
     }
@@ -94,7 +72,7 @@ export const uploadAvatar = (file) => {
   const formData = new FormData()
   formData.append('file', file)
   return request({
-    url: '/admin/upload-avatar',
+    url: '/user/avatar',
     method: 'post',
     data: formData,
     headers: {
@@ -434,56 +412,433 @@ export const getRoutePage = (pageRequest) => {
 }
 
 // ==================== 反馈管理 ====================
-export const getFeedbackPage = (pageRequest) => {
+export const getFeedbackPage = (current = 1, size = 10, keyword = '') => {
   return request({
-    url: '/admin/feedback/page',
-    method: 'post',
-    data: pageRequest
+    url: '/feedback/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
   })
 }
 
 export const getFeedbackById = (id) => {
   return request({
-    url: `/admin/feedback/${id}`,
+    url: `/feedback/admin/${id}`,
     method: 'get'
-  })
-}
-
-export const deleteFeedback = (id) => {
-  return request({
-    url: `/admin/feedback/${id}`,
-    method: 'delete'
   })
 }
 
 export const updateFeedbackStatus = (id, status) => {
   return request({
-    url: '/admin/feedback/update-status',
-    method: 'post',
-    params: {
-      id,
+    url: `/feedback/admin/${id}`,
+    method: 'put',
+    data: {
       status
     }
   })
 }
 
-export const batchUpdateFeedbackStatus = (ids, status) => {
+export const deleteFeedback = (id) => {
   return request({
-    url: '/admin/feedback/batch-update-status',
+    url: `/feedback/admin/${id}`,
+    method: 'delete'
+  })
+}
+// ==================== 雅安相关接口 ====================
+
+// 文章管理
+/**
+ * 添加文章
+ */
+export const addArticle = (data) => {
+  return request({
+    url: '/article/admin/create',
     method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新文章
+ */
+export const updateArticle = (data) => {
+  return request({
+    url: `/article/admin/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除文章
+ */
+export const deleteArticle = (id) => {
+  return request({
+    url: `/article/admin/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 根据ID获取文章
+ */
+export const getArticleById = (id) => {
+  return request({
+    url: `/article/admin/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取文章列表
+ */
+export const getArticleList = (params) => {
+  return request({
+    url: '/admin/article/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取文章
+ */
+export const getArticlePage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/article/admin/page',
+    method: 'get',
     params: {
-      ids: ids.join(','),
-      status
+      current,
+      size,
+      keyword
     }
   })
 }
 
-export const batchDeleteFeedback = (ids) => {
+// 电视剧管理
+/**
+ * 添加电视剧
+ */
+export const addDrama = (data) => {
   return request({
-    url: '/admin/feedback/batch-delete',
+    url: '/drama/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新电视剧
+ */
+export const updateDrama = (data) => {
+  return request({
+    url: `/drama/admin/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除电视剧
+ */
+export const deleteDrama = (id) => {
+  return request({
+    url: `/drama/admin/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 根据ID获取电视剧
+ */
+export const getDramaById = (id) => {
+  return request({
+    url: `/drama/admin/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取电视剧列表
+ */
+export const getDramaList = (params) => {
+  return request({
+    url: '/admin/drama/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取电视剧
+ */
+export const getDramaPage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/drama/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
+  })
+}
+
+// 图片管理
+/**
+ * 上传图片
+ */
+export const uploadImage = (formData) => {
+  return request({
+    url: '/admin/image/upload',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+/**
+ * 删除图片
+ */
+export const deleteImage = (id) => {
+  return request({
+    url: `/admin/image/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 批量删除图片
+ */
+export const batchDeleteImage = (ids) => {
+  return request({
+    url: '/admin/image/batch-delete',
     method: 'post',
     data: {
       ids
+    }
+  })
+}
+
+/**
+ * 分页获取图片
+ */
+export const getImagePage = (pageRequest) => {
+  return request({
+    url: '/admin/image/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 场地管理
+/**
+ * 添加场地
+ */
+export const addLocation = (data) => {
+  return request({
+    url: '/location/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新场地
+ */
+export const updateLocation = (data) => {
+  return request({
+    url: `/location/admin/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除场地
+ */
+export const deleteLocation = (id) => {
+  return request({
+    url: `/location/admin/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 根据ID获取场地
+ */
+export const getLocationById = (id) => {
+  return request({
+    url: `/location/admin/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取场地列表
+ */
+export const getLocationList = (params) => {
+  return request({
+    url: '/admin/location/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取场地
+ */
+export const getLocationPage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/location/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
+  })
+}
+
+// 服务管理
+/**
+ * 添加服务
+ */
+export const addService = (data) => {
+  return request({
+    url: '/shoot/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新服务
+ */
+export const updateService = (data) => {
+  return request({
+    url: `/shoot/admin/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除服务
+ */
+export const deleteService = (id) => {
+  return request({
+    url: `/shoot/admin/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 根据ID获取服务
+ */
+export const getServiceById = (id) => {
+  return request({
+    url: `/shoot/admin/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取服务列表
+ */
+export const getServiceList = (params) => {
+  return request({
+    url: '/admin/service/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取服务
+ */
+export const getServicePage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/shoot/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
+  })
+}
+
+// 电视剧拍摄报告管理
+/**
+ * 添加报告
+ */
+export const addReport = (data) => {
+  return request({
+    url: '/report/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新报告
+ */
+export const updateReport = (data) => {
+  return request({
+    url: `/report/admin/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除报告
+ */
+export const deleteReport = (id) => {
+  return request({
+    url: `/report/admin/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 根据ID获取报告
+ */
+export const getReportById = (id) => {
+  return request({
+    url: `/report/admin/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取报告列表
+ */
+export const getReportList = (params) => {
+  return request({
+    url: '/admin/report/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取报告
+ */
+export const getReportPage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/report/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
     }
   })
 }

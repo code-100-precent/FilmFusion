@@ -153,14 +153,29 @@ export default {
       this.loadArticles()
     },
     goToDetail(id) {
-      uni.showToast({
-        title: '功能开发中',
-        icon: 'none'
+      uni.navigateTo({
+        url: `/pages/article/detail?id=${id}`
       })
     },
     formatDate(dateStr) {
       if (!dateStr) return ''
-      const date = new Date(dateStr)
+      let date
+      // 处理数组格式的日期（后端 LocalDateTime 序列化为数组）
+      if (Array.isArray(dateStr)) {
+        // 数组格式: [2024, 12, 15, 10, 0, 0]
+        if (dateStr.length >= 3) {
+          date = new Date(dateStr[0], dateStr[1] - 1, dateStr[2])
+        } else {
+          return ''
+        }
+      } else if (typeof dateStr === 'string') {
+        date = new Date(dateStr)
+      } else {
+        return ''
+      }
+      
+      if (isNaN(date.getTime())) return ''
+      
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')

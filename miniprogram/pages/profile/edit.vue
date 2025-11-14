@@ -23,13 +23,10 @@
             <uni-icons type="phone" size="18" color="#6366f1"></uni-icons>
             <text>手机号</text>
           </view>
-          <input
-            v-model="form.phoneNumber"
-            class="form-input"
-            type="number"
-            placeholder="请输入手机号"
-            maxlength="11"
-          />
+          <view class="form-input form-input--disabled">
+            {{ form.phoneNumber || '未设置' }}
+          </view>
+          <text class="form-hint">手机号不可修改</text>
         </view>
 
         <button
@@ -67,8 +64,7 @@ export default {
     ...mapGetters(['userInfo']),
     canSubmit() {
       return this.form.username.trim().length >= 3 && 
-             this.form.username.trim().length <= 20 &&
-             /^1\d{10}$/.test(this.form.phoneNumber)
+             this.form.username.trim().length <= 20
     }
   },
   onLoad() {
@@ -99,8 +95,7 @@ export default {
       this.loading = true
       try {
         const res = await updateUserInfo({
-          username: this.form.username.trim(),
-          phoneNumber: this.form.phoneNumber
+          username: this.form.username.trim()
         })
 
         if (res.code === 200 && res.data) {
@@ -194,6 +189,18 @@ export default {
 .form-input:focus {
   border-color: #6366f1;
   background: #fff;
+}
+
+.form-input--disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.form-hint {
+  font-size: 24rpx;
+  color: #9ca3af;
+  margin-top: 8rpx;
 }
 
 .submit-btn {

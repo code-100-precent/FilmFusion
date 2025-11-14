@@ -50,16 +50,18 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .addPathPatterns("/api/drama/**")
                 .excludePathPatterns("/api/drama/page", "/api/drama/*")
                 // 影视剧备案模块 - 只拦截需要登录的接口，排除公开接口
+                // 注意：详情接口使用 @PublicAccess 注解标记，拦截器会自动放行
                 .addPathPatterns("/api/report/**")
-                .excludePathPatterns("/api/report/page", "/api/report/*")
+                .excludePathPatterns("/api/report/page")
                 // 拍摄场地模块 - 只拦截需要登录的接口，排除公开接口
                 .addPathPatterns("/api/location/**")
                 .excludePathPatterns("/api/location/page", "/api/location/*")
                 // 协拍服务模块 - 只拦截需要登录的接口，排除公开接口
                 .addPathPatterns("/api/shoot/**")
                 .excludePathPatterns("/api/shoot/page", "/api/shoot/*")
-                // 反馈模块 - 全部需要登录
-                .addPathPatterns("/api/feedback/**");
+                // 反馈模块 - 全部需要登录，但排除管理员接口（管理员接口由adminInterceptor处理）
+                .addPathPatterns("/api/feedback/**")
+                .excludePathPatterns("/api/feedback/admin/**");
         
         // 管理员权限拦截器
         registry.addInterceptor(adminInterceptor)

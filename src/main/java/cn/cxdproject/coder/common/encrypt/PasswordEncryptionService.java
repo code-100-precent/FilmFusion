@@ -30,7 +30,15 @@ public class PasswordEncryptionService {
      * @return 是否匹配
      */
     public boolean matchesBCrypt(String plainText, String hash) {
-        return BCrypt.checkpw(plainText, hash);
+        if (plainText == null || hash == null) {
+            return false;
+        }
+        try {
+            return BCrypt.checkpw(plainText, hash);
+        } catch (Exception e) {
+            // BCrypt验证失败时可能抛出异常
+            return false;
+        }
     }
 
     // ===================== PBKDF2 实现 =====================

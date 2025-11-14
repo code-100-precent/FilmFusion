@@ -1,201 +1,306 @@
 <template>
-  <div class="profile-page animate-fade-in">
-    <div class="profile-container">
-      <!-- 用户信息卡片 -->
-      <el-card class="profile-card card animate-slide-in-up">
-        <template #header>
-          <div class="card-header">
-            <span class="card-title">个人信息</span>
-            <el-button 
-              type="primary" 
-              @click="handleEdit"
-              class="btn-transition"
-              v-if="!isEditing"
-            >
-              <el-icon><Edit /></el-icon>
-              编辑
-            </el-button>
-            <div v-else>
-              <el-button @click="handleCancel" class="mr-2">取消</el-button>
-              <el-button type="primary" @click="handleSave">保存</el-button>
-            </div>
-          </div>
-        </template>
-        
-        <div class="profile-content">
-          <!-- 头像区域 -->
-          <div class="avatar-section">
-            <div class="avatar-wrapper">
-              <el-avatar :size="80" class="avatar" :src="formData.avatar">
-                <el-icon :size="40"><User /></el-icon>
-              </el-avatar>
-              <div class="avatar-overlay" v-if="isEditing">
-                <el-upload
-                  :action="uploadAction"
-                  :on-success="handleAvatarSuccess"
-                  :show-file-list="false"
+  <div class="profile-page">
+    <n-grid :cols="24" :x-gap="24" :y-gap="24" responsive="screen">
+      <!-- 个人信息卡片 -->
+      <n-gi :span="24">
+        <n-card class="profile-card" :bordered="false">
+          <template #header>
+            <div class="card-header">
+              <div class="header-title">
+                <Icon icon="mdi:account-circle" :width="24" style="margin-right: 8px; color: #18a058;" />
+                <span>个人信息</span>
+              </div>
+              <div class="header-actions">
+                <n-button
+                  v-if="!isEditing"
+                  type="primary"
+                  @click="handleEdit"
+                  size="medium"
                 >
-                  <el-button type="primary" circle>
-                    <el-icon><Camera /></el-icon>
-                  </el-button>
-                </el-upload>
+                  <template #icon>
+                    <Icon icon="mdi:pencil-outline" />
+                  </template>
+                  编辑信息
+                </n-button>
+                <div v-else class="edit-actions">
+                  <n-button @click="handleCancel" size="medium">取消</n-button>
+                  <n-button type="primary" @click="handleSave" :loading="loading" size="medium">
+                    <template #icon>
+                      <Icon icon="mdi:check" />
+                    </template>
+                    保存
+                  </n-button>
+                </div>
               </div>
             </div>
-            <div class="user-info">
-              <h3 class="username">{{ formData.username || '管理员' }}</h3>
-              <p class="user-role">{{ formData.role === 'ADMIN' ? '管理员' : '普通用户' }}</p>
-            </div>
-          </div>
+          </template>
           
-          <!-- 信息表单 -->
-          <el-form
-            ref="formRef"
-            :model="formData"
-            :rules="formRules"
-            label-width="100px"
-            class="info-form"
-            v-loading="loading"
-          >
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="用户名" prop="username">
-                  <el-input 
-                    v-model="formData.username" 
-                    :disabled="!isEditing"
-                    class="animate-slide-in-up"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="邮箱" prop="email">
-                  <el-input 
-                    v-model="formData.email" 
-                    :disabled="!isEditing"
-                    placeholder="请输入邮箱"
-                    class="animate-slide-in-up"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="角色">
-                  <el-input 
-                    v-model="formData.identity" 
-                    disabled
-                    class="animate-slide-in-up"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-form>
-        </div>
-      </el-card>
+          <div class="profile-content">
+            <!-- 头像和基本信息 -->
+            <div class="avatar-section">
+              <div class="avatar-wrapper">
+                <n-upload
+                  :file-list="avatarFileList"
+                  :max="1"
+                  :show-file-list="false"
+                  :custom-request="handleAvatarUpload"
+                  accept="image/*"
+                  :disabled="!isEditing"
+                >
+                  <template #trigger>
+                    <div class="avatar-container">
+                      <n-avatar
+                        :size="100"
+                        :src="formData.avatar"
+                        class="avatar"
+                        :fallback-src="null"
+                      >
+                        <Icon icon="mdi:account" :width="50" />
+                      </n-avatar>
+                      <div v-if="isEditing" class="avatar-overlay">
+                        <Icon icon="mdi:camera" :width="24" />
+                        <span>更换头像</span>
+                      </div>
+                    </div>
+                  </template>
+                </n-upload>
+              </div>
+              <div class="user-info">
+                <h2 class="username">{{ formData.username || '管理员' }}</h2>
+                <div class="user-tags">
+                  <n-tag :type="formData.role === 'ADMIN' ? 'success' : 'default'" size="medium" round>
+                    <template #icon>
+                      <Icon icon="mdi:shield-account" />
+                    </template>
+                    {{ formData.role === 'ADMIN' ? '管理员' : '普通用户' }}
+                  </n-tag>
+                  <n-tag :type="formData.enabled ? 'success' : 'error'" size="medium" round>
+                    <template #icon>
+                      <Icon :icon="formData.enabled ? 'mdi:check-circle' : 'mdi:close-circle'" />
+                    </template>
+                    {{ formData.enabled ? '已启用' : '已禁用' }}
+                  </n-tag>
+                </div>
+                <div class="user-meta">
+                  <div class="meta-item">
+                    <Icon icon="mdi:phone" :width="16" />
+                    <span>{{ formData.phoneNumber || '未设置' }}</span>
+                  </div>
+                  <div class="meta-item" v-if="formData.id">
+                    <Icon icon="mdi:identifier" :width="16" />
+                    <span>ID: {{ formData.id }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 编辑表单 -->
+            <n-divider />
+            <n-form
+              ref="formRef"
+              :model="formData"
+              :rules="formRules"
+              label-placement="left"
+              label-width="120"
+              :disabled="!isEditing"
+              class="profile-form"
+            >
+              <n-grid :cols="2" :x-gap="24" responsive="screen">
+                <n-gi :span="2" :s-span="1">
+                  <n-form-item label="用户名" path="username">
+                    <n-input 
+                      v-model:value="formData.username" 
+                      placeholder="请输入用户名"
+                      :disabled="!isEditing"
+                      clearable
+                    >
+                      <template #prefix>
+                        <Icon icon="mdi:account" />
+                      </template>
+                    </n-input>
+                  </n-form-item>
+                </n-gi>
+                <n-gi :span="2" :s-span="1">
+                  <n-form-item label="手机号">
+                    <n-input 
+                      v-model:value="formData.phoneNumber" 
+                      disabled 
+                      placeholder="手机号不可修改"
+                    >
+                      <template #prefix>
+                        <Icon icon="mdi:phone" />
+                      </template>
+                    </n-input>
+                  </n-form-item>
+                </n-gi>
+              </n-grid>
+            </n-form>
+          </div>
+        </n-card>
+      </n-gi>
       
       <!-- 修改密码卡片 -->
-      <el-card class="password-card card animate-slide-in-up">
-        <template #header>
-          <div class="card-header">
-            <span class="card-title">修改密码</span>
-          </div>
-        </template>
-        
-        <el-form
-          ref="passwordFormRef"
-          :model="passwordForm"
-          :rules="passwordRules"
-          label-width="100px"
-          class="password-form"
-        >
-          <el-form-item label="当前密码" prop="oldPassword">
-            <el-input
-              v-model="passwordForm.oldPassword"
-              type="password"
-              placeholder="请输入当前密码"
-              show-password
-              class="animate-slide-in-up"
-            />
-          </el-form-item>
-          <el-form-item label="新密码" prop="newPassword">
-            <el-input
-              v-model="passwordForm.newPassword"
-              type="password"
-              placeholder="请输入新密码"
-              show-password
-              class="animate-slide-in-up"
-            />
-          </el-form-item>
-          <el-form-item label="确认密码" prop="confirmPassword">
-            <el-input
-              v-model="passwordForm.confirmPassword"
-              type="password"
-              placeholder="请再次输入新密码"
-              show-password
-              class="animate-slide-in-up"
-            />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handleChangePassword" class="btn-transition">
-              修改密码
-            </el-button>
-            <el-button @click="handleResetPassword">重置</el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
-      
-      <!-- 操作日志卡片 -->
-      <el-card class="logs-card card animate-slide-in-up">
-        <template #header>
-          <div class="card-header">
-            <span class="card-title">最近操作</span>
-          </div>
-        </template>
-        
-        <el-timeline class="timeline-compact">
-          <el-timeline-item
-            v-for="(log, index) in operationLogs"
-            :key="index"
-            :timestamp="log.time"
-            placement="top"
-            class="animate-slide-in-left"
-          >
-            <div class="log-content">
-              <h4>
-                {{ log.action }}
-                <el-tag v-if="log.success === false" type="danger" size="small" style="margin-left: 8px">失败</el-tag>
-                <el-tag v-else type="success" size="small" style="margin-left: 8px">成功</el-tag>
-              </h4>
-              <p v-if="log.detail">{{ log.detail }}</p>
+      <n-gi :span="12" :s-span="24">
+        <n-card class="password-card" :bordered="false">
+          <template #header>
+            <div class="card-header">
+              <div class="header-title">
+                <Icon icon="mdi:lock-reset" :width="24" style="margin-right: 8px; color: #2080f0;" />
+                <span>修改密码</span>
+              </div>
             </div>
-          </el-timeline-item>
-        </el-timeline>
-        <div v-if="operationLogs.length === 0" class="empty-logs">
-          <el-empty description="暂无操作记录" />
-        </div>
-      </el-card>
-    </div>
+          </template>
+          <n-form
+            ref="passwordFormRef"
+            :model="passwordForm"
+            :rules="passwordRules"
+            label-placement="left"
+            label-width="100"
+            class="password-form"
+          >
+            <n-form-item label="当前密码" path="oldPassword">
+              <n-input
+                v-model:value="passwordForm.oldPassword"
+                type="password"
+                placeholder="请输入当前密码"
+                show-password-on="click"
+                clearable
+              >
+                <template #prefix>
+                  <Icon icon="mdi:lock" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item label="新密码" path="newPassword">
+              <n-input
+                v-model:value="passwordForm.newPassword"
+                type="password"
+                placeholder="请输入新密码（6-20个字符）"
+                show-password-on="click"
+                clearable
+              >
+                <template #prefix>
+                  <Icon icon="mdi:lock-outline" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item label="确认密码" path="confirmPassword">
+              <n-input
+                v-model:value="passwordForm.confirmPassword"
+                type="password"
+                placeholder="请再次输入新密码"
+                show-password-on="click"
+                clearable
+              >
+                <template #prefix>
+                  <Icon icon="mdi:lock-check" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item>
+              <div class="form-actions">
+                <n-button type="primary" @click="handleChangePassword" :loading="loading" block>
+                  <template #icon>
+                    <Icon icon="mdi:check-circle" />
+                  </template>
+                  修改密码
+                </n-button>
+                <n-button @click="handleResetPassword" block style="margin-top: 12px">
+                  <template #icon>
+                    <Icon icon="mdi:refresh" />
+                  </template>
+                  重置
+                </n-button>
+              </div>
+            </n-form-item>
+          </n-form>
+        </n-card>
+      </n-gi>
+      
+      <!-- 账户信息卡片 -->
+      <n-gi :span="12" :s-span="24">
+        <n-card class="info-card" :bordered="false">
+          <template #header>
+            <div class="card-header">
+              <div class="header-title">
+                <Icon icon="mdi:information" :width="24" style="margin-right: 8px; color: #f0a020;" />
+                <span>账户信息</span>
+              </div>
+            </div>
+          </template>
+          <n-descriptions :column="1" bordered size="medium" class="info-descriptions">
+            <n-descriptions-item label="用户ID">
+              <div class="info-value">
+                <Icon icon="mdi:identifier" :width="16" style="margin-right: 8px;" />
+                {{ formData.id || '-' }}
+              </div>
+            </n-descriptions-item>
+            <n-descriptions-item label="角色">
+              <n-tag :type="formData.role === 'ADMIN' ? 'success' : 'default'" size="medium" round>
+                <template #icon>
+                  <Icon icon="mdi:shield-account" />
+                </template>
+                {{ formData.role === 'ADMIN' ? '管理员' : '普通用户' }}
+              </n-tag>
+            </n-descriptions-item>
+            <n-descriptions-item label="账户状态">
+              <n-tag :type="formData.enabled ? 'success' : 'error'" size="medium" round>
+                <template #icon>
+                  <Icon :icon="formData.enabled ? 'mdi:check-circle' : 'mdi:close-circle'" />
+                </template>
+                {{ formData.enabled ? '已启用' : '已禁用' }}
+              </n-tag>
+            </n-descriptions-item>
+            <n-descriptions-item label="手机号">
+              <div class="info-value">
+                <Icon icon="mdi:phone" :width="16" style="margin-right: 8px;" />
+                {{ formData.phoneNumber || '未设置' }}
+              </div>
+            </n-descriptions-item>
+          </n-descriptions>
+        </n-card>
+      </n-gi>
+    </n-grid>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { User, Edit, Camera } from '@element-plus/icons-vue'
-import EnhancedTextarea from '@/components/EnhancedTextarea.vue'
-import { getAdminInfo, updateAdminInfo, changePassword, uploadAvatar, getRecentOperationLogs } from '@/api'
+import { Icon } from '@iconify/vue'
+import {
+  NCard,
+  NGrid,
+  NGi,
+  NButton,
+  NUpload,
+  NAvatar,
+  NTag,
+  NForm,
+  NFormItem,
+  NInput,
+  NDescriptions,
+  NDescriptionsItem,
+  NDivider,
+  useMessage
+} from 'naive-ui'
+import { getAdminInfo, updateAdminInfo, changePassword, uploadAvatar } from '@/api'
 
 const userStore = useUserStore()
+const message = useMessage()
 const formRef = ref(null)
 const passwordFormRef = ref(null)
 const isEditing = ref(false)
 const loading = ref(false)
+const avatarFileList = ref([])
 
 const formData = reactive({
   id: null,
   username: '',
-  email: '',
+  phoneNumber: '',
   avatar: '',
   role: '',
-  identity: '管理员'
+  enabled: true
 })
 
 const passwordForm = reactive({
@@ -206,10 +311,8 @@ const passwordForm = reactive({
 
 const formRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
-  email: [
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 32, message: '用户名长度在 2 到 32 个字符', trigger: 'blur' }
   ]
 }
 
@@ -224,73 +327,39 @@ const passwordRules = {
   confirmPassword: [
     { required: true, message: '请确认新密码', trigger: 'blur' },
     {
-      validator: (rule, value, callback) => {
+      validator: (rule, value) => {
         if (value !== passwordForm.newPassword) {
-          callback(new Error('两次输入密码不一致'))
-        } else {
-          callback()
+          return new Error('两次输入密码不一致')
         }
+        return true
       },
       trigger: 'blur'
     }
   ]
 }
 
-const operationLogs = ref([])
-
-const uploadAction = '/api/admin/upload-avatar'
-
 onMounted(async () => {
   await loadAdminInfo()
-  await loadOperationLogs()
 })
-
-const loadOperationLogs = async () => {
-  try {
-    const res = await getRecentOperationLogs(10)
-    if (res.code === 200 && res.data) {
-      operationLogs.value = res.data.map(log => ({
-        action: log.description || '未知操作',
-        detail: log.type ? `操作类型: ${typeof log.type === 'string' ? log.type : log.type.description || log.type}` : '',
-        time: log.timestamp ? formatDateTime(log.timestamp) : '',
-        success: log.success !== undefined ? log.success : true
-      }))
-    }
-  } catch (error) {
-    console.error('加载操作日志失败:', error)
-  }
-}
-
-const formatDateTime = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-}
 
 const loadAdminInfo = async () => {
   try {
     loading.value = true
     const res = await getAdminInfo()
+    
     if (res.code === 200 && res.data) {
       Object.assign(formData, {
         id: res.data.id,
         username: res.data.username || '',
-        email: res.data.email || '',
+        phoneNumber: res.data.phoneNumber || '',
         avatar: res.data.avatar || '',
         role: res.data.role || '',
-        identity: res.data.role === 'ADMIN' ? '管理员' : '普通用户'
+        enabled: res.data.enabled !== false
       })
-      // 更新store
       userStore.setUserInfo(res.data)
     }
   } catch (error) {
-    ElMessage.error('加载用户信息失败')
+    console.error('加载用户信息失败:', error)
   } finally {
     loading.value = false
   }
@@ -307,10 +376,10 @@ const handleCancel = () => {
     Object.assign(formData, {
       id: userStore.userInfo.id,
       username: userStore.userInfo.username || '',
-      email: userStore.userInfo.email || '',
+      phoneNumber: userStore.userInfo.phoneNumber || '',
       avatar: userStore.userInfo.avatar || '',
       role: userStore.userInfo.role || '',
-      identity: userStore.userInfo.role === 'ADMIN' ? '管理员' : '普通用户'
+      enabled: userStore.userInfo.enabled !== false
     })
   }
 }
@@ -318,75 +387,69 @@ const handleCancel = () => {
 const handleSave = async () => {
   if (!formRef.value) return
   
-  await formRef.value.validate(async (valid) => {
-    if (valid) {
-      try {
-        loading.value = true
-        const updateData = {
-          id: formData.id,
-          username: formData.username,
-          email: formData.email,
-          avatar: formData.avatar
-        }
-        const res = await updateAdminInfo(updateData)
-        if (res.code === 200) {
-          ElMessage.success('保存成功')
-          await loadAdminInfo()
-          isEditing.value = false
-        } else {
-          ElMessage.error(res.message || '保存失败')
-        }
-      } catch (error) {
-        ElMessage.error(error.message || '保存失败')
-      } finally {
-        loading.value = false
-      }
+  try {
+    await formRef.value.validate()
+  } catch (error) {
+    return
+  }
+  
+  try {
+    loading.value = true
+    const res = await updateAdminInfo({
+      username: formData.username
+    })
+    
+    if (res.code === 200) {
+      message.success('保存成功')
+      await loadAdminInfo()
+      isEditing.value = false
     }
-  })
+  } catch (error) {
+    console.error('保存失败:', error)
+  } finally {
+    loading.value = false
+  }
 }
 
-const handleAvatarSuccess = async (response) => {
-  if (response.code === 200) {
-    formData.avatar = response.data
-    // 立即更新到后端
-    try {
-      await updateAdminInfo({
-        id: formData.id,
-        username: formData.username,
-        email: formData.email,
-        avatar: formData.avatar
-      })
+const handleAvatarUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadAvatar(file.file)
+    if (res.code === 200 && res.data) {
+      formData.avatar = res.data
+      message.success('头像上传成功')
+      onFinish()
       await loadAdminInfo()
-      ElMessage.success('头像上传成功')
-    } catch (error) {
-      ElMessage.error('头像更新失败')
+    } else {
+      onError()
     }
-  } else {
-    ElMessage.error('头像上传失败')
+  } catch (error) {
+    console.error('头像上传失败:', error)
+    onError()
   }
 }
 
 const handleChangePassword = async () => {
   if (!passwordFormRef.value) return
   
-  await passwordFormRef.value.validate(async (valid) => {
-    if (valid) {
-      try {
-        loading.value = true
-        const res = await changePassword(passwordForm.oldPassword, passwordForm.newPassword)
-        if (res.code === 200) {
-          ElMessage.success('密码修改成功')
-          handleResetPassword()
-        } else {
-          ElMessage.error(res.message || '密码修改失败')
-        }
-      } catch (error) {
-        ElMessage.error(error.message || '密码修改失败')
-      } finally {
-        loading.value = false
-      }
+  try {
+    await passwordFormRef.value.validate()
+  } catch (error) {
+    return
+  }
+  
+  try {
+    loading.value = true
+    const res = await changePassword(passwordForm.oldPassword, passwordForm.newPassword)
+    
+    if (res.code === 200) {
+      message.success('密码修改成功')
+      handleResetPassword()
     }
-  })
+  } catch (error) {
+    console.error('密码修改失败:', error)
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleResetPassword = () => {
@@ -394,205 +457,225 @@ const handleResetPassword = () => {
   passwordForm.newPassword = ''
   passwordForm.confirmPassword = ''
   if (passwordFormRef.value) {
-    passwordFormRef.value.clearValidate()
+    passwordFormRef.value.restoreValidation()
   }
 }
 </script>
 
 <style scoped lang="scss">
 .profile-page {
+  animation: fadeIn 0.3s ease;
   padding: 0;
-}
-
-.profile-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  
-  .profile-card {
-    grid-column: 1 / -1;
-  }
-  
-  .password-card,
-  .logs-card {
-    grid-column: span 1;
-  }
-}
-
-@media (max-width: 1200px) {
-  .profile-container {
-    grid-template-columns: 1fr;
-  }
 }
 
 .profile-card,
 .password-card,
-.logs-card {
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #ebe6ff;
-    background: linear-gradient(135deg, #f9f7ff 0%, #f3f0ff 100%);
-  }
+.info-card {
+  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.3s ease;
   
-  .card-title {
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .header-title {
+    display: flex;
+    align-items: center;
     font-size: 16px;
     font-weight: 600;
-    background: linear-gradient(135deg, #9c88ff 0%, #b8abff 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #1f2937;
   }
+  
+  .header-actions {
+    display: flex;
+    gap: 12px;
+  }
+}
+
+.edit-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .profile-content {
-  padding: 20px;
-}
-
-.avatar-section {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #ebe6ff;
-}
-
-.avatar-wrapper {
-  position: relative;
-  
-  .avatar {
-    width: 80px !important;
-    height: 80px !important;
-    border: 3px solid #ebe6ff;
-    transition: all 0.3s ease;
+  .avatar-section {
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+    margin-bottom: 24px;
+    padding: 24px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+    border-radius: 12px;
     
-    &:hover {
-      border-color: #9c88ff;
-      transform: scale(1.05);
+    .avatar-wrapper {
+      flex-shrink: 0;
+    }
+    
+    .avatar-container {
+      position: relative;
+      cursor: pointer;
+      
+      .avatar {
+        border: 4px solid #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+        
+        &:hover {
+          transform: scale(1.05);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+      }
+      
+      .avatar-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 8px;
+        border-radius: 0 0 50px 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        
+        span {
+          font-size: 12px;
+        }
+      }
+      
+      &:hover .avatar-overlay {
+        opacity: 1;
+      }
+    }
+    
+    .user-info {
+      flex: 1;
+      
+      .username {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .user-tags {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      
+      .user-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #6b7280;
+          font-size: 14px;
+          
+          span {
+            color: #374151;
+          }
+        }
+      }
     }
   }
   
-  .avatar-overlay {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    background: white;
-    border-radius: 50%;
-    padding: 2px;
-    box-shadow: 0 2px 6px rgba(156, 136, 255, 0.3);
-    transition: all 0.3s ease;
-    
-    &:hover {
-      transform: scale(1.1);
-    }
-  }
-}
-
-.user-info {
-  flex: 1;
-  
-  .username {
-    font-size: 20px;
-    font-weight: 600;
-    color: #303133;
-    margin-bottom: 6px;
-    background: linear-gradient(135deg, #9c88ff 0%, #b8abff 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  .user-role {
-    font-size: 13px;
-    color: #909399;
-    margin: 0;
-  }
-}
-
-.info-form {
-  :deep(.el-form-item) {
-    margin-bottom: 18px;
-  }
-  
-  :deep(.el-input) {
-    transition: all 0.3s ease;
+  .profile-form {
+    padding: 0 24px;
   }
 }
 
 .password-form {
-  padding: 20px;
+  padding: 8px 0;
+}
+
+.form-actions {
+  width: 100%;
+}
+
+.info-descriptions {
+  :deep(.n-descriptions-item__label) {
+    font-weight: 500;
+    color: #374151;
+  }
   
-  :deep(.el-form-item) {
-    margin-bottom: 18px;
+  .info-value {
+    display: flex;
+    align-items: center;
+    color: #6b7280;
   }
 }
 
-.logs-card {
-  :deep(.el-timeline) {
-    padding-left: 0;
+// 响应式设计
+@media (max-width: 768px) {
+  .profile-content {
+    .avatar-section {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      
+      .user-info {
+        width: 100%;
+        
+        .user-tags {
+          justify-content: center;
+        }
+        
+        .user-meta {
+          align-items: center;
+        }
+      }
+    }
   }
   
-  :deep(.el-timeline-item__timestamp) {
-    font-size: 12px;
-    color: #909399;
-    margin-bottom: 4px;
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    
+    .header-actions {
+      width: 100%;
+      
+      .edit-actions {
+        width: 100%;
+        
+        button {
+          flex: 1;
+        }
+      }
+    }
   }
 }
 
-.timeline-compact {
-  padding: 0;
-  
-  :deep(.el-timeline-item) {
-    padding-bottom: 12px;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  
-  :deep(.el-timeline-item__tail) {
-    left: 6px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  :deep(.el-timeline-item__node) {
-    width: 12px;
-    height: 12px;
-    left: 0;
-  }
-}
-
-.log-content {
-  padding: 8px 12px;
-  background: #f9f7ff;
-  border-radius: 6px;
-  margin-bottom: 4px;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    background: #f3f0ff;
-    transform: translateX(5px);
-  }
-  
-  h4 {
-    font-size: 13px;
-    font-weight: 600;
-    color: #303133;
-    margin-bottom: 2px;
-  }
-  
-  p {
-    font-size: 12px;
-    color: #909399;
-    margin: 0;
-    line-height: 1.4;
-  }
-}
-
-.empty-logs {
-  padding: 20px 0;
-}
-
-.mr-2 {
-  margin-right: 8px;
 }
 </style>
-

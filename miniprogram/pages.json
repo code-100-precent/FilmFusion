@@ -69,6 +69,62 @@
 				"navigationBarTitleText": "修改密码",
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/article/detail",
+			"style": {
+				"navigationBarTitleText": "资讯详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/location/detail",
+			"style": {
+				"navigationBarTitleText": "场地详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/shoot/detail",
+			"style": {
+				"navigationBarTitleText": "服务详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/profile/reports",
+			"style": {
+				"navigationBarTitleText": "我的报备",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/profile/feedback-list",
+			"style": {
+				"navigationBarTitleText": "我的反馈",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/feedback/feedback",
+			"style": {
+				"navigationBarTitleText": "意见反馈",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/profile/help",
+			"style": {
+				"navigationBarTitleText": "帮助中心",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/profile/about",
+			"style": {
+				"navigationBarTitleText": "关于我们",
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"globalStyle": {

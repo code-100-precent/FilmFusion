@@ -68,7 +68,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 验证密码
-        if (!passwordEncryptionService.matchesBCrypt(password, user.getPassword())) {
+        log.debug("验证密码 - 用户ID: {}, 用户名: {}, 密码hash: {}", user.getId(), user.getUsername(), user.getPassword());
+        boolean passwordMatches = passwordEncryptionService.matchesBCrypt(password, user.getPassword());
+        log.debug("密码验证结果: {}", passwordMatches);
+        if (!passwordMatches) {
+            log.warn("密码验证失败 - 用户ID: {}, 用户名: {}", user.getId(), user.getUsername());
             throw new AuthException(UNAUTHORIZED.code(), "用户名或密码错误");
         }
 

@@ -199,32 +199,44 @@ export default {
       }
     },
     goToNews() {
-      uni.switchTab({
+      uni.reLaunch({
         url: '/pages/news/news'
       })
     },
     goToLocations() {
-      uni.switchTab({
+      uni.reLaunch({
         url: '/pages/scenes/scenes'
       })
     },
     goToArticleDetail(id) {
-      // TODO: 跳转到文章详情页
-      uni.showToast({
-        title: '功能开发中',
-        icon: 'none'
+      uni.navigateTo({
+        url: `/pages/article/detail?id=${id}`
       })
     },
     goToLocationDetail(id) {
-      // TODO: 跳转到场地详情页
-      uni.showToast({
-        title: '功能开发中',
-        icon: 'none'
+      uni.navigateTo({
+        url: `/pages/location/detail?id=${id}`
       })
     },
     formatDate(dateStr) {
       if (!dateStr) return ''
-      const date = new Date(dateStr)
+      let date
+      // 处理数组格式的日期（后端 LocalDateTime 序列化为数组）
+      if (Array.isArray(dateStr)) {
+        // 数组格式: [2024, 12, 15, 10, 0, 0]
+        if (dateStr.length >= 3) {
+          date = new Date(dateStr[0], dateStr[1] - 1, dateStr[2])
+        } else {
+          return ''
+        }
+      } else if (typeof dateStr === 'string') {
+        date = new Date(dateStr)
+      } else {
+        return ''
+      }
+      
+      if (isNaN(date.getTime())) return ''
+      
       const month = date.getMonth() + 1
       const day = date.getDate()
       return `${month}月${day}日`
