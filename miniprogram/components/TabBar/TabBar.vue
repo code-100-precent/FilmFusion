@@ -151,6 +151,7 @@ export default {
   color: #4f46e5;
 }
 
+/* 去掉底部栏选中状态的紫色横线
 .tabbar-item.active::after {
   content: '';
   position: absolute;
@@ -164,7 +165,9 @@ export default {
   box-shadow: 0 2rpx 8rpx rgba(99, 102, 241, 0.4);
   animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+*/
 
+/* 去掉底部栏选中状态的动画
 @keyframes slideIn {
   from {
     width: 0;
@@ -175,4 +178,5 @@ export default {
     opacity: 1;
   }
 }
+*/
 </style>

@@ -37,14 +37,6 @@ const routes = [
           }
         },
         {
-          path: 'image',
-          name: 'image',
-          component: () => import('../views/image/ImageList.vue'),
-          meta: {
-            title: '图片管理'
-          }
-        },
-        {
           path: 'location',
           name: 'location',
           component: () => import('../views/location/LocationList.vue'),

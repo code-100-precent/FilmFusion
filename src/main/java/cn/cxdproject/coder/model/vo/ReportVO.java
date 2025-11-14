@@ -36,6 +36,7 @@ public class ReportVO {
     private String phoneNumber;
     private String crewPosition;
     private Long userId;
+    private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

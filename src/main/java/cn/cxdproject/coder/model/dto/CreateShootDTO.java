@@ -34,5 +34,7 @@ public class CreateShootDTO {
     
     @NotBlank(message = "联系人不能为空")
     private String contactName;
+
+    private String cover;
 }
 
