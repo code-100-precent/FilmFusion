@@ -31,5 +31,15 @@ public class ShootVO {
     private String cover;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public ShootVO(Long id, String name, String description, BigDecimal price, Byte status, String cover, String address) {
+        this.id=id;
+        this.name=name;
+        this.description=description;
+        this.price=price;
+        this.status=status;
+        this.cover=cover;
+        this.address=address;
+    }
 }
 

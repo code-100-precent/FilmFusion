@@ -4,7 +4,6 @@ import cn.cxdproject.coder.model.dto.CreateArticleDTO;
 import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
 import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.vo.ArticleVO;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -58,7 +57,7 @@ public interface ArticleService extends IService<Article> {
      * @param createDTO 创建文章DTO
      * @return 文章VO
      */
-    ArticleVO createArticleByAdmin(CreateArticleDTO createDTO);
+//    ArticleVO createArticleByAdmin(CreateArticleDTO createDTO);
     
     /**
      * 管理员更新文章
@@ -95,4 +94,5 @@ public interface ArticleService extends IService<Article> {
      * @return 文章VO
      */
     ArticleVO toArticleVO(Article article);
+
 }

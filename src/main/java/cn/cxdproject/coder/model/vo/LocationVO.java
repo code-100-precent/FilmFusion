@@ -33,5 +33,17 @@ public class LocationVO {
     private String cover;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+
+    public LocationVO(Long id, String name, Byte status, String type, String locationDescription, String cover, String address, BigDecimal price) {
+        this.id = id;
+        this.name = name;
+        this.type = type;
+        this.status = status;
+        this.locationDescription = locationDescription;
+        this.address = address;
+        this.price = price;
+        this.cover = cover;
+    }
 }
 

@@ -20,5 +20,6 @@ public class UpdateLocationDTO {
     private String contactName;
     private String address;
     private BigDecimal price;
+    private String cover;
 }
 

@@ -123,7 +123,7 @@ public class Report extends BaseEntity implements Serializable, Cloneable {
 
 
     @TableField("status")
-    private Long status;
+    private String status;
 
     @Override
     public Report clone() {

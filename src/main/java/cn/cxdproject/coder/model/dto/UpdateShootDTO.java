@@ -19,5 +19,6 @@ public class UpdateShootDTO {
     private String address;
     private String phone;
     private String contactName;
+    private String cover;
 }
 

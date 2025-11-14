@@ -27,5 +27,6 @@ public class UpdateReportDTO {
     private String contact;
     private String phoneNumber;
     private String crewPosition;
+    private String status;
 }
 

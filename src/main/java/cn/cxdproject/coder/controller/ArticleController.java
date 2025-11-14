@@ -114,12 +114,12 @@ public class ArticleController {
     /**
      * 管理员创建文章
      */
-    @PostMapping("/admin/create")
-    public ApiResponse<ArticleVO> createArticleByAdmin(@Valid @RequestBody CreateArticleDTO createDTO) {
-        // 权限检查在拦截器中完成
-        ArticleVO articleVO = articleService.createArticleByAdmin(createDTO);
-        return ApiResponse.success(articleVO);
-    }
+//    @PostMapping("/admin/create")
+//    public ApiResponse<ArticleVO> createArticleByAdmin(@Valid @RequestBody CreateArticleDTO createDTO) {
+//
+//        ArticleVO articleVO = articleService.createArticleByAdmin(createDTO);
+//        return ApiResponse.success(articleVO);
+//    }
 
     /**
      * 管理员更新文章
