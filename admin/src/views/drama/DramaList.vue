@@ -1,28 +1,29 @@
 <template>
   <div class="drama-management">
     <n-card class="management-card">
-      <n-form :model="searchForm" inline class="search-form">
-        <n-form-item label="关键词">
-          <n-input v-model:value="searchForm.keyword" placeholder="请输入剧名或关键词" clearable @keyup.enter="handleSearch" />
-        </n-form-item>
-        <n-form-item>
-          <n-button type="primary" @click="handleSearch">
+      <div class="search-header">
+        <n-form :model="searchForm" inline class="search-form">
+          <n-form-item label="关键词">
+            <n-input v-model:value="searchForm.keyword" placeholder="请输入剧名或关键词" clearable @keyup.enter="handleSearch" />
+          </n-form-item>
+          <n-form-item>
+            <n-button type="primary" @click="handleSearch">
+              <template #icon>
+                <Icon icon="mdi:magnify" />
+              </template>
+              搜索
+            </n-button>
+            <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
+          </n-form-item>
+        </n-form>
+        <div class="action-buttons">
+          <n-button type="primary" @click="handleAdd">
             <template #icon>
-              <Icon icon="mdi:magnify" />
+              <Icon icon="mdi:plus" />
             </template>
-            搜索
+            新增电视剧
           </n-button>
-          <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
-        </n-form-item>
-      </n-form>
-      
-      <div class="action-bar">
-        <n-button type="primary" @click="handleAdd">
-          <template #icon>
-            <Icon icon="mdi:plus" />
-          </template>
-          新增电视剧
-        </n-button>
+        </div>
       </div>
       
       <n-data-table
@@ -301,8 +302,21 @@ const handleDelete = async (id) => {
   }
 }
 
-.search-form {
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 16px;
+  gap: 16px;
+}
+
+.search-form {
+  flex: 1;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
 }
 
 .action-bar {

@@ -18,17 +18,14 @@
             搜索
           </n-button>
           <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
+          <n-button @click="handleRefresh" style="margin-left: 12px">
+            <template #icon>
+              <Icon icon="mdi:refresh" />
+            </template>
+            刷新
+          </n-button>
         </n-form-item>
       </n-form>
-      
-      <div class="action-bar">
-        <n-button @click="handleRefresh">
-          <template #icon>
-            <Icon icon="mdi:refresh" />
-          </template>
-          刷新
-        </n-button>
-      </div>
       
       <n-data-table
         :columns="columns"
