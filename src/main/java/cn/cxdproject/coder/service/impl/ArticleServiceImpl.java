@@ -107,37 +107,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 throw new BusinessException(FORBIDDEN.code(), "无权删除他人的文章");
             }
         }
-
-//        // 获取文章
-//        Article article = this.getById(articleId);
-//        if (article == null || Boolean.TRUE.equals(article.getDeleted())) {
-//            throw new NotFoundException(NOT_FOUND.code(), "文章不存在");
-//        }
-//
-//        // 检查权限：只能删除自己的文章
-//        if (!article.getUserId().equals(userId)) {
-//            throw new BusinessException(FORBIDDEN.code(), "无权删除他人的文章");
-//        }
-//
-//        // 逻辑删除
-//        article.setDeleted(true);
-//        this.updateById(article);
     }
 
     @Override
     public ArticleVO getArticleById(Long articleId) {
-        Object store = redisUtils.get(RedisKeyConstants.ARTICLE + articleId);
-        Article cachedArtical = JsonUtils.fromJson((String) store, Article.class);
-        if(store != null){
-            return toArticleVO(cachedArtical);
-        }
         Article article = this.getById(articleId);
         if (article == null || Boolean.TRUE.equals(article.getDeleted())) {
             throw new NotFoundException(NOT_FOUND.code(), "文章不存在");
         }
-        redisUtils.set(RedisKeyConstants.ARTICLE+articleId,article,1, TimeUnit.DAYS);
         return toArticleVO(article);
     }
+
 
     @Override
     public Page<ArticleVO> getArticlePage(Page<Article> page, String keyword) {
@@ -147,7 +127,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .eq("deleted", false);
 
         if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like("title", keyword).or().like("content", keyword));
+            wrapper.and(w -> w.like("title", keyword));
         }
 
         wrapper.orderByDesc("issue_time");

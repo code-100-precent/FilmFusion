@@ -37,5 +37,7 @@ public class CreateLocationDTO {
     
     @NotNull(message = "价格不能为空")
     private BigDecimal price;
+
+    private String cover;
 }
 

@@ -62,6 +62,9 @@ public class Article extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
+    @TableField("cover")
+    private String cover;
+
     @Override
     public Article clone() {
         try {

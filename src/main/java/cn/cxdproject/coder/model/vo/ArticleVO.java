@@ -1,6 +1,7 @@
 package cn.cxdproject.coder.model.vo;
 
 import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,6 +51,8 @@ public class ArticleVO {
      * 用户ID
      */
     private Long userId;
+
+    private String cover;
 
     /**
      * 创建时间

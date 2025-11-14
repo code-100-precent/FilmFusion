@@ -28,6 +28,7 @@ public class ShootVO {
     private String phone;
     private String contactName;
     private Long userId;
+    private String cover;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
