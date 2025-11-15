@@ -90,5 +90,16 @@ public class DramaVO {
      * 更新时间
      */
     private LocalDateTime updatedAt;
+
+    private String image;
+
+
+    public DramaVO(Long id, String name, String dramaDescription, String cast, String cover) {
+        this.id=id;
+        this.name=name;
+        this.dramaDescription=dramaDescription;
+        this.cast=cast;
+        this.cover=cover;
+    }
 }
 

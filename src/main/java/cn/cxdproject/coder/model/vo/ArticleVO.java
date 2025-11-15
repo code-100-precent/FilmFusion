@@ -54,6 +54,9 @@ public class ArticleVO {
 
     private String cover;
 
+    private String image;
+
+
     /**
      * 创建时间
      */
@@ -67,12 +70,13 @@ public class ArticleVO {
     private LocalDateTime updatedAt;
 
 
-    public ArticleVO(Long id, String title, String issueUnit, LocalDateTime issueTime, Long userId) {
+    public ArticleVO(Long id, String title, String issueUnit, LocalDateTime issueTime, Long userId,String cover) {
         this.id=id;
         this.issueTime=issueTime;
         this.title=title;
         this.issueUnit=issueUnit;
         this.userId=userId;
+        this.cover=cover;
     }
 }
 

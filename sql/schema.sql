@@ -76,7 +76,8 @@ CREATE TABLE `fi_reports`
     `deleted`       TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
     `created_at`    DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`    DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `status` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '申报状态(未处理，处理中，申请成功，申请失败)',
+    `status`        varchar(10)   NOT NULL COMMENT '申报状态(未处理，处理中，申请成功，申请失败)',
+    `image`         varchar(2550) DEFAULT NULL COMMENT '图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -98,7 +99,8 @@ CREATE TABLE `fi_locations`
     `deleted`              TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
     `created_at`           DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`           DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `cover` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `cover`                varchar(200)  NOT NULL,
+    `image`                varchar(2550) DEFAULT NULL COMMENT '图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -116,7 +118,8 @@ CREATE TABLE `fi_articles`
     `deleted`    TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
     `created_at` DATETIME              DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at` DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `cover` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `cover`      varchar(200)  NOT NULL,
+    `image`      varchar(2550) DEFAULT NULL COMMENT '图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -137,7 +140,8 @@ CREATE TABLE `fi_shoots`
     `deleted`      TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
     `created_at`   DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`   DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `cover` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `cover`        varchar(200)  NOT NULL,
+    `image`        varchar(2550) DEFAULT NULL COMMENT '图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -161,7 +165,8 @@ CREATE TABLE `fi_dramas`
     `deleted`           TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
     `created_at`        DATETIME              DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`        DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `cover` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `cover`             varchar(200) NOT NULL,
+    `image`             varchar(2550)         DEFAULT NULL COMMENT '图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4

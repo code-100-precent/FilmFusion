@@ -24,5 +24,9 @@ public class UpdateArticleDTO {
      * 内容
      */
     private String content;
+
+    private String cover;
+
+    private String image;
 }
 

@@ -44,5 +44,7 @@ public class CreateDramaDTO {
     private Long serviceId;
 
     private String cover;
+
+    private String image;
 }
 

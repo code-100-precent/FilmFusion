@@ -20,7 +20,7 @@ import javax.validation.constraints.NotNull;
 
 /**
  * 拍摄场地控制器
- * 
+ *
  * @author heathcetide
  */
 @Slf4j
@@ -84,7 +84,7 @@ public class LocationController {
     /**
      * 更新拍摄场地（只能更新自己的）
      */
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ApiResponse<LocationVO> updateLocation(
             @PathVariable @NotNull(message = "ID不能为空") Long id,
             @Valid @RequestBody UpdateLocationDTO updateDTO) {
@@ -99,7 +99,7 @@ public class LocationController {
     /**
      * 删除拍摄场地（只能删除自己的）
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deleteLocation(@PathVariable @NotNull(message = "ID不能为空") Long id) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
@@ -114,16 +114,16 @@ public class LocationController {
     /**
      * 管理员创建拍摄场地
      */
-    @PostMapping("/admin/create")
-    public ApiResponse<LocationVO> createLocationByAdmin(@Valid @RequestBody CreateLocationDTO createDTO) {
-        LocationVO locationVO = locationService.createLocationByAdmin(createDTO);
-        return ApiResponse.success(locationVO);
-    }
+//    @PostMapping("/admin/create")
+//    public ApiResponse<LocationVO> createLocationByAdmin(@Valid @RequestBody CreateLocationDTO createDTO) {
+//        LocationVO locationVO = locationService.createLocationByAdmin(createDTO);
+//        return ApiResponse.success(locationVO);
+//    }
 
     /**
      * 管理员更新拍摄场地
      */
-    @PutMapping("/admin/{id}")
+    @PutMapping("/admin/update/{id}")
     public ApiResponse<LocationVO> updateLocationByAdmin(
             @PathVariable @NotNull(message = "ID不能为空") Long id,
             @Valid @RequestBody UpdateLocationDTO updateDTO) {
@@ -134,7 +134,7 @@ public class LocationController {
     /**
      * 管理员删除拍摄场地
      */
-    @DeleteMapping("/admin/{id}")
+    @DeleteMapping("/admin/delete/{id}")
     public ApiResponse<Void> deleteLocationByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
         locationService.deleteLocationByAdmin(id);
         return ApiResponse.success();
@@ -143,27 +143,27 @@ public class LocationController {
     /**
      * 管理员分页查询拍摄场地
      */
-    @GetMapping("/admin/page")
-    public PageResponse<LocationVO> getLocationPageByAdmin(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String keyword) {
-        Page<Location> page = new Page<>(current, size);
-        Page<LocationVO> locationPage = locationService.getLocationPageByAdmin(page, keyword);
-        return PageResponse.of(
-                (int) locationPage.getCurrent(),
-                (int) locationPage.getSize(),
-                locationPage.getTotal(),
-                locationPage.getRecords()
-        );
-    }
-
+//    @GetMapping("/admin/page")
+//    public PageResponse<LocationVO> getLocationPageByAdmin(
+//            @RequestParam(defaultValue = "1") Integer current,
+//            @RequestParam(defaultValue = "10") Integer size,
+//            @RequestParam(required = false) String keyword) {
+//        Page<Location> page = new Page<>(current, size);
+//        Page<LocationVO> locationPage = locationService.getLocationPageByAdmin(page, keyword);
+//        return PageResponse.of(
+//                (int) locationPage.getCurrent(),
+//                (int) locationPage.getSize(),
+//                locationPage.getTotal(),
+//                locationPage.getRecords()
+//        );
+//    }
+//
     /**
      * 管理员获取拍摄场地详情
      */
-    @GetMapping("/admin/{id}")
-    public ApiResponse<LocationVO> getLocationByIdByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        LocationVO locationVO = locationService.getLocationByIdByAdmin(id);
-        return ApiResponse.success(locationVO);
-    }
+//    @GetMapping("/admin/{id}")
+//    public ApiResponse<LocationVO> getLocationByIdByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+//        LocationVO locationVO = locationService.getLocationByIdByAdmin(id);
+//        return ApiResponse.success(locationVO);
+//    }
 }
