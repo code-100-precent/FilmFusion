@@ -37,6 +37,7 @@ public class ReportVO {
     private String crewPosition;
     private Long userId;
     private String status;
+    private String image;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

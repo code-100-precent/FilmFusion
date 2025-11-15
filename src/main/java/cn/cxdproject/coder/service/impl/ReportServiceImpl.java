@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,6 +50,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
 
     @Override
     public ReportVO createReport(Long userId, CreateReportDTO createDTO) {
+
         Report report = Report.builder()
                 .name(createDTO.getName())
                 .type(createDTO.getType())
@@ -65,7 +67,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                 .phoneNumber(createDTO.getPhoneNumber())
                 .crewPosition(createDTO.getCrewPosition())
                 .userId(userId)
-                .status("未处理")
+                .status(createDTO.getStatus())
                 .build();
 
         this.save(report);
@@ -97,6 +99,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         if (updateDTO.getContact() != null) report.setContact(updateDTO.getContact());
         if (updateDTO.getPhoneNumber() != null) report.setPhoneNumber(updateDTO.getPhoneNumber());
         if (updateDTO.getCrewPosition() != null) report.setCrewPosition(updateDTO.getCrewPosition());
+        if (updateDTO.getImage() != null) report.setImage(updateDTO.getImage());
         if (updateDTO.getStatus() != null) throw new BusinessException(FORBIDDEN.code(), "无权修改申请状态");;
 
         cache.asMap().put(CaffeineConstants.REPORT + reportId, report);
@@ -126,48 +129,53 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
     @Override
-    public ReportVO getReportById(Long reportId) {
+    public ReportVO getReportById(Long reportId,Long userId) {
         Object store = cache.asMap().get(CaffeineConstants.REPORT + reportId);
+        Report report;
         if (store != null) {
-            return toReportVO((Report) store);
+            report = (Report) store;
         } else {
-            Report report = this.getById(reportId);
+            report = this.getById(reportId);
             if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
                 throw new NotFoundException(NOT_FOUND.code(), "申请不存在");
             }
             cache.asMap().put(CaffeineConstants.REPORT + reportId, report);
-            return toReportVO(report);
-        }
-    }
-
-    @Override
-    public Page<ReportVO> getReportPage(Page<Report> page, String keyword) {
-        QueryWrapper<Report> wrapper = new QueryWrapper<>();
-
-        wrapper.select("id", "user_id", "contact")
-                .eq("deleted", false);
-
-        if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like("contact", keyword));
         }
 
-        wrapper.orderByDesc("created_at");
-
-        Page<Report> reportPage = this.page(page, wrapper);
-
-        List<ReportVO> voList = reportPage.getRecords().stream()
-                .map(report -> new ReportVO(
-                        report.getId(),
-                        report.getContact(),
-                        report.getUserId()
-                ))
-                .collect(Collectors.toList());
-
-        Page<ReportVO> voPage = new Page<>(reportPage.getCurrent(), reportPage.getSize(), reportPage.getTotal());
-        voPage.setRecords(voList);
-
-        return voPage;
+        if (!userId.equals(report.getUserId())) {
+            throw new BusinessException(FORBIDDEN.code(), "无权访问该申请");
+        }
+        return toReportVO(report);
     }
+
+//    @Override
+//    public Page<ReportVO> getReportPage(Page<Report> page, String keyword) {
+//        QueryWrapper<Report> wrapper = new QueryWrapper<>();
+//
+//        wrapper.select("id", "user_id", "contact")
+//                .eq("deleted", false);
+//
+//        if (keyword != null && !keyword.isEmpty()) {
+//            wrapper.and(w -> w.like("contact", keyword));
+//        }
+//
+//        wrapper.orderByDesc("created_at");
+//
+//        Page<Report> reportPage = this.page(page, wrapper);
+//
+//        List<ReportVO> voList = reportPage.getRecords().stream()
+//                .map(report -> new ReportVO(
+//                        report.getId(),
+//                        report.getContact(),
+//                        report.getUserId()
+//                ))
+//                .collect(Collectors.toList());
+//
+//        Page<ReportVO> voPage = new Page<>(reportPage.getCurrent(), reportPage.getSize(), reportPage.getTotal());
+//        voPage.setRecords(voList);
+//
+//        return voPage;
+//    }
 
     @Override
     public Page<ReportVO> getMyReportPage(Long userId, Page<Report> page) {
@@ -186,35 +194,39 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         return voPage;
     }
 
-    //感觉没用
-    @Override
-    public ReportVO createReportByAdmin(CreateReportDTO createDTO) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            throw new BusinessException(UNAUTHORIZED.code(), "未登录");
-        }
-
-        Report report = Report.builder()
-                .name(createDTO.getName())
-                .type(createDTO.getType())
-                .genre(createDTO.getGenre())
-                .episodes(createDTO.getEpisodes())
-                .investAmount(createDTO.getInvestAmount())
-                .mainCreators(createDTO.getMainCreators())
-                .leadProducer(createDTO.getLeadProducer())
-                .producerUnit(createDTO.getProducerUnit())
-                .startDate(createDTO.getStartDate())
-                .endDate(createDTO.getEndDate())
-                .crewScale(createDTO.getCrewScale())
-                .contact(createDTO.getContact())
-                .phoneNumber(createDTO.getPhoneNumber())
-                .crewPosition(createDTO.getCrewPosition())
-                .userId(currentUser.getId())
-                .build();
-
-        this.save(report);
-        return toReportVO(report);
-    }
+//    @Override
+//    public ReportVO createReportByAdmin(CreateReportDTO createDTO) {
+//        User currentUser = AuthContext.getCurrentUser();
+//        if (currentUser == null) {
+//            throw new BusinessException(UNAUTHORIZED.code(), "未登录");
+//        }
+//
+//        Report report = Report.builder()
+//                .name(createDTO.getName())
+//                .type(createDTO.getType())
+//                .genre(createDTO.getGenre())
+//                .episodes(createDTO.getEpisodes())
+//                .investAmount(createDTO.getInvestAmount())
+//                .mainCreators(createDTO.getMainCreators())
+//                .leadProducer(createDTO.getLeadProducer())
+//                .producerUnit(createDTO.getProducerUnit())
+//                .startDate(createDTO.getStartDate())
+//                .endDate(createDTO.getEndDate())
+//                .crewScale(createDTO.getCrewScale())
+//                .contact(createDTO.getContact())
+//                .phoneNumber(createDTO.getPhoneNumber())
+//                .crewPosition(createDTO.getCrewPosition())
+//                .userId(currentUser.getId())
+//                .createdAt(LocalDateTime.now())
+//                .updatedAt(LocalDateTime.now())
+//                .image(createDTO.getImage())
+//                .status("未处理")
+//                .deleted(false)
+//                .build();
+//
+//        this.save(report);
+//        return toReportVO(report);
+//    }
 
     @Override
     public ReportVO updateReportByAdmin(Long reportId, UpdateReportDTO updateDTO) {
@@ -227,50 +239,38 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
             throw new NotFoundException(NOT_FOUND.code(), "影视剧备案不存在");
         }
 
-        if (updateDTO.getName() != null) report.setName(updateDTO.getName());
-        if (updateDTO.getType() != null) report.setType(updateDTO.getType());
-        if (updateDTO.getGenre() != null) report.setGenre(updateDTO.getGenre());
-        if (updateDTO.getEpisodes() != null) report.setEpisodes(updateDTO.getEpisodes());
-        if (updateDTO.getInvestAmount() != null) report.setInvestAmount(updateDTO.getInvestAmount());
-        if (updateDTO.getMainCreators() != null) report.setMainCreators(updateDTO.getMainCreators());
-        if (updateDTO.getLeadProducer() != null) report.setLeadProducer(updateDTO.getLeadProducer());
-        if (updateDTO.getProducerUnit() != null) report.setProducerUnit(updateDTO.getProducerUnit());
-        if (updateDTO.getStartDate() != null) report.setStartDate(updateDTO.getStartDate());
-        if (updateDTO.getEndDate() != null) report.setEndDate(updateDTO.getEndDate());
-        if (updateDTO.getCrewScale() != null) report.setCrewScale(updateDTO.getCrewScale());
-        if (updateDTO.getContact() != null) report.setContact(updateDTO.getContact());
-        if (updateDTO.getPhoneNumber() != null) report.setPhoneNumber(updateDTO.getPhoneNumber());
-        if (updateDTO.getCrewPosition() != null) report.setCrewPosition(updateDTO.getCrewPosition());
+        if (updateDTO.getStatus() != null) report.setStatus(updateDTO.getStatus());
 
+        report.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.REPORT + reportId, report);
         this.updateById(report);
         return toReportVO(report);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void deleteReportByAdmin(Long reportId) {
-        boolean updated = reportMapper.update(null,
-                Wrappers.<Report>lambdaUpdate()
-                        .set(Report::getDeleted, true)
-                        .eq(Report::getId, reportId)
-                        .eq(Report::getDeleted, false)
-        ) > 0;
-
-        if (!updated) {
-            Report report = this.getById(reportId);
-            if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "申请不存在或已删除");
-            }
-        }
-        cache.invalidate(CaffeineConstants.REPORT+reportId);
-    }
+//    @Override
+//    public void deleteReportByAdmin(Long reportId) {
+//        boolean updated = reportMapper.update(null,
+//                Wrappers.<Report>lambdaUpdate()
+//                        .set(Report::getDeleted, true)
+//                        .eq(Report::getId, reportId)
+//                        .eq(Report::getDeleted, false)
+//        ) > 0;
+//
+//        if (!updated) {
+//            Report report = this.getById(reportId);
+//            if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
+//                throw new NotFoundException(NOT_FOUND.code(), "申请不存在或已删除");
+//            }
+//        }
+//        cache.invalidate(CaffeineConstants.REPORT+reportId);
+//    }
 
     @Override
     public Page<ReportVO> getReportPageByAdmin(Page<Report> page, String keyword) {
         QueryWrapper<Report> wrapper = new QueryWrapper<>();
 
-        wrapper.select("id", "user_id", "contact");
+        wrapper.select("id", "user_id", "contact")
+                .eq("deleted", false);
 
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.and(w -> w.like("contact", keyword));
@@ -334,6 +334,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                 .status(report.getStatus())
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
+                .image(report.getImage())
                 .build();
     }
 }

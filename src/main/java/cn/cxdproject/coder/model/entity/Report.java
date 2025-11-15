@@ -9,6 +9,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Report 实体类
@@ -121,9 +122,20 @@ public class Report extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
+    @TableField("deleted")
+    private Boolean deleted;
 
     @TableField("status")
     private String status;
+
+    @TableField("image")
+    private String image;
+
+    @TableField("created_at")
+    private LocalDateTime createdAt;
+
+    @TableField("updated_at")
+    private LocalDateTime updatedAt;
 
     @Override
     public Report clone() {

@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,6 +49,10 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     @Override
     public ShootVO createShoot(Long userId, CreateShootDTO createDTO) {
+        if(createDTO.getCover()==null){
+            createDTO.setCover("https://auto-avatar.oss-cn-beijing.aliyuncs.com/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20251115152833_120_8.jpg");
+        }
+
         Shoot shoot = Shoot.builder()
                 .name(createDTO.getName())
                 .description(createDTO.getDescription())
@@ -57,6 +62,10 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .phone(createDTO.getPhone())
                 .contactName(createDTO.getContactName())
                 .userId(userId)
+                .deleted(false)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .iamge(createDTO.getImage())
                 .build();
 
         this.save(shoot);
@@ -64,7 +73,6 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public ShootVO updateShoot(Long userId, Long shootId, UpdateShootDTO updateDTO) {
         Shoot shoot = this.getById(shootId);
         if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
@@ -83,7 +91,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (updateDTO.getPhone() != null) shoot.setPhone(updateDTO.getPhone());
         if (updateDTO.getContactName() != null) shoot.setContactName(updateDTO.getContactName());
         if (updateDTO.getCover() != null) shoot.setCover(updateDTO.getCover());
+        if (updateDTO.getImage() != null) shoot.setIamge(updateDTO.getImage());
 
+        shoot.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
         this.updateById(shoot);
         return toShootVO(shoot);
@@ -158,30 +168,27 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         return voPage;
     }
 
-    @Override
-    public ShootVO createShootByAdmin(CreateShootDTO createDTO) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            throw new BusinessException(UNAUTHORIZED.code(), "未登录");
-        }
-        if (currentUser.getRole()== "user"){
-            throw new BusinessException(FORBIDDEN.code(), "无权创建服务");
-        }
-
-        Shoot shoot = Shoot.builder()
-                .name(createDTO.getName())
-                .description(createDTO.getDescription())
-                .price(createDTO.getPrice())
-                .status(createDTO.getStatus())
-                .address(createDTO.getAddress())
-                .phone(createDTO.getPhone())
-                .contactName(createDTO.getContactName())
-                .userId(currentUser.getId())
-                .build();
-
-        this.save(shoot);
-        return toShootVO(shoot);
-    }
+//    @Override
+//    public ShootVO createShootByAdmin(CreateShootDTO createDTO) {
+//        User currentUser = AuthContext.getCurrentUser();
+//        if (currentUser == null) {
+//            throw new BusinessException(UNAUTHORIZED.code(), "未登录");
+//        }
+//
+//        Shoot shoot = Shoot.builder()
+//                .name(createDTO.getName())
+//                .description(createDTO.getDescription())
+//                .price(createDTO.getPrice())
+//                .status(createDTO.getStatus())
+//                .address(createDTO.getAddress())
+//                .phone(createDTO.getPhone())
+//                .contactName(createDTO.getContactName())
+//                .userId(currentUser.getId())
+//                .build();
+//
+//        this.save(shoot);
+//        return toShootVO(shoot);
+//    }
 
     @Override
     public ShootVO updateShootByAdmin(Long shootId, UpdateShootDTO updateDTO) {
@@ -198,7 +205,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (updateDTO.getPhone() != null) shoot.setPhone(updateDTO.getPhone());
         if (updateDTO.getContactName() != null) shoot.setContactName(updateDTO.getContactName());
         if (updateDTO.getCover() != null) shoot.setCover(updateDTO.getCover());
+        if (updateDTO.getImage() != null) shoot.setIamge(updateDTO.getImage());
 
+        shoot.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
         this.updateById(shoot);
         return toShootVO(shoot);
@@ -222,52 +231,52 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         cache.invalidate(CaffeineConstants.SHOOT+shootId);
     }
 
-    @Override
-    public Page<ShootVO> getShootPageByAdmin(Page<Shoot> page, String keyword) {
-        QueryWrapper<Shoot> wrapper = new QueryWrapper<>();
+//    @Override
+//    public Page<ShootVO> getShootPageByAdmin(Page<Shoot> page, String keyword) {
+//        QueryWrapper<Shoot> wrapper = new QueryWrapper<>();
+//
+//        wrapper.select("id", "name", "description", "price", "status", "cover","address");
+//
+//        if (keyword != null && !keyword.isEmpty()) {
+//            wrapper.and(w -> w.like("description", keyword));
+//        }
+//
+//        wrapper.orderByDesc("created_at");
+//
+//        Page<Shoot> shootPage = this.page(page, wrapper);
+//
+//        List<ShootVO> voList = shootPage.getRecords().stream()
+//                .map(shoot -> new ShootVO(
+//                        shoot.getId(),
+//                        shoot.getName(),
+//                        shoot.getDescription(),
+//                        shoot.getPrice(),
+//                        shoot.getStatus(),
+//                        shoot.getCover(),
+//                        shoot.getAddress()
+//                ))
+//                .collect(Collectors.toList());
+//
+//        Page<ShootVO> voPage = new Page<>(shootPage.getCurrent(), shootPage.getSize(), shootPage.getTotal());
+//        voPage.setRecords(voList);
+//
+//        return voPage;
+//    }
 
-        wrapper.select("id", "name", "description", "price", "status", "cover","address");
-
-        if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like("description", keyword));
-        }
-
-        wrapper.orderByDesc("created_at");
-
-        Page<Shoot> shootPage = this.page(page, wrapper);
-
-        List<ShootVO> voList = shootPage.getRecords().stream()
-                .map(shoot -> new ShootVO(
-                        shoot.getId(),
-                        shoot.getName(),
-                        shoot.getDescription(),
-                        shoot.getPrice(),
-                        shoot.getStatus(),
-                        shoot.getCover(),
-                        shoot.getAddress()
-                ))
-                .collect(Collectors.toList());
-
-        Page<ShootVO> voPage = new Page<>(shootPage.getCurrent(), shootPage.getSize(), shootPage.getTotal());
-        voPage.setRecords(voList);
-
-        return voPage;
-    }
-
-    @Override
-    public ShootVO getShootByIdByAdmin(Long shootId) {
-        Object store = cache.asMap().get(CaffeineConstants.SHOOT + shootId);
-        if (store != null) {
-            return toShootVO((Shoot) store);
-        } else {
-            Shoot shoot = this.getById(shootId);
-            if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "服务不存在");
-            }
-            cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
-            return toShootVO(shoot);
-        }
-    }
+//    @Override
+//    public ShootVO getShootByIdByAdmin(Long shootId) {
+//        Object store = cache.asMap().get(CaffeineConstants.SHOOT + shootId);
+//        if (store != null) {
+//            return toShootVO((Shoot) store);
+//        } else {
+//            Shoot shoot = this.getById(shootId);
+//            if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
+//                throw new NotFoundException(NOT_FOUND.code(), "服务不存在");
+//            }
+//            cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
+//            return toShootVO(shoot);
+//        }
+//    }
 
     @Override
     public ShootVO toShootVO(Shoot shoot) {
@@ -287,6 +296,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .cover(shoot.getCover())
                 .createdAt(shoot.getCreatedAt())
                 .updatedAt(shoot.getUpdatedAt())
+                .image(shoot.getIamge())
                 .build();
     }
 }

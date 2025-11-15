@@ -49,7 +49,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public ArticleVO createArticle(Long userId, CreateArticleDTO createDTO) {
         if(createDTO.getCover()==null){
-            createDTO.setCover("默认封面");
+            createDTO.setCover("https://auto-avatar.oss-cn-beijing.aliyuncs.com/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20251115152833_120_8.jpg");
         }
         // 创建文章
         Article article = Article.builder()
@@ -242,45 +242,46 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         cache.invalidate(CaffeineConstants.ARTICLE+articleId);
     }
 
-    @Override
-    public Page<ArticleVO> getArticlePageByAdmin(Page<Article> page, String keyword) {
-        QueryWrapper<Article> wrapper = new QueryWrapper<>();
+//    @Override
+//    public Page<ArticleVO> getArticlePageByAdmin(Page<Article> page, String keyword) {
+//        QueryWrapper<Article> wrapper = new QueryWrapper<>();
+//
+//        wrapper.select("id", "title", "issue_unit", "issue_time", "user_id", "cover")
+//                .eq("deleted", false);
+//
+//        if (keyword != null && !keyword.isEmpty()) {
+//            wrapper.and(w -> w.like("title", keyword));
+//        }
+//
+//        wrapper.orderByDesc("issue_time");
+//
+//        Page<Article> articlePage = this.page(page, wrapper);
+//
+//        List<ArticleVO> voList = articlePage.getRecords().stream()
+//                .map(article -> new ArticleVO(
+//                        article.getId(),
+//                        article.getTitle(),
+//                        article.getIssueUnit(),
+//                        article.getIssueTime(),
+//                        article.getUserId(),
+//                        article.getCover()
+//                ))
+//                .collect(Collectors.toList());
+//
+//        Page<ArticleVO> voPage = new Page<>(articlePage.getCurrent(), articlePage.getSize(), articlePage.getTotal());
+//        voPage.setRecords(voList);
+//
+//        return voPage;
+//    }
 
-        wrapper.select("id", "title", "issue_unit", "issue_time", "user_id", "cover");
-
-        if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like("title", keyword));
-        }
-
-        wrapper.orderByDesc("issue_time");
-
-        Page<Article> articlePage = this.page(page, wrapper);
-
-        List<ArticleVO> voList = articlePage.getRecords().stream()
-                .map(article -> new ArticleVO(
-                        article.getId(),
-                        article.getTitle(),
-                        article.getIssueUnit(),
-                        article.getIssueTime(),
-                        article.getUserId(),
-                        article.getCover()
-                ))
-                .collect(Collectors.toList());
-
-        Page<ArticleVO> voPage = new Page<>(articlePage.getCurrent(), articlePage.getSize(), articlePage.getTotal());
-        voPage.setRecords(voList);
-
-        return voPage;
-    }
-
-    @Override
-    public ArticleVO getArticleByIdByAdmin(Long articleId) {
-        Article article = this.getById(articleId);
-        if (article == null) {
-            throw new NotFoundException(NOT_FOUND.code(), "文章不存在");
-        }
-        return toArticleVO(article);
-    }
+//    @Override
+//    public ArticleVO getArticleByIdByAdmin(Long articleId) {
+//        Article article = this.getById(articleId);
+//        if (article == null) {
+//            throw new NotFoundException(NOT_FOUND.code(), "文章不存在");
+//        }
+//        return toArticleVO(article);
+//    }
 
     @Override
     public ArticleVO toArticleVO(Article article) {
@@ -297,6 +298,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .cover(article.getCover())
                 .createdAt(article.getCreatedAt())
                 .updatedAt(article.getUpdatedAt())
+                .image(article.getImage())
                 .build();
     }
 

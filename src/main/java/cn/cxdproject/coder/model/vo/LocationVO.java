@@ -23,7 +23,7 @@ public class LocationVO {
     private Long id;
     private String name;
     private String type;
-    private Byte status;
+    private Boolean status;
     private String locationDescription;
     private String contactPhone;
     private String contactName;
@@ -31,11 +31,12 @@ public class LocationVO {
     private BigDecimal price;
     private Long userId;
     private String cover;
+    private String image;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
 
-    public LocationVO(Long id, String name, Byte status, String type, String locationDescription, String cover, String address, BigDecimal price) {
+    public LocationVO(Long id, String name, Boolean status, String type, String locationDescription, String cover, String address, BigDecimal price) {
         this.id = id;
         this.name = name;
         this.type = type;

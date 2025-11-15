@@ -93,7 +93,6 @@ public class DramaVO {
 
     private String image;
 
-    private Boolean deleted;
 
     public DramaVO(Long id, String name, String dramaDescription, String cast, String cover) {
         this.id=id;

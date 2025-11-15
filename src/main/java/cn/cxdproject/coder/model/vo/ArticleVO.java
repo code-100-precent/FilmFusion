@@ -56,8 +56,6 @@ public class ArticleVO {
 
     private String image;
 
-    private Boolean deleted;
-
 
     /**
      * 创建时间

@@ -50,6 +50,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
 
     @Override
     public LocationVO createLocation(Long userId, CreateLocationDTO createDTO) {
+        if(createDTO.getCover()==null){
+            createDTO.setCover("https://auto-avatar.oss-cn-beijing.aliyuncs.com/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20251115152833_120_8.jpg");
+        }
+
         Location location = Location.builder()
                 .name(createDTO.getName())
                 .type(createDTO.getType())
@@ -60,6 +64,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .address(createDTO.getAddress())
                 .price(createDTO.getPrice())
                 .userId(userId)
+                .image(createDTO.getImage())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .deleted(false)
                 .build();
 
         this.save(location);
@@ -86,7 +94,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         if (updateDTO.getAddress() != null) location.setAddress(updateDTO.getAddress());
         if (updateDTO.getPrice() != null) location.setPrice(updateDTO.getPrice());
         if(updateDTO.getCover() != null) location.setCover(updateDTO.getCover());
+        if(updateDTO.getImage() != null) location.setImage(updateDTO.getImage());
 
+        location.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.LOCATION + locationId, location);
         this.updateById(location);
         return toLocationVO(location);
@@ -163,31 +173,31 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         return voPage;
     }
 
-    @Override
-    public LocationVO createLocationByAdmin(CreateLocationDTO createDTO) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            throw new BusinessException(UNAUTHORIZED.code(), "未登录");
-        }
-        if (currentUser.getRole()== "user"){
-            throw new BusinessException(FORBIDDEN.code(), "无权创建文章");
-        }
-
-        Location location = Location.builder()
-                .name(createDTO.getName())
-                .type(createDTO.getType())
-                .status(createDTO.getStatus())
-                .locationDescription(createDTO.getLocationDescription())
-                .contactPhone(createDTO.getContactPhone())
-                .contactName(createDTO.getContactName())
-                .address(createDTO.getAddress())
-                .price(createDTO.getPrice())
-                .userId(currentUser.getId())
-                .build();
-
-        this.save(location);
-        return toLocationVO(location);
-    }
+//    @Override
+//    public LocationVO createLocationByAdmin(CreateLocationDTO createDTO) {
+//        User currentUser = AuthContext.getCurrentUser();
+//        if (currentUser == null) {
+//            throw new BusinessException(UNAUTHORIZED.code(), "未登录");
+//        }
+//        if (currentUser.getRole()== "user"){
+//            throw new BusinessException(FORBIDDEN.code(), "无权创建文章");
+//        }
+//
+//        Location location = Location.builder()
+//                .name(createDTO.getName())
+//                .type(createDTO.getType())
+//                .status(createDTO.getStatus())
+//                .locationDescription(createDTO.getLocationDescription())
+//                .contactPhone(createDTO.getContactPhone())
+//                .contactName(createDTO.getContactName())
+//                .address(createDTO.getAddress())
+//                .price(createDTO.getPrice())
+//                .userId(currentUser.getId())
+//                .build();
+//
+//        this.save(location);
+//        return toLocationVO(location);
+//    }
 
     @Override
     public LocationVO updateLocationByAdmin(Long locationId, UpdateLocationDTO updateDTO) {
@@ -205,7 +215,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         if (updateDTO.getAddress() != null) location.setAddress(updateDTO.getAddress());
         if (updateDTO.getPrice() != null) location.setPrice(updateDTO.getPrice());
         if(updateDTO.getCover() != null) location.setCover(updateDTO.getCover());
+        if(updateDTO.getImage() != null) location.setImage(updateDTO.getImage());
 
+        location.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.LOCATION + locationId, location);
         this.updateById(location);
         return toLocationVO(location);
@@ -229,53 +241,53 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         cache.invalidate(CaffeineConstants.LOCATION+locationId);
     }
 
-    @Override
-    public Page<LocationVO> getLocationPageByAdmin(Page<Location> page, String keyword) {
-        QueryWrapper<Location> wrapper = new QueryWrapper<>();
-
-        wrapper.select("id", "name", "type", "status", "location_description", "cover","address","price");
-
-        if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like("location_description", keyword));
-        }
-
-        wrapper.orderByDesc("created_at");
-
-        Page<Location> locationPage = this.page(page, wrapper);
-
-        List<LocationVO> voList = locationPage.getRecords().stream()
-                .map(location -> new LocationVO(
-                        location.getId(),
-                        location.getName(),
-                        location.getStatus(),
-                        location.getType(),
-                        location.getLocationDescription(),
-                        location.getCover(),
-                        location.getAddress(),
-                        location.getPrice()
-                ))
-                .collect(Collectors.toList());
-
-        Page<LocationVO> voPage = new Page<>(locationPage.getCurrent(), locationPage.getSize(), locationPage.getTotal());
-        voPage.setRecords(voList);
-
-        return voPage;
-    }
-
-    @Override
-    public LocationVO getLocationByIdByAdmin(Long locationId) {
-        Object store = cache.asMap().get(CaffeineConstants.LOCATION + locationId);
-        if (store != null) {
-            return toLocationVO((Location) store);
-        } else {
-            Location location = this.getById(locationId);
-            if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "拍摄场地不存在");
-            }
-            cache.asMap().put(CaffeineConstants.LOCATION + locationId, location);
-            return toLocationVO(location);
-        }
-    }
+//    @Override
+//    public Page<LocationVO> getLocationPageByAdmin(Page<Location> page, String keyword) {
+//        QueryWrapper<Location> wrapper = new QueryWrapper<>();
+//
+//        wrapper.select("id", "name", "type", "status", "location_description", "cover","address","price");
+//
+//        if (keyword != null && !keyword.isEmpty()) {
+//            wrapper.and(w -> w.like("location_description", keyword));
+//        }
+//
+//        wrapper.orderByDesc("created_at");
+//
+//        Page<Location> locationPage = this.page(page, wrapper);
+//
+//        List<LocationVO> voList = locationPage.getRecords().stream()
+//                .map(location -> new LocationVO(
+//                        location.getId(),
+//                        location.getName(),
+//                        location.getStatus(),
+//                        location.getType(),
+//                        location.getLocationDescription(),
+//                        location.getCover(),
+//                        location.getAddress(),
+//                        location.getPrice()
+//                ))
+//                .collect(Collectors.toList());
+//
+//        Page<LocationVO> voPage = new Page<>(locationPage.getCurrent(), locationPage.getSize(), locationPage.getTotal());
+//        voPage.setRecords(voList);
+//
+//        return voPage;
+//    }
+//
+//    @Override
+//    public LocationVO getLocationByIdByAdmin(Long locationId) {
+//        Object store = cache.asMap().get(CaffeineConstants.LOCATION + locationId);
+//        if (store != null) {
+//            return toLocationVO((Location) store);
+//        } else {
+//            Location location = this.getById(locationId);
+//            if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
+//                throw new NotFoundException(NOT_FOUND.code(), "拍摄场地不存在");
+//            }
+//            cache.asMap().put(CaffeineConstants.LOCATION + locationId, location);
+//            return toLocationVO(location);
+//        }
+//    }
 
     @Override
     public LocationVO toLocationVO(Location location) {
@@ -296,6 +308,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                .cover(location.getCover())
                .createdAt(location.getCreatedAt())
                .updatedAt(location.getUpdatedAt())
+               .image(location.getImage())
                .build();
     }
 }

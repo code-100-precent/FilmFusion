@@ -15,10 +15,11 @@ public class UpdateShootDTO {
     private String name;
     private String description;
     private BigDecimal price;
-    private Byte status;
+    private Boolean status;
     private String address;
     private String phone;
     private String contactName;
     private String cover;
+    private String image;
 }
 
