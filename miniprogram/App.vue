@@ -24,11 +24,6 @@
 			if (typeof document !== 'undefined') {
 				document.documentElement.style.setProperty('--status-bar-height', statusBarHeight + 'px')
 			}
-			
-			// 直接跳转到启动页
-			uni.reLaunch({
-				url: '/pages/splash/splash'
-			})
 		},
 		onShow: function() {
 			console.log('App Show')

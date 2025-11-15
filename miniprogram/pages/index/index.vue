@@ -36,8 +36,6 @@
 
       <!-- 功能入口 -->
       <view class="function-section">
-        <view class="section-title">快速入口</view>
-        <view class="section-title">快速入口</view>
         <view class="function-grid">
           <view
             v-for="(item, index) in functions"
@@ -73,8 +71,8 @@
             class="article-item"
             @click="goToArticleDetail(article.id)"
           >
-            <view v-if="article.cover" class="article-cover">
-              <image :src="article.cover" class="cover-image"></image>
+            <view class="article-cover">
+              <image :src="getArticleCover(article.cover)" class="cover-image" mode="aspectFill"></image>
             </view>
             <view class="article-content">
               <text class="article-title">{{ article.title }}</text>
@@ -97,7 +95,13 @@
         <view v-else-if="locations.length === 0" class="empty-wrapper">
           <Empty text="暂无场地"></Empty>
         </view>
-        <scroll-view v-else class="location-scroll" scroll-x>
+        <scroll-view 
+          v-else 
+          class="location-scroll" 
+          scroll-x 
+          :show-scrollbar="false"
+          :enable-flex="true"
+        >
           <view class="location-list">
             <view
               v-for="location in locations"
@@ -106,7 +110,7 @@
               @click="goToLocationDetail(location.id)"
             >
               <view v-if="location.cover" class="location-cover">
-                <image :src="location.cover" class="cover-image"></image>
+                <image :src="location.cover" class="cover-image" mode="aspectFill"></image>
               </view>
               <view class="location-header">
                 <text class="location-name">{{ location.name }}</text>
@@ -234,6 +238,10 @@ export default {
         url: `/pages/location/detail?id=${id}`
       })
     },
+    getArticleCover(cover) {
+      // 如果 cover 为 null 或空，使用默认图片
+      return cover || 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png'
+    },
     formatDate(dateStr) {
       if (!dateStr) return ''
       let date
@@ -245,7 +253,9 @@ export default {
         } else {
           return ''
         }
+      } else {
         date = new Date(dateStr)
+      }
       
       const month = date.getMonth() + 1
       const day = date.getDate()
@@ -370,11 +380,17 @@ export default {
 }
 
 .section-title {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 24rpx;
-  text-align: center;
+  line-height: 1.2;
+}
+
+.news-section .section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
 }
 
 .function-grid {
@@ -433,14 +449,23 @@ export default {
 .location-section {
   background: #fff;
   margin-bottom: 32rpx;
-  padding: 40rpx;
+  padding: 32rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
   width: 100%;
   box-sizing: border-box;
 }
 
-.section-header {
+.news-section .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f3f4f6;
+}
+
+.location-section .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -448,9 +473,10 @@ export default {
 }
 
 .section-more {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #6366f1;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 .loading-wrapper,
@@ -463,17 +489,16 @@ export default {
 .article-list {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: 16rpx;
 }
 
 .article-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 16rpx;
-  padding: 16rpx;
+  padding: 20rpx;
   background: #f9fafb;
-  border-radius: 16rpx;
+  border-radius: 12rpx;
   transition: all 0.3s;
   overflow: hidden;
 }
@@ -484,11 +509,12 @@ export default {
 }
 
 .article-cover {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 12rpx;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 10rpx;
   overflow: hidden;
   flex-shrink: 0;
+  background: #f3f4f6;
 }
 
 .article-cover .cover-image {
@@ -501,32 +527,61 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 8rpx;
+  min-width: 0;
+  justify-content: center;
+}
+
+.article-item > uni-icons {
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 0;
 }
 
 .article-title {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: #1f2937;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-all;
 }
 
 .article-meta {
-  font-size: 24rpx;
-  color: #6b7280;
+  font-size: 22rpx;
+  color: #9ca3af;
+  line-height: 1.4;
 }
 
 .location-scroll {
+  width: 100%;
   white-space: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .location-list {
-  display: flex;
+  display: inline-flex;
   gap: 24rpx;
-  padding-bottom: 20rpx;
+  padding: 0 0 20rpx 0;
+  white-space: nowrap;
 }
 
 .location-card {
   width: 480rpx;
+  min-width: 480rpx;
   padding: 0;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   border-radius: 20rpx;
@@ -535,6 +590,7 @@ export default {
   flex-direction: column;
   gap: 0;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .location-cover {
@@ -633,16 +689,4 @@ export default {
   -ms-overflow-style: none;
 }
 
-.location-scroll {
-  white-space: nowrap;
-  
-  /* 隐藏滚动条 */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  /* 兼容火狐浏览器 */
-  scrollbar-width: none;
-  /* 兼容IE浏览器 */
-  -ms-overflow-style: none;
-}
 </style>

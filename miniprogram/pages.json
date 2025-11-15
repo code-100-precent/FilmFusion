@@ -1,6 +1,13 @@
 {
 	"pages": [
 		{
+			"path": "pages/splash/splash",
+			"style": {
+				"navigationBarTitleText": "",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/index/index",
 			"style": {
 				"navigationBarTitleText": "雅安影视服务",

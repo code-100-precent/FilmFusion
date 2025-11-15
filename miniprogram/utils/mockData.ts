@@ -351,7 +351,7 @@ const mockData = {
       issueUnit: '雅安市影视服务中心',
       issueTime: '2024-12-15T10:00:00Z',
       content: '为促进雅安市影视产业发展，我市出台了多项优惠政策支持影视拍摄。包括场地使用费减免、拍摄协调服务、政策咨询等。欢迎各影视制作单位来雅安取景拍摄。',
-      coverUrl: 'https://images.unsplash.com/photo-1529158062015-cad636e69505?auto=format&fit=crop&w=800&q=60'
+      cover: 'https://images.unsplash.com/photo-1529158062015-cad636e69505?auto=format&fit=crop&w=800&q=60'
     },
     {
       id: 2,
@@ -359,7 +359,7 @@ const mockData = {
       issueUnit: '雅安市文化广电旅游局',
       issueTime: '2024-12-10T14:30:00Z',
       content: '为展示雅安影视产业发展成果，我市将举办2024年度优秀影视作品展映活动。活动将展映在雅安取景拍摄的优秀影视作品，并邀请主创团队分享拍摄经验。',
-      coverUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=60'
+      cover: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=60'
     },
     {
       id: 3,
@@ -367,7 +367,7 @@ const mockData = {
       issueUnit: '雅安市影视服务中心',
       issueTime: '2024-12-05T09:20:00Z',
       content: '上里古镇是雅安市重要的影视取景地，以其保存完好的明清古建筑群而闻名。古镇依山傍水，古色古香，适合拍摄古装剧、年代剧等多种题材。',
-      coverUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=60'
+      cover: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=60'
     },
     {
       id: 4,
@@ -375,7 +375,7 @@ const mockData = {
       issueUnit: '雅安市影视服务中心',
       issueTime: '2024-11-28T16:00:00Z',
       content: '为进一步优化影视拍摄服务，我市简化了拍摄报备流程。现在可以通过线上平台提交报备材料，工作人员将在1个工作日内完成审核并联系确认。',
-      coverUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=60'
+      cover: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=60'
     }
   ],
 

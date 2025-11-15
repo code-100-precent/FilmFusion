@@ -23,21 +23,17 @@
           class="feedback-card"
         >
           <view class="feedback-header">
-<<<<<<< HEAD
-            <view class="feedback-type">{{ feedback.type }}</view>
-            <view class="feedback-status" :class="statusClassObj[feedback.status] || 'status-pending'">
-              {{ statusTextMap[feedback.status] || '待处理' }}
-=======
-<<<<<<< HEAD
-            <view class="feedback-status" :class="statusClassMap[feedback.status] || 'status-pending'">
-            <view class="feedback-status" :class="statusClassObj[feedback.status] || 'status-pending'">
->>>>>>> 19eb907990f0b0b57bdbb996afca8517c06862d0
-              {{ statusTextMap[feedback.status] || '待处理' }}
-=======
             <view class="feedback-type">{{ getTypeText(feedback.type) }}</view>
-            <view class="feedback-status" :class="statusClassMap[feedback.status] || 'status-pending'">
+            <view 
+              class="feedback-status" 
+              :class="{
+                'status-pending': feedback.status === 'PENDING',
+                'status-processing': feedback.status === 'PROCESSING',
+                'status-resolved': feedback.status === 'RESOLVED',
+                'status-rejected': feedback.status === 'REJECTED'
+              }"
+            >
               {{ getStatusText(feedback.status) }}
->>>>>>> 19eb907990f0b0b57bdbb996afca8517c06862d0
             </view>
           </view>
           <text class="feedback-content">{{ feedback.content }}</text>
@@ -65,41 +61,30 @@ export default {
   data() {
     return {
       feedbacks: [],
-<<<<<<< HEAD
-      statusClassObj: {
-        'PENDING': 'status-pending',
-        'PROCESSING': 'status-processing',
-        'RESOLVED': 'status-resolved'
-      },
-      statusTextMap: {
-        'PENDING': '待处理',
-        'PROCESSING': '处理中',
-        'RESOLVED': '已解决'
-=======
       current: 1,
       size: 10,
       total: 0,
       loading: false,
       refreshing: false,
->>>>>>> 19eb907990f0b0b57bdbb996afca8517c06862d0
       hasMore: true,
-<<<<<<< HEAD
-      statusClassObj: {
-        'PENDING': 'status-pending',
-        'PROCESSING': 'status-processing',
-        'RESOLVED': 'status-resolved'
-      },
-      statusTextMap: {
-        'PENDING': '待处理',
-        'PROCESSING': '处理中',
-        'RESOLVED': '已解决'
-=======
       statusClassMap: {
         'PENDING': 'status-pending',
         'PROCESSING': 'status-processing',
         'RESOLVED': 'status-resolved',
         'REJECTED': 'status-rejected'
->>>>>>> 19eb907990f0b0b57bdbb996afca8517c06862d0
+      },
+      statusTextMap: {
+        'PENDING': '待处理',
+        'PROCESSING': '处理中',
+        'RESOLVED': '已解决',
+        'REJECTED': '已拒绝'
+      },
+      typeTextMap: {
+        'SUGGESTION': '建议',
+        'BUG_REPORT': '错误报告',
+        'FEATURE_REQUEST': '功能请求',
+        'COMPLAINT': '投诉',
+        'OTHER': '其他'
       }
     }
   },
@@ -155,16 +140,6 @@ export default {
         uni.showToast({
           title: '加载失败，请稍后重试',
           icon: 'none'
-<<<<<<< HEAD
-
-=======
-    getStatusClass(status) {
-      if (status === 'PENDING') return 'status-pending'
-      if (status === 'PROCESSING') return 'status-processing'
-      if (status === 'RESOLVED') return 'status-resolved'
-      if (status === 'REJECTED') return 'status-rejected'
-      return 'status-pending'
-    },
         })
         if (reset) {
           this.feedbacks = []
@@ -183,31 +158,12 @@ export default {
       this.current++
       this.loadFeedbacks()
     },
->>>>>>> 19eb907990f0b0b57bdbb996afca8517c06862d0
-<<<<<<< HEAD
-
-=======
-    getStatusClass(status) {
-      if (status === 'PENDING') return 'status-pending'
-      if (status === 'PROCESSING') return 'status-processing'
-      if (status === 'RESOLVED') return 'status-resolved'
-      if (status === 'REJECTED') return 'status-rejected'
-      return 'status-pending'
-    },
     getStatusText(status) {
-      const statusMap = {
-        'PENDING': '待处理',
-        'PROCESSING': '处理中',
-        'RESOLVED': '已解决',
-        'REJECTED': '已拒绝'
-      }
-      return statusMap[status] || '待处理'
+      return this.statusTextMap[status] || '待处理'
     },
     getTypeText(type) {
-      const typeMap = {
-        'SUGGESTION': '建议',
-        date = new Date(dateStr)
->>>>>>> 19eb907990f0b0b57bdbb996afca8517c06862d0
+      return this.typeTextMap[type] || '其他'
+    },
     formatDate(dateStr) {
       if (!dateStr) return ''
       let date

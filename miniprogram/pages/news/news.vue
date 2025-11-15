@@ -47,17 +47,22 @@
             class="article-card"
             @click="goToDetail(article.id)"
           >
-            <view class="article-header">
-              <text class="article-title">{{ article.title }}</text>
+            <view class="article-cover-wrapper">
+              <image :src="getArticleCover(article.cover)" class="article-cover" mode="aspectFill"></image>
             </view>
-            <view class="article-meta">
-              <text class="article-unit">{{ article.issueUnit }}</text>
-              <text class="article-time">{{ formatDate(article.issueTime) }}</text>
-            </view>
-            <text class="article-content">{{ getContentPreview(article.content) }}</text>
-            <view class="article-footer">
-              <text class="read-more">查看详情</text>
-              <uni-icons type="right" size="14" color="#6366f1"></uni-icons>
+            <view class="article-info">
+              <view class="article-header">
+                <text class="article-title">{{ article.title }}</text>
+              </view>
+              <view class="article-meta">
+                <text class="article-unit">{{ article.issueUnit }}</text>
+                <text class="article-time">{{ formatDate(article.issueTime) }}</text>
+              </view>
+              <text class="article-content">{{ getContentPreview(article.content) }}</text>
+              <view class="article-footer">
+                <text class="read-more">查看详情</text>
+                <uni-icons type="right" size="14" color="#6366f1"></uni-icons>
+              </view>
             </view>
           </view>
         </view>
@@ -188,6 +193,10 @@ export default {
       const day = String(date.getDate()).padStart(2, '0')
       return `${year}-${month}-${day}`
     },
+    getArticleCover(cover) {
+      // 如果 cover 为 null 或空，使用默认图片
+      return cover || 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png'
+    },
     getContentPreview(content) {
       if (!content) return ''
       return content.length > 100 ? content.substring(0, 100) + '...' : content
@@ -291,11 +300,35 @@ export default {
   transition: all 0.3s;
   width: 100%;
   box-sizing: border-box;
+  display: flex;
+  gap: 24rpx;
 }
 
 .article-card:active {
   transform: translateY(-4rpx);
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.article-cover-wrapper {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f3f4f6;
+}
+
+.article-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.article-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .article-header {
