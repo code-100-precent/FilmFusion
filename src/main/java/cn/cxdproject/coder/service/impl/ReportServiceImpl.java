@@ -1,6 +1,7 @@
 package cn.cxdproject.coder.service.impl;
 
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
+import cn.cxdproject.coder.common.constants.ReportConstants;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
@@ -78,11 +79,11 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     public ReportVO updateReport(Long userId, Long reportId, UpdateReportDTO updateDTO) {
         Report report = this.getById(reportId);
         if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "影视剧备案不存在");
+            throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
         }
 
         if (!report.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), "无权修改他人的影视剧备案");
+            throw new BusinessException(FORBIDDEN.code(), ReportConstants.NO_PERMISSION);
         }
 
         if (updateDTO.getName() != null) report.setName(updateDTO.getName());
@@ -120,9 +121,9 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         if (!updated) {
             Report report = this.getById(reportId);
             if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "申请不存在");
+                throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
             } else {
-                throw new BusinessException(FORBIDDEN.code(), "无权删除他人的申请");
+                throw new BusinessException(FORBIDDEN.code(), ReportConstants.NO_PERMISSION);
             }
         }
         cache.invalidate(CaffeineConstants.REPORT+reportId);
@@ -137,13 +138,13 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         } else {
             report = this.getById(reportId);
             if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "申请不存在");
+                throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
             }
             cache.asMap().put(CaffeineConstants.REPORT + reportId, report);
         }
 
         if (!userId.equals(report.getUserId())) {
-            throw new BusinessException(FORBIDDEN.code(), "无权访问该申请");
+            throw new BusinessException(FORBIDDEN.code(), ReportConstants.NO_PERMISSION);
         }
         return toReportVO(report);
     }
@@ -231,12 +232,9 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     @Override
     public ReportVO updateReportByAdmin(Long reportId, UpdateReportDTO updateDTO) {
         User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            throw new BusinessException(UNAUTHORIZED.code(), "未登录");
-        }
         Report report = this.getById(reportId);
         if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "影视剧备案不存在");
+            throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
         }
 
         if (updateDTO.getStatus() != null) report.setStatus(updateDTO.getStatus());
@@ -302,7 +300,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         } else {
             Report report = this.getById(reportId);
             if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "申请不存在");
+                throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
             }
             cache.asMap().put(CaffeineConstants.REPORT + reportId, report);
             return toReportVO(report);

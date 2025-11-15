@@ -1,6 +1,8 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.constants.BannerConstants;
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
+import cn.cxdproject.coder.common.constants.DramaConstants;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
@@ -79,11 +81,11 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     public DramaVO updateDrama(Long userId, Long dramaId, UpdateDramaDTO updateDTO) {
         Drama drama = this.getById(dramaId);
         if (drama == null || Boolean.TRUE.equals(drama.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "电视剧备案不存在");
+            throw new NotFoundException(NOT_FOUND.code(), DramaConstants.NOT_FIND);
         }
 
         if (!drama.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), "无权修改他人的电视剧备案");
+            throw new BusinessException(FORBIDDEN.code(), DramaConstants.NO_PERMISSION);
         }
 
         if (updateDTO.getName() != null) drama.setName(updateDTO.getName());
@@ -117,9 +119,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         if (!updated) {
             Drama drama = this.getById(dramaId);
             if (drama == null || Boolean.TRUE.equals(drama.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "电视剧不存在");
+                throw new NotFoundException(NOT_FOUND.code(), DramaConstants.NOT_FIND);
             } else {
-                throw new BusinessException(FORBIDDEN.code(), "无权删除他人的电视剧");
+                throw new BusinessException(FORBIDDEN.code(), DramaConstants.NO_PERMISSION);
             }
         }
         cache.invalidate(CaffeineConstants.DRAMA+dramaId);
@@ -133,7 +135,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }else {
             Drama drama = this.getById(dramaId);
             if (drama == null || Boolean.TRUE.equals(drama.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "电视剧备案不存在");
+                throw new NotFoundException(NOT_FOUND.code(), DramaConstants.NOT_FIND);
             }
             cache.asMap().put(CaffeineConstants.DRAMA + dramaId, dramaId);
             return toDramaVO(drama);
@@ -204,7 +206,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     public DramaVO updateDramaByAdmin(Long dramaId, UpdateDramaDTO updateDTO) {
         Drama drama = this.getById(dramaId);
         if (drama == null || Boolean.TRUE.equals(drama.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "电视剧备案不存在");
+            throw new NotFoundException(NOT_FOUND.code(), DramaConstants.NOT_FIND);
         }
 
         if (updateDTO.getName() != null) drama.setName(updateDTO.getName());
@@ -237,7 +239,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         if (!updated) {
             Drama drama = this.getById(dramaId);
             if (drama == null || Boolean.TRUE.equals(drama.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "电视剧不存在");
+                throw new NotFoundException(NOT_FOUND.code(), DramaConstants.NOT_FIND);
             }
         }
         cache.invalidate(CaffeineConstants.DRAMA+dramaId);

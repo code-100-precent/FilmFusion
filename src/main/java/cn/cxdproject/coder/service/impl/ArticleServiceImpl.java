@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.constants.ArticleConstants;
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.exception.BusinessException;
@@ -74,11 +75,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public ArticleVO updateArticle(Long userId, Long articleId, UpdateArticleDTO updateDTO) {
         Article article = this.getById(articleId);
         if (article == null || Boolean.TRUE.equals(article.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "文章不存在");
+            throw new NotFoundException(NOT_FOUND.code(), ArticleConstants.NOT_FIND);
         }
 
         if (!article.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), "无权修改他人的文章");
+            throw new BusinessException(FORBIDDEN.code(), ArticleConstants.NO_PERMISSION);
         }
 
         if (updateDTO.getTitle() != null) {
@@ -115,9 +116,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (!updated) {
             Article article = this.getById(articleId);
             if (article == null || Boolean.TRUE.equals(article.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "文章不存在");
+                throw new NotFoundException(NOT_FOUND.code(), ArticleConstants.NOT_FIND);
             } else {
-                throw new BusinessException(FORBIDDEN.code(), "无权删除他人的文章");
+                throw new BusinessException(FORBIDDEN.code(), ArticleConstants.NO_PERMISSION);
             }
         }
         cache.invalidate(CaffeineConstants.ARTICLE+articleId);
@@ -131,7 +132,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         } else {
             Article article = this.getById(articleId);
             if (article == null || Boolean.TRUE.equals(article.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "文章不存在或已删除");
+                throw new NotFoundException(NOT_FOUND.code(), ArticleConstants.NOT_FIND);
             }
             cache.asMap().put(CaffeineConstants.ARTICLE + articleId, article);
             return toArticleVO(article);
@@ -143,8 +144,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public Page<ArticleVO> getArticlePage(Page<Article> page, String keyword) {
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
-        wrapper.select("id", "title", "issue_unit", "issue_time", "user_id", "cover")
-                .eq("deleted", false);
+        wrapper.select(ArticleConstants.ID, ArticleConstants.TITLE, ArticleConstants.ISSUE_NAME,ArticleConstants.ISSUE_TIME , ArticleConstants.USER_ID, ArticleConstants.COVER)
+                .eq(ArticleConstants.DELETED, false);
 
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.and(w -> w.like("title", keyword));
@@ -201,7 +202,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public ArticleVO updateArticleByAdmin(Long articleId, UpdateArticleDTO updateDTO) {
         Article article = this.getById(articleId);
         if (article == null || Boolean.TRUE.equals(article.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "文章不存在");
+            throw new NotFoundException(NOT_FOUND.code(), ArticleConstants.NOT_FIND);
         }
 
         if (updateDTO.getTitle() != null) {
@@ -236,7 +237,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (!updated) {
             Article article = this.getById(articleId);
             if (article == null || Boolean.TRUE.equals(article.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "文章不存在");
+                throw new NotFoundException(NOT_FOUND.code(), ArticleConstants.NOT_FIND);
             }
         }
         cache.invalidate(CaffeineConstants.ARTICLE+articleId);
