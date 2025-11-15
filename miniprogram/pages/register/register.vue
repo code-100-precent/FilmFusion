@@ -177,88 +177,70 @@ export default {
 <style lang="scss" scoped>
 .register-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f7fa;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40rpx 32rpx;
-  position: relative;
-  overflow: hidden;
-}
-
-.register-page::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.08)"/><circle cx="40" cy="70" r="1" fill="rgba(255,255,255,0.06)"/><circle cx="90" cy="80" r="2.5" fill="rgba(255,255,255,0.09)"/><circle cx="10" cy="60" r="1" fill="rgba(255,255,255,0.05)"/></svg>') repeat;
-  opacity: 0.3;
-  z-index: 0;
 }
 
 .register-container {
   width: 100%;
   max-width: 600rpx;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20rpx);
-  border-radius: 32rpx;
-  padding: 48rpx 40rpx 36rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
-  border: 1rpx solid rgba(255, 255, 255, 0.2);
-  position: relative;
-  z-index: 1;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 80rpx 48rpx 60rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
 .header {
   text-align: center;
-  margin-bottom: 40rpx;
+  margin-bottom: 64rpx;
 }
 
 .title {
   display: block;
-  font-size: 42rpx;
-  font-weight: 700;
+  font-size: 48rpx;
+  font-weight: 600;
   color: #1f2937;
-  margin-bottom: 12rpx;
+  margin-bottom: 16rpx;
   letter-spacing: -0.5rpx;
 }
 
 .subtitle {
   display: block;
-  font-size: 24rpx;
-  color: #6b7280;
+  font-size: 26rpx;
+  color: #9ca3af;
   font-weight: 400;
 }
 
 .form-container {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: 32rpx;
 }
 
 .form-item {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 12rpx;
 }
 
 .form-label {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  font-size: 26rpx;
-  color: #374151;
+  gap: 10rpx;
+  font-size: 28rpx;
+  color: #4b5563;
   font-weight: 500;
 }
 
 .form-input {
   width: 100%;
-  height: 80rpx;
-  background: rgba(249, 250, 251, 0.8);
-  border: 1.5rpx solid #e5e7eb;
-  border-radius: 16rpx;
+  height: 88rpx;
+  background: #f9fafb;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 12rpx;
   padding: 0 20rpx;
   font-size: 28rpx;
   color: #1f2937;
@@ -269,44 +251,40 @@ export default {
 .form-input:focus {
   border-color: #6366f1;
   background: #fff;
-  box-shadow: 0 0 0 3rpx rgba(99, 102, 241, 0.1);
 }
 
 .register-btn {
   width: 100%;
-  height: 80rpx;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  height: 88rpx;
+  background: #1f2937;
   color: #fff;
-  font-size: 28rpx;
-  font-weight: 600;
-  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  border-radius: 12rpx;
   border: none;
-  margin-top: 8rpx;
+  margin-top: 12rpx;
   transition: all 0.2s;
-  box-shadow: 0 4rpx 12rpx rgba(99, 102, 241, 0.3);
 }
 
 .register-btn:active {
-  transform: translateY(-2rpx);
-  box-shadow: 0 6rpx 16rpx rgba(99, 102, 241, 0.4);
+  background: #374151;
 }
 
 .register-btn--disabled {
   opacity: 0.5;
   background: #d1d5db;
-  box-shadow: none;
 }
 
 .login-link {
   text-align: center;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #6b7280;
-  margin-top: 24rpx;
+  margin-top: 32rpx;
 }
 
 .link-text {
-  color: #6366f1;
-  font-weight: 600;
-  margin-left: 6rpx;
+  color: #1f2937;
+  font-weight: 500;
+  margin-left: 8rpx;
 }
 </style>

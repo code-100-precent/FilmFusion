@@ -37,6 +37,7 @@
       <!-- 功能入口 -->
       <view class="function-section">
         <view class="section-title">快速入口</view>
+        <view class="section-title">快速入口</view>
         <view class="function-grid">
           <view
             v-for="(item, index) in functions"
@@ -238,13 +239,7 @@ export default {
         } else {
           return ''
         }
-      } else if (typeof dateStr === 'string') {
         date = new Date(dateStr)
-      } else {
-        return ''
-      }
-      
-      if (isNaN(date.getTime())) return ''
       
       const month = date.getMonth() + 1
       const day = date.getDate()

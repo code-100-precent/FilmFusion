@@ -1,14 +1,6 @@
 {
 	"pages": [
 		{
-			"path": "pages/splash/splash",
-			"style": {
-				"navigationBarTitleText": "",
-				"navigationStyle": "custom",
-				"backgroundColor": "#000000"
-			}
-		},
-		{
 			"path": "pages/index/index",
 			"style": {
 				"navigationBarTitleText": "雅安影视服务",
