@@ -60,6 +60,8 @@ public class CreateReportDTO {
     @NotBlank(message = "申请状态")
     private String status;
 
+    private String image;
+
 
 }
 

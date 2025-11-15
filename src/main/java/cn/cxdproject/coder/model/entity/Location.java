@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * Location 实体类
@@ -46,7 +47,7 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
      * 可用状态（0：不可用，1：可用）
      */
     @TableField("status")
-    private Byte status;
+    private Boolean status;
 
     /**
      * 场地介绍
@@ -86,6 +87,18 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
 
     @TableField("cover")
     private String cover;
+
+    @TableField("image")
+    private String image;
+
+    @TableField("deleted")
+    private Boolean deleted;
+
+    @TableField("created_at")
+    private LocalDateTime createdAt;
+
+    @TableField("updated_at")
+    private LocalDateTime updatedAt;
 
     @Override
     public Location clone() {

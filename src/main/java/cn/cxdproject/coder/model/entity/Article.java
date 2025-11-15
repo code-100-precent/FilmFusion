@@ -62,8 +62,22 @@ public class Article extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
+    @TableField("deleted")
+    private Boolean deleted;
+
+    @TableField("created_at")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createdAt;
+
+    @TableField("updated_at")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime updatedAt;
+
     @TableField("cover")
     private String cover;
+
+    @TableField("image")
+    private String image;
 
     @Override
     public Article clone() {

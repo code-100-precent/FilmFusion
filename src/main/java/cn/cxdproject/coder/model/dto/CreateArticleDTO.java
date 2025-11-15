@@ -31,5 +31,7 @@ public class CreateArticleDTO {
     private String content;
 
     private String cover;
+
+    private String image;
 }
 
