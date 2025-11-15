@@ -275,6 +275,7 @@ const mockData = {
       contactName: '张经理',
       address: '雅安市雨城区影视路1号',
       price: 5000,
+      cover: 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E6%91%84%E5%9F%BA%E5%9C%B0.png',
       updatedAt: '2024-12-01T10:00:00Z'
     },
     {
@@ -287,6 +288,7 @@ const mockData = {
       contactName: '李主任',
       address: '雅安市雨城区上里镇',
       price: 3000,
+      cover: 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E4%B8%8A%E9%87%8C%E5%8F%A4%E9%95%87.png',
       updatedAt: '2024-11-15T14:30:00Z'
     },
     {
@@ -299,6 +301,7 @@ const mockData = {
       contactName: '王主管',
       address: '雅安市雨城区碧峰峡镇',
       price: 2000,
+      cover: 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E7%A2%A7%E5%B3%B0%E5%B3%A1.png',
       updatedAt: '2024-12-10T09:20:00Z'
     }
   ],

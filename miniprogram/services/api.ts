@@ -110,6 +110,7 @@ export interface Article {
   issueUnit: string
   issueTime: string
   content: string
+  cover?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -143,6 +144,7 @@ export interface Location {
   contactName: string
   address: string
   price: number
+  cover?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -175,6 +177,7 @@ export interface Shoot {
   address: string
   phone: string
   contactName: string
+  cover?: string
   createdAt?: string
   updatedAt?: string
 }

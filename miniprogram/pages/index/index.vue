@@ -73,6 +73,9 @@
             class="article-item"
             @click="goToArticleDetail(article.id)"
           >
+            <view v-if="article.cover" class="article-cover">
+              <image :src="article.cover" class="cover-image"></image>
+            </view>
             <view class="article-content">
               <text class="article-title">{{ article.title }}</text>
               <text class="article-meta">{{ article.issueUnit }} · {{ formatDate(article.issueTime) }}</text>
@@ -102,6 +105,9 @@
               class="location-card"
               @click="goToLocationDetail(location.id)"
             >
+              <view v-if="location.cover" class="location-cover">
+                <image :src="location.cover" class="cover-image"></image>
+              </view>
               <view class="location-header">
                 <text class="location-name">{{ location.name }}</text>
                 <view class="location-badge">{{ location.type }}</view>
@@ -464,15 +470,31 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 32rpx;
+  gap: 16rpx;
+  padding: 16rpx;
   background: #f9fafb;
   border-radius: 16rpx;
   transition: all 0.3s;
+  overflow: hidden;
 }
 
 .article-item:active {
   background: #f3f4f6;
   transform: translateX(4rpx);
+}
+
+.article-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.article-cover .cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .article-content {
@@ -505,13 +527,46 @@ export default {
 
 .location-card {
   width: 480rpx;
-  padding: 32rpx;
+  padding: 0;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   border-radius: 20rpx;
   border: 2rpx solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 0;
+  overflow: hidden;
+}
+
+.location-cover {
+  width: 100%;
+  height: 240rpx;
+  overflow: hidden;
+}
+
+.location-cover .cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.location-card > .location-header,
+.location-card > .location-desc,
+.location-card > .location-footer {
+  padding: 0 32rpx;
+}
+
+.location-card > .location-header {
+  padding-top: 16rpx;
+  padding-bottom: 8rpx;
+}
+
+.location-card > .location-desc {
+  padding-bottom: 8rpx;
+}
+
+.location-card > .location-footer {
+  padding-bottom: 16rpx;
+  padding-top: 8rpx;
 }
 
 .location-header {
