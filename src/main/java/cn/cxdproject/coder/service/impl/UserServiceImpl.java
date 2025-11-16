@@ -97,18 +97,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Transactional(rollbackFor = Exception.class)
     public LoginResponseDTO register(RegisterDTO registerDTO) {
         // 检查用户名是否已存在
-        QueryWrapper<User> usernameWrapper = new QueryWrapper<>();
-        usernameWrapper.eq("username", registerDTO.getUsername());
-        usernameWrapper.eq("deleted", false);
-        if (this.count(usernameWrapper) > 0) {
+        boolean usernameExists = this.lambdaQuery()
+                .select(User::getId)
+                .eq(User::getUsername, registerDTO.getUsername())
+                .eq(User::getDeleted, false)
+                .last("LIMIT 1")
+                .one() != null;
+        if (usernameExists) {
             throw new BusinessException(DUPLICATE_RESOURCE.code(), "用户名已存在");
         }
 
         // 检查手机号是否已存在
-        QueryWrapper<User> phoneWrapper = new QueryWrapper<>();
-        phoneWrapper.eq("phoneNumber", registerDTO.getPhoneNumber());
-        phoneWrapper.eq("deleted", false);
-        if (this.count(phoneWrapper) > 0) {
+        boolean phoneExists = this.lambdaQuery()
+                .select(User::getId)
+                .eq(User::getPhoneNumber, registerDTO.getPhoneNumber())
+                .eq(User::getDeleted, false)
+                .last("LIMIT 1")
+                .one() != null;
+        if (phoneExists) {
             throw new BusinessException(DUPLICATE_RESOURCE.code(), "手机号已被注册");
         }
 
@@ -161,11 +167,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 如果更新用户名，检查是否重复
         if (updateDTO.getUsername() != null && !updateDTO.getUsername().equals(user.getUsername())) {
-            QueryWrapper<User> wrapper = new QueryWrapper<>();
-            wrapper.eq("username", updateDTO.getUsername());
-            wrapper.eq("deleted", false);
-            wrapper.ne("id", userId);
-            if (this.count(wrapper) > 0) {
+            boolean usernameExists = this.lambdaQuery()
+                    .select(User::getId)
+                    .eq(User::getUsername, updateDTO.getUsername())
+                    .eq(User::getDeleted, false)
+                    .ne(User::getId, userId)
+                    .last("LIMIT 1")
+                    .one() != null;
+            if (usernameExists) {
                 throw new BusinessException(DUPLICATE_RESOURCE.code(), "用户名已存在");
             }
             user.setUsername(updateDTO.getUsername());
@@ -173,11 +182,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 如果更新手机号，检查是否重复
         if (updateDTO.getPhoneNumber() != null && !updateDTO.getPhoneNumber().equals(user.getPhoneNumber())) {
-            QueryWrapper<User> wrapper = new QueryWrapper<>();
-            wrapper.eq("phoneNumber", updateDTO.getPhoneNumber());
-            wrapper.eq("deleted", false);
-            wrapper.ne("id", userId);
-            if (this.count(wrapper) > 0) {
+            boolean phoneExists = this.lambdaQuery()
+                    .select(User::getId)
+                    .eq(User::getPhoneNumber, updateDTO.getPhoneNumber())
+                    .eq(User::getDeleted, false)
+                    .ne(User::getId, userId)
+                    .last("LIMIT 1")
+                    .one() != null;
+            if (phoneExists) {
                 throw new BusinessException(DUPLICATE_RESOURCE.code(), "手机号已被注册");
             }
             user.setPhoneNumber(updateDTO.getPhoneNumber());
@@ -235,19 +247,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Transactional(rollbackFor = Exception.class)
     public UserVO createUserByAdmin(User user) {
         // 检查用户名是否已存在
-        QueryWrapper<User> usernameWrapper = new QueryWrapper<>();
-        usernameWrapper.eq("username", user.getUsername());
-        usernameWrapper.eq("deleted", false);
-        if (this.count(usernameWrapper) > 0) {
+        boolean usernameExists = this.lambdaQuery()
+                .select(User::getId)
+                .eq(User::getUsername, user.getUsername())
+                .eq(User::getDeleted, false)
+                .last("LIMIT 1")
+                .one() != null;
+        if (usernameExists) {
             throw new BusinessException(DUPLICATE_RESOURCE.code(), "用户名已存在");
         }
 
         // 检查手机号是否已存在
         if (user.getPhoneNumber() != null) {
-            QueryWrapper<User> phoneWrapper = new QueryWrapper<>();
-            phoneWrapper.eq("phoneNumber", user.getPhoneNumber());
-            phoneWrapper.eq("deleted", false);
-            if (this.count(phoneWrapper) > 0) {
+            boolean phoneExists = this.lambdaQuery()
+                    .select(User::getId)
+                    .eq(User::getPhoneNumber, user.getPhoneNumber())
+                    .eq(User::getDeleted, false)
+                    .last("LIMIT 1")
+                    .one() != null;
+            if (phoneExists) {
                 throw new BusinessException(DUPLICATE_RESOURCE.code(), "手机号已被注册");
             }
         }
@@ -283,23 +301,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 如果更新用户名，检查是否重复
         if (user.getUsername() != null && !user.getUsername().equals(existingUser.getUsername())) {
-            QueryWrapper<User> wrapper = new QueryWrapper<>();
-            wrapper.eq("username", user.getUsername());
-            wrapper.eq("deleted", false);
-            wrapper.ne("id", userId);
-            if (this.count(wrapper) > 0) {
+            boolean usernameExists = this.lambdaQuery()
+                    .select(User::getId)
+                    .eq(User::getUsername, user.getUsername())
+                    .eq(User::getDeleted, false)
+                    .ne(User::getId, userId)
+                    .last("LIMIT 1")
+                    .one() != null;
+            if (usernameExists) {
                 throw new BusinessException(DUPLICATE_RESOURCE.code(), "用户名已存在");
             }
             existingUser.setUsername(user.getUsername());
         }
 
-        // 如果更新手机号，检查是否重复
         if (user.getPhoneNumber() != null && !user.getPhoneNumber().equals(existingUser.getPhoneNumber())) {
-            QueryWrapper<User> wrapper = new QueryWrapper<>();
-            wrapper.eq("phoneNumber", user.getPhoneNumber());
-            wrapper.eq("deleted", false);
-            wrapper.ne("id", userId);
-            if (this.count(wrapper) > 0) {
+            boolean phoneExists = this.lambdaQuery()
+                    .select(User::getId)
+                    .eq(User::getPhoneNumber, user.getPhoneNumber())
+                    .eq(User::getDeleted, false)
+                    .ne(User::getId, userId)
+                    .last("LIMIT 1")
+                    .one() != null;
+            if (phoneExists) {
                 throw new BusinessException(DUPLICATE_RESOURCE.code(), "手机号已被注册");
             }
             existingUser.setPhoneNumber(user.getPhoneNumber());
@@ -426,7 +449,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 上传新头像
         String filename = fileStorageAdapter.upload("avatars", avatarFile);
-        
+
         // 构建访问URL（本地存储使用/api/files/前缀）
         String avatarUrl = "/api/files/" + filename;
 
