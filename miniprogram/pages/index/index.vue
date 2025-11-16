@@ -152,6 +152,7 @@ export default {
   data() {
     return {
       loading: false,
+      loadingTimer: null,
       banners: [
         {
           title: '雅安影视服务',
@@ -182,9 +183,31 @@ export default {
   onLoad() {
     this.loadData()
   },
+  onUnload() {
+    // 组件销毁时清除定时器
+    if (this.loadingTimer) {
+      clearTimeout(this.loadingTimer)
+      this.loadingTimer = null
+    }
+  },
   methods: {
     async loadData() {
+      // 清除之前的定时器
+      if (this.loadingTimer) {
+        clearTimeout(this.loadingTimer)
+        this.loadingTimer = null
+      }
+      
       this.loading = true
+      
+      // 设置2秒超时，最多显示2秒加载状态
+      this.loadingTimer = setTimeout(() => {
+        if (this.loading) {
+          this.loading = false
+          this.loadingTimer = null
+        }
+      }, 2000)
+      
       try {
         const [articleRes, locationRes] = await Promise.all([
           getArticlePage({ current: 1, size: 5 }),
@@ -202,6 +225,11 @@ export default {
       } catch (error) {
         console.error('加载数据失败:', error)
       } finally {
+        // 清除定时器
+        if (this.loadingTimer) {
+          clearTimeout(this.loadingTimer)
+          this.loadingTimer = null
+        }
         this.loading = false
       }
     },

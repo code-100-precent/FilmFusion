@@ -48,11 +48,18 @@
 			}
 		},
 		mounted() {
-			// 获取系统信息
-			const systemInfo = uni.getSystemInfoSync()
-			// 状态栏高度，单位转换为rpx（1px = 2rpx）
-			this.statusBarHeight = (systemInfo.statusBarHeight || 22) * 2
-			this.navbarHeight = this.statusBarHeight + 88
+			// 获取系统信息（使用新的 API）
+			try {
+				const windowInfo = uni.getWindowInfo()
+				// 状态栏高度，单位转换为rpx（1px = 2rpx）
+				this.statusBarHeight = (windowInfo.statusBarHeight || 22) * 2
+				this.navbarHeight = this.statusBarHeight + 88
+			} catch (e) {
+				// 兼容旧版本，如果新 API 不支持则使用旧 API
+				const systemInfo = uni.getSystemInfoSync()
+				this.statusBarHeight = (systemInfo.statusBarHeight || 22) * 2
+				this.navbarHeight = this.statusBarHeight + 88
+			}
 		},
 		methods: {
 			handleBack() {

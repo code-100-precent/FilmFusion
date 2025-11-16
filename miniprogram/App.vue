@@ -6,10 +6,17 @@
 		},
 		onLaunch: function() {
 			console.log('App Launch')
-			// 获取系统信息
-			const systemInfo = uni.getSystemInfoSync()
+			// 获取系统信息（使用新的 API）
+			let statusBarHeight = 44
+			try {
+				const windowInfo = uni.getWindowInfo()
+				statusBarHeight = windowInfo.statusBarHeight || 44
+			} catch (e) {
+				// 兼容旧版本
+				const systemInfo = uni.getSystemInfoSync()
+				statusBarHeight = systemInfo.statusBarHeight || 44
+			}
 			// 计算导航栏总高度
-			const statusBarHeight = systemInfo.statusBarHeight || 44
 			const navbarHeight = statusBarHeight + 44
 			// 全局存储导航栏高度，供页面使用
 			const app = getApp()

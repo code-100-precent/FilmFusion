@@ -10,7 +10,7 @@ public interface ArticleConstants {
     String NO_PERMISSION = "权限不足";
     String ID = "id";
     String TITLE = "title";
-    String ISSUE_NAME = "issue_name";
+    String ISSUE_NAME = "issue_unit";
     String ISSUE_TIME = "issue_time";
     String USER_ID = "user_id";
     String COVER = "cover";
