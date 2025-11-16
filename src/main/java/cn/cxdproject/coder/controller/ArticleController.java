@@ -68,18 +68,6 @@ public class ArticleController {
 
     // ==================== 普通用户接口 ====================
 
-    /**
-     * 创建文章
-     */
-    @PostMapping
-    public ApiResponse<ArticleVO> createArticle(@Valid @RequestBody CreateArticleDTO createDTO) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
-        }
-        ArticleVO articleVO = articleService.createArticle(currentUser.getId(), createDTO);
-        return ApiResponse.success(articleVO);
-    }
 
     /**
      * 更新文章（只能更新自己的文章）
@@ -114,12 +102,11 @@ public class ArticleController {
     /**
      * 管理员创建文章
      */
-//    @PostMapping("/admin/create")
-//    public ApiResponse<ArticleVO> createArticleByAdmin(@Valid @RequestBody CreateArticleDTO createDTO) {
-//
-//        ArticleVO articleVO = articleService.createArticleByAdmin(createDTO);
-//        return ApiResponse.success(articleVO);
-//    }
+    @PostMapping("/admin/create")
+    public ApiResponse<ArticleVO> createArticleByAdmin(@Valid @RequestBody CreateArticleDTO createDTO) {
+        ArticleVO articleVO = articleService.createArticleByAdmin(createDTO);
+        return ApiResponse.success(articleVO);
+    }
 
     /**
      * 管理员更新文章
@@ -143,32 +130,4 @@ public class ArticleController {
         return ApiResponse.success();
     }
 
-    /**
-     * 管理员分页查询文章
-     */
-//    @GetMapping("/admin/page")
-//    public PageResponse<ArticleVO> getArticlePageByAdmin(
-//            @RequestParam(defaultValue = "1") Integer current,
-//            @RequestParam(defaultValue = "10") Integer size,
-//            @RequestParam(required = false) String keyword) {
-//        // 权限检查在拦截器中完成
-//        Page<Article> page = new Page<>(current, size);
-//        Page<ArticleVO> articlePage = articleService.getArticlePageByAdmin(page, keyword);
-//        return PageResponse.of(
-//                (int) articlePage.getCurrent(),
-//                (int) articlePage.getSize(),
-//                articlePage.getTotal(),
-//                articlePage.getRecords()
-//        );
-//    }
-//
-//    /**
-//     * 管理员获取文章详情
-//     */
-//    @GetMapping("/admin/{id}")
-//    public ApiResponse<ArticleVO> getArticleByIdByAdmin(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
-//        // 权限检查在拦截器中完成
-//        ArticleVO articleVO = articleService.getArticleByIdByAdmin(id);
-//        return ApiResponse.success(articleVO);
-//    }
 }

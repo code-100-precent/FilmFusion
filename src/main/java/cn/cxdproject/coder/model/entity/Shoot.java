@@ -83,16 +83,7 @@ public class Shoot extends BaseEntity implements Serializable, Cloneable {
     private String cover;
 
     @TableField("image")
-    private String iamge;
-
-    @TableField("deleted")
-    private Boolean deleted;
-
-    @TableField("created_at")
-    private LocalDateTime createdAt;
-
-    @TableField("updated_at")
-    private LocalDateTime updatedAt;
+    private String image;
 
     @Override
     public Shoot clone() {

@@ -44,4 +44,19 @@
             'image'
     </sql>
 
+    <select id="getPage" resultType="cn.cxdproject.coder.model.entity.Drama">
+        SELECT a.id, a.name, a.drama_description, a.cast, a.cover
+        FROM fi_dramas a
+        INNER JOIN (
+        SELECT id
+        FROM fi_dramas
+        WHERE deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND title LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+        ) tmp ON a.id = tmp.id
+    </select>
+
 </mapper>

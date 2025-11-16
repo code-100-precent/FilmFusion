@@ -1,15 +1,10 @@
 package cn.cxdproject.coder.service.impl;
 
-import cn.cxdproject.coder.common.constants.BannerConstants;
-import cn.cxdproject.coder.common.constants.CaffeineConstants;
+import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateBannerDTO;
 import cn.cxdproject.coder.model.dto.UpdateBannerDTO;
-import cn.cxdproject.coder.model.entity.Article;
-import cn.cxdproject.coder.model.entity.Drama;
-import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.BannerVO;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -19,7 +14,6 @@ import cn.cxdproject.coder.service.BannerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,7 +45,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         if (!updated) {
             Banner banner = this.getById(id);
             if (banner == null || Boolean.TRUE.equals(banner.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), BannerConstants.NOT_FIND);
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
         }
 
@@ -61,7 +55,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
     public BannerVO updateImage(Long id,UpdateBannerDTO updateDTO) {
         Banner banner = this.getById(id);
         if (banner == null || Boolean.TRUE.equals(banner.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), BannerConstants.NOT_FIND);
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
         if (updateDTO.getImageName() != null) {
@@ -77,7 +71,6 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
             banner.setStatus(updateDTO.getStatus());
         }
 
-        banner.setUpdatedAt(LocalDateTime.now());
         this.updateById(banner);
         return toBannerVO(banner);
     }
@@ -90,9 +83,6 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
                 .targetModule(createDTO.getTargetModule())
                 .sort(createDTO.getSort())
                 .status(true)
-                .deleted(false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
 
         // 保存文章
@@ -102,20 +92,13 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
 
     @Override
     public Page<BannerVO> getImagePage(Page<Banner> page, String keyword) {
-        QueryWrapper<Banner> wrapper = new QueryWrapper<>();
+        long current = page.getCurrent();
+        long size = page.getSize();
+        long offset = (current - 1) * size;
 
-        wrapper.select("id", "image_name", "image_url", "target_module", "status", "sort")
-                .eq("deleted", false);
+        List<Banner> images = bannerMapper.getPage(keyword, offset, size);
 
-        if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like("image_name", keyword));
-        }
-
-        wrapper.orderByDesc("created_at");
-
-        Page<Banner> imagePage = this.page(page, wrapper);
-
-        List<BannerVO> voList = imagePage.getRecords().stream()
+        List<BannerVO> voList = images.stream()
                 .map(banner -> new BannerVO(
                         banner.getId(),
                         banner.getImageName(),
@@ -126,17 +109,17 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
                 ))
                 .collect(Collectors.toList());
 
-        Page<BannerVO> voPage = new Page<>(imagePage.getCurrent(), imagePage.getSize(), imagePage.getTotal());
-        voPage.setRecords(voList);
-
-        return voPage;
+        return new Page<BannerVO>()
+                .setCurrent(current)
+                .setSize(size)
+                .setRecords(voList);
     }
 
     @Override
     public BannerVO getImageById(Long id) {
             Banner banner = this.getById(id);
             if (banner == null || Boolean.TRUE.equals(banner.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), BannerConstants.NOT_FIND);
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
             return toBannerVO(banner);
     }

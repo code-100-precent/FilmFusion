@@ -91,15 +91,6 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
     @TableField("image")
     private String image;
 
-    @TableField("deleted")
-    private Boolean deleted;
-
-    @TableField("created_at")
-    private LocalDateTime createdAt;
-
-    @TableField("updated_at")
-    private LocalDateTime updatedAt;
-
     @Override
     public Location clone() {
         try {

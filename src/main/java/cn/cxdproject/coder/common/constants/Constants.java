@@ -186,4 +186,6 @@ public interface Constants {
      * cos存储类型
      */
     String STORAGE_TYPE_COS = "cos";
+
+    String DEFAULT_COVER = "";
 }

@@ -15,15 +15,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface ArticleService extends IService<Article> {
 
     /**
-     * 创建文章（普通用户）
-     *
-     * @param userId    用户ID
-     * @param createDTO 创建文章DTO
-     * @return 文章VO
-     */
-    ArticleVO createArticle(Long userId, CreateArticleDTO createDTO);
-
-    /**
      * 更新文章（普通用户，只能更新自己的文章）
      *
      * @param userId    用户ID
@@ -63,7 +54,7 @@ public interface ArticleService extends IService<Article> {
      * @param createDTO 创建文章DTO
      * @return 文章VO
      */
-//    ArticleVO createArticleByAdmin(CreateArticleDTO createDTO);
+    ArticleVO createArticleByAdmin(CreateArticleDTO createDTO);
 
     /**
      * 管理员更新文章
@@ -81,20 +72,6 @@ public interface ArticleService extends IService<Article> {
      */
     void deleteArticleByAdmin(Long articleId);
 
-    /**
-     * 管理员分页查询文章
-     * @param page 分页对象
-     * @param keyword 关键字
-     * @return 分页结果
-     */
-//    Page<ArticleVO> getArticlePageByAdmin(Page<Article> page, String keyword);
-//
-    /**
-     * 管理员获取文章详情
-     * @param articleId 文章ID
-     * @return 文章VO
-     */
-//    ArticleVO getArticleByIdByAdmin(Long articleId);
 
     /**
      * 将Article实体转换为ArticleVO

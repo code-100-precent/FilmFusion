@@ -1,30 +1,25 @@
 package cn.cxdproject.coder.service.impl;
 
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
-import cn.cxdproject.coder.common.constants.ReportConstants;
+import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
-import cn.cxdproject.coder.mapper.ArticleMapper;
 import cn.cxdproject.coder.model.dto.CreateReportDTO;
 import cn.cxdproject.coder.model.dto.UpdateReportDTO;
-import cn.cxdproject.coder.model.entity.Article;
-import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.entity.Report;
 import cn.cxdproject.coder.model.entity.User;
-import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.ReportVO;
 import cn.cxdproject.coder.mapper.ReportMapper;
 import cn.cxdproject.coder.service.ReportService;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
-import org.springframework.beans.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -79,11 +74,11 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     public ReportVO updateReport(Long userId, Long reportId, UpdateReportDTO updateDTO) {
         Report report = this.getById(reportId);
         if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
         if (!report.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), ReportConstants.NO_PERMISSION);
+            throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
         }
 
         if (updateDTO.getName() != null) report.setName(updateDTO.getName());
@@ -103,7 +98,6 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         if (updateDTO.getImage() != null) report.setImage(updateDTO.getImage());
         if (updateDTO.getStatus() != null) throw new BusinessException(FORBIDDEN.code(), "无权修改申请状态");;
 
-        cache.asMap().put(CaffeineConstants.REPORT + reportId, report);
         this.updateById(report);
         return toReportVO(report);
     }
@@ -121,9 +115,9 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         if (!updated) {
             Report report = this.getById(reportId);
             if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             } else {
-                throw new BusinessException(FORBIDDEN.code(), ReportConstants.NO_PERMISSION);
+                throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
             }
         }
         cache.invalidate(CaffeineConstants.REPORT+reportId);
@@ -138,103 +132,45 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         } else {
             report = this.getById(reportId);
             if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
             cache.asMap().put(CaffeineConstants.REPORT + reportId, report);
         }
 
         if (!userId.equals(report.getUserId())) {
-            throw new BusinessException(FORBIDDEN.code(), ReportConstants.NO_PERMISSION);
+            throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
         }
         return toReportVO(report);
     }
 
-//    @Override
-//    public Page<ReportVO> getReportPage(Page<Report> page, String keyword) {
-//        QueryWrapper<Report> wrapper = new QueryWrapper<>();
-//
-//        wrapper.select("id", "user_id", "contact")
-//                .eq("deleted", false);
-//
-//        if (keyword != null && !keyword.isEmpty()) {
-//            wrapper.and(w -> w.like("contact", keyword));
-//        }
-//
-//        wrapper.orderByDesc("created_at");
-//
-//        Page<Report> reportPage = this.page(page, wrapper);
-//
-//        List<ReportVO> voList = reportPage.getRecords().stream()
-//                .map(report -> new ReportVO(
-//                        report.getId(),
-//                        report.getContact(),
-//                        report.getUserId()
-//                ))
-//                .collect(Collectors.toList());
-//
-//        Page<ReportVO> voPage = new Page<>(reportPage.getCurrent(), reportPage.getSize(), reportPage.getTotal());
-//        voPage.setRecords(voList);
-//
-//        return voPage;
-//    }
 
     @Override
     public Page<ReportVO> getMyReportPage(Long userId, Page<Report> page) {
-        QueryWrapper<Report> wrapper = new QueryWrapper<>();
-        wrapper.eq("user_id", userId);
-        wrapper.eq("deleted", false);
-        wrapper.orderByDesc("created_at");
+        long current = page.getCurrent();
+        long size = page.getSize();
+        long offset = (current - 1) * size;
 
-        Page<Report> reportPage = this.page(page, wrapper);
-        Page<ReportVO> voPage = new Page<>(reportPage.getCurrent(), reportPage.getSize(), reportPage.getTotal());
-        List<ReportVO> voList = reportPage.getRecords().stream()
-                .map(this::toReportVO)
-                .collect(Collectors.toList());
+        List<Report> reports = reportMapper.selectMyPage(userId, offset, size);
+
+        long total = this.count(
+                new LambdaQueryWrapper<Report>()
+                        .eq(Report::getUserId, userId)
+                        .eq(Report::getDeleted, false)
+        );
+
+        List<ReportVO> voList = reports.stream().map(this::toReportVO).collect(Collectors.toList());
+        Page<ReportVO> voPage = new Page<>(current, size, total);
         voPage.setRecords(voList);
-
         return voPage;
     }
 
-//    @Override
-//    public ReportVO createReportByAdmin(CreateReportDTO createDTO) {
-//        User currentUser = AuthContext.getCurrentUser();
-//        if (currentUser == null) {
-//            throw new BusinessException(UNAUTHORIZED.code(), "未登录");
-//        }
-//
-//        Report report = Report.builder()
-//                .name(createDTO.getName())
-//                .type(createDTO.getType())
-//                .genre(createDTO.getGenre())
-//                .episodes(createDTO.getEpisodes())
-//                .investAmount(createDTO.getInvestAmount())
-//                .mainCreators(createDTO.getMainCreators())
-//                .leadProducer(createDTO.getLeadProducer())
-//                .producerUnit(createDTO.getProducerUnit())
-//                .startDate(createDTO.getStartDate())
-//                .endDate(createDTO.getEndDate())
-//                .crewScale(createDTO.getCrewScale())
-//                .contact(createDTO.getContact())
-//                .phoneNumber(createDTO.getPhoneNumber())
-//                .crewPosition(createDTO.getCrewPosition())
-//                .userId(currentUser.getId())
-//                .createdAt(LocalDateTime.now())
-//                .updatedAt(LocalDateTime.now())
-//                .image(createDTO.getImage())
-//                .status("未处理")
-//                .deleted(false)
-//                .build();
-//
-//        this.save(report);
-//        return toReportVO(report);
-//    }
 
     @Override
     public ReportVO updateReportByAdmin(Long reportId, UpdateReportDTO updateDTO) {
         User currentUser = AuthContext.getCurrentUser();
         Report report = this.getById(reportId);
         if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
         if (updateDTO.getStatus() != null) report.setStatus(updateDTO.getStatus());
@@ -245,40 +181,23 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         return toReportVO(report);
     }
 
-//    @Override
-//    public void deleteReportByAdmin(Long reportId) {
-//        boolean updated = reportMapper.update(null,
-//                Wrappers.<Report>lambdaUpdate()
-//                        .set(Report::getDeleted, true)
-//                        .eq(Report::getId, reportId)
-//                        .eq(Report::getDeleted, false)
-//        ) > 0;
-//
-//        if (!updated) {
-//            Report report = this.getById(reportId);
-//            if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-//                throw new NotFoundException(NOT_FOUND.code(), "申请不存在或已删除");
-//            }
-//        }
-//        cache.invalidate(CaffeineConstants.REPORT+reportId);
-//    }
 
     @Override
     public Page<ReportVO> getReportPageByAdmin(Page<Report> page, String keyword) {
-        QueryWrapper<Report> wrapper = new QueryWrapper<>();
+        long current = page.getCurrent();
+        long size = page.getSize();
+        long offset = (current - 1) * size;
 
-        wrapper.select("id", "user_id", "contact")
-                .eq("deleted", false);
+        List<Report> reports = reportMapper.selectPageByAdmin(keyword, offset, size);
 
-        if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like("contact", keyword));
+        LambdaQueryWrapper<Report> countWrapper = new LambdaQueryWrapper<>();
+        countWrapper.eq(Report::getDeleted, false);
+        if (StringUtils.isNotBlank(keyword)) {
+            countWrapper.like(Report::getContact, keyword.trim());
         }
+        long total = this.count(countWrapper);
 
-        wrapper.orderByDesc("created_at");
-
-        Page<Report> reportPage = this.page(page, wrapper);
-
-        List<ReportVO> voList = reportPage.getRecords().stream()
+        List<ReportVO> voList = reports.stream()
                 .map(report -> new ReportVO(
                         report.getId(),
                         report.getContact(),
@@ -286,10 +205,11 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                 ))
                 .collect(Collectors.toList());
 
-        Page<ReportVO> voPage = new Page<>(reportPage.getCurrent(), reportPage.getSize(), reportPage.getTotal());
-        voPage.setRecords(voList);
-
-        return voPage;
+        return new Page<ReportVO>()
+                .setCurrent(current)
+                .setSize(size)
+                .setTotal(total)
+                .setRecords(voList);
     }
 
     @Override
@@ -300,7 +220,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         } else {
             Report report = this.getById(reportId);
             if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), ReportConstants.NOT_FIND);
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
             cache.asMap().put(CaffeineConstants.REPORT + reportId, report);
             return toReportVO(report);

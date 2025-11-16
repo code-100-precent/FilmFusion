@@ -39,11 +39,6 @@ public interface DramaService extends IService<Drama> {
     Page<DramaVO> getDramaPage(Page<Drama> page, String keyword);
     
     /**
-     * 管理员创建电视剧备案
-     */
-//    DramaVO createDramaByAdmin(CreateDramaDTO createDTO);
-    
-    /**
      * 管理员更新电视剧备案
      */
     DramaVO updateDramaByAdmin(Long dramaId, UpdateDramaDTO updateDTO);
@@ -52,17 +47,7 @@ public interface DramaService extends IService<Drama> {
      * 管理员删除电视剧备案
      */
     void deleteDramaByAdmin(Long dramaId);
-    
-    /**
-     * 管理员分页查询电视剧备案
-     */
-//    Page<DramaVO> getDramaPageByAdmin(Page<Drama> page, String keyword);
-    
-    /**
-     * 管理员获取电视剧备案详情
-     */
-//    DramaVO getDramaByIdByAdmin(Long dramaId);
-    
+
     /**
      * 转换为VO
      */

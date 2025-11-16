@@ -18,11 +18,7 @@ public interface ShootService extends IService<Shoot> {
     void deleteShoot(Long userId, Long shootId);
     ShootVO getShootById(Long shootId);
     Page<ShootVO> getShootPage(Page<Shoot> page, String keyword);
-    
-//    ShootVO createShootByAdmin(CreateShootDTO createDTO);
     ShootVO updateShootByAdmin(Long shootId, UpdateShootDTO updateDTO);
     void deleteShootByAdmin(Long shootId);
-//    Page<ShootVO> getShootPageByAdmin(Page<Shoot> page, String keyword);
-//    ShootVO getShootByIdByAdmin(Long shootId);
     ShootVO toShootVO(Shoot shoot);
 }

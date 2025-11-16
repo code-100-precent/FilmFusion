@@ -183,7 +183,8 @@ CREATE TABLE `fi_banner` (
     `created_at`       DATETIME           NOT NULL COMMENT '创建时间',
     `updated_at`       DATETIME           NOT NULL COMMENT '更新时间',
     `sort`             INT                NOT NULL COMMENT '排序值，越小越靠前',
-    PRIMARY KEY ( `id` )
+    PRIMARY KEY ( `id` ),
+    UNIQUE KEY `sort` (`sort`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
 
 # ==================== 插入Mock数据 ====================
