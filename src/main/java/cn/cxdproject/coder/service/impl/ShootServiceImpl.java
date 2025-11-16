@@ -1,6 +1,7 @@
 package cn.cxdproject.coder.service.impl;
 
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
+import cn.cxdproject.coder.common.constants.ShootConstants;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
@@ -76,11 +77,11 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     public ShootVO updateShoot(Long userId, Long shootId, UpdateShootDTO updateDTO) {
         Shoot shoot = this.getById(shootId);
         if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "协拍服务不存在");
+            throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
         }
 
         if (!shoot.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), "无权修改他人的协拍服务");
+            throw new BusinessException(FORBIDDEN.code(), ShootConstants.NO_PERMISSION);
         }
 
         if (updateDTO.getName() != null) shoot.setName(updateDTO.getName());
@@ -112,9 +113,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (!updated) {
             Shoot shoot = this.getById(shootId);
             if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "拍摄服务不存在");
+                throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
             } else {
-                throw new BusinessException(FORBIDDEN.code(), "无权删除他人的服务");
+                throw new BusinessException(FORBIDDEN.code(), ShootConstants.NO_PERMISSION);
             }
         }
         cache.invalidate(CaffeineConstants.SHOOT+shootId);
@@ -128,7 +129,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         } else {
             Shoot shoot = this.getById(shootId);
             if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "服务不存在");
+                throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
             }
             cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
             return toShootVO(shoot);
@@ -194,7 +195,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     public ShootVO updateShootByAdmin(Long shootId, UpdateShootDTO updateDTO) {
         Shoot shoot = this.getById(shootId);
         if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "协拍服务不存在");
+            throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
         }
 
         if (updateDTO.getName() != null) shoot.setName(updateDTO.getName());
@@ -225,7 +226,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (!updated) {
             Shoot shoot = this.getById(shootId);
             if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "拍摄服务不存在");
+                throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
             }
         }
         cache.invalidate(CaffeineConstants.SHOOT+shootId);

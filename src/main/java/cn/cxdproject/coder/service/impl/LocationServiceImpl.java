@@ -1,6 +1,8 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.constants.ArticleConstants;
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
+import cn.cxdproject.coder.common.constants.LocationConstants;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
@@ -78,11 +80,11 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     public LocationVO updateLocation(Long userId, Long locationId, UpdateLocationDTO updateDTO) {
         Location location = this.getById(locationId);
         if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "拍摄场地不存在");
+            throw new NotFoundException(NOT_FOUND.code(), ArticleConstants.NOT_FIND);
         }
 
         if (!location.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), "无权修改他人的拍摄场地");
+            throw new BusinessException(FORBIDDEN.code(), LocationConstants.NO_PERMISSION);
         }
 
         if (updateDTO.getName() != null) location.setName(updateDTO.getName());
@@ -115,9 +117,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         if (!updated) {
             Location location = this.getById(locationId);
             if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "拍摄场地不存在");
+                throw new NotFoundException(NOT_FOUND.code(), ArticleConstants.NOT_FIND);
             } else {
-                throw new BusinessException(FORBIDDEN.code(), "无权删除他人的场地信息");
+                throw new BusinessException(FORBIDDEN.code(), LocationConstants.NO_PERMISSION);
             }
         }
         cache.invalidate(CaffeineConstants.LOCATION+locationId);
@@ -132,7 +134,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         } else {
             Location location = this.getById(locationId);
             if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "拍摄场地不存在");
+                throw new NotFoundException(NOT_FOUND.code(), LocationConstants.NOT_FIND);
             }
             cache.asMap().put(CaffeineConstants.LOCATION + locationId, location);
             return toLocationVO(location);
@@ -203,7 +205,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     public LocationVO updateLocationByAdmin(Long locationId, UpdateLocationDTO updateDTO) {
         Location location = this.getById(locationId);
         if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), "拍摄场地不存在");
+            throw new NotFoundException(NOT_FOUND.code(), LocationConstants.NOT_FIND);
         }
 
         if (updateDTO.getName() != null) location.setName(updateDTO.getName());
@@ -235,7 +237,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         if (!updated) {
             Location location = this.getById(locationId);
             if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), "拍摄场地不存在");
+                throw new NotFoundException(NOT_FOUND.code(), LocationConstants.NOT_FIND);
             }
         }
         cache.invalidate(CaffeineConstants.LOCATION+locationId);
