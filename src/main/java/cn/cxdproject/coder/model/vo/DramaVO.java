@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -77,6 +78,8 @@ public class DramaVO {
      * 用户ID
      */
     private Long userId;
+
+    private String cover;
     
     /**
      * 创建时间
@@ -87,5 +90,16 @@ public class DramaVO {
      * 更新时间
      */
     private LocalDateTime updatedAt;
+
+    private String image;
+
+
+    public DramaVO(Long id, String name, String dramaDescription, String cast, String cover) {
+        this.id=id;
+        this.name=name;
+        this.dramaDescription=dramaDescription;
+        this.cast=cast;
+        this.cover=cover;
+    }
 }
 

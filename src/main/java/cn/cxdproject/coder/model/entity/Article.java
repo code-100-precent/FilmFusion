@@ -5,6 +5,7 @@ import java.io.Serializable;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -46,6 +47,7 @@ public class Article extends BaseEntity implements Serializable, Cloneable {
     * 发布时间
     */
     @TableField("issue_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime issueTime;
 
     /**
@@ -59,6 +61,23 @@ public class Article extends BaseEntity implements Serializable, Cloneable {
     */
     @TableField("user_id")
     private Long userId;
+
+    @TableField("deleted")
+    private Boolean deleted;
+
+    @TableField("created_at")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createdAt;
+
+    @TableField("updated_at")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime updatedAt;
+
+    @TableField("cover")
+    private String cover;
+
+    @TableField("image")
+    private String image;
 
     @Override
     public Article clone() {

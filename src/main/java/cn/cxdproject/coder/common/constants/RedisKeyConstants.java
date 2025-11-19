@@ -12,6 +12,7 @@ public interface RedisKeyConstants {
 
     String ARTICLE_DETAIL_PREFIX = "article:detail:";
     String CAPTCHA_PREFIX = "captcha:";
+
     
     static String getTaskResultKey(Long taskId) {
         return TASK_RESULT_KEY + taskId;

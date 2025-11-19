@@ -24,6 +24,8 @@
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
+        <result column="status" property="status" />
+        <result column="image" property="image" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -45,7 +47,9 @@
             `user_id`,
             `deleted`,
             `created_at`,
-            `updated_at`
+            `updated_at`,
+            'status',
+            'image'
     </sql>
 
 </mapper>

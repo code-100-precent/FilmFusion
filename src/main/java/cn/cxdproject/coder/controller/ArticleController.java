@@ -84,7 +84,7 @@ public class ArticleController {
     /**
      * 更新文章（只能更新自己的文章）
      */
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ApiResponse<ArticleVO> updateArticle(
             @PathVariable @NotNull(message = "文章ID不能为空") Long id,
             @Valid @RequestBody UpdateArticleDTO updateDTO) {
@@ -99,7 +99,7 @@ public class ArticleController {
     /**
      * 删除文章（只能删除自己的文章）
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deleteArticle(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
@@ -114,17 +114,17 @@ public class ArticleController {
     /**
      * 管理员创建文章
      */
-    @PostMapping("/admin/create")
-    public ApiResponse<ArticleVO> createArticleByAdmin(@Valid @RequestBody CreateArticleDTO createDTO) {
-        // 权限检查在拦截器中完成
-        ArticleVO articleVO = articleService.createArticleByAdmin(createDTO);
-        return ApiResponse.success(articleVO);
-    }
+//    @PostMapping("/admin/create")
+//    public ApiResponse<ArticleVO> createArticleByAdmin(@Valid @RequestBody CreateArticleDTO createDTO) {
+//
+//        ArticleVO articleVO = articleService.createArticleByAdmin(createDTO);
+//        return ApiResponse.success(articleVO);
+//    }
 
     /**
      * 管理员更新文章
      */
-    @PutMapping("/admin/{id}")
+    @PutMapping("/admin/update/{id}")
     public ApiResponse<ArticleVO> updateArticleByAdmin(
             @PathVariable @NotNull(message = "文章ID不能为空") Long id,
             @Valid @RequestBody UpdateArticleDTO updateDTO) {
@@ -136,7 +136,7 @@ public class ArticleController {
     /**
      * 管理员删除文章
      */
-    @DeleteMapping("/admin/{id}")
+    @DeleteMapping("/admin/delete/{id}")
     public ApiResponse<Void> deleteArticleByAdmin(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
         // 权限检查在拦截器中完成
         articleService.deleteArticleByAdmin(id);
@@ -146,29 +146,29 @@ public class ArticleController {
     /**
      * 管理员分页查询文章
      */
-    @GetMapping("/admin/page")
-    public PageResponse<ArticleVO> getArticlePageByAdmin(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String keyword) {
-        // 权限检查在拦截器中完成
-        Page<Article> page = new Page<>(current, size);
-        Page<ArticleVO> articlePage = articleService.getArticlePageByAdmin(page, keyword);
-        return PageResponse.of(
-                (int) articlePage.getCurrent(),
-                (int) articlePage.getSize(),
-                articlePage.getTotal(),
-                articlePage.getRecords()
-        );
-    }
-
-    /**
-     * 管理员获取文章详情
-     */
-    @GetMapping("/admin/{id}")
-    public ApiResponse<ArticleVO> getArticleByIdByAdmin(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
-        // 权限检查在拦截器中完成
-        ArticleVO articleVO = articleService.getArticleByIdByAdmin(id);
-        return ApiResponse.success(articleVO);
-    }
+//    @GetMapping("/admin/page")
+//    public PageResponse<ArticleVO> getArticlePageByAdmin(
+//            @RequestParam(defaultValue = "1") Integer current,
+//            @RequestParam(defaultValue = "10") Integer size,
+//            @RequestParam(required = false) String keyword) {
+//        // 权限检查在拦截器中完成
+//        Page<Article> page = new Page<>(current, size);
+//        Page<ArticleVO> articlePage = articleService.getArticlePageByAdmin(page, keyword);
+//        return PageResponse.of(
+//                (int) articlePage.getCurrent(),
+//                (int) articlePage.getSize(),
+//                articlePage.getTotal(),
+//                articlePage.getRecords()
+//        );
+//    }
+//
+//    /**
+//     * 管理员获取文章详情
+//     */
+//    @GetMapping("/admin/{id}")
+//    public ApiResponse<ArticleVO> getArticleByIdByAdmin(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
+//        // 权限检查在拦截器中完成
+//        ArticleVO articleVO = articleService.getArticleByIdByAdmin(id);
+//        return ApiResponse.success(articleVO);
+//    }
 }

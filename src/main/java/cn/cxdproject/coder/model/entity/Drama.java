@@ -2,6 +2,8 @@ package cn.cxdproject.coder.model.entity;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -93,6 +95,21 @@ public class Drama extends BaseEntity implements Serializable, Cloneable {
      */
     @TableField("user_id")
     private Long userId;
+
+    @TableField("deleted")
+    private Boolean deleted;
+
+    @TableField("cover")
+    private String cover;
+
+    @TableField("created_at")
+    private LocalDateTime createdAt;
+
+    @TableField("updated_at")
+    private LocalDateTime updatedAt;
+
+    @TableField("image")
+    private String image;
 
     @Override
     public Drama clone() {

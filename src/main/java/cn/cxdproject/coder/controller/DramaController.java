@@ -84,7 +84,7 @@ public class DramaController {
     /**
      * 更新电视剧备案（只能更新自己的）
      */
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ApiResponse<DramaVO> updateDrama(
             @PathVariable @NotNull(message = "ID不能为空") Long id,
             @Valid @RequestBody UpdateDramaDTO updateDTO) {
@@ -99,7 +99,7 @@ public class DramaController {
     /**
      * 删除电视剧备案（只能删除自己的）
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deleteDrama(@PathVariable @NotNull(message = "ID不能为空") Long id) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
@@ -114,16 +114,16 @@ public class DramaController {
     /**
      * 管理员创建电视剧备案
      */
-    @PostMapping("/admin/create")
-    public ApiResponse<DramaVO> createDramaByAdmin(@Valid @RequestBody CreateDramaDTO createDTO) {
-        DramaVO dramaVO = dramaService.createDramaByAdmin(createDTO);
-        return ApiResponse.success(dramaVO);
-    }
+//    @PostMapping("/admin/create")
+//    public ApiResponse<DramaVO> createDramaByAdmin(@Valid @RequestBody CreateDramaDTO createDTO) {
+//        DramaVO dramaVO = dramaService.createDramaByAdmin(createDTO);
+//        return ApiResponse.success(dramaVO);
+//    }
 
     /**
      * 管理员更新电视剧备案
      */
-    @PutMapping("/admin/{id}")
+    @PutMapping("/admin/update/{id}")
     public ApiResponse<DramaVO> updateDramaByAdmin(
             @PathVariable @NotNull(message = "ID不能为空") Long id,
             @Valid @RequestBody UpdateDramaDTO updateDTO) {
@@ -134,7 +134,7 @@ public class DramaController {
     /**
      * 管理员删除电视剧备案
      */
-    @DeleteMapping("/admin/{id}")
+    @DeleteMapping("/admin/delete/{id}")
     public ApiResponse<Void> deleteDramaByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
         dramaService.deleteDramaByAdmin(id);
         return ApiResponse.success();
@@ -143,27 +143,27 @@ public class DramaController {
     /**
      * 管理员分页查询电视剧备案
      */
-    @GetMapping("/admin/page")
-    public PageResponse<DramaVO> getDramaPageByAdmin(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String keyword) {
-        Page<Drama> page = new Page<>(current, size);
-        Page<DramaVO> dramaPage = dramaService.getDramaPageByAdmin(page, keyword);
-        return PageResponse.of(
-                (int) dramaPage.getCurrent(),
-                (int) dramaPage.getSize(),
-                dramaPage.getTotal(),
-                dramaPage.getRecords()
-        );
-    }
-
-    /**
-     * 管理员获取电视剧备案详情
-     */
-    @GetMapping("/admin/{id}")
-    public ApiResponse<DramaVO> getDramaByIdByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        DramaVO dramaVO = dramaService.getDramaByIdByAdmin(id);
-        return ApiResponse.success(dramaVO);
-    }
+//    @GetMapping("/admin/page")
+//    public PageResponse<DramaVO> getDramaPageByAdmin(
+//            @RequestParam(defaultValue = "1") Integer current,
+//            @RequestParam(defaultValue = "10") Integer size,
+//            @RequestParam(required = false) String keyword) {
+//        Page<Drama> page = new Page<>(current, size);
+//        Page<DramaVO> dramaPage = dramaService.getDramaPageByAdmin(page, keyword);
+//        return PageResponse.of(
+//                (int) dramaPage.getCurrent(),
+//                (int) dramaPage.getSize(),
+//                dramaPage.getTotal(),
+//                dramaPage.getRecords()
+//        );
+//    }
+//
+//    /**
+//     * 管理员获取电视剧备案详情
+//     */
+//    @GetMapping("/admin/{id}")
+//    public ApiResponse<DramaVO> getDramaByIdByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+//        DramaVO dramaVO = dramaService.getDramaByIdByAdmin(id);
+//        return ApiResponse.success(dramaVO);
+//    }
 }

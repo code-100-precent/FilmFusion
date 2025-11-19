@@ -36,7 +36,15 @@ public class ReportVO {
     private String phoneNumber;
     private String crewPosition;
     private Long userId;
+    private String status;
+    private String image;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public ReportVO(Long id, String contact, Long userId) {
+        this.id=id;
+        this.contact=contact;
+        this.userId=userId;
+    }
 }
 

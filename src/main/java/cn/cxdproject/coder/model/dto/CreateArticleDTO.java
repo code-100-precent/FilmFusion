@@ -29,5 +29,9 @@ public class CreateArticleDTO {
      */
     @NotBlank(message = "文章内容不能为空")
     private String content;
+
+    private String cover;
+
+    private String image;
 }
 

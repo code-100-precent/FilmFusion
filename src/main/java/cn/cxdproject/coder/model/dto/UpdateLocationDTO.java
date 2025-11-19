@@ -14,11 +14,13 @@ public class UpdateLocationDTO {
     
     private String name;
     private String type;
-    private Byte status;
+    private Boolean status;
     private String locationDescription;
     private String contactPhone;
     private String contactName;
     private String address;
     private BigDecimal price;
+    private String cover;
+    private String image;
 }
 

@@ -20,5 +20,7 @@ public class UpdateDramaDTO {
     private Long locationId;
     private String service;
     private Long serviceId;
+    private String cover;
+    private String image;
 }
 

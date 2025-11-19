@@ -56,5 +56,12 @@ public class CreateReportDTO {
     
     @NotBlank(message = "剧组职务不能为空")
     private String crewPosition;
+
+    @NotBlank(message = "申请状态")
+    private String status;
+
+    private String image;
+
+
 }
 

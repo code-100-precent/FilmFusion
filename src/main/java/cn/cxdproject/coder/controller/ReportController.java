@@ -43,28 +43,32 @@ public class ReportController {
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<ReportVO> getReportById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        ReportVO reportVO = reportService.getReportById(id);
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        ReportVO reportVO = reportService.getReportById(id,currentUser.getId());
         return ApiResponse.success(reportVO);
     }
 
-    /**
-     * 分页获取影视剧备案列表（按时间倒序，公开）
-     */
-    @GetMapping("/page")
-    @PublicAccess
-    public PageResponse<ReportVO> getReportPage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String keyword) {
-        Page<Report> page = new Page<>(current, size);
-        Page<ReportVO> reportPage = reportService.getReportPage(page, keyword);
-        return PageResponse.of(
-                (int) reportPage.getCurrent(),
-                (int) reportPage.getSize(),
-                reportPage.getTotal(),
-                reportPage.getRecords()
-        );
-    }
+//    /**
+//     * 分页获取影视剧备案列表（按时间倒序，公开）
+//     */
+//    @GetMapping("/page")
+//    @PublicAccess
+//    public PageResponse<ReportVO> getReportPage(
+//            @RequestParam(defaultValue = "1") Integer current,
+//            @RequestParam(defaultValue = "10") Integer size,
+//            @RequestParam(required = false) String keyword) {
+//        Page<Report> page = new Page<>(current, size);
+//        Page<ReportVO> reportPage = reportService.getReportPage(page, keyword);
+//        return PageResponse.of(
+//                (int) reportPage.getCurrent(),
+//                (int) reportPage.getSize(),
+//                reportPage.getTotal(),
+//                reportPage.getRecords()
+//        );
+//    }
 
     // ==================== 普通用户接口 ====================
 
@@ -84,7 +88,7 @@ public class ReportController {
     /**
      * 更新影视剧备案（只能更新自己的）
      */
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ApiResponse<ReportVO> updateReport(
             @PathVariable @NotNull(message = "ID不能为空") Long id,
             @Valid @RequestBody UpdateReportDTO updateDTO) {
@@ -99,7 +103,7 @@ public class ReportController {
     /**
      * 删除影视剧备案（只能删除自己的）
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deleteReport(@PathVariable @NotNull(message = "ID不能为空") Long id) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
@@ -140,19 +144,19 @@ public class ReportController {
 
     // ==================== 管理员接口 ====================
 
-    /**
-     * 管理员创建影视剧备案
-     */
-    @PostMapping("/admin/create")
-    public ApiResponse<ReportVO> createReportByAdmin(@Valid @RequestBody CreateReportDTO createDTO) {
-        ReportVO reportVO = reportService.createReportByAdmin(createDTO);
-        return ApiResponse.success(reportVO);
-    }
+//    /**
+//     * 管理员创建影视剧备案
+//     */
+//    @PostMapping("/admin/create")
+//    public ApiResponse<ReportVO> createReportByAdmin(@Valid @RequestBody CreateReportDTO createDTO) {
+//        ReportVO reportVO = reportService.createReportByAdmin(createDTO);
+//        return ApiResponse.success(reportVO);
+//    }
 
     /**
      * 管理员更新影视剧备案
      */
-    @PutMapping("/admin/{id}")
+    @PutMapping("/admin/update/{id}")
     public ApiResponse<ReportVO> updateReportByAdmin(
             @PathVariable @NotNull(message = "ID不能为空") Long id,
             @Valid @RequestBody UpdateReportDTO updateDTO) {
@@ -160,14 +164,14 @@ public class ReportController {
         return ApiResponse.success(reportVO);
     }
 
-    /**
-     * 管理员删除影视剧备案
-     */
-    @DeleteMapping("/admin/{id}")
-    public ApiResponse<Void> deleteReportByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        reportService.deleteReportByAdmin(id);
-        return ApiResponse.success();
-    }
+//    /**
+//     * 管理员删除影视剧备案
+//     */
+//    @DeleteMapping("/admin/{id}")
+//    public ApiResponse<Void> deleteReportByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+//        reportService.deleteReportByAdmin(id);
+//        return ApiResponse.success();
+//    }
 
     /**
      * 管理员分页查询影视剧备案

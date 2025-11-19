@@ -21,7 +21,7 @@ public class CreateLocationDTO {
     private String type;
     
     @NotNull(message = "可用状态不能为空")
-    private Byte status;
+    private Boolean status;
     
     @NotBlank(message = "场地介绍不能为空")
     private String locationDescription;
@@ -37,5 +37,9 @@ public class CreateLocationDTO {
     
     @NotNull(message = "价格不能为空")
     private BigDecimal price;
+
+    private String cover;
+
+    private String image;
 }
 

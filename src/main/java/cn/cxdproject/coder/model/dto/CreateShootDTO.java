@@ -24,7 +24,7 @@ public class CreateShootDTO {
     private BigDecimal price;
     
     @NotNull(message = "状态不能为空")
-    private Byte status;
+    private Boolean status;
     
     @NotBlank(message = "服务地址不能为空")
     private String address;
@@ -34,5 +34,9 @@ public class CreateShootDTO {
     
     @NotBlank(message = "联系人不能为空")
     private String contactName;
+
+    private String cover;
+
+    private String image;
 }
 
