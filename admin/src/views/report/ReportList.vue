@@ -37,9 +37,9 @@
       />
     </n-card>
     
-    <n-modal v-model:show="dialogVisible" preset="dialog" :title="dialogTitle" style="width: 900px">
+    <n-modal v-model:show="dialogVisible" preset="dialog" :title="dialogTitle" style="width: 90%; max-width: 900px">
       <n-form ref="formRef" :model="reportForm" :rules="formRules" label-placement="left" label-width="100">
-        <n-grid :cols="2" :x-gap="24">
+        <n-grid :cols="2" :x-gap="24" responsive="screen" :s-cols="1">
           <n-gi>
             <n-form-item label="剧名" path="name">
               <n-input v-model:value="reportForm.name" placeholder="请输入剧名" />
@@ -424,15 +424,50 @@ const handleDelete = async (id) => {
   align-items: flex-start;
   margin-bottom: 16px;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .search-form {
   flex: 1;
+  min-width: 300px;
 }
 
 .action-buttons {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .search-header {
+    flex-direction: column;
+    
+    .search-form {
+      width: 100%;
+      min-width: auto;
+    }
+    
+    .action-buttons {
+      width: 100%;
+      
+      button {
+        flex: 1;
+      }
+    }
+  }
+  
+  .management-card {
+    :deep(.n-card__content) {
+      padding: 12px;
+    }
+  }
+  
+  :deep(.n-data-table) {
+    .n-data-table-wrapper {
+      overflow-x: auto;
+    }
+  }
 }
 
 .action-bar {

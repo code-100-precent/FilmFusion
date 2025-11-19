@@ -37,7 +37,7 @@
       />
     </n-card>
     
-    <n-modal v-model:show="dialogVisible" preset="dialog" :title="dialogTitle" style="width: 800px">
+    <n-modal v-model:show="dialogVisible" preset="dialog" :title="dialogTitle" style="width: 90%; max-width: 800px">
       <n-form ref="formRef" :model="articleForm" :rules="formRules" label-placement="left" label-width="100">
         <n-form-item label="文章标题" path="title">
           <n-input v-model:value="articleForm.title" placeholder="请输入文章标题" />
@@ -282,15 +282,50 @@ const handleDelete = async (id) => {
   align-items: flex-start;
   margin-bottom: 16px;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .search-form {
   flex: 1;
+  min-width: 300px;
 }
 
 .action-buttons {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .search-header {
+    flex-direction: column;
+    
+    .search-form {
+      width: 100%;
+      min-width: auto;
+    }
+    
+    .action-buttons {
+      width: 100%;
+      
+      button {
+        flex: 1;
+      }
+    }
+  }
+  
+  .management-card {
+    :deep(.n-card__content) {
+      padding: 12px;
+    }
+  }
+  
+  :deep(.n-data-table) {
+    .n-data-table-wrapper {
+      overflow-x: auto;
+    }
+  }
 }
 
 .action-bar {

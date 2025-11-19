@@ -1,5 +1,12 @@
 <template>
   <n-layout has-sider class="main-layout">
+    <!-- 移动端遮罩层 -->
+    <div 
+      v-if="isMobile && !collapsed" 
+      class="mobile-overlay"
+      @click="collapsed = true"
+    ></div>
+    
     <n-layout-sider
       bordered
       :width="240"
@@ -8,11 +15,13 @@
       collapse-mode="width"
       :native-scrollbar="false"
       class="sidebar"
+      :class="{ 'mobile-sidebar': isMobile }"
+      :show-trigger="!isMobile"
+      :collapsible="!isMobile"
     >
       <div class="logo" :class="{ collapsed }">
         <div class="logo-content">
-          <Icon icon="mdi:film" :width="24" :height="24" v-if="!collapsed" />
-          <Icon icon="mdi:film" :width="24" :height="24" v-else />
+          <Icon icon="mdi:film" :width="24" :height="24" />
           <span v-if="!collapsed" class="logo-text">拍在雅安</span>
         </div>
         <span v-if="!collapsed" class="logo-subtitle">管理后台</span>
@@ -43,7 +52,7 @@
               <Icon :icon="collapsed ? 'mdi:menu' : 'mdi:menu-open'" />
             </template>
           </n-button>
-          <n-breadcrumb>
+          <n-breadcrumb class="breadcrumb">
             <n-breadcrumb-item>{{ currentTitle }}</n-breadcrumb-item>
           </n-breadcrumb>
         </div>
@@ -54,8 +63,8 @@
               <template #icon>
                 <Icon icon="mdi:account-circle" />
               </template>
-              <span>{{ userInfo?.username || '管理员' }}</span>
-              <Icon icon="mdi:chevron-down" style="margin-left: 4px" />
+              <span class="user-name">{{ userInfo?.username || '管理员' }}</span>
+              <Icon icon="mdi:chevron-down" class="chevron-icon" />
             </n-button>
           </n-dropdown>
         </div>
@@ -78,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, computed, h } from 'vue'
+import { ref, computed, h, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { Icon } from '@iconify/vue'
@@ -103,8 +112,40 @@ const userStore = useUserStore()
 const message = useMessage()
 const dialog = useDialog()
 const collapsed = ref(false)
+const isMobile = ref(false)
+
+// 检测移动端
+const checkMobile = () => {
+  const mobile = window.innerWidth <= 768
+  isMobile.value = mobile
+  if (mobile) {
+    collapsed.value = true
+  }
+}
+
+// 移动端点击菜单后自动关闭侧边栏
+const handleMenuSelect = (key) => {
+  router.push(key)
+  if (isMobile.value) {
+    collapsed.value = true
+  }
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 
 const menuOptions = [
+  {
+    label: '用户管理',
+    key: '/user',
+    icon: 'mdi:account-group-outline'
+  },
   {
     label: '文章管理',
     key: '/article',
@@ -175,10 +216,6 @@ const renderMenuLabel = (option) => {
   return option.label
 }
 
-const handleMenuSelect = (key) => {
-  router.push(key)
-}
-
 const handleUserSelect = (key) => {
   if (key === 'profile') {
     router.push('/profile')
@@ -208,11 +245,39 @@ const handleUserSelect = (key) => {
 .main-layout {
   height: 100vh;
   display: flex;
+  position: relative;
+}
+
+// 移动端遮罩层
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
 }
 
 .sidebar {
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &.mobile-sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    height: 100vh;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+    
+    &.n-layout-sider--collapsed {
+      transform: translateX(-100%);
+    }
+  }
   
   .logo {
     height: 64px;
@@ -260,25 +325,55 @@ const handleUserSelect = (key) => {
   padding: 0 24px;
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
   
   .header-left {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex: 1;
+    min-width: 0;
     
     .collapse-btn {
       color: #6b7280;
+      flex-shrink: 0;
       
       &:hover {
         color: #1f2937;
       }
     }
+    
+    .breadcrumb {
+      flex: 1;
+      min-width: 0;
+      
+      :deep(.n-breadcrumb-item) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 14px;
+      }
+    }
   }
   
   .header-right {
+    flex-shrink: 0;
+    
     .user-btn {
       color: #374151;
       font-weight: 500;
+      padding: 4px 12px;
+      
+      .user-name {
+        margin: 0 4px;
+      }
+      
+      .chevron-icon {
+        margin-left: 4px;
+        font-size: 16px;
+      }
     }
   }
 }
@@ -287,10 +382,91 @@ const handleUserSelect = (key) => {
   background: #f9fafb;
   padding: 16px;
   overflow-y: auto;
+  min-height: calc(100vh - 64px);
   
   .page-wrapper {
     max-width: 100%;
     margin: 0;
+  }
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .header {
+    padding: 0 12px;
+    height: 56px;
+    
+    .header-left {
+      gap: 8px;
+      
+      .breadcrumb {
+        :deep(.n-breadcrumb-item) {
+          font-size: 14px;
+        }
+      }
+    }
+    
+    .header-right {
+      .user-btn {
+        padding: 4px 8px;
+        
+        .user-name {
+          display: none;
+        }
+        
+        .chevron-icon {
+          display: none;
+        }
+      }
+    }
+  }
+  
+  .main-content {
+    padding: 12px;
+    min-height: calc(100vh - 56px);
+  }
+  
+  .sidebar {
+    width: 260px !important;
+    
+    .logo {
+      height: 56px;
+      padding: 10px;
+    }
+  }
+}
+
+// 小屏幕适配
+@media (max-width: 480px) {
+  .header {
+    padding: 0 8px;
+    height: 52px;
+    
+    .header-left {
+      .breadcrumb {
+        :deep(.n-breadcrumb-item) {
+          font-size: 13px;
+        }
+      }
+    }
+  }
+  
+  .main-content {
+    padding: 8px;
+    min-height: calc(100vh - 52px);
+  }
+  
+  .sidebar {
+    width: 240px !important;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
