@@ -38,19 +38,33 @@
             'image'
     </sql>
 
-    <select id="getPage" resultType="cn.cxdproject.coder.model.entity.Drama">
-        SELECT a.id, a.name, a.description, a.price, a.status,a.cover,a.address
-        FROM fi_shoots a
-        INNER JOIN (
+    <select id="getPageShootIds" resultType="java.lang.Long">
         SELECT id
         FROM fi_shoots
-        WHERE deleted = 0
-        <if test="keyword != null and keyword != ''">
-            AND title LIKE CONCAT('%', #{keyword}, '%')
-        </if>
+        <where>
+            <if test="keyword != null and keyword != ''">
+                description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
         ORDER BY created_at DESC
         LIMIT #{offset}, #{size}
-        ) tmp ON a.id = tmp.id
+    </select>
+
+    <select id="countByKeyword" resultType="long">
+        SELECT COUNT(*)
+        FROM fi_shoots
+        <where>
+            <if test="keyword != null and keyword != ''">
+                description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Shoot">
+        SELECT id, name, description, price, status,cover,address
+        FROM fi_shoots
+        ORDER BY created_at DESC
+            LIMIT 10
     </select>
 
 </mapper>

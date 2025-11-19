@@ -2,23 +2,29 @@ package cn.cxdproject.coder.service.impl;
 
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
 import cn.cxdproject.coder.common.constants.Constants;
+import cn.cxdproject.coder.common.constants.RedisKeyConstants;
 import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateLocationDTO;
 import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
+import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Location;
+import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.mapper.LocationMapper;
 import cn.cxdproject.coder.service.LocationService;
+import cn.cxdproject.coder.utils.JsonUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.time.Duration;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
@@ -32,12 +38,14 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
 
     private final LocationMapper locationMapper;
     private final Cache<String, Object> cache;
+    private final RedisTemplate redisTemplate;
 
     public LocationServiceImpl(
             LocationMapper locationMapper,
-            @Qualifier("cache") Cache<String, Object> cache) {
+            @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate) {
         this.locationMapper = locationMapper;
         this.cache = cache;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -51,8 +59,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .type(createDTO.getType())
                 .status(createDTO.getStatus())
                 .locationDescription(createDTO.getLocationDescription())
-                .contactPhone(createDTO.getContactPhone())
-                .contactName(createDTO.getContactName())
+                .locationPrincipalPhone(createDTO.getLocationPrincipalPhone())
+                .locationPrincipalName(createDTO.getLocationPrincipalName())
+                .govPrincipalPhone(createDTO.getGovPrincipalPhone())
+                .govPrincipalName(createDTO.getGovPrincipalName())
                 .address(createDTO.getAddress())
                 .price(createDTO.getPrice())
                 .userId(userId)
@@ -78,8 +88,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         if (updateDTO.getType() != null) location.setType(updateDTO.getType());
         if (updateDTO.getStatus() != null) location.setStatus(updateDTO.getStatus());
         if (updateDTO.getLocationDescription() != null) location.setLocationDescription(updateDTO.getLocationDescription());
-        if (updateDTO.getContactPhone() != null) location.setContactPhone(updateDTO.getContactPhone());
-        if (updateDTO.getContactName() != null) location.setContactName(updateDTO.getContactName());
+        if (updateDTO.getLocationPrincipalName() != null) location.setLocationPrincipalName(updateDTO.getLocationPrincipalName());
+        if (updateDTO.getLocationPrincipalPhone() != null) location.setLocationPrincipalPhone(updateDTO.getLocationPrincipalPhone());
+        if (updateDTO.getGovPrincipalName() != null) location.setGovPrincipalName(updateDTO.getGovPrincipalName());
+        if (updateDTO.getGovPrincipalPhone() != null) location.setGovPrincipalPhone(updateDTO.getGovPrincipalPhone());
         if (updateDTO.getAddress() != null) location.setAddress(updateDTO.getAddress());
         if (updateDTO.getPrice() != null) location.setPrice(updateDTO.getPrice());
         if(updateDTO.getCover() != null) location.setCover(updateDTO.getCover());
@@ -134,24 +146,65 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         long size = page.getSize();
         long offset = (current - 1) * size;
 
-        List<Location> locations = locationMapper.getPage(keyword, offset, size);
+        List<Long> ids = locationMapper.getPageLocationIds(keyword, offset, size);
+        long total = locationMapper.countByKeyword(keyword);
+
+        if (ids.isEmpty()) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
+
+        // 1. 批量从 Redis 获取缓存
+        List<String> keys = ids.stream().map(id -> RedisKeyConstants.LOCATION + id).collect(Collectors.toList());
+        List<String> cachedJsons = redisTemplate.opsForValue().multiGet(keys);
+
+        // 2. 构建Location列表：优先用缓存，缺失的记录 ID
+        List<Location> locations = new ArrayList<>(Collections.nCopies(ids.size(), null));
+        List<Long> missingIds = new ArrayList<>();
+
+        for (int i = 0; i < ids.size(); i++) {
+            String json = cachedJsons.get(i);
+            if (json != null) {
+                try {
+                    locations.set(i, JsonUtils.fromJson(json, Location.class));
+                } catch (Exception e) {
+                    missingIds.add(ids.get(i));
+                }
+            } else {
+                missingIds.add(ids.get(i));
+            }
+        }
+
+        if (!missingIds.isEmpty()) {
+            List<Location> dbArticles = locationMapper.selectBatchIds(missingIds);
+            Map<Long, Location> dbMap = dbArticles.stream()
+                    .peek(location -> {
+                        // 回填 Redis 缓存
+                        redisTemplate.opsForValue().set(
+                                RedisKeyConstants.LOCATION + location.getId(),
+                                JsonUtils.toJson(location),
+                                Duration.ofMinutes(30)
+                        );
+                        cache.put(CaffeineConstants.LOCATION+location.getId(),location);
+                    })
+                    .collect(Collectors.toMap(Location::getId, a -> a));
+
+            // 填回原位置
+            for (int i = 0; i < ids.size(); i++) {
+                if (locations.get(i) == null) {
+                    locations.set(i, dbMap.get(ids.get(i)));
+                }
+            }
+        }
 
         List<LocationVO> voList = locations.stream()
-                .map(location -> new LocationVO(
-                        location.getId(),
-                        location.getName(),
-                        location.getStatus(),
-                        location.getType(),
-                        location.getLocationDescription(),
-                        location.getCover(),
-                        location.getAddress(),
-                        location.getPrice()
-                ))
+                .map(this::toLocationVO)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
         return new Page<LocationVO>()
                 .setCurrent(current)
                 .setSize(size)
+                .setTotal(total)
                 .setRecords(voList);
 
     }
@@ -168,8 +221,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         if (updateDTO.getType() != null) location.setType(updateDTO.getType());
         if (updateDTO.getStatus() != null) location.setStatus(updateDTO.getStatus());
         if (updateDTO.getLocationDescription() != null) location.setLocationDescription(updateDTO.getLocationDescription());
-        if (updateDTO.getContactPhone() != null) location.setContactPhone(updateDTO.getContactPhone());
-        if (updateDTO.getContactName() != null) location.setContactName(updateDTO.getContactName());
+        if (updateDTO.getLocationPrincipalName() != null) location.setLocationPrincipalName(updateDTO.getLocationPrincipalName());
+        if (updateDTO.getLocationPrincipalPhone() != null) location.setLocationPrincipalPhone(updateDTO.getLocationPrincipalPhone());
+        if (updateDTO.getGovPrincipalName() != null) location.setGovPrincipalName(updateDTO.getGovPrincipalName());
+        if (updateDTO.getGovPrincipalPhone() != null) location.setGovPrincipalPhone(updateDTO.getGovPrincipalPhone());
         if (updateDTO.getAddress() != null) location.setAddress(updateDTO.getAddress());
         if (updateDTO.getPrice() != null) location.setPrice(updateDTO.getPrice());
         if(updateDTO.getCover() != null) location.setCover(updateDTO.getCover());
@@ -210,8 +265,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                .type(location.getType())
                .status(location.getStatus())
                .locationDescription(location.getLocationDescription())
-               .contactPhone(location.getContactPhone())
-               .contactName(location.getContactName())
+               .locationPrincipalName(location.getLocationPrincipalName())
+               .locationPrincipalPhone(location.getLocationPrincipalPhone())
+               .govPrincipalName(location.getGovPrincipalName())
+               .govPrincipalPhone(location.getGovPrincipalPhone())
                .address(location.getAddress())
                .price(location.getPrice())
                .userId(location.getUserId())

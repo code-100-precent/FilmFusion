@@ -10,10 +10,13 @@ public interface RedisKeyConstants {
 
     String SCAN_RATE_LIMIT = PREFIX + "rate_limit:";
 
-    String ARTICLE_DETAIL_PREFIX = "article:detail:";
+    String ARTICLE = "article";
     String CAPTCHA_PREFIX = "captcha:";
+    String DRAMA = "drama";
+    String LOCATION = "location";
+    String SHOOT = "shoot";
 
-    
+
     static String getTaskResultKey(Long taskId) {
         return TASK_RESULT_KEY + taskId;
     }

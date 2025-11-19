@@ -1,8 +1,8 @@
 <template>
   <div class="profile-page">
-    <n-grid :cols="24" :x-gap="24" :y-gap="24" responsive="screen">
+    <n-grid :cols="24" :x-gap="24" :y-gap="24" responsive="screen" :s-cols="1">
       <!-- 个人信息卡片 -->
-      <n-gi :span="24">
+      <n-gi :span="24" class="profile-card-wrapper">
         <n-card class="profile-card" :bordered="false">
           <template #header>
             <div class="card-header">
@@ -95,18 +95,18 @@
             </div>
             
             <!-- 编辑表单 -->
-            <n-divider />
+            <n-divider v-if="!isMobile" />
             <n-form
               ref="formRef"
               :model="formData"
               :rules="formRules"
-              label-placement="left"
-              label-width="120"
+              :label-placement="isMobile ? 'top' : 'left'"
+              :label-width="isMobile ? 'auto' : '120'"
               :disabled="!isEditing"
               class="profile-form"
             >
-              <n-grid :cols="2" :x-gap="24" responsive="screen">
-                <n-gi :span="2" :s-span="1">
+              <n-grid :cols="2" :x-gap="24" responsive="screen" :s-cols="1">
+                <n-gi>
                   <n-form-item label="用户名" path="username">
                     <n-input 
                       v-model:value="formData.username" 
@@ -120,7 +120,7 @@
                     </n-input>
                   </n-form-item>
                 </n-gi>
-                <n-gi :span="2" :s-span="1">
+                <n-gi>
                   <n-form-item label="手机号">
                     <n-input 
                       v-model:value="formData.phoneNumber" 
@@ -140,7 +140,7 @@
       </n-gi>
       
       <!-- 修改密码卡片 -->
-      <n-gi :span="12" :s-span="24">
+      <n-gi :span="12" :s-span="24" class="password-card-wrapper">
         <n-card class="password-card" :bordered="false">
           <template #header>
             <div class="card-header">
@@ -154,8 +154,8 @@
             ref="passwordFormRef"
             :model="passwordForm"
             :rules="passwordRules"
-            label-placement="left"
-            label-width="100"
+            :label-placement="isMobile ? 'top' : 'left'"
+            :label-width="isMobile ? 'auto' : '100'"
             class="password-form"
           >
             <n-form-item label="当前密码" path="oldPassword">
@@ -218,7 +218,7 @@
       </n-gi>
       
       <!-- 账户信息卡片 -->
-      <n-gi :span="12" :s-span="24">
+      <n-gi :span="12" :s-span="24" class="info-card-wrapper">
         <n-card class="info-card" :bordered="false">
           <template #header>
             <div class="card-header">
@@ -265,7 +265,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { Icon } from '@iconify/vue'
 import {
@@ -293,6 +293,12 @@ const passwordFormRef = ref(null)
 const isEditing = ref(false)
 const loading = ref(false)
 const avatarFileList = ref([])
+const isMobile = ref(false)
+
+// 检测移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
 
 const formData = reactive({
   id: null,
@@ -339,7 +345,13 @@ const passwordRules = {
 }
 
 onMounted(async () => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   await loadAdminInfo()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 
 const loadAdminInfo = async () => {
@@ -466,18 +478,23 @@ const handleResetPassword = () => {
 .profile-page {
   animation: fadeIn 0.3s ease;
   padding: 0;
+  min-height: calc(100vh - 64px);
 }
 
 .profile-card,
 .password-card,
 .info-card {
-  height: 100%;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: box-shadow 0.3s ease;
   
   &:hover {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   }
+}
+
+.password-card,
+.info-card {
+  height: 100%;
 }
 
 .card-header {
@@ -602,12 +619,20 @@ const handleResetPassword = () => {
   }
   
   .profile-form {
-    padding: 0 24px;
+    padding: 24px;
+    
+    :deep(.n-form-item) {
+      margin-bottom: 20px;
+    }
   }
 }
 
 .password-form {
-  padding: 8px 0;
+  padding: 16px 0;
+  
+  :deep(.n-form-item) {
+    margin-bottom: 20px;
+  }
 }
 
 .form-actions {
@@ -629,21 +654,81 @@ const handleResetPassword = () => {
 
 // 响应式设计
 @media (max-width: 768px) {
+  .profile-page {
+    min-height: calc(100vh - 56px);
+  }
+  
   .profile-content {
     .avatar-section {
       flex-direction: column;
       align-items: center;
       text-align: center;
+      padding: 20px 16px;
+      gap: 20px;
+      margin-bottom: 20px;
+      
+      .avatar-wrapper {
+        .avatar-container {
+          .avatar {
+            width: 80px !important;
+            height: 80px !important;
+          }
+          
+          .avatar-overlay {
+            font-size: 11px;
+            padding: 6px;
+            
+            span {
+              font-size: 11px;
+            }
+          }
+        }
+      }
       
       .user-info {
         width: 100%;
         
+        .username {
+          font-size: 22px;
+          margin-bottom: 12px;
+        }
+        
         .user-tags {
           justify-content: center;
+          margin-bottom: 12px;
+          gap: 8px;
+          
+          :deep(.n-tag) {
+            font-size: 12px;
+            padding: 4px 10px;
+          }
         }
         
         .user-meta {
           align-items: center;
+          gap: 8px;
+          
+          .meta-item {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+    
+    .profile-form {
+      padding: 0 16px 16px;
+      
+      :deep(.n-form-item) {
+        margin-bottom: 18px;
+        
+        .n-form-item-label {
+          font-weight: 500;
+          margin-bottom: 8px;
+          font-size: 14px;
+        }
+        
+        .n-input {
+          font-size: 14px;
         }
       }
     }
@@ -654,16 +739,150 @@ const handleResetPassword = () => {
     align-items: flex-start;
     gap: 12px;
     
+    .header-title {
+      font-size: 15px;
+    }
+    
     .header-actions {
       width: 100%;
       
+      button {
+        flex: 1;
+        font-size: 14px;
+      }
+      
       .edit-actions {
         width: 100%;
+        display: flex;
+        gap: 8px;
         
         button {
           flex: 1;
         }
       }
+    }
+  }
+  
+  .password-form {
+    padding: 16px 0;
+    
+    :deep(.n-form-item) {
+      margin-bottom: 18px;
+      
+      .n-form-item-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+      
+      .n-input {
+        width: 100%;
+        font-size: 14px;
+      }
+    }
+    
+    .form-actions {
+      margin-top: 8px;
+      
+      .n-button {
+        font-size: 14px;
+        height: 40px;
+      }
+    }
+  }
+  
+  .info-descriptions {
+    :deep(.n-descriptions-item) {
+      padding: 12px;
+      
+      .n-descriptions-item__label {
+        font-size: 14px;
+        width: 100px;
+      }
+      
+      .n-descriptions-item__content {
+        font-size: 14px;
+      }
+    }
+  }
+  
+  // 网格布局优化 - 移动端强制单列
+  :deep(.n-grid) {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  
+  // 卡片间距优化 - 移动端强制垂直排列
+  :deep(.n-gi) {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  // 确保所有卡片在移动端垂直排列
+  .profile-card-wrapper {
+    order: 1;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .password-card-wrapper {
+    order: 2;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .info-card-wrapper {
+    order: 3;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  // 卡片内容优化
+  :deep(.n-card__content) {
+    padding: 20px 16px;
+  }
+  
+  .password-card,
+  .info-card {
+    width: 100%;
+    margin-bottom: 0;
+  }
+}
+
+// 小屏幕优化
+@media (max-width: 480px) {
+  .profile-content {
+    .avatar-section {
+      padding: 16px 12px;
+      
+      .avatar-wrapper {
+        .avatar-container {
+          .avatar {
+            width: 70px !important;
+            height: 70px !important;
+          }
+        }
+      }
+      
+      .user-info {
+        .username {
+          font-size: 20px;
+        }
+      }
+    }
+    
+    .profile-form {
+      padding: 0 12px;
+    }
+  }
+  
+  .card-header {
+    .header-title {
+      font-size: 14px;
     }
   }
 }

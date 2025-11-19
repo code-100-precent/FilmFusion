@@ -67,6 +67,14 @@ const routes = [
           meta: {
             title: '反馈管理'
           }
+        },
+        {
+          path: 'user',
+          name: 'user',
+          component: () => import('../views/user/UserList.vue'),
+          meta: {
+            title: '用户管理'
+          }
         }
     ]
   }

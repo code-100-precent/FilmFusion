@@ -411,6 +411,64 @@ export const getRoutePage = (pageRequest) => {
   })
 }
 
+// ==================== 用户管理 ====================
+/**
+ * 分页获取用户列表
+ */
+export const getUserPage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/user/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
+  })
+}
+
+/**
+ * 根据ID获取用户详情
+ */
+export const getUserById = (id) => {
+  return request({
+    url: `/user/admin/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 创建用户
+ */
+export const createUser = (data) => {
+  return request({
+    url: '/user/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新用户
+ */
+export const updateUser = (userId, data) => {
+  return request({
+    url: `/user/admin/${userId}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除用户
+ */
+export const deleteUser = (id) => {
+  return request({
+    url: `/user/admin/${id}`,
+    method: 'delete'
+  })
+}
+
 // ==================== 反馈管理 ====================
 export const getFeedbackPage = (current = 1, size = 10, keyword = '') => {
   return request({

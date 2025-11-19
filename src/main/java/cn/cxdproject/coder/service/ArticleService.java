@@ -14,23 +14,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface ArticleService extends IService<Article> {
 
-    /**
-     * 更新文章（普通用户，只能更新自己的文章）
-     *
-     * @param userId    用户ID
-     * @param articleId 文章ID
-     * @param updateDTO 更新文章DTO
-     * @return 文章VO
-     */
-    ArticleVO updateArticle(Long userId, Long articleId, UpdateArticleDTO updateDTO);
-
-    /**
-     * 删除文章（普通用户，只能删除自己的文章）
-     *
-     * @param userId    用户ID
-     * @param articleId 文章ID
-     */
-    void deleteArticle(Long userId, Long articleId);
 
     /**
      * 获取文章详情（公开接口）
@@ -81,4 +64,7 @@ public interface ArticleService extends IService<Article> {
      */
     ArticleVO toArticleVO(Article article);
 
+    ArticleVO getByIdFallBack(Long id);
+
+//    Page<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e);
 }

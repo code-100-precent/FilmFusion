@@ -1,31 +1,33 @@
 <template>
   <div class="feedback-management">
     <n-card class="management-card">
-      <n-form :model="searchForm" inline class="search-form">
-        <n-form-item label="关键词">
-          <n-input
-            v-model:value="searchForm.keyword"
-            placeholder="请输入关键词"
-            clearable
-            @keyup.enter="handleSearch"
-          />
-        </n-form-item>
-        <n-form-item>
-          <n-button type="primary" @click="handleSearch">
-            <template #icon>
-              <Icon icon="mdi:magnify" />
-            </template>
-            搜索
-          </n-button>
-          <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
-          <n-button @click="handleRefresh" style="margin-left: 12px">
-            <template #icon>
-              <Icon icon="mdi:refresh" />
-            </template>
-            刷新
-          </n-button>
-        </n-form-item>
-      </n-form>
+      <div class="search-header">
+        <n-form :model="searchForm" inline class="search-form">
+          <n-form-item label="关键词">
+            <n-input
+              v-model:value="searchForm.keyword"
+              placeholder="请输入关键词"
+              clearable
+              @keyup.enter="handleSearch"
+            />
+          </n-form-item>
+          <n-form-item>
+            <n-button type="primary" @click="handleSearch">
+              <template #icon>
+                <Icon icon="mdi:magnify" />
+              </template>
+              搜索
+            </n-button>
+            <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
+            <n-button @click="handleRefresh" style="margin-left: 12px">
+              <template #icon>
+                <Icon icon="mdi:refresh" />
+              </template>
+              刷新
+            </n-button>
+          </n-form-item>
+        </n-form>
+      </div>
       
       <n-data-table
         :columns="columns"
@@ -39,7 +41,7 @@
     </n-card>
     
     <!-- 处理反馈对话框 -->
-    <n-modal v-model:show="dialogVisible" preset="dialog" title="处理反馈" :mask-closable="false" style="width: 600px">
+    <n-modal v-model:show="dialogVisible" preset="dialog" title="处理反馈" :mask-closable="false" style="width: 90%; max-width: 600px">
       <n-form label-placement="left" label-width="100px">
         <n-form-item label="反馈类型">
           <n-input :value="currentFeedback?.type" disabled />
@@ -318,8 +320,56 @@ const handleDelete = async (id) => {
   }
 }
 
-.search-form {
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 16px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-form {
+  flex: 1;
+  min-width: 300px;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .search-header {
+    flex-direction: column;
+    
+    .search-form {
+      width: 100%;
+      min-width: auto;
+    }
+    
+    .action-buttons {
+      width: 100%;
+      
+      button {
+        flex: 1;
+      }
+    }
+  }
+  
+  .management-card {
+    :deep(.n-card__content) {
+      padding: 12px;
+    }
+  }
+  
+  :deep(.n-data-table) {
+    .n-data-table-wrapper {
+      overflow-x: auto;
+    }
+  }
 }
 
 .action-bar {

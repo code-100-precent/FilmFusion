@@ -1,6 +1,7 @@
 package cn.cxdproject.coder.mapper;
 
 import cn.cxdproject.coder.model.entity.Drama;
+import cn.cxdproject.coder.model.entity.Location;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import cn.cxdproject.coder.model.entity.Shoot;
 import org.apache.ibatis.annotations.Mapper;
@@ -15,10 +16,17 @@ import java.util.List;
 @Mapper
 public interface ShootMapper extends BaseMapper<Shoot> {
 
-    List<Shoot> getPage(
+    List<Long> getPageShootIds(
             @Param("keyword") String keyword,
             @Param("offset") long offset,
             @Param("size") long size
     );
+
+    /**
+     * 获取总数量（用于分页 total）
+     */
+    long countByKeyword(@Param("keyword") String keyword);
+
+    List<Shoot> selectLatest10();
 
 }

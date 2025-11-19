@@ -2,6 +2,7 @@ package cn.cxdproject.coder.service.impl;
 
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
 import cn.cxdproject.coder.common.constants.Constants;
+import cn.cxdproject.coder.common.constants.RedisKeyConstants;
 import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
@@ -11,15 +12,18 @@ import cn.cxdproject.coder.model.entity.Shoot;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.mapper.ShootMapper;
 import cn.cxdproject.coder.service.ShootService;
+import cn.cxdproject.coder.utils.JsonUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
@@ -33,12 +37,14 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     private final ShootMapper shootMapper;
     private final Cache<String, Object> cache;
+    public final RedisTemplate redisTemplate;
 
     public ShootServiceImpl(
             ShootMapper shootMapper,
-            @Qualifier("cache") Cache<String, Object> cache) {
+            @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate) {
         this.shootMapper = shootMapper;
         this.cache = cache;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -127,27 +133,69 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     @Override
     public Page<ShootVO> getShootPage(Page<Shoot> page, String keyword) {
-        long current = page.getCurrent(); // MyBatis-Plus 页码从 1 开始
+        long current = page.getCurrent();
         long size = page.getSize();
         long offset = (current - 1) * size;
 
-        List<Shoot> shoots = shootMapper.getPage(keyword, offset, size);
+        List<Long> ids = shootMapper.getPageShootIds(keyword, offset, size);
+        long total = shootMapper.countByKeyword(keyword);
+
+        if (ids.isEmpty()) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
+
+        // 1. 批量从 Redis 获取缓存
+        List<String> keys = ids.stream().map(id -> RedisKeyConstants.SHOOT + id).collect(Collectors.toList());
+        List<String> cachedJsons = redisTemplate.opsForValue().multiGet(keys);
+
+        // 2. 构建Shoot列表：优先用缓存，缺失的记录 ID
+        List<Shoot> shoots = new ArrayList<>(Collections.nCopies(ids.size(), null));
+        List<Long> missingIds = new ArrayList<>();
+
+        for (int i = 0; i < ids.size(); i++) {
+            String json = cachedJsons.get(i);
+            if (json != null) {
+                try {
+                    shoots.set(i, JsonUtils.fromJson(json, Shoot.class));
+                } catch (Exception e) {
+                    missingIds.add(ids.get(i));
+                }
+            } else {
+                missingIds.add(ids.get(i));
+            }
+        }
+
+        if (!missingIds.isEmpty()) {
+            List<Shoot> dbShoots = shootMapper.selectBatchIds(missingIds);
+            Map<Long, Shoot> dbMap = dbShoots.stream()
+                    .peek(shoot -> {
+                        // 回填 Redis 缓存
+                        redisTemplate.opsForValue().set(
+                                RedisKeyConstants.SHOOT + shoot.getId(),
+                                JsonUtils.toJson(shoot),
+                                Duration.ofMinutes(30)
+                        );
+                        cache.put(CaffeineConstants.SHOOT+shoot.getId(),shoot);
+                    })
+                    .collect(Collectors.toMap(Shoot::getId, a -> a));
+
+            // 填回原位置
+            for (int i = 0; i < ids.size(); i++) {
+                if (shoots.get(i) == null) {
+                    shoots.set(i, dbMap.get(ids.get(i)));
+                }
+            }
+        }
 
         List<ShootVO> voList = shoots.stream()
-                .map(shoot -> new ShootVO(
-                        shoot.getId(),
-                        shoot.getName(),
-                        shoot.getDescription(),
-                        shoot.getPrice(),
-                        shoot.getStatus(),
-                        shoot.getCover(),
-                        shoot.getAddress()
-                ))
+                .map(this::toShootVO)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
         return new Page<ShootVO>()
                 .setCurrent(current)
                 .setSize(size)
+                .setTotal(total)
                 .setRecords(voList);
 
     }

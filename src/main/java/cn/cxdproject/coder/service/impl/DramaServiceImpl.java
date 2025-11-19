@@ -2,24 +2,30 @@ package cn.cxdproject.coder.service.impl;
 
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
 import cn.cxdproject.coder.common.constants.Constants;
+import cn.cxdproject.coder.common.constants.RedisKeyConstants;
 import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateDramaDTO;
 import cn.cxdproject.coder.model.dto.UpdateDramaDTO;
+import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Drama;
+import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.mapper.DramaMapper;
 import cn.cxdproject.coder.service.DramaService;
+import cn.cxdproject.coder.utils.JsonUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
@@ -33,10 +39,12 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
 
     private final DramaMapper dramaMapper;
     private final Cache<String, Object> cache;
+    private final RedisTemplate redisTemplate;
 
-    public DramaServiceImpl(DramaMapper dramaMapper,  @Qualifier("cache") Cache<String, Object> cache) {
+    public DramaServiceImpl(DramaMapper dramaMapper, @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate) {
         this.dramaMapper = dramaMapper;
         this.cache = cache;
+        this.redisTemplate = redisTemplate;
     }
 
 
@@ -136,21 +144,65 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         long size = page.getSize();
         long offset = (current - 1) * size;
 
-        List<Drama> articles = dramaMapper.getPage(keyword, offset, size);
+        List<Long> ids = dramaMapper.getPageDramaIds(keyword, offset, size);
+        long total = dramaMapper.countByKeyword(keyword);
+
+        if (ids.isEmpty()) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
+
+        // 1. 批量从 Redis 获取缓存
+        List<String> keys = ids.stream().map(id -> RedisKeyConstants.DRAMA + id).collect(Collectors.toList());
+        List<String> cachedJsons = redisTemplate.opsForValue().multiGet(keys);
+
+        // 2. 构建Drama列表：优先用缓存，缺失的记录 ID
+        List<Drama> articles = new ArrayList<>(Collections.nCopies(ids.size(), null));
+        List<Long> missingIds = new ArrayList<>();
+
+        for (int i = 0; i < ids.size(); i++) {
+            String json = cachedJsons.get(i);
+            if (json != null) {
+                try {
+                    articles.set(i, JsonUtils.fromJson(json, Drama.class));
+                } catch (Exception e) {
+                    missingIds.add(ids.get(i));
+                }
+            } else {
+                missingIds.add(ids.get(i));
+            }
+        }
+
+        if (!missingIds.isEmpty()) {
+            List<Drama> dbArticles = dramaMapper.selectBatchIds(missingIds);
+            Map<Long, Drama> dbMap = dbArticles.stream()
+                    .peek(drama -> {
+                        // 回填 Redis 缓存
+                        redisTemplate.opsForValue().set(
+                                RedisKeyConstants.DRAMA + drama.getId(),
+                                JsonUtils.toJson(drama),
+                                Duration.ofMinutes(30)
+                        );
+                        cache.put(CaffeineConstants.DRAMA+drama.getId(),drama);
+                    })
+                    .collect(Collectors.toMap(Drama::getId, a -> a));
+
+            // 填回原位置
+            for (int i = 0; i < ids.size(); i++) {
+                if (articles.get(i) == null) {
+                    articles.set(i, dbMap.get(ids.get(i)));
+                }
+            }
+        }
 
         List<DramaVO> voList = articles.stream()
-                .map(drama -> new DramaVO(
-                        drama.getId(),
-                        drama.getName(),
-                        drama.getDramaDescription(),
-                        drama.getCast(),
-                        drama.getCover()
-                ))
+                .map(this::toDramaVO)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
         return new Page<DramaVO>()
                 .setCurrent(current)
                 .setSize(size)
+                .setTotal(total)
                 .setRecords(voList);
 
     }

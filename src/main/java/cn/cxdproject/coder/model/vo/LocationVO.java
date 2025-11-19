@@ -25,8 +25,10 @@ public class LocationVO {
     private String type;
     private Boolean status;
     private String locationDescription;
-    private String contactPhone;
-    private String contactName;
+    private String locationPrincipalPhone;
+    private String locationPrincipalName;
+    private String govPrincipalPhone;
+    private String govPrincipalName;
     private String address;
     private BigDecimal price;
     private Long userId;

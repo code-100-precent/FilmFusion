@@ -15,12 +15,19 @@ import java.util.List;
 public interface ArticleMapper extends BaseMapper<Article> {
 
     /**
-     * 延迟关联分页查询（
+     * 分页查询文章ID（用于后续缓存加载）
      */
-    List<Article> getPage(
+    List<Long> getPageArticleIds(
             @Param("keyword") String keyword,
             @Param("offset") long offset,
             @Param("size") long size
     );
+
+    /**
+     * 获取总数量（用于分页 total）
+     */
+    long countByKeyword(@Param("keyword") String keyword);
+
+    List<Article> selectLatest10();
 
 }

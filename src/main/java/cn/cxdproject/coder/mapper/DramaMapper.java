@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Banner;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import cn.cxdproject.coder.model.entity.Drama;
@@ -15,10 +16,17 @@ import java.util.List;
 @Mapper
 public interface DramaMapper extends BaseMapper<Drama> {
 
-    List<Drama> getPage(
+    List<Long> getPageDramaIds(
             @Param("keyword") String keyword,
             @Param("offset") long offset,
             @Param("size") long size
     );
+
+    /**
+     * 获取总数量（用于分页 total）
+     */
+    long countByKeyword(@Param("keyword") String keyword);
+
+    List<Drama> selectLatest10();
 
 }

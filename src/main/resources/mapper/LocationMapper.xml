@@ -10,8 +10,10 @@
         <result column="type" property="type" />
         <result column="status" property="status" />
         <result column="location_description" property="locationDescription" />
-        <result column="contact_phone" property="contactPhone" />
-        <result column="contact_name" property="contactName" />
+        <result column="location_principal_phone" property="locationPrincipalPhone" />
+        <result column="location_principal_name" property="locationPrincipalName" />
+        <result column="gov_principal_phone" property="govPrincipalPhone" />
+        <result column="gov_principal_name" property="govPrincipalName" />
         <result column="address" property="address" />
         <result column="price" property="price" />
         <result column="user_id" property="userId" />
@@ -28,7 +30,10 @@
             `type`,
             `status`,
             `location_description`,
-            `contact_phone`,
+            `location_principal_phone`,
+            'location_principal_name',
+            'gov_principal_phone',
+            'gov_principal_name',
             `contact_name`,
             `address`,
             `price`,
@@ -40,19 +45,33 @@
             'image'
     </sql>
 
-    <select id="getPage" resultType="cn.cxdproject.coder.model.entity.Location">
-        SELECT a.id, a.name, a.status, a.type, a.location_description,a.cover,a.address,a.price
-        FROM fi_locations a
-        INNER JOIN (
+    <select id="getPageLocationIds" resultType="java.lang.Long">
         SELECT id
         FROM fi_locations
-        WHERE deleted = 0
-        <if test="keyword != null and keyword != ''">
-            AND title LIKE CONCAT('%', #{keyword}, '%')
-        </if>
+        <where>
+            <if test="keyword != null and keyword != ''">
+                location_description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
         ORDER BY created_at DESC
         LIMIT #{offset}, #{size}
-        ) tmp ON a.id = tmp.id
+    </select>
+
+    <select id="countByKeyword" resultType="long">
+        SELECT COUNT(*)
+        FROM fi_locations
+        <where>
+            <if test="keyword != null and keyword != ''">
+                location_description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Location">
+        SELECT id, name, type,cover,location_description,address
+        FROM fi_locations
+        ORDER BY created_at DESC
+            LIMIT 10
     </select>
 
 </mapper>
