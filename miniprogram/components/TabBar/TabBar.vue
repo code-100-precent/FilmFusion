@@ -16,6 +16,8 @@
 </template>
 
 <script>
+import uniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
+
 const DEFAULT_ITEMS = [
   { key: 'index', path: '/pages/index/index', text: '首页', icon: 'home' },
   { key: 'scenes', path: '/pages/scenes/scenes', text: '场地', icon: 'location' },
@@ -26,6 +28,9 @@ const DEFAULT_ITEMS = [
 
 export default {
   name: 'TabBar',
+  components: {
+    uniIcons
+  },
   props: {
     current: {
       type: String,

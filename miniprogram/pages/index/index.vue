@@ -36,20 +36,22 @@
 
       <!-- 功能入口 -->
       <view class="function-section">
-        <view class="function-grid">
-          <view
-            v-for="(item, index) in functions"
-            :key="index"
-            class="function-item"
-            @click="handleFunctionClick(item)"
-          >
-            <view class="function-icon" :style="{ background: item.bgColor }">
-              <uni-icons :type="item.icon" :color="item.color" size="30"></uni-icons>
+        <scroll-view class="function-scroll" scroll-x :show-scrollbar="false" :enable-flex="true">
+          <view class="function-grid">
+            <view
+              v-for="(item, index) in functions"
+              :key="index"
+              class="function-item"
+              @click="handleFunctionClick(item)"
+            >
+              <view class="function-icon" :style="{ background: item.bgColor }">
+                <uni-icons :type="item.icon" :color="item.color" size="30"></uni-icons>
+              </view>
+              <text class="function-text">{{ item.text }}</text>
+              <text class="function-desc">{{ item.desc }}</text>
             </view>
-            <text class="function-text">{{ item.text }}</text>
-            <text class="function-desc">{{ item.desc }}</text>
           </view>
-        </view>
+        </scroll-view>
       </view>
 
       <!-- 最新资讯 -->
@@ -174,7 +176,9 @@ export default {
         { icon: 'location', text: '拍摄场地', desc: '寻找完美取景地', color: '#f59e0b', bgColor: 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)', path: '/pages/scenes/scenes' },
         { icon: 'calendar', text: '剧组报备', desc: '手续办理更便捷', color: '#8b5cf6', bgColor: 'linear-gradient(135deg, #f3e8ff 0%, #ddd6fe 100%)', path: '/pages/filing/filing' },
         { icon: 'phone', text: '协拍服务', desc: '专业团队支持', color: '#ec4899', bgColor: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', path: '/pages/services/services' },
-        { icon: 'chatbubble', text: '影视资讯', desc: '掌握行业动态', color: '#06b6d4', bgColor: 'linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%)', path: '/pages/news/news' }
+        { icon: 'chatbubble', text: '影视资讯', desc: '掌握行业动态', color: '#06b6d4', bgColor: 'linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%)', path: '/pages/news/news' },
+        { icon: 'map', text: '跟着影视游', desc: '探寻影视足迹', color: '#10b981', bgColor: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', path: '/pages/tourroute/tourroute' },
+        { icon: 'document', text: '视听政策', desc: '了解扶持政策', color: '#3b82f6', bgColor: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', path: '/pages/policy/policy' }
       ],
       articles: [],
       locations: []
@@ -421,10 +425,24 @@ export default {
   line-height: 1.2;
 }
 
+.function-scroll {
+  width: 100%;
+  white-space: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 .function-grid {
-  display: flex;
-  justify-content: space-between;
+  display: inline-flex;
   gap: 16rpx;
+  padding: 0 24rpx;
+  white-space: nowrap;
 }
 
 .function-item {
@@ -432,13 +450,16 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 8rpx;
-  flex: 1;
+  min-width: 160rpx;
+  width: 160rpx;
   padding: 20rpx 12rpx;
   border-radius: 16rpx;
   transition: all 0.3s ease;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
   border: 1rpx solid rgba(229, 231, 235, 0.5);
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  white-space: normal;
 }
 
 .function-item:active {

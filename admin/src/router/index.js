@@ -67,6 +67,22 @@ const routes = [
           meta: {
             title: '反馈管理'
           }
+        },
+        {
+          path: 'tourroute',
+          name: 'tourroute',
+          component: () => import('../views/tourroute/TourRouteList.vue'),
+          meta: {
+            title: '旅游线路管理'
+          }
+        },
+        {
+          path: 'policy',
+          name: 'policy',
+          component: () => import('../views/policy/PolicyList.vue'),
+          meta: {
+            title: '政策管理'
+          }
         }
     ]
   }

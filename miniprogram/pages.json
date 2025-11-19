@@ -132,6 +132,38 @@
 				"navigationBarTitleText": "关于我们",
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/tourroute/tourroute",
+			"style": {
+				"navigationBarTitleText": "跟着影视游雅安",
+				"navigationStyle": "custom",
+				"navigationBarBackgroundColor": "#667eea",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/tourroute/detail",
+			"style": {
+				"navigationBarTitleText": "线路详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/policy/policy",
+			"style": {
+				"navigationBarTitleText": "视听政策",
+				"navigationStyle": "custom",
+				"navigationBarBackgroundColor": "#667eea",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/policy/detail",
+			"style": {
+				"navigationBarTitleText": "政策详情",
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"globalStyle": {
@@ -144,6 +176,7 @@
 	"easycom": {
 		"autoscan": true,
 		"custom": {
+			"^uni-icons$": "@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue",
 			"^NavBar$": "@/components/NavBar/NavBar.vue",
 			"^TabBar$": "@/components/TabBar/TabBar.vue",
 			"^Loading$": "@/components/Loading/Loading.vue",
