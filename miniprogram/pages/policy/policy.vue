@@ -2,13 +2,8 @@
   <view class="policy-page">
     <!-- 渐变背景层 -->
     <view class="gradient-bg"></view>
-
-    <!-- 自定义返回按钮 -->
-    <view class="custom-header">
-      <view class="back-button" @click="handleBack">
-        <uni-icons type="left" color="white" size="20" />
-      </view>
-    </view>
+    
+    <NavBar :show-back="true"></NavBar>
 
     <view class="content">
       <!-- 页面标题 -->
@@ -66,19 +61,21 @@
             class="policy-card"
             @click="goToDetail(policy.id)"
           >
-            <view class="policy-header">
-              <view class="policy-type-badge" :class="policy.type === '省级' ? 'type-prov' : 'type-city'">
-                {{ policy.type }}
+            <view class="policy-info">
+              <view class="policy-header">
+                <view class="policy-type-badge" :class="policy.type === '省级' ? 'type-prov' : 'type-city'">
+                  {{ policy.type }}
+                </view>
+                <text class="policy-title">{{ policy.title }}</text>
               </view>
-              <text class="policy-title">{{ policy.title }}</text>
-            </view>
-            <view class="policy-meta">
-              <text class="policy-unit">{{ policy.issueUnit }}</text>
-              <text class="policy-date">{{ formatDate(policy.issueDate) }}</text>
-            </view>
-            <view class="policy-footer">
-              <text class="view-more">查看详情</text>
-              <uni-icons type="right" size="14" color="#6366f1"></uni-icons>
+              <view class="policy-meta">
+                <text class="policy-unit">{{ policy.issueUnit }}</text>
+                <text class="policy-date">{{ formatDate(policy.issueDate) }}</text>
+              </view>
+              <view class="policy-footer">
+                <text class="view-more">查看详情</text>
+                <uni-icons type="right" size="14" color="#6366f1"></uni-icons>
+              </view>
             </view>
           </view>
         </view>
@@ -98,12 +95,14 @@
 </template>
 
 <script>
+import NavBar from '@/components/NavBar/NavBar.vue'
 import TabBar from '@/components/TabBar/TabBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 
 export default {
   components: {
+    NavBar,
     TabBar,
     Loading,
     Empty
@@ -159,14 +158,6 @@ export default {
     this.loadData()
   },
   methods: {
-    handleBack() {
-      const pages = getCurrentPages()
-      if (pages.length > 1) {
-        uni.navigateBack()
-      } else {
-        uni.reLaunch({ url: '/pages/index/index' })
-      }
-    },
     async loadData() {
       this.loading = true
       // 模拟网络延迟
@@ -222,11 +213,12 @@ export default {
 
 <style scoped lang="scss">
 .policy-page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: #f8fafc;
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-top: 132rpx;
+  box-sizing: border-box;
   position: relative;
+  overflow: hidden;
 }
 
 .gradient-bg {
@@ -234,133 +226,143 @@ export default {
   top: 0;
   left: 0;
   right: 0;
-  height: 200px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  height: 33.33vh;
+  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
   z-index: 0;
 }
 
-.custom-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  z-index: 100;
-  padding-top: env(safe-area-inset-top);
-}
-
-.back-button {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s;
-}
-
-.back-button:active {
-  background: rgba(255, 255, 255, 0.2);
-}
-
 .content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  width: 100%;
   position: relative;
   z-index: 1;
-  overflow: hidden;
-  padding-top: 44px;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
+/* 页面标题样式 */
 .page-title {
-  padding: 20px 16px 10px;
-  text-align: center;
+  padding: 32rpx 0 8rpx 0;
+  width: 100%;
 }
 
 .title-text {
-  font-size: 28px;
-  font-weight: bold;
-  color: white;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
 }
 
 .search-bar {
-  padding: 0 16px 12px;
+  margin-top: 24rpx;
+  margin-bottom: 24rpx;
 }
 
 .search-input-wrapper {
   display: flex;
   align-items: center;
-  background: white;
-  border-radius: 8px;
-  padding: 8px 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: 16rpx;
+  padding: 0 24rpx;
+  height: 80rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .search-input {
   flex: 1;
-  margin-left: 8px;
-  font-size: 14px;
-  color: #333;
+  font-size: 28rpx;
+  color: #1f2937;
 }
 
 .filter-bar {
   display: flex;
-  gap: 8px;
-  padding: 0 16px 12px;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
   overflow-x: auto;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .filter-tag {
-  padding: 6px 14px;
-  background: white;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 12rpx 28rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  font-size: 26rpx;
   color: #6b7280;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+  flex-shrink: 0;
 }
 
 .filter-tag.active {
   background: #6366f1;
   color: white;
+  box-shadow: 0 4rpx 12rpx rgba(99, 102, 241, 0.3);
 }
 
 .policy-list {
-  flex: 1;
-  padding: 0 16px;
+  height: calc(100vh - 132rpx - 200rpx);
+}
+
+.loading-wrapper,
+.empty-wrapper {
+  padding: 100rpx 0;
+  display: flex;
+  justify-content: center;
 }
 
 .policy-card {
-  background: white;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .policy-card:active {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4rpx);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.policy-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .policy-header {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
 }
 
 .policy-type-badge {
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -376,18 +378,19 @@ export default {
 }
 
 .policy-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 32rpx;
+  font-weight: 700;
   color: #1f2937;
-  line-height: 1.4;
+  line-height: 1.5;
   flex: 1;
 }
 
 .policy-meta {
   display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-  font-size: 12px;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+  font-size: 24rpx;
   color: #9ca3af;
 }
 
@@ -403,28 +406,23 @@ export default {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  color: #6366f1;
-  font-size: 13px;
+  gap: 8rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f3f4f6;
 }
 
 .view-more {
-  margin-right: 4px;
-}
-
-.loading-wrapper,
-.empty-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 300px;
+  font-size: 26rpx;
+  color: #6366f1;
+  font-weight: 500;
 }
 
 .load-more,
 .no-more {
   text-align: center;
-  padding: 20px;
+  padding: 40rpx 0;
+  font-size: 26rpx;
   color: #9ca3af;
-  font-size: 13px;
 }
 </style>
 
