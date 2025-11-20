@@ -5,7 +5,8 @@
 
     <NavBar :show-back="true"></NavBar>
 
-    <view class="content">
+    <!-- 内容区域 -->
+    <scroll-view class="content" scroll-y @scrolltolower="loadMore" :refresher-enabled="true" :refresher-triggered="refreshing" @refresherrefresh="handleRefresh">
       <!-- 页面标题 -->
       <view class="page-title">
         <text class="title-text">跟着影视游</text>
@@ -27,14 +28,7 @@
       </view>
 
       <!-- 线路列表 -->
-      <scroll-view
-        class="route-list"
-        scroll-y
-        @scrolltolower="loadMore"
-        :refresher-enabled="true"
-        :refresher-triggered="refreshing"
-        @refresherrefresh="handleRefresh"
-      >
+      <view class="route-list">
         <view v-if="loading && routes.length === 0" class="loading-wrapper">
           <Loading></Loading>
         </view>
@@ -45,24 +39,17 @@
           <view
             v-for="route in routes"
             :key="route.id"
-            class="route-card"
+            class="route-item"
             @click="goToDetail(route.id)"
           >
-            <view class="route-cover-wrapper">
-              <image :src="route.cover || defaultCover" class="route-cover" mode="aspectFill"></image>
+            <view class="route-cover">
+              <image :src="route.cover || defaultCover" class="route-image" mode="aspectFill"></image>
             </view>
-            <view class="route-info">
+            <view class="route-content">
               <view class="route-header">
                 <text class="route-title">{{ route.name }}</text>
               </view>
-              <text class="route-description">{{ route.description }}</text>
-              <view class="route-features">
-                <text class="feature-tag">{{ route.theme }}</text>
-              </view>
-              <view class="route-footer">
-                <text class="view-more">查看详情</text>
-                <uni-icons type="right" size="14" color="#6366f1"></uni-icons>
-              </view>
+              <text class="route-meta">{{ route.description }}</text>
             </view>
           </view>
         </view>
@@ -73,8 +60,8 @@
         <view v-if="!hasMore && routes.length > 0" class="no-more">
           <text>没有更多了</text>
         </view>
-      </scroll-view>
-    </view>
+      </view>
+    </scroll-view>
 
     <!-- 底部导航栏 -->
     <TabBar :current="'tourroute'"></TabBar>
@@ -237,6 +224,7 @@ export default {
   width: 100%;
   position: relative;
   z-index: 1;
+  height: calc(100vh - 132rpx - 140rpx);
 
   /* 隐藏滚动条 */
   &::-webkit-scrollbar {
@@ -284,7 +272,7 @@ export default {
 }
 
 .route-list {
-  height: calc(100vh - 88rpx - 200rpx);
+  width: 100%;
 }
 
 .loading-wrapper,
@@ -294,92 +282,72 @@ export default {
   justify-content: center;
 }
 
-.route-card {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
-  width: 100%;
-  box-sizing: border-box;
+.route-list {
   display: flex;
-  gap: 24rpx;
+  flex-direction: column;
+  gap: 16rpx;
 }
 
-.route-card:active {
-  transform: translateY(-4rpx);
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+.route-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 20rpx;
+  background: #f9fafb;
+  border-radius: 12rpx;
+  transition: all 0.3s;
+  overflow: hidden;
+
+  &:active {
+    background: #f3f4f6;
+    transform: translateX(4rpx);
+  }
 }
 
-.route-cover-wrapper {
-  width: 200rpx;
-  height: 200rpx;
-  border-radius: 16rpx;
+.route-cover {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 10rpx;
   overflow: hidden;
   flex-shrink: 0;
   background: #f3f4f6;
 }
 
-.route-cover {
+.route-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.route-info {
+.route-content {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 8rpx;
   min-width: 0;
+  justify-content: center;
 }
 
 .route-header {
-  margin-bottom: 16rpx;
+  margin-bottom: 0;
 }
 
 .route-title {
-  font-size: 32rpx;
-  font-weight: 700;
+  font-size: 28rpx;
+  font-weight: 600;
   color: #1f2937;
   line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-all;
 }
 
-.route-description {
-  display: block;
-  font-size: 28rpx;
-  color: #6b7280;
-  line-height: 1.8;
-  margin-bottom: 24rpx;
-}
-
-.route-features {
-  margin-bottom: 20rpx;
-}
-
-.feature-tag {
-  display: inline-block;
-  background: #f3f4f6;
-  color: #6366f1;
-  padding: 8rpx 16rpx;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  font-weight: 500;
-}
-
-.route-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx solid #f3f4f6;
-}
-
-.view-more {
-  font-size: 26rpx;
-  color: #6366f1;
-  font-weight: 500;
+.route-meta {
+  font-size: 22rpx;
+  color: #9ca3af;
+  line-height: 1.4;
 }
 
 .load-more,
