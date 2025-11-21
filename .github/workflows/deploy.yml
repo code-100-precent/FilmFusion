@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build JAR (if needed)
-        run: ./mvnw clean package -DskipTests  # 或 ./gradlew bootJar
+        run: mvn clean package -DskipTests  # 或 ./gradlew bootJar
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
