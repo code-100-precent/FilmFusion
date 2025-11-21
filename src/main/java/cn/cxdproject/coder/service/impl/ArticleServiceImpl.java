@@ -56,6 +56,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
+    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
     public ArticleVO getArticleById(Long articleId) {
         Object store = cache.getIfPresent(CaffeineConstants.ARTICLE + articleId);
         if (store != null) {
@@ -72,7 +73,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
 
     @Override
-//    @CircuitBreaker(name = "articlePage", fallbackMethod = "getPageFallback")
+    @CircuitBreaker(name = "get", fallbackMethod = "getPageFallback")
     public Page<ArticleVO> getArticlePage(Page<Article> page, String keyword) {
 
         long current = page.getCurrent();
@@ -117,7 +118,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                                 JsonUtils.toJson(article),
                                 Duration.ofMinutes(30)
                         );
-                        cache.put(CaffeineConstants.ARTICLE+article.getId(),article);
+                        cache.put(CaffeineConstants.ARTICLE + article.getId(), article);
                     })
                     .collect(Collectors.toMap(Article::getId, a -> a));
 
@@ -148,7 +149,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (currentUser == null) {
             throw new BusinessException(UNAUTHORIZED.code(), "未登录");
         }
-        if(createDTO.getCover()==null){
+        if (createDTO.getCover() == null) {
             createDTO.setCover(Constants.DEFAULT_COVER);
         }
         // 创建文章
@@ -183,10 +184,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (updateDTO.getContent() != null) {
             article.setContent(updateDTO.getContent());
         }
-        if(updateDTO.getCover() != null){
+        if (updateDTO.getCover() != null) {
             article.setCover(updateDTO.getCover());
         }
-        if(updateDTO.getImage() != null){
+        if (updateDTO.getImage() != null) {
             article.setImage(updateDTO.getImage());
         }
 
@@ -210,7 +211,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
         }
-        cache.invalidate(CaffeineConstants.ARTICLE+articleId);
+        cache.invalidate(CaffeineConstants.ARTICLE + articleId);
     }
 
 
@@ -249,12 +250,25 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return null;
     }
 
-//    @Override
-//    public List getPageFallback(Page<Article> page, String keyword, Throwable e) {
-//        Object store = redisUtils.get(TaskConstants.ARTICLE);
-//        return store;
-//
-//    }
+    @Override
+    public List<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e) {
+        try {
+            String json = (String) redisUtils.get(TaskConstants.ARTICLE);
+            if (json == null || json.isEmpty()) {
+                return Collections.emptyList();
+            }
 
+            // 使用数组方式反序列化
+            ArticleVO[] array = JsonUtils.fromJson(json, ArticleVO[].class);
+            if (array == null) {
+                return Collections.emptyList();
+            }
 
+            return new ArrayList<>(Arrays.asList(array));
+
+        } catch (Exception ex) {
+            log.error("fallback 反序列化失败", ex);
+            return Collections.emptyList();
+        }
+    }
 }

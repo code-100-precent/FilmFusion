@@ -1,24 +1,25 @@
 package cn.cxdproject.coder.service.impl;
 
-import cn.cxdproject.coder.common.constants.CaffeineConstants;
-import cn.cxdproject.coder.common.constants.Constants;
-import cn.cxdproject.coder.common.constants.RedisKeyConstants;
-import cn.cxdproject.coder.common.constants.ResponseConstants;
+import cn.cxdproject.coder.common.constants.*;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateLocationDTO;
 import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
 import cn.cxdproject.coder.model.entity.Article;
+import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.vo.ArticleVO;
+import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.mapper.LocationMapper;
 import cn.cxdproject.coder.service.LocationService;
 import cn.cxdproject.coder.utils.JsonUtils;
+import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -39,13 +40,15 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     private final LocationMapper locationMapper;
     private final Cache<String, Object> cache;
     private final RedisTemplate redisTemplate;
+    public  final RedisUtils redisUtils;
 
     public LocationServiceImpl(
             LocationMapper locationMapper,
-            @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate) {
+            @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate, RedisUtils redisUtils) {
         this.locationMapper = locationMapper;
         this.cache = cache;
         this.redisTemplate = redisTemplate;
+        this.redisUtils = redisUtils;
     }
 
     @Override
@@ -125,6 +128,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
 
 
     @Override
+    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
     public LocationVO getLocationById(Long locationId) {
         Object store = cache.asMap().get(CaffeineConstants.LOCATION + locationId);
         if (store != null) {
@@ -140,6 +144,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
+    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
     public Page<LocationVO> getLocationPage(Page<Location> page, String keyword) {
 
         long current = page.getCurrent();
@@ -277,5 +282,43 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                .updatedAt(location.getUpdatedAt())
                .image(location.getImage())
                .build();
+    }
+
+    @Override
+    public LocationVO getByIdFallBack(Long id) {
+        String key = CaffeineConstants.LOCATION + id;
+        Object store;
+        store = cache.getIfPresent(key);
+        if (store != null) {
+            return toLocationVO((Location) store);
+        }
+        store = redisUtils.get(key);
+        if (store != null) {
+            Location location = JsonUtils.fromJson((String) store, Location.class);
+            return toLocationVO(location);
+        }
+        return null;
+    }
+
+    @Override
+    public List<LocationVO> getPageFallback(Page<Location> page, String keyword, Throwable e) {
+        try {
+            String json = (String) redisUtils.get(TaskConstants.LOCATION);
+            if (json == null || json.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            // 使用数组方式反序列化
+            LocationVO[] array = JsonUtils.fromJson(json, LocationVO[].class);
+            if (array == null) {
+                return Collections.emptyList();
+            }
+
+            return new ArrayList<>(Arrays.asList(array));
+
+        } catch (Exception ex) {
+            log.error("fallback 反序列化失败", ex);
+            return Collections.emptyList();
+        }
     }
 }

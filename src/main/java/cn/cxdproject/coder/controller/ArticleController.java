@@ -44,7 +44,6 @@ public class ArticleController {
      */
     @GetMapping("/{id}")
     @PublicAccess
-    @CircuitBreaker(name = "articlePage", fallbackMethod = "getByIdFallback")
     public ApiResponse<ArticleVO> getArticleById(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
         ArticleVO articleVO = articleService.getArticleById(id);
         return ApiResponse.success(articleVO);
@@ -55,7 +54,6 @@ public class ArticleController {
      */
     @GetMapping("/page")
     @PublicAccess
-
     public PageResponse<ArticleVO> getArticlePage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
