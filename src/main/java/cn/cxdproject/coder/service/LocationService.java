@@ -2,10 +2,14 @@ package cn.cxdproject.coder.service;
 
 import cn.cxdproject.coder.model.dto.CreateLocationDTO;
 import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
+import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
+import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 /**
  * Location 服务接口
@@ -28,4 +32,8 @@ public interface LocationService extends IService<Location> {
     void deleteLocationByAdmin(Long locationId);
     
     LocationVO toLocationVO(Location location);
+
+    LocationVO getByIdFallBack(Long id);
+
+    List<LocationVO> getPageFallback(Page<Location> page, String keyword, Throwable e);
 }

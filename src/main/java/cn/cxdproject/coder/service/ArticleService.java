@@ -7,6 +7,8 @@ import cn.cxdproject.coder.model.vo.ArticleVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 /**
  * Article 服务接口
  *
@@ -66,5 +68,5 @@ public interface ArticleService extends IService<Article> {
 
     ArticleVO getByIdFallBack(Long id);
 
-//    Page<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e);
+    List<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e);
 }

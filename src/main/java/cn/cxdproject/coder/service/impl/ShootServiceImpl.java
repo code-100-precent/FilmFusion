@@ -1,22 +1,23 @@
 package cn.cxdproject.coder.service.impl;
 
-import cn.cxdproject.coder.common.constants.CaffeineConstants;
-import cn.cxdproject.coder.common.constants.Constants;
-import cn.cxdproject.coder.common.constants.RedisKeyConstants;
-import cn.cxdproject.coder.common.constants.ResponseConstants;
+import cn.cxdproject.coder.common.constants.*;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateShootDTO;
 import cn.cxdproject.coder.model.dto.UpdateShootDTO;
+import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.entity.Shoot;
+import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.mapper.ShootMapper;
 import cn.cxdproject.coder.service.ShootService;
 import cn.cxdproject.coder.utils.JsonUtils;
+import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -37,14 +38,16 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     private final ShootMapper shootMapper;
     private final Cache<String, Object> cache;
-    public final RedisTemplate redisTemplate;
+    public  final RedisTemplate redisTemplate;
+    private final RedisUtils redisUtils;
 
     public ShootServiceImpl(
             ShootMapper shootMapper,
-            @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate) {
+            @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate, RedisUtils redisUtils) {
         this.shootMapper = shootMapper;
         this.cache = cache;
         this.redisTemplate = redisTemplate;
+        this.redisUtils = redisUtils;
     }
 
     @Override
@@ -117,6 +120,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
+    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
     public ShootVO getShootById(Long shootId) {
         Object store = cache.asMap().get(CaffeineConstants.SHOOT + shootId);
         if (store != null) {
@@ -132,6 +136,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
+    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
     public Page<ShootVO> getShootPage(Page<Shoot> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();
@@ -261,5 +266,43 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .updatedAt(shoot.getUpdatedAt())
                 .image(shoot.getImage())
                 .build();
+    }
+
+    @Override
+    public ShootVO getByIdFallBack(Long id) {
+        String key = CaffeineConstants.SHOOT + id;
+        Object store;
+        store = cache.getIfPresent(key);
+        if (store != null) {
+            return toShootVO((Shoot) store);
+        }
+        store = redisUtils.get(key);
+        if (store != null) {
+            Shoot shoot = JsonUtils.fromJson((String) store, Shoot.class);
+            return toShootVO(shoot);
+        }
+        return null;
+    }
+
+    @Override
+    public List<ShootVO> getPageFallback(Page<Shoot> page, String keyword, Throwable e) {
+        try {
+            String json = (String) redisUtils.get(TaskConstants.SHOOT);
+            if (json == null || json.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            // 使用数组方式反序列化
+            ShootVO[] array = JsonUtils.fromJson(json, ShootVO[].class);
+            if (array == null) {
+                return Collections.emptyList();
+            }
+
+            return new ArrayList<>(Arrays.asList(array));
+
+        } catch (Exception ex) {
+            log.error("fallback 反序列化失败", ex);
+            return Collections.emptyList();
+        }
     }
 }

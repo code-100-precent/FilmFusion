@@ -2,10 +2,14 @@ package cn.cxdproject.coder.service;
 
 import cn.cxdproject.coder.model.dto.CreateDramaDTO;
 import cn.cxdproject.coder.model.dto.UpdateDramaDTO;
+import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Drama;
+import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 /**
  * Drama 服务接口
@@ -52,4 +56,8 @@ public interface DramaService extends IService<Drama> {
      * 转换为VO
      */
     DramaVO toDramaVO(Drama drama);
+
+    DramaVO getByIdFallBack(Long id);
+
+    List<DramaVO> getPageFallback(Page<Drama> page, String keyword, Throwable e);
 }

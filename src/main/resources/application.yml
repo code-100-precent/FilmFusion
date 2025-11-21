@@ -127,6 +127,9 @@ resilience4j:
       update:
         max-concurrent-calls: 30
         max-wait-duration: 50ms
+      get:
+        max-concurrent-calls: 30
+        max-wait-duration: 50ms
 
     configs:
       default:
