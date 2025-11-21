@@ -22,15 +22,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/myapp
-            # 停止旧进程（根据端口或 jar 名）
             pkill -f myapp.jar || true
-            # 删除旧文件
-            rm -rf *.jar
-            # 上传新 JAR（这里假设你构建在 target/）
-            # 注意：SSH action 不能直接传文件，所以我们要在服务器上 git clone + build
-            # 更推荐方式：在服务器上拉代码并构建
-            git clone https://github.com/code-100-precent/FilmFusion.git
+            rm -rf *
+            git clone https://github.com/code-100-precent/FilmFusion.git .
             ./mvnw clean package -DskipTests
-            # 启动应用（后台运行）
             nohup java -jar target/*.jar > app.log 2>&1 &
-            echo $! > app.pid
+            echo "App started with PID $(cat app.pid)"
