@@ -44,4 +44,33 @@
             'image'
     </sql>
 
+    <select id="getPageDramaIds" resultType="java.lang.Long">
+        SELECT id
+        FROM fi_dramas
+        <where>
+            <if test="keyword != null and keyword != ''">
+                drama_description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByKeyword" resultType="long">
+        SELECT COUNT(*)
+        FROM fi_dramas
+        <where>
+            <if test="keyword != null and keyword != ''">
+                drama_description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Drama">
+        SELECT id, name, drama_description,cover,issue_time,cast
+        FROM fi_dramas
+        ORDER BY created_time DESC
+            LIMIT 10
+    </select>
+
 </mapper>

@@ -58,14 +58,20 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
     /**
      * 联系人电话
      */
-    @TableField("contact_phone")
-    private String contactPhone;
+    @TableField("location_principal_phone")
+    private String locationPrincipalPhone;
 
     /**
      * 联系人
      */
-    @TableField("contact_name")
-    private String contactName;
+    @TableField("location_principal_name")
+    private String locationPrincipalName;
+
+    @TableField("gov_principal_phone")
+    private String govPrincipalPhone;
+
+    @TableField("gov_principal_name")
+    private String govPrincipalName;
 
     /**
      * 地址
@@ -90,15 +96,6 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
 
     @TableField("image")
     private String image;
-
-    @TableField("deleted")
-    private Boolean deleted;
-
-    @TableField("created_at")
-    private LocalDateTime createdAt;
-
-    @TableField("updated_at")
-    private LocalDateTime updatedAt;
 
     @Override
     public Location clone() {

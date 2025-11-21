@@ -38,4 +38,33 @@
             'image'
     </sql>
 
+    <select id="getPageShootIds" resultType="java.lang.Long">
+        SELECT id
+        FROM fi_shoots
+        <where>
+            <if test="keyword != null and keyword != ''">
+                description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByKeyword" resultType="long">
+        SELECT COUNT(*)
+        FROM fi_shoots
+        <where>
+            <if test="keyword != null and keyword != ''">
+                description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Shoot">
+        SELECT id, name, description, price, status,cover,address
+        FROM fi_shoots
+        ORDER BY created_at DESC
+            LIMIT 10
+    </select>
+
 </mapper>

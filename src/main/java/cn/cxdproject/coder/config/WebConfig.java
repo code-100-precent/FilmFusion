@@ -79,8 +79,9 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 // 协拍服务模块的管理员接口
                 .addPathPatterns("/api/shoot/admin/**")
                 // 反馈模块的管理员接口
-                .addPathPatterns("/api/feedback/admin/**");
-        
+                .addPathPatterns("/api/feedback/admin/**")
+                //banner模块接口
+                . addPathPatterns("/api/banner/**");
         registry.addInterceptor(registrationInterceptor)
                 .addPathPatterns("/api/admin/register/email");
     }

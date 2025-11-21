@@ -24,5 +24,5 @@ public interface BannerService extends IService<Banner> {
 
     BannerVO getImageById(Long id);
 
-    public BannerVO toBannerVO(Banner banner);
+    BannerVO toBannerVO(Banner banner);
 }

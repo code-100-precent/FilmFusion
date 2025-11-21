@@ -1,32 +1,29 @@
 package cn.cxdproject.coder.service.impl;
 
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
-import cn.cxdproject.coder.common.constants.ShootConstants;
-import cn.cxdproject.coder.common.context.AuthContext;
+import cn.cxdproject.coder.common.constants.Constants;
+import cn.cxdproject.coder.common.constants.RedisKeyConstants;
+import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
-import cn.cxdproject.coder.mapper.ArticleMapper;
 import cn.cxdproject.coder.model.dto.CreateShootDTO;
 import cn.cxdproject.coder.model.dto.UpdateShootDTO;
-import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Shoot;
-import cn.cxdproject.coder.model.entity.User;
-import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.mapper.ShootMapper;
 import cn.cxdproject.coder.service.ShootService;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import cn.cxdproject.coder.utils.JsonUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
@@ -40,18 +37,20 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     private final ShootMapper shootMapper;
     private final Cache<String, Object> cache;
+    public final RedisTemplate redisTemplate;
 
     public ShootServiceImpl(
             ShootMapper shootMapper,
-            @Qualifier("cache") Cache<String, Object> cache) {
+            @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate) {
         this.shootMapper = shootMapper;
         this.cache = cache;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     public ShootVO createShoot(Long userId, CreateShootDTO createDTO) {
         if(createDTO.getCover()==null){
-            createDTO.setCover("https://auto-avatar.oss-cn-beijing.aliyuncs.com/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20251115152833_120_8.jpg");
+            createDTO.setCover(Constants.DEFAULT_COVER);
         }
 
         Shoot shoot = Shoot.builder()
@@ -63,10 +62,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .phone(createDTO.getPhone())
                 .contactName(createDTO.getContactName())
                 .userId(userId)
-                .deleted(false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .iamge(createDTO.getImage())
+                .image(createDTO.getImage())
                 .build();
 
         this.save(shoot);
@@ -77,11 +73,11 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     public ShootVO updateShoot(Long userId, Long shootId, UpdateShootDTO updateDTO) {
         Shoot shoot = this.getById(shootId);
         if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
         if (!shoot.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), ShootConstants.NO_PERMISSION);
+            throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
         }
 
         if (updateDTO.getName() != null) shoot.setName(updateDTO.getName());
@@ -92,9 +88,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (updateDTO.getPhone() != null) shoot.setPhone(updateDTO.getPhone());
         if (updateDTO.getContactName() != null) shoot.setContactName(updateDTO.getContactName());
         if (updateDTO.getCover() != null) shoot.setCover(updateDTO.getCover());
-        if (updateDTO.getImage() != null) shoot.setIamge(updateDTO.getImage());
+        if (updateDTO.getImage() != null) shoot.setImage(updateDTO.getImage());
 
-        shoot.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
         this.updateById(shoot);
         return toShootVO(shoot);
@@ -113,9 +108,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (!updated) {
             Shoot shoot = this.getById(shootId);
             if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             } else {
-                throw new BusinessException(FORBIDDEN.code(), ShootConstants.NO_PERMISSION);
+                throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
             }
         }
         cache.invalidate(CaffeineConstants.SHOOT+shootId);
@@ -129,7 +124,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         } else {
             Shoot shoot = this.getById(shootId);
             if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
             cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
             return toShootVO(shoot);
@@ -138,64 +133,78 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     @Override
     public Page<ShootVO> getShootPage(Page<Shoot> page, String keyword) {
-        QueryWrapper<Shoot> wrapper = new QueryWrapper<>();
+        long current = page.getCurrent();
+        long size = page.getSize();
+        long offset = (current - 1) * size;
 
-        wrapper.select("id", "name", "description", "price", "status", "cover","address")
-                .eq("deleted", false);
+        List<Long> ids = shootMapper.getPageShootIds(keyword, offset, size);
+        long total = shootMapper.countByKeyword(keyword);
 
-        if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like("description", keyword));
+        if (ids.isEmpty()) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
-        wrapper.orderByDesc("created_at");
+        // 1. 批量从 Redis 获取缓存
+        List<String> keys = ids.stream().map(id -> RedisKeyConstants.SHOOT + id).collect(Collectors.toList());
+        List<String> cachedJsons = redisTemplate.opsForValue().multiGet(keys);
 
-        Page<Shoot> shootPage = this.page(page, wrapper);
+        // 2. 构建Shoot列表：优先用缓存，缺失的记录 ID
+        List<Shoot> shoots = new ArrayList<>(Collections.nCopies(ids.size(), null));
+        List<Long> missingIds = new ArrayList<>();
 
-        List<ShootVO> voList = shootPage.getRecords().stream()
-                .map(shoot -> new ShootVO(
-                        shoot.getId(),
-                        shoot.getName(),
-                        shoot.getDescription(),
-                        shoot.getPrice(),
-                        shoot.getStatus(),
-                        shoot.getCover(),
-                        shoot.getAddress()
-                ))
+        for (int i = 0; i < ids.size(); i++) {
+            String json = cachedJsons.get(i);
+            if (json != null) {
+                try {
+                    shoots.set(i, JsonUtils.fromJson(json, Shoot.class));
+                } catch (Exception e) {
+                    missingIds.add(ids.get(i));
+                }
+            } else {
+                missingIds.add(ids.get(i));
+            }
+        }
+
+        if (!missingIds.isEmpty()) {
+            List<Shoot> dbShoots = shootMapper.selectBatchIds(missingIds);
+            Map<Long, Shoot> dbMap = dbShoots.stream()
+                    .peek(shoot -> {
+                        // 回填 Redis 缓存
+                        redisTemplate.opsForValue().set(
+                                RedisKeyConstants.SHOOT + shoot.getId(),
+                                JsonUtils.toJson(shoot),
+                                Duration.ofMinutes(30)
+                        );
+                        cache.put(CaffeineConstants.SHOOT+shoot.getId(),shoot);
+                    })
+                    .collect(Collectors.toMap(Shoot::getId, a -> a));
+
+            // 填回原位置
+            for (int i = 0; i < ids.size(); i++) {
+                if (shoots.get(i) == null) {
+                    shoots.set(i, dbMap.get(ids.get(i)));
+                }
+            }
+        }
+
+        List<ShootVO> voList = shoots.stream()
+                .map(this::toShootVO)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        Page<ShootVO> voPage = new Page<>(shootPage.getCurrent(), shootPage.getSize(), shootPage.getTotal());
-        voPage.setRecords(voList);
+        return new Page<ShootVO>()
+                .setCurrent(current)
+                .setSize(size)
+                .setTotal(total)
+                .setRecords(voList);
 
-        return voPage;
     }
-
-//    @Override
-//    public ShootVO createShootByAdmin(CreateShootDTO createDTO) {
-//        User currentUser = AuthContext.getCurrentUser();
-//        if (currentUser == null) {
-//            throw new BusinessException(UNAUTHORIZED.code(), "未登录");
-//        }
-//
-//        Shoot shoot = Shoot.builder()
-//                .name(createDTO.getName())
-//                .description(createDTO.getDescription())
-//                .price(createDTO.getPrice())
-//                .status(createDTO.getStatus())
-//                .address(createDTO.getAddress())
-//                .phone(createDTO.getPhone())
-//                .contactName(createDTO.getContactName())
-//                .userId(currentUser.getId())
-//                .build();
-//
-//        this.save(shoot);
-//        return toShootVO(shoot);
-//    }
 
     @Override
     public ShootVO updateShootByAdmin(Long shootId, UpdateShootDTO updateDTO) {
         Shoot shoot = this.getById(shootId);
         if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
         if (updateDTO.getName() != null) shoot.setName(updateDTO.getName());
@@ -206,7 +215,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (updateDTO.getPhone() != null) shoot.setPhone(updateDTO.getPhone());
         if (updateDTO.getContactName() != null) shoot.setContactName(updateDTO.getContactName());
         if (updateDTO.getCover() != null) shoot.setCover(updateDTO.getCover());
-        if (updateDTO.getImage() != null) shoot.setIamge(updateDTO.getImage());
+        if (updateDTO.getImage() != null) shoot.setImage(updateDTO.getImage());
 
         shoot.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
@@ -226,58 +235,11 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (!updated) {
             Shoot shoot = this.getById(shootId);
             if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), ShootConstants.NOT_FIND);
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
         }
         cache.invalidate(CaffeineConstants.SHOOT+shootId);
     }
-
-//    @Override
-//    public Page<ShootVO> getShootPageByAdmin(Page<Shoot> page, String keyword) {
-//        QueryWrapper<Shoot> wrapper = new QueryWrapper<>();
-//
-//        wrapper.select("id", "name", "description", "price", "status", "cover","address");
-//
-//        if (keyword != null && !keyword.isEmpty()) {
-//            wrapper.and(w -> w.like("description", keyword));
-//        }
-//
-//        wrapper.orderByDesc("created_at");
-//
-//        Page<Shoot> shootPage = this.page(page, wrapper);
-//
-//        List<ShootVO> voList = shootPage.getRecords().stream()
-//                .map(shoot -> new ShootVO(
-//                        shoot.getId(),
-//                        shoot.getName(),
-//                        shoot.getDescription(),
-//                        shoot.getPrice(),
-//                        shoot.getStatus(),
-//                        shoot.getCover(),
-//                        shoot.getAddress()
-//                ))
-//                .collect(Collectors.toList());
-//
-//        Page<ShootVO> voPage = new Page<>(shootPage.getCurrent(), shootPage.getSize(), shootPage.getTotal());
-//        voPage.setRecords(voList);
-//
-//        return voPage;
-//    }
-
-//    @Override
-//    public ShootVO getShootByIdByAdmin(Long shootId) {
-//        Object store = cache.asMap().get(CaffeineConstants.SHOOT + shootId);
-//        if (store != null) {
-//            return toShootVO((Shoot) store);
-//        } else {
-//            Shoot shoot = this.getById(shootId);
-//            if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-//                throw new NotFoundException(NOT_FOUND.code(), "服务不存在");
-//            }
-//            cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
-//            return toShootVO(shoot);
-//        }
-//    }
 
     @Override
     public ShootVO toShootVO(Shoot shoot) {
@@ -297,7 +259,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .cover(shoot.getCover())
                 .createdAt(shoot.getCreatedAt())
                 .updatedAt(shoot.getUpdatedAt())
-                .image(shoot.getIamge())
+                .image(shoot.getImage())
                 .build();
     }
 }

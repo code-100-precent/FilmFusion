@@ -9,6 +9,8 @@ import cn.cxdproject.coder.model.entity.Banner;
 import cn.cxdproject.coder.model.vo.BannerVO;
 import cn.cxdproject.coder.service.BannerService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -20,6 +22,8 @@ import javax.validation.constraints.NotNull;
  */
 @RestController
 @RequestMapping("/api/banner")
+@Slf4j
+@Validated
 public class BannerController {
 
     private final BannerService bannerService;
@@ -29,24 +33,18 @@ public class BannerController {
     }
 
     /**
-     * 新增 Banner 记录
-     * @param entity 实体对象
-     * @return 是否新增成功
+     * 查找 Banner 记录
      */
     @GetMapping("/{id}")
-    @PublicAccess
     public ApiResponse<BannerVO> getImageById(@PathVariable @NotNull(message = "图片ID不能为空") Long id) {
         BannerVO bannerVo = bannerService.getImageById(id);
         return ApiResponse.success(bannerVo);
     }
 
     /**
-     * 更新 Banner 记录
-     * @param entity 实体对象（必须包含主键 ID）
-     * @return 是否更新成功
+     * 分页查询
      */
     @GetMapping("/page")
-    @PublicAccess
     public PageResponse<BannerVO> getImagePage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
@@ -62,12 +60,18 @@ public class BannerController {
         );
     }
 
+    /**
+     * 新增图片
+     */
     @PostMapping
     public ApiResponse<BannerVO> createImage(@Valid @RequestBody CreateBannerDTO createDTO) {
         BannerVO bannerVo = bannerService.createImage(createDTO);
         return ApiResponse.success(bannerVo);
     }
 
+    /**
+     * 更新图片信息
+     */
     @PutMapping("/update/{id}")
     public ApiResponse<BannerVO> updateImage(
             @PathVariable @NotNull(message = "图片ID不能为空") Long id,
@@ -76,6 +80,9 @@ public class BannerController {
         return ApiResponse.success(bannerVO);
     }
 
+    /**
+     * 删除
+     */
     @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deleteImage(@PathVariable @NotNull(message = "图片ID不能为空") Long id) {
         bannerService.deleteImage(id);

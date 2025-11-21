@@ -112,15 +112,6 @@ public class ShootController {
     // ==================== 管理员接口 ====================
 
     /**
-     * 管理员创建协拍服务
-     */
-//    @PostMapping("/admin/create")
-//    public ApiResponse<ShootVO> createShootByAdmin(@Valid @RequestBody CreateShootDTO createDTO) {
-//        ShootVO shootVO = shootService.createShootByAdmin(createDTO);
-//        return ApiResponse.success(shootVO);
-//    }
-
-    /**
      * 管理员更新协拍服务
      */
     @PutMapping("/admin/update/{id}")
@@ -140,30 +131,4 @@ public class ShootController {
         return ApiResponse.success();
     }
 
-    /**
-     * 管理员分页查询协拍服务
-     */
-//    @GetMapping("/admin/page")
-//    public PageResponse<ShootVO> getShootPageByAdmin(
-//            @RequestParam(defaultValue = "1") Integer current,
-//            @RequestParam(defaultValue = "10") Integer size,
-//            @RequestParam(required = false) String keyword) {
-//        Page<Shoot> page = new Page<>(current, size);
-//        Page<ShootVO> shootPage = shootService.getShootPageByAdmin(page, keyword);
-//        return PageResponse.of(
-//                (int) shootPage.getCurrent(),
-//                (int) shootPage.getSize(),
-//                shootPage.getTotal(),
-//                shootPage.getRecords()
-//        );
-//    }
-
-    /**
-     * 管理员获取协拍服务详情
-     */
-//    @GetMapping("/admin/{id}")
-//    public ApiResponse<ShootVO> getShootByIdByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-//        ShootVO shootVO = shootService.getShootByIdByAdmin(id);
-//        return ApiResponse.success(shootVO);
-//    }
 }
