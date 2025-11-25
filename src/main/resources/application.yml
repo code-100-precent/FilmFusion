@@ -116,22 +116,104 @@ management:
 
 
 resilience4j:
-  bulkhead:
-    instances:
-      add:
-        max-concurrent-calls: 10
-        max-wait-duration: 100ms   # 等待获取许可的最大时间，超时抛出 BulkheadFullException
-      delete:
-        max-concurrent-calls: 30
-        max-wait-duration: 50ms
-      update:
-        max-concurrent-calls: 30
-        max-wait-duration: 50ms
-      get:
-        max-concurrent-calls: 30
-        max-wait-duration: 50ms
 
+  # Bulkhead：并发隔离 / 限并发
+  bulkhead:
     configs:
       default:
         max-concurrent-calls: 25
         max-wait-duration: 100ms
+
+    instances:
+      add:
+        base-config: default
+        max-concurrent-calls: 10
+        max-wait-duration: 100ms   # 写操作可以稍微等一下
+
+      delete:
+        base-config: default
+        max-concurrent-calls: 20
+        max-wait-duration: 50ms
+
+      update:
+        base-config: default
+        max-concurrent-calls: 20
+        max-wait-duration: 50ms
+
+      get:
+        base-config: default
+        max-concurrent-calls: 50
+        max-wait-duration: 50ms
+
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 50
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 5
+        automatic-transition-from-open-to-half-open-enabled: true
+
+    instances:
+      articleGetPage:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      articleGetById:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      dramaGetPage:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      dramaGetById:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      locationGetPage:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      locationGetById:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      shootGetPage:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      shootGetById:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      hotelGetPage:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      hotelGetById:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      tourGetPage:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      tourGetById:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException

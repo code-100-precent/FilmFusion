@@ -74,7 +74,6 @@ public class ArticleController {
      * 管理员创建文章
      */
     @PostMapping("/admin/create")
-    @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
     public ApiResponse<ArticleVO> createArticleByAdmin(@Valid @RequestBody CreateArticleDTO createDTO) {
         ArticleVO articleVO = articleService.createArticleByAdmin(createDTO);
         return ApiResponse.success(articleVO);
@@ -84,7 +83,6 @@ public class ArticleController {
      * 管理员更新文章
      */
     @PutMapping("/admin/update/{id}")
-    @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
     public ApiResponse<ArticleVO> updateArticleByAdmin(
             @PathVariable @NotNull(message = "文章ID不能为空") Long id,
             @Valid @RequestBody UpdateArticleDTO updateDTO) {
@@ -97,17 +95,11 @@ public class ArticleController {
      * 管理员删除文章
      */
     @DeleteMapping("/admin/delete/{id}")
-    @Bulkhead(name = "delete", type = Bulkhead.Type.SEMAPHORE)
     public ApiResponse<Void> deleteArticleByAdmin(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
         // 权限检查在拦截器中完成
         articleService.deleteArticleByAdmin(id);
         return ApiResponse.success();
     }
 
-    //根据id查询降级
-    public ApiResponse<ArticleVO> getByIdFallback(Long id) {
-        ArticleVO articleVO = articleService.getByIdFallBack(id);
-        return ApiResponse.success(articleVO);
-    }
 
 }

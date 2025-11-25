@@ -35,13 +35,10 @@ public class ReportController {
         this.reportService = reportService;
     }
 
-    // ==================== 公开接口 ====================
-
     /**
      * 获取影视剧备案详情（公开）
      */
     @GetMapping("/{id}")
-    @PublicAccess
     public ApiResponse<ReportVO> getReportById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
@@ -56,7 +53,7 @@ public class ReportController {
     /**
      * 创建影视剧备案
      */
-    @PostMapping
+    @PostMapping("/create")
     public ApiResponse<ReportVO> createReport(@Valid @RequestBody CreateReportDTO createDTO) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {

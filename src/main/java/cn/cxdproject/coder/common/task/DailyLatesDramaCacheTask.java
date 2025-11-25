@@ -8,6 +8,7 @@ import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.utils.JsonUtils;
+import cn.cxdproject.coder.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,18 +22,19 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class DailyLatesDramaCacheTask {
+
     private final DramaMapper dramaMapper;
+    private final RedisUtils redisUtils;
 
-    private final RedisTemplate<String, String> redisTemplate;
-
-    public DailyLatesDramaCacheTask(DramaMapper dramaMapper, RedisTemplate<String, String> redisTemplate) {
+    public DailyLatesDramaCacheTask(DramaMapper dramaMapper,
+                                    RedisUtils redisUtils) {
         this.dramaMapper = dramaMapper;
-        this.redisTemplate = redisTemplate;
+        this.redisUtils = redisUtils;
     }
 
 
     @Scheduled(cron = "0 0 2 * * ?")
-    public void cacheLatest10Articles() {
+    public void cacheLatest10Dramas() {
         try {
             // 1. 从数据库查询最新10条
             List<Drama> latestDramas = dramaMapper.selectLatest10();
@@ -45,14 +47,13 @@ public class DailyLatesDramaCacheTask {
             // 2. 转为 VO 列表
             List<DramaVO> voList = latestDramas.stream()
                     .map(this::toDramaVO)
-                    .filter(vo -> vo != null)
                     .collect(Collectors.toList());
 
             // 3. 序列化
             String json = JsonUtils.toJson(voList);
 
             // 4. 写入 Redis，有效期25小时
-            redisTemplate.opsForValue().set(
+            redisUtils.set(
                     TaskConstants.DRAMA,
                     json,
                     Duration.ofHours(25)

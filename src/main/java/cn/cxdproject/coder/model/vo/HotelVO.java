@@ -1,45 +1,69 @@
 package cn.cxdproject.coder.model.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 拍摄场地视图对象
- * 
- * @author heathcetide
- */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class LocationVO {
-    
+public class HotelVO {
+
+    /**
+     * 主键ID
+     */
     private Long id;
+
+    /**
+     * 住宿名称
+     */
     private String name;
-    private String type;
-    private Boolean status;
-    private String locationDescription;
-    private String locationPrincipalPhone;
-    private String locationPrincipalName;
-    private String govPrincipalPhone;
-    private String govPrincipalName;
+
+    /**
+     * 介绍
+     */
+    private String description;
+
+    /**
+     * 地址
+     */
     private String address;
-    private BigDecimal price;
-    private Long userId;
+
+    /**
+     * 负责人名称
+     */
+    private String managerName;
+
+    /**
+     * 负责人电话
+     */
+    private String managerPhone;
+
+    /**
+     * 封面
+     */
     private String cover;
+
+    /**
+     * 图片
+     */
     private String image;
+
+    private Long userId;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
+
+    /**
+     * 更新时间
+     */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
 
 }
-

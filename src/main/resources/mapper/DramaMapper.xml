@@ -67,7 +67,7 @@
     </select>
 
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Drama">
-        SELECT id, name, drama_description,cover,issue_time,cast
+        SELECT id, name, drama_description,cover
         FROM fi_dramas
         ORDER BY created_time DESC
             LIMIT 10

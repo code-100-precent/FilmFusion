@@ -5,8 +5,8 @@ import cn.cxdproject.coder.mapper.ArticleMapper;
 import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.utils.JsonUtils;
+import cn.cxdproject.coder.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,15 +16,15 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j
-public class DailyLatestArtiicleCacheTask {
+public class DailyLatestArticleCacheTask {
 
     private final ArticleMapper articleMapper;
+    private final RedisUtils redisUtils;
 
-    private final RedisTemplate<String, String> redisTemplate;
-
-    public DailyLatestArtiicleCacheTask(ArticleMapper articleMapper, RedisTemplate<String, String> redisTemplate) {
+    public DailyLatestArticleCacheTask(ArticleMapper articleMapper,
+                                       RedisUtils redisUtils) {
         this.articleMapper = articleMapper;
-        this.redisTemplate = redisTemplate;
+        this.redisUtils = redisUtils;
     }
 
     @Scheduled(cron = "0 0 2 * * ?")
@@ -41,14 +41,14 @@ public class DailyLatestArtiicleCacheTask {
             // 2. 转为VO
             List<ArticleVO> voList = latestArticles.stream()
                     .map(this::toArticleVO)
-                    .filter(vo -> vo != null)
                     .collect(Collectors.toList());
+
 
             // 3. 序列化
             String json = JsonUtils.toJson(voList);
 
             // 4. 写入 Redis，有效期25小时
-            redisTemplate.opsForValue().set(
+            redisUtils.set(
                     TaskConstants.ARTICLE,
                     json,
                     Duration.ofHours(25)

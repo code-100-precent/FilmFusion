@@ -2,43 +2,39 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="cn.cxdproject.coder.mapper.TourMapper">
+<mapper namespace="cn.cxdproject.coder.mapper.HotelMapper">
 
-    <resultMap id="BaseResultMap" type="cn.cxdproject.coder.model.entity.Tour">
+    <resultMap id="BaseResultMap" type="cn.cxdproject.coder.model.entity.Hotel">
         <id column="id" property="id" />
         <result column="name" property="name" />
         <result column="description" property="description" />
-        <result column="theme" property="theme" />
-        <result column="features" property="features" />
+        <result column="address" property="address" />
+        <result column="manager_name" property="managerName" />
+        <result column="manager_phone" property="managerPhone" />
         <result column="cover" property="cover" />
-        <result column="transport" property="transport" />
-        <result column="hotel" property="hotel" />
-        <result column="food" property="food" />
+        <result column="image" property="image" />
+        <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
-        <result column="deleted" property="deleted" />
-        <result column="image" property="image" />
     </resultMap>
 
     <sql id="Base_Column_List">
             `id`,
             `name`,
             `description`,
-            `theme`,
-            `features`,
+            `address`,
+            `manager_name`,
+            `manager_phone`,
             `cover`,
-            `transport`,
-            `hotel`,
-            `food`,
-            `created_at`,
-            `updated_at`,
-            `deleted`,
             `image`
+            `deleted`,
+            `created_at`,
+            `updated_at`
     </sql>
 
-    <select id="getPageTourIds" resultType="java.lang.Long">
+    <select id="getPageHotelIds" resultType="java.lang.Long">
         SELECT id
-        FROM fi_tour
+        FROM fi_hotel
         <where>
             <if test="keyword != null and keyword != ''">
                 description LIKE CONCAT('%', #{keyword}, '%')
@@ -50,7 +46,7 @@
 
     <select id="countByKeyword" resultType="long">
         SELECT COUNT(*)
-        FROM fi_tour
+        FROM fi_hotel
         <where>
             <if test="keyword != null and keyword != ''">
                 description LIKE CONCAT('%', #{keyword}, '%')
@@ -58,10 +54,10 @@
         </where>
     </select>
 
-    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Tour">
-        SELECT id, name, description, theme, features,cover
-        FROM fi_tour
-        ORDER BY created_at DESC
+    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Hotel">
+        SELECT id, name, description,cover,address
+        FROM fi_hotel
+        ORDER BY created_time DESC
             LIMIT 10
     </select>
 

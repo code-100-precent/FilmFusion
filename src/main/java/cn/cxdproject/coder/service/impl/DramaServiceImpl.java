@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -37,20 +38,21 @@ import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements DramaService {
 
     private final DramaMapper dramaMapper;
-    private final Cache<String, Object> cache;
-    private final RedisTemplate redisTemplate;
+    private final Cache<String, Object> cache;;
     private final RedisUtils redisUtils;
 
-    public DramaServiceImpl(DramaMapper dramaMapper, @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate, RedisUtils redisUtils) {
+    public DramaServiceImpl(DramaMapper dramaMapper,
+                            @Qualifier("cache") Cache<String, Object> cache,
+                            RedisUtils redisUtils) {
         this.dramaMapper = dramaMapper;
         this.cache = cache;
-        this.redisTemplate = redisTemplate;
         this.redisUtils = redisUtils;
     }
 
 
     @Override
-    public DramaVO createDrama(Long userId, CreateDramaDTO createDTO) {
+    @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
+    public DramaVO createDramaByAdmin(Long userId, CreateDramaDTO createDTO) {
         if(createDTO.getCover()==null){
             createDTO.setCover(Constants.DEFAULT_COVER);
         }
@@ -75,56 +77,8 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     }
 
     @Override
-    public DramaVO updateDrama(Long userId, Long dramaId, UpdateDramaDTO updateDTO) {
-        Drama drama = this.getById(dramaId);
-        if (drama == null || Boolean.TRUE.equals(drama.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
-        }
-
-        if (!drama.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
-        }
-
-        if (updateDTO.getName() != null) drama.setName(updateDTO.getName());
-        if (updateDTO.getFilingNum() != null) drama.setFilingNum(updateDTO.getFilingNum());
-        if (updateDTO.getProdCompany() != null) drama.setProdCompany(updateDTO.getProdCompany());
-        if (updateDTO.getCrewDescription() != null) drama.setCrewDescription(updateDTO.getCrewDescription());
-        if (updateDTO.getDramaDescription() != null) drama.setDramaDescription(updateDTO.getDramaDescription());
-        if (updateDTO.getCast() != null) drama.setCast(updateDTO.getCast());
-        if (updateDTO.getShootLocation() != null) drama.setShootLocation(updateDTO.getShootLocation());
-        if (updateDTO.getLocationId() != null) drama.setLocationId(updateDTO.getLocationId());
-        if (updateDTO.getService() != null) drama.setService(updateDTO.getService());
-        if (updateDTO.getServiceId() != null) drama.setServiceId(updateDTO.getServiceId());
-        if(updateDTO.getCover() != null) drama.setCover(updateDTO.getCover());
-        if(updateDTO.getImage() != null) drama.setImage(updateDTO.getImage());
-
-        cache.asMap().put(CaffeineConstants.DRAMA + dramaId, drama);
-        this.updateById(drama);
-        return toDramaVO(drama);
-    }
-
-    @Override
-    public void deleteDrama(Long userId, Long dramaId) {
-        boolean updated = dramaMapper.update(null,
-                Wrappers.<Drama>lambdaUpdate()
-                        .set(Drama::getDeleted, true)
-                        .eq(Drama::getId, dramaId)
-                        .eq(Drama::getUserId, userId)
-                        .eq(Drama::getDeleted, false)
-        ) > 0;
-        if (!updated) {
-            Drama drama = this.getById(dramaId);
-            if (drama == null || Boolean.TRUE.equals(drama.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
-            } else {
-                throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
-            }
-        }
-        cache.invalidate(CaffeineConstants.DRAMA+dramaId);
-    }
-
-    @Override
-    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "dramaGetById", fallbackMethod = "getByIdFallback")
+    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public DramaVO getDramaById(Long dramaId) {
         Object store = cache.asMap().get(CaffeineConstants.DRAMA + dramaId);
         if (store != null) {
@@ -140,7 +94,8 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     }
 
     @Override
-    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getByIdFallback")
+    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<DramaVO> getDramaPage(Page<Drama> page, String keyword) {
 
         long current = page.getCurrent();
@@ -156,7 +111,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
 
         // 1. 批量从 Redis 获取缓存
         List<String> keys = ids.stream().map(id -> RedisKeyConstants.DRAMA + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisTemplate.opsForValue().multiGet(keys);
+        List<String> cachedJsons = redisUtils.multiGet(keys);
 
         // 2. 构建Drama列表：优先用缓存，缺失的记录 ID
         List<Drama> articles = new ArrayList<>(Collections.nCopies(ids.size(), null));
@@ -180,7 +135,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
             Map<Long, Drama> dbMap = dbArticles.stream()
                     .peek(drama -> {
                         // 回填 Redis 缓存
-                        redisTemplate.opsForValue().set(
+                        redisUtils.set(
                                 RedisKeyConstants.DRAMA + drama.getId(),
                                 JsonUtils.toJson(drama),
                                 Duration.ofMinutes(30)
@@ -280,14 +235,13 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     }
 
     @Override
-    public DramaVO getByIdFallBack(Long id) {
-        String key = CaffeineConstants.DRAMA + id;
+    public DramaVO getByIdFallback(Long id) {
         Object store;
-        store = cache.getIfPresent(key);
+        store = cache.getIfPresent(CaffeineConstants.DRAMA + id);
         if (store != null) {
             return toDramaVO((Drama) store);
         }
-        store = redisUtils.get(key);
+        store = redisUtils.get(RedisKeyConstants.DRAMA+id);
         if (store != null) {
             Drama drama = JsonUtils.fromJson((String) store, Drama.class);
             return toDramaVO(drama);
@@ -296,24 +250,34 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     }
 
     @Override
-    public List<DramaVO> getPageFallback(Page<Drama> page, String keyword, Throwable e) {
+    public Page<DramaVO> getPageFallback(Page<Drama> page, String keyword, Throwable e) {
         try {
             String json = (String) redisUtils.get(TaskConstants.DRAMA);
             if (json == null || json.isEmpty()) {
-                return Collections.emptyList();
+                return new Page<DramaVO>()
+                        .setCurrent(page.getCurrent())
+                        .setSize(page.getSize())
+                        .setTotal(0)
+                        .setRecords(Collections.emptyList());
             }
 
-            // 使用数组方式反序列化
             DramaVO[] array = JsonUtils.fromJson(json, DramaVO[].class);
-            if (array == null) {
-                return Collections.emptyList();
-            }
+            List<DramaVO> list = array != null ? Arrays.asList(array) : Collections.emptyList();
 
-            return new ArrayList<>(Arrays.asList(array));
+            long total = list.size();
 
+            return new Page<DramaVO>()
+                    .setCurrent(page.getCurrent())
+                    .setSize(page.getSize())
+                    .setTotal(total)
+                    .setRecords(new ArrayList<>(list));
         } catch (Exception ex) {
-            log.error("fallback 反序列化失败", ex);
-            return Collections.emptyList();
+            log.error("getPageFallback error", ex);
+            return new Page<DramaVO>()
+                    .setCurrent(page.getCurrent())
+                    .setSize(page.getSize())
+                    .setTotal(0)
+                    .setRecords(Collections.emptyList());
         }
     }
 }

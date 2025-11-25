@@ -16,21 +16,10 @@ import java.util.List;
  * @author Hibiscus-code-generate
  */
 public interface DramaService extends IService<Drama> {
-    
     /**
-     * 创建电视剧备案（普通用户）
+     * 创建电视剧备案（只有管理员能进行）
      */
-    DramaVO createDrama(Long userId, CreateDramaDTO createDTO);
-    
-    /**
-     * 更新电视剧备案（只能更新自己的）
-     */
-    DramaVO updateDrama(Long userId, Long dramaId, UpdateDramaDTO updateDTO);
-    
-    /**
-     * 删除电视剧备案（只能删除自己的）
-     */
-    void deleteDrama(Long userId, Long dramaId);
+    DramaVO createDramaByAdmin(Long userId, CreateDramaDTO createDTO);
     
     /**
      * 获取电视剧备案详情（公开）
@@ -57,7 +46,7 @@ public interface DramaService extends IService<Drama> {
      */
     DramaVO toDramaVO(Drama drama);
 
-    DramaVO getByIdFallBack(Long id);
+    DramaVO getByIdFallback(Long id);
 
-    List<DramaVO> getPageFallback(Page<Drama> page, String keyword, Throwable e);
+    Page<DramaVO> getPageFallback(Page<Drama> page, String keyword, Throwable e);
 }

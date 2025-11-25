@@ -1,8 +1,12 @@
+
 package cn.cxdproject.coder.common.constants;
 
 public interface TaskConstants {
-    String DRAMA = "fallback:dramas";
-    String LOCATION = "fallback:locations";
-    String SHOOT = "fallback:shoots";
-    String ARTICLE = "fallback:articles";
+
+    String ARTICLE = "fallback:article";
+    String DRAMA = "fallback:drama";
+    String LOCATION = "fallback:location";
+    String SHOOT = "fallback:shoot";
+    String HOTEL = "fallback:hotel";
+    String TOUR = "fallback:tour";
 }

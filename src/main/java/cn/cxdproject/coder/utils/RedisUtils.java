@@ -2,6 +2,7 @@ package cn.cxdproject.coder.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.K;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -134,6 +136,14 @@ public class RedisUtils {
         }
 
         return objectMapper.convertValue(value, clazz);
+    }
+
+    //批量查询key
+    public List<Object> multiGet(Collection<String> keys) {
+        if (keys == null || keys.isEmpty()) {
+            return List.of();
+        }
+        return redisTemplate.opsForValue().multiGet(keys);
     }
 
     /**
