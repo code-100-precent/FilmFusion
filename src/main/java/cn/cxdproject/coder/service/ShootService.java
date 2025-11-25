@@ -17,14 +17,12 @@ import java.util.List;
  */
 public interface ShootService extends IService<Shoot> {
     
-    ShootVO createShoot(Long userId, CreateShootDTO createDTO);
-    ShootVO updateShoot(Long userId, Long shootId, UpdateShootDTO updateDTO);
-    void deleteShoot(Long userId, Long shootId);
+    ShootVO createShootByAdmin(Long userId, CreateShootDTO createDTO);
     ShootVO getShootById(Long shootId);
     Page<ShootVO> getShootPage(Page<Shoot> page, String keyword);
     ShootVO updateShootByAdmin(Long shootId, UpdateShootDTO updateDTO);
     void deleteShootByAdmin(Long shootId);
     ShootVO toShootVO(Shoot shoot);
-    ShootVO getByIdFallBack(Long id);
-    List<ShootVO> getPageFallback(Page<Shoot> page, String keyword, Throwable e);
+    ShootVO getByIdFallback(Long id);
+    Page<ShootVO> getPageFallback(Page<Shoot> page, String keyword, Throwable e);
 }

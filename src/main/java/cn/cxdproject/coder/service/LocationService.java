@@ -17,11 +17,7 @@ import java.util.List;
  */
 public interface LocationService extends IService<Location> {
     
-    LocationVO createLocation(Long userId, CreateLocationDTO createDTO);
-    
-    LocationVO updateLocation(Long userId, Long locationId, UpdateLocationDTO updateDTO);
-
-    void deleteLocation(Long userId, Long locationId);
+    LocationVO createLocationByAdmin(Long userId, CreateLocationDTO createDTO);
 
     LocationVO getLocationById(Long locationId);
 
@@ -33,7 +29,7 @@ public interface LocationService extends IService<Location> {
     
     LocationVO toLocationVO(Location location);
 
-    LocationVO getByIdFallBack(Long id);
+    LocationVO getByIdFallback(Long id);
 
-    List<LocationVO> getPageFallback(Page<Location> page, String keyword, Throwable e);
+    Page<LocationVO> getPageFallback(Page<Location> page, String keyword, Throwable e);
 }

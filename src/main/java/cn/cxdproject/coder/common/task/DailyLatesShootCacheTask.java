@@ -7,6 +7,7 @@ import cn.cxdproject.coder.model.entity.Shoot;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.utils.JsonUtils;
+import cn.cxdproject.coder.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,15 +22,16 @@ import java.util.stream.Collectors;
 public class DailyLatesShootCacheTask {
     private final ShootMapper shootMapper;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisUtils redisUtils;
 
-    public DailyLatesShootCacheTask(ShootMapper shootMapper, RedisTemplate<String, String> redisTemplate) {
+    public DailyLatesShootCacheTask(ShootMapper shootMapper,
+                                    RedisUtils redisUtils) {
         this.shootMapper = shootMapper;
-        this.redisTemplate = redisTemplate;
+        this.redisUtils = redisUtils;
     }
 
     @Scheduled(cron = "0 0 2 * * ?")
-    public void cacheLatest10Articles() {
+    public void cacheLatest10Shoots() {
         try {
             // 1. 从数据库查询最新10条
             List<Shoot> latestShoots = shootMapper.selectLatest10();
@@ -42,14 +44,13 @@ public class DailyLatesShootCacheTask {
             // 2. 转为VO列表
             List<ShootVO> voList = latestShoots.stream()
                     .map(this::toShootVO)
-                    .filter(vo -> vo != null)
                     .collect(Collectors.toList());
 
             // 3. 序列化
             String json = JsonUtils.toJson(voList);
 
             // 4. 写入 Redis，有效期25小时
-            redisTemplate.opsForValue().set(
+            redisUtils.set(
                     TaskConstants.SHOOT,
                     json,
                     Duration.ofHours(25)

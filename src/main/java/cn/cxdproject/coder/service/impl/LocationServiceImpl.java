@@ -10,6 +10,7 @@ import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
+import cn.cxdproject.coder.model.vo.HotelVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.mapper.LocationMapper;
 import cn.cxdproject.coder.service.LocationService;
@@ -19,6 +20,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -39,20 +41,20 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
 
     private final LocationMapper locationMapper;
     private final Cache<String, Object> cache;
-    private final RedisTemplate redisTemplate;
     public  final RedisUtils redisUtils;
 
     public LocationServiceImpl(
             LocationMapper locationMapper,
-            @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate, RedisUtils redisUtils) {
+            @Qualifier("cache") Cache<String, Object> cache,
+            RedisUtils redisUtils) {
         this.locationMapper = locationMapper;
         this.cache = cache;
-        this.redisTemplate = redisTemplate;
         this.redisUtils = redisUtils;
     }
 
     @Override
-    public LocationVO createLocation(Long userId, CreateLocationDTO createDTO) {
+    @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
+    public LocationVO createLocationByAdmin(Long userId, CreateLocationDTO createDTO) {
         if(createDTO.getCover()==null){
             createDTO.setCover(Constants.DEFAULT_COVER);
         }
@@ -70,6 +72,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .price(createDTO.getPrice())
                 .userId(userId)
                 .image(createDTO.getImage())
+                .cover(createDTO.getCover())
                 .build();
 
         this.save(location);
@@ -77,58 +80,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
-    public LocationVO updateLocation(Long userId, Long locationId, UpdateLocationDTO updateDTO) {
-        Location location = this.getById(locationId);
-        if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
-        }
-
-        if (!location.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
-        }
-
-        if (updateDTO.getName() != null) location.setName(updateDTO.getName());
-        if (updateDTO.getType() != null) location.setType(updateDTO.getType());
-        if (updateDTO.getStatus() != null) location.setStatus(updateDTO.getStatus());
-        if (updateDTO.getLocationDescription() != null) location.setLocationDescription(updateDTO.getLocationDescription());
-        if (updateDTO.getLocationPrincipalName() != null) location.setLocationPrincipalName(updateDTO.getLocationPrincipalName());
-        if (updateDTO.getLocationPrincipalPhone() != null) location.setLocationPrincipalPhone(updateDTO.getLocationPrincipalPhone());
-        if (updateDTO.getGovPrincipalName() != null) location.setGovPrincipalName(updateDTO.getGovPrincipalName());
-        if (updateDTO.getGovPrincipalPhone() != null) location.setGovPrincipalPhone(updateDTO.getGovPrincipalPhone());
-        if (updateDTO.getAddress() != null) location.setAddress(updateDTO.getAddress());
-        if (updateDTO.getPrice() != null) location.setPrice(updateDTO.getPrice());
-        if(updateDTO.getCover() != null) location.setCover(updateDTO.getCover());
-        if(updateDTO.getImage() != null) location.setImage(updateDTO.getImage());
-
-        cache.asMap().put(CaffeineConstants.LOCATION + locationId, location);
-        this.updateById(location);
-        return toLocationVO(location);
-    }
-
-    @Override
-    public void deleteLocation(Long userId, Long locationId) {
-        boolean updated = locationMapper.update(null,
-                Wrappers.<Location>lambdaUpdate()
-                        .set(Location::getDeleted, true)
-                        .eq(Location::getId, locationId)
-                        .eq(Location::getUserId, userId)
-                        .eq(Location::getDeleted, false)
-        ) > 0;
-
-        if (!updated) {
-            Location location = this.getById(locationId);
-            if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
-            } else {
-                throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
-            }
-        }
-        cache.invalidate(CaffeineConstants.LOCATION+locationId);
-    }
-
-
-    @Override
-    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "locationGetById", fallbackMethod = "getByIdFallback")
+    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public LocationVO getLocationById(Long locationId) {
         Object store = cache.asMap().get(CaffeineConstants.LOCATION + locationId);
         if (store != null) {
@@ -144,7 +97,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
-    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "locationGetPage", fallbackMethod = "getByIdFallback")
+    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<LocationVO> getLocationPage(Page<Location> page, String keyword) {
 
         long current = page.getCurrent();
@@ -160,7 +114,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
 
         // 1. 批量从 Redis 获取缓存
         List<String> keys = ids.stream().map(id -> RedisKeyConstants.LOCATION + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisTemplate.opsForValue().multiGet(keys);
+        List<String> cachedJsons = redisUtils.multiGet(keys);
 
         // 2. 构建Location列表：优先用缓存，缺失的记录 ID
         List<Location> locations = new ArrayList<>(Collections.nCopies(ids.size(), null));
@@ -184,7 +138,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
             Map<Long, Location> dbMap = dbArticles.stream()
                     .peek(location -> {
                         // 回填 Redis 缓存
-                        redisTemplate.opsForValue().set(
+                        redisUtils.set(
                                 RedisKeyConstants.LOCATION + location.getId(),
                                 JsonUtils.toJson(location),
                                 Duration.ofMinutes(30)
@@ -216,6 +170,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
 
 
     @Override
+    @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
     public LocationVO updateLocationByAdmin(Long locationId, UpdateLocationDTO updateDTO) {
         Location location = this.getById(locationId);
         if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
@@ -241,6 +196,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
+    @Bulkhead(name = "delete", type = Bulkhead.Type.SEMAPHORE)
     public void deleteLocationByAdmin(Long locationId) {
         boolean updated = locationMapper.update(null,
                 Wrappers.<Location>lambdaUpdate()
@@ -285,14 +241,13 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
-    public LocationVO getByIdFallBack(Long id) {
-        String key = CaffeineConstants.LOCATION + id;
+    public LocationVO getByIdFallback(Long id) {
         Object store;
-        store = cache.getIfPresent(key);
+        store = cache.getIfPresent(CaffeineConstants.LOCATION + id);
         if (store != null) {
             return toLocationVO((Location) store);
         }
-        store = redisUtils.get(key);
+        store = redisUtils.get(RedisKeyConstants.LOCATION+id);
         if (store != null) {
             Location location = JsonUtils.fromJson((String) store, Location.class);
             return toLocationVO(location);
@@ -301,24 +256,34 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
-    public List<LocationVO> getPageFallback(Page<Location> page, String keyword, Throwable e) {
+    public Page<LocationVO> getPageFallback(Page<Location> page, String keyword, Throwable e) {
         try {
             String json = (String) redisUtils.get(TaskConstants.LOCATION);
             if (json == null || json.isEmpty()) {
-                return Collections.emptyList();
+                return new Page<LocationVO>()
+                        .setCurrent(page.getCurrent())
+                        .setSize(page.getSize())
+                        .setTotal(0)
+                        .setRecords(Collections.emptyList());
             }
 
-            // 使用数组方式反序列化
             LocationVO[] array = JsonUtils.fromJson(json, LocationVO[].class);
-            if (array == null) {
-                return Collections.emptyList();
-            }
+            List<LocationVO> list = array != null ? Arrays.asList(array) : Collections.emptyList();
 
-            return new ArrayList<>(Arrays.asList(array));
+            long total = list.size();
 
+            return new Page<LocationVO>()
+                    .setCurrent(page.getCurrent())
+                    .setSize(page.getSize())
+                    .setTotal(total)
+                    .setRecords(new ArrayList<>(list));
         } catch (Exception ex) {
-            log.error("fallback 反序列化失败", ex);
-            return Collections.emptyList();
+            log.error("getPageFallback error", ex);
+            return new Page<LocationVO>()
+                    .setCurrent(page.getCurrent())
+                    .setSize(page.getSize())
+                    .setTotal(0)
+                    .setRecords(Collections.emptyList());
         }
     }
 }

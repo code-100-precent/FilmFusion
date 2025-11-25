@@ -66,7 +66,7 @@ public interface ArticleService extends IService<Article> {
      */
     ArticleVO toArticleVO(Article article);
 
-    ArticleVO getByIdFallBack(Long id);
+    ArticleVO getByIdFallback(Long id,Throwable e);
 
-    List<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e);
+    Page<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e);
 }

@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -38,20 +39,20 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     private final ShootMapper shootMapper;
     private final Cache<String, Object> cache;
-    public  final RedisTemplate redisTemplate;
     private final RedisUtils redisUtils;
 
     public ShootServiceImpl(
             ShootMapper shootMapper,
-            @Qualifier("cache") Cache<String, Object> cache, RedisTemplate redisTemplate, RedisUtils redisUtils) {
+            @Qualifier("cache") Cache<String, Object> cache,
+            RedisUtils redisUtils) {
         this.shootMapper = shootMapper;
         this.cache = cache;
-        this.redisTemplate = redisTemplate;
         this.redisUtils = redisUtils;
     }
 
     @Override
-    public ShootVO createShoot(Long userId, CreateShootDTO createDTO) {
+    @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
+    public ShootVO createShootByAdmin(Long userId, CreateShootDTO createDTO) {
         if(createDTO.getCover()==null){
             createDTO.setCover(Constants.DEFAULT_COVER);
         }
@@ -65,6 +66,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .phone(createDTO.getPhone())
                 .contactName(createDTO.getContactName())
                 .userId(userId)
+                .cover(createDTO.getCover())
                 .image(createDTO.getImage())
                 .build();
 
@@ -73,54 +75,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    public ShootVO updateShoot(Long userId, Long shootId, UpdateShootDTO updateDTO) {
-        Shoot shoot = this.getById(shootId);
-        if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
-        }
-
-        if (!shoot.getUserId().equals(userId)) {
-            throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
-        }
-
-        if (updateDTO.getName() != null) shoot.setName(updateDTO.getName());
-        if (updateDTO.getDescription() != null) shoot.setDescription(updateDTO.getDescription());
-        if (updateDTO.getPrice() != null) shoot.setPrice(updateDTO.getPrice());
-        if (updateDTO.getStatus() != null) shoot.setStatus(updateDTO.getStatus());
-        if (updateDTO.getAddress() != null) shoot.setAddress(updateDTO.getAddress());
-        if (updateDTO.getPhone() != null) shoot.setPhone(updateDTO.getPhone());
-        if (updateDTO.getContactName() != null) shoot.setContactName(updateDTO.getContactName());
-        if (updateDTO.getCover() != null) shoot.setCover(updateDTO.getCover());
-        if (updateDTO.getImage() != null) shoot.setImage(updateDTO.getImage());
-
-        cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
-        this.updateById(shoot);
-        return toShootVO(shoot);
-    }
-
-    @Override
-    public void deleteShoot(Long userId, Long shootId) {
-        boolean updated = shootMapper.update(null,
-                Wrappers.<Shoot>lambdaUpdate()
-                        .set(Shoot::getDeleted, true)
-                        .eq(Shoot::getId, shootId)
-                        .eq(Shoot::getUserId, userId)
-                        .eq(Shoot::getDeleted, false)
-        ) > 0;
-
-        if (!updated) {
-            Shoot shoot = this.getById(shootId);
-            if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
-                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
-            } else {
-                throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
-            }
-        }
-        cache.invalidate(CaffeineConstants.SHOOT+shootId);
-    }
-
-    @Override
-    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "shootGetById", fallbackMethod = "getByIdFallback")
+    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public ShootVO getShootById(Long shootId) {
         Object store = cache.asMap().get(CaffeineConstants.SHOOT + shootId);
         if (store != null) {
@@ -136,7 +92,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getByIdFallback")
+    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<ShootVO> getShootPage(Page<Shoot> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();
@@ -151,7 +108,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
         // 1. 批量从 Redis 获取缓存
         List<String> keys = ids.stream().map(id -> RedisKeyConstants.SHOOT + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisTemplate.opsForValue().multiGet(keys);
+        List<String> cachedJsons = redisUtils.multiGet(keys);
 
         // 2. 构建Shoot列表：优先用缓存，缺失的记录 ID
         List<Shoot> shoots = new ArrayList<>(Collections.nCopies(ids.size(), null));
@@ -175,7 +132,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
             Map<Long, Shoot> dbMap = dbShoots.stream()
                     .peek(shoot -> {
                         // 回填 Redis 缓存
-                        redisTemplate.opsForValue().set(
+                        redisUtils.set(
                                 RedisKeyConstants.SHOOT + shoot.getId(),
                                 JsonUtils.toJson(shoot),
                                 Duration.ofMinutes(30)
@@ -206,6 +163,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
+    @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
     public ShootVO updateShootByAdmin(Long shootId, UpdateShootDTO updateDTO) {
         Shoot shoot = this.getById(shootId);
         if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
@@ -229,6 +187,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
+    @Bulkhead(name = "delete", type = Bulkhead.Type.SEMAPHORE)
     public void deleteShootByAdmin(Long shootId) {
         boolean updated = shootMapper.update(null,
                 Wrappers.<Shoot>lambdaUpdate()
@@ -269,14 +228,13 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    public ShootVO getByIdFallBack(Long id) {
-        String key = CaffeineConstants.SHOOT + id;
+    public ShootVO getByIdFallback(Long id) {
         Object store;
-        store = cache.getIfPresent(key);
+        store = cache.getIfPresent(CaffeineConstants.SHOOT + id);
         if (store != null) {
             return toShootVO((Shoot) store);
         }
-        store = redisUtils.get(key);
+        store = redisUtils.get(RedisKeyConstants.SHOOT+id);
         if (store != null) {
             Shoot shoot = JsonUtils.fromJson((String) store, Shoot.class);
             return toShootVO(shoot);
@@ -285,24 +243,34 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    public List<ShootVO> getPageFallback(Page<Shoot> page, String keyword, Throwable e) {
+    public Page<ShootVO> getPageFallback(Page<Shoot> page, String keyword, Throwable e) {
         try {
             String json = (String) redisUtils.get(TaskConstants.SHOOT);
             if (json == null || json.isEmpty()) {
-                return Collections.emptyList();
+                return new Page<ShootVO>()
+                        .setCurrent(page.getCurrent())
+                        .setSize(page.getSize())
+                        .setTotal(0)
+                        .setRecords(Collections.emptyList());
             }
 
-            // 使用数组方式反序列化
             ShootVO[] array = JsonUtils.fromJson(json, ShootVO[].class);
-            if (array == null) {
-                return Collections.emptyList();
-            }
+            List<ShootVO> list = array != null ? Arrays.asList(array) : Collections.emptyList();
 
-            return new ArrayList<>(Arrays.asList(array));
+            long total = list.size();
 
+            return new Page<ShootVO>()
+                    .setCurrent(page.getCurrent())
+                    .setSize(page.getSize())
+                    .setTotal(total)
+                    .setRecords(new ArrayList<>(list));
         } catch (Exception ex) {
-            log.error("fallback 反序列化失败", ex);
-            return Collections.emptyList();
+            log.error("getPageFallback error", ex);
+            return new Page<ShootVO>()
+                    .setCurrent(page.getCurrent())
+                    .setSize(page.getSize())
+                    .setTotal(0)
+                    .setRecords(Collections.emptyList());
         }
     }
 }

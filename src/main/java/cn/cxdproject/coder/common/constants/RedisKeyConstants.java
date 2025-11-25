@@ -15,6 +15,8 @@ public interface RedisKeyConstants {
     String DRAMA = "drama";
     String LOCATION = "location";
     String SHOOT = "shoot";
+    String HOTEL = "hotel";
+    String TOUR = "tour";
 
 
     static String getTaskResultKey(Long taskId) {

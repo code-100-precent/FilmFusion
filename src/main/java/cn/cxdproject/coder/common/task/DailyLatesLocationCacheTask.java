@@ -8,6 +8,7 @@ import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.utils.JsonUtils;
+import cn.cxdproject.coder.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,16 +22,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DailyLatesLocationCacheTask {
     private final LocationMapper locationMapper;
+    private final RedisUtils redisUtils;
 
-    private final RedisTemplate<String, String> redisTemplate;
-
-    public DailyLatesLocationCacheTask(LocationMapper locationMapper, RedisTemplate<String, String> redisTemplate) {
+    public DailyLatesLocationCacheTask(LocationMapper locationMapper,
+                                       RedisUtils redisUtils) {
         this.locationMapper = locationMapper;
-        this.redisTemplate = redisTemplate;
+        this.redisUtils = redisUtils;
     }
 
     @Scheduled(cron = "0 0 2 * * ?")
-    public void cacheLatest10Articles() {
+    public void cacheLatest10Locations() {
         try {
             // 1. 从数据库查询最新10条
             List<Location> latestLocations = locationMapper.selectLatest10();
@@ -43,14 +44,13 @@ public class DailyLatesLocationCacheTask {
             // 2. 转为VO列表
             List<LocationVO> voList = latestLocations.stream()
                     .map(this::toLocationVO)
-                    .filter(vo -> vo != null)
                     .collect(Collectors.toList());
 
             // 3. 序列化
             String json = JsonUtils.toJson(voList);
 
             // 4. 写入 Redis，有效期 25 小时
-            redisTemplate.opsForValue().set(
+            redisUtils.set(
                     TaskConstants.LOCATION,
                     json,
                     Duration.ofHours(25)

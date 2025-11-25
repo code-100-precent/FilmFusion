@@ -7,4 +7,6 @@ public interface CaffeineConstants {
     String LOCATION = "location";
     String REPORT = "report";
     String SHOOT = "shoot";
+    String HOTEL = "hotel";
+    String TOUR = "tour";
 }

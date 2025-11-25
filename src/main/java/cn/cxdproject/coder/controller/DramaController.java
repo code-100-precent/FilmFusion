@@ -11,6 +11,7 @@ import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.service.DramaService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -68,46 +69,6 @@ public class DramaController {
 
     // ==================== 普通用户接口 ====================
 
-    /**
-     * 创建电视剧备案
-     */
-    @PostMapping
-    public ApiResponse<DramaVO> createDrama(@Valid @RequestBody CreateDramaDTO createDTO) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
-        }
-        DramaVO dramaVO = dramaService.createDrama(currentUser.getId(), createDTO);
-        return ApiResponse.success(dramaVO);
-    }
-
-    /**
-     * 更新电视剧备案（只能更新自己的）
-     */
-    @PutMapping("/update/{id}")
-    public ApiResponse<DramaVO> updateDrama(
-            @PathVariable @NotNull(message = "ID不能为空") Long id,
-            @Valid @RequestBody UpdateDramaDTO updateDTO) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
-        }
-        DramaVO dramaVO = dramaService.updateDrama(currentUser.getId(), id, updateDTO);
-        return ApiResponse.success(dramaVO);
-    }
-
-    /**
-     * 删除电视剧备案（只能删除自己的）
-     */
-    @DeleteMapping("/delete/{id}")
-    public ApiResponse<Void> deleteDrama(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
-        }
-        dramaService.deleteDrama(currentUser.getId(), id);
-        return ApiResponse.success();
-    }
 
     // ==================== 管理员接口 ====================
 
@@ -121,6 +82,20 @@ public class DramaController {
         DramaVO dramaVO = dramaService.updateDramaByAdmin(id, updateDTO);
         return ApiResponse.success(dramaVO);
     }
+
+    /**
+     * 创建电视剧备案
+     */
+    @PostMapping("/admin/create")
+    public ApiResponse<DramaVO> createDrama(@Valid @RequestBody CreateDramaDTO createDTO) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        DramaVO dramaVO = dramaService.createDramaByAdmin(currentUser.getId(), createDTO);
+        return ApiResponse.success(dramaVO);
+    }
+
 
     /**
      * 管理员删除电视剧备案

@@ -189,6 +189,39 @@ CREATE TABLE `fi_banner` (
     UNIQUE KEY `sort` (`sort`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
 
+CREATE TABLE `fi_hotel` (
+     `id`              INT                NOT NULL AUTO_INCREMENT,
+     `name`            VARCHAR ( 30 )     NOT NULL COMMENT '住宿名称',
+     `description`     VARCHAR ( 255 )    NOT NULL COMMENT '介绍',
+     `address`         VARCHAR ( 50 )     NOT NULL COMMENT '地址',
+     `manager_name`    VARCHAR ( 15 )     NOT NULL COMMENT '负责人名称',
+     `manager_phone`   VARCHAR ( 20 )     NOT NULL COMMENT '负责人电话',
+     `cover`           VARCHAR ( 255 )    NOT NULL COMMENT '封面',
+     `image`           VARCHAR ( 300 )    DEFAULT NULL COMMENT '图片',
+     `created_at`      DATETIME           NOT NULL,
+     `updated_at`      DATETIME           NOT NULL,
+     `deleted`         TINYINT            NOT NULL,
+     `user_id`         int               NOT NULL,
+      PRIMARY KEY ( `id` )
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
+
+CREATE TABLE `fi_tour` (
+     `id`              int               NOT NULL AUTO_INCREMENT,
+     `name`            varchar(255)      NOT NULL COMMENT '体验游名称',
+     `description`     varchar(2550)     NOT NULL COMMENT '介绍',
+     `theme`           varchar(50)       NOT NULL COMMENT '主题',
+     `features`        varchar(2550)     NOT NULL COMMENT '特点',
+     `cover`           varchar(2550)     NOT NULL COMMENT '封面',
+     `transport`       varchar(2550)     NOT NULL COMMENT '交通方式',
+      `hotel`          varchar(2550)     NOT NULL COMMENT '周边旅馆',
+     `food`            varchar(2550)     NOT NULL COMMENT '美食推荐',
+     `created_at`      datetime          NOT NULL,
+     `updated_at`      datetime          NOT NULL,
+     `deleted`         tinyint           NOT NULL,
+     `image`          varchar(2550)     DEFAULT NULL,
+      PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
 # ==================== 插入Mock数据 ====================
 
 # 插入用户数据（密码都是123456的BCrypt加密值）

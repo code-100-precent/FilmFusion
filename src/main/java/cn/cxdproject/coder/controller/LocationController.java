@@ -11,6 +11,7 @@ import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.service.LocationService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -68,48 +69,21 @@ public class LocationController {
 
     // ==================== 普通用户接口 ====================
 
+    // ==================== 管理员接口 ====================
+
+
     /**
      * 创建拍摄场地
      */
-    @PostMapping
+    @PostMapping("/admin/create")
     public ApiResponse<LocationVO> createLocation(@Valid @RequestBody CreateLocationDTO createDTO) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
             return ApiResponse.error(401, "未登录");
         }
-        LocationVO locationVO = locationService.createLocation(currentUser.getId(), createDTO);
+        LocationVO locationVO = locationService.createLocationByAdmin(currentUser.getId(), createDTO);
         return ApiResponse.success(locationVO);
     }
-
-    /**
-     * 更新拍摄场地（只能更新自己的）
-     */
-    @PutMapping("/update/{id}")
-    public ApiResponse<LocationVO> updateLocation(
-            @PathVariable @NotNull(message = "ID不能为空") Long id,
-            @Valid @RequestBody UpdateLocationDTO updateDTO) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
-        }
-        LocationVO locationVO = locationService.updateLocation(currentUser.getId(), id, updateDTO);
-        return ApiResponse.success(locationVO);
-    }
-
-    /**
-     * 删除拍摄场地（只能删除自己的）
-     */
-    @DeleteMapping("/delete/{id}")
-    public ApiResponse<Void> deleteLocation(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
-        }
-        locationService.deleteLocation(currentUser.getId(), id);
-        return ApiResponse.success();
-    }
-
-    // ==================== 管理员接口 ====================
 
     /**
      * 管理员更新拍摄场地

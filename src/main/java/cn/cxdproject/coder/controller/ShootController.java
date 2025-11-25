@@ -11,6 +11,7 @@ import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.service.ShootService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -66,50 +67,21 @@ public class ShootController {
         );
     }
 
-    // ==================== 普通用户接口 ====================
+    // ==================== 管理员接口 ====================
 
     /**
      * 创建协拍服务
      */
-    @PostMapping
+    @PostMapping("/admin/create")
     public ApiResponse<ShootVO> createShoot(@Valid @RequestBody CreateShootDTO createDTO) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
             return ApiResponse.error(401, "未登录");
         }
-        ShootVO shootVO = shootService.createShoot(currentUser.getId(), createDTO);
+        ShootVO shootVO = shootService.createShootByAdmin(currentUser.getId(), createDTO);
         return ApiResponse.success(shootVO);
     }
 
-    /**
-     * 更新协拍服务（只能更新自己的）
-     */
-    @PutMapping("/update/{id}")
-    public ApiResponse<ShootVO> updateShoot(
-            @PathVariable @NotNull(message = "ID不能为空") Long id,
-            @Valid @RequestBody UpdateShootDTO updateDTO) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
-        }
-        ShootVO shootVO = shootService.updateShoot(currentUser.getId(), id, updateDTO);
-        return ApiResponse.success(shootVO);
-    }
-
-    /**
-     * 删除协拍服务（只能删除自己的）
-     */
-    @DeleteMapping("/delete/{id}")
-    public ApiResponse<Void> deleteShoot(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
-        }
-        shootService.deleteShoot(currentUser.getId(), id);
-        return ApiResponse.success();
-    }
-
-    // ==================== 管理员接口 ====================
 
     /**
      * 管理员更新协拍服务

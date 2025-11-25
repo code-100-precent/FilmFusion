@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,22 +42,21 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     private final ArticleMapper articleMapper;
     private final Cache<String, Object> cache;
-    private final RedisTemplate redisTemplate;
     private final RedisUtils redisUtils;
 
     public ArticleServiceImpl(
             ArticleMapper articleMapper,
             @Qualifier("cache") Cache<String, Object> cache,
-            RedisTemplate redisTemplate, RedisUtils redisUtils
+            RedisUtils redisUtils
     ) {
         this.articleMapper = articleMapper;
         this.cache = cache;
-        this.redisTemplate = redisTemplate;
         this.redisUtils = redisUtils;
     }
 
     @Override
-    @CircuitBreaker(name = "get", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "articleGetById", fallbackMethod = "getByIdFallback")
+    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public ArticleVO getArticleById(Long articleId) {
         Object store = cache.getIfPresent(CaffeineConstants.ARTICLE + articleId);
         if (store != null) {
@@ -73,7 +73,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
 
     @Override
-    @CircuitBreaker(name = "get", fallbackMethod = "getPageFallback")
+    @CircuitBreaker(name = "articleGetPage", fallbackMethod = "getPageFallback")
+    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<ArticleVO> getArticlePage(Page<Article> page, String keyword) {
 
         long current = page.getCurrent();
@@ -89,7 +90,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         // 1. 批量从 Redis 获取缓存
         List<String> keys = ids.stream().map(id -> RedisKeyConstants.ARTICLE + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisTemplate.opsForValue().multiGet(keys);
+        List<String> cachedJsons = redisUtils.multiGet(keys);
 
         // 2. 构建 Article 列表：优先用缓存，缺失的记录 ID
         List<Article> articles = new ArrayList<>(Collections.nCopies(ids.size(), null));
@@ -113,7 +114,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             Map<Long, Article> dbMap = dbArticles.stream()
                     .peek(article -> {
                         // 回填 Redis 缓存
-                        redisTemplate.opsForValue().set(
+                        redisUtils.set(
                                 RedisKeyConstants.ARTICLE + article.getId(),
                                 JsonUtils.toJson(article),
                                 Duration.ofMinutes(30)
@@ -143,6 +144,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
+    @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
     public ArticleVO createArticleByAdmin(CreateArticleDTO createDTO) {
         // 获取当前管理员用户
         User currentUser = AuthContext.getCurrentUser();
@@ -169,6 +171,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
+    @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
     public ArticleVO updateArticleByAdmin(Long articleId, UpdateArticleDTO updateDTO) {
         Article article = this.getById(articleId);
         if (article == null || Boolean.TRUE.equals(article.getDeleted())) {
@@ -197,6 +200,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
+    @Bulkhead(name = "delete", type = Bulkhead.Type.SEMAPHORE)
     public void deleteArticleByAdmin(Long articleId) {
         boolean updated = articleMapper.update(null,
                 Wrappers.<Article>lambdaUpdate()
@@ -235,14 +239,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public ArticleVO getByIdFallBack(Long articleId) {
-        String key = CaffeineConstants.ARTICLE + articleId;
+    public ArticleVO getByIdFallback(Long articleId,Throwable e) {
         Object store;
-        store = cache.getIfPresent(key);
+        store = cache.getIfPresent(CaffeineConstants.ARTICLE + articleId);
         if (store != null) {
             return toArticleVO((Article) store);
         }
-        store = redisUtils.get(key);
+        store = redisUtils.get(RedisKeyConstants.ARTICLE+articleId);
         if (store != null) {
             Article article = JsonUtils.fromJson((String) store, Article.class);
             return toArticleVO(article);
@@ -251,24 +254,34 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public List<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e) {
+    public Page<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e) {
         try {
             String json = (String) redisUtils.get(TaskConstants.ARTICLE);
             if (json == null || json.isEmpty()) {
-                return Collections.emptyList();
+                return new Page<ArticleVO>()
+                        .setCurrent(page.getCurrent())
+                        .setSize(page.getSize())
+                        .setTotal(0)
+                        .setRecords(Collections.emptyList());
             }
 
-            // 使用数组方式反序列化
             ArticleVO[] array = JsonUtils.fromJson(json, ArticleVO[].class);
-            if (array == null) {
-                return Collections.emptyList();
-            }
+            List<ArticleVO> list = array != null ? Arrays.asList(array) : Collections.emptyList();
 
-            return new ArrayList<>(Arrays.asList(array));
+            long total = list.size();
 
+            return new Page<ArticleVO>()
+                    .setCurrent(page.getCurrent())
+                    .setSize(page.getSize())
+                    .setTotal(total)
+                    .setRecords(new ArrayList<>(list));
         } catch (Exception ex) {
-            log.error("fallback 反序列化失败", ex);
-            return Collections.emptyList();
+            log.error("getPageFallback error", ex);
+            return new Page<ArticleVO>()
+                    .setCurrent(page.getCurrent())
+                    .setSize(page.getSize())
+                    .setTotal(0)
+                    .setRecords(Collections.emptyList());
         }
     }
 }
