@@ -94,7 +94,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     }
 
     @Override
-    @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<DramaVO> getDramaPage(Page<Drama> page, String keyword) {
 
