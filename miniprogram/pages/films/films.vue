@@ -46,7 +46,7 @@
         scroll-y
         @scrolltolower="loadMore"
       >
-        <view v-if="films.length === 0" class="empty-wrapper">
+        <view v-if="films.length === 0 && !loading" class="empty-wrapper">
           <Empty text="暂无影视作品"></Empty>
         </view>
         <view v-else class="film-grid">
@@ -77,6 +77,7 @@
 <script>
 import NavBar from '../../components/NavBar/NavBar.vue'
 import Empty from '../../components/Empty/Empty.vue'
+import { getDramaPage } from '../../services/backend-api'
 
 export default {
   components: {
@@ -89,62 +90,57 @@ export default {
       selectedCategory: '全部',
       categories: ['全部', '电影', '电视剧', '网络剧', '微短剧', '纪录片'],
       films: [],
-      allFilms: [
-        {
-          id: 1,
-          name: "云上雅安",
-          type: "纪录片",
-          genre: "人文/自然",
-          releaseDate: "2023-05-12",
-          poster: "https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/film_poster_1.jpg",
-          director: "张三",
-          actors: ["李四", "王五"],
-          description: "一部展示雅安自然风光和人文历史的纪录片。",
-          scenes: ["碧峰峡", "上里古镇"]
-        },
-        {
-          id: 2,
-          name: "茶马古道",
-          type: "电视剧",
-          genre: "历史/剧情",
-          releaseDate: "2022-10-01",
-          poster: "https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/film_poster_2.jpg",
-          director: "李四",
-          actors: ["赵六", "钱七"],
-          description: "讲述茶马古道上的传奇故事。",
-          scenes: ["蒙顶山", "望鱼古镇"]
-        },
-         {
-          id: 3,
-          name: "熊猫奇缘",
-          type: "电影",
-          genre: "喜剧/冒险",
-          releaseDate: "2024-01-25",
-          poster: "https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/film_poster_3.jpg",
-          director: "王五",
-          actors: ["孙八", "周九"],
-          description: "一只大熊猫的冒险之旅。",
-          scenes: ["熊猫基地"]
-        }
-      ]
+      loading: false,
+      currentPage: 1,
+      pageSize: 10,
+      totalItems: 0,
+      hasMore: true
     }
   },
   onLoad() {
     this.loadFilms()
   },
   methods: {
-    loadFilms() {
-      let result = this.allFilms;
-      
-      if (this.selectedCategory !== '全部') {
-        result = result.filter(f => f.type === this.selectedCategory);
+    async loadFilms() {
+      this.loading = true;
+      try {
+        const params = {
+          current: 1,
+          size: this.pageSize,
+          keyword: this.keyword
+        };
+        
+        // 如果选择了分类且不是"全部"，添加类型筛选
+        if (this.selectedCategory !== '全部') {
+          params.type = this.selectedCategory;
+        }
+        
+        const response = await getDramaPage(params);
+        
+        if (response.code === 200) {
+          this.films = response.data;
+          this.totalItems = response.pagination?.totalItems || 0;
+          this.currentPage = 1;
+          this.hasMore = this.films.length < this.totalItems;
+        } else {
+          uni.showToast({
+            title: response.message || '获取数据失败',
+            icon: 'none'
+          });
+          this.films = [];
+          this.hasMore = false;
+        }
+      } catch (error) {
+        console.error('加载影视作品失败:', error);
+        uni.showToast({
+          title: '网络错误，请稍后重试',
+          icon: 'none'
+        });
+        this.films = [];
+        this.hasMore = false;
+      } finally {
+        this.loading = false;
       }
-      
-      if (this.keyword) {
-        result = result.filter(f => f.name.includes(this.keyword));
-      }
-      
-      this.films = result;
     },
     handleSearch() {
       this.loadFilms()
@@ -153,8 +149,40 @@ export default {
       this.selectedCategory = category
       this.loadFilms()
     },
-    loadMore() {
-      // Mock load more
+    async loadMore() {
+      if (this.loading || !this.hasMore) {
+        return;
+      }
+      
+      this.loading = true;
+      try {
+        const params = {
+          current: this.currentPage + 1,
+          size: this.pageSize,
+          keyword: this.keyword
+        };
+        
+        // 如果选择了分类且不是"全部"，添加类型筛选
+        if (this.selectedCategory !== '全部') {
+          params.type = this.selectedCategory;
+        }
+        
+        const response = await getDramaPage(params);
+        
+        if (response.code === 200) {
+          this.films = [...this.films, ...response.data];
+          this.currentPage++;
+          this.hasMore = this.films.length < this.totalItems;
+        }
+      } catch (error) {
+        console.error('加载更多失败:', error);
+        uni.showToast({
+          title: '加载更多失败',
+          icon: 'none'
+        });
+      } finally {
+        this.loading = false;
+      }
     },
     goToDetail(id) {
       uni.navigateTo({

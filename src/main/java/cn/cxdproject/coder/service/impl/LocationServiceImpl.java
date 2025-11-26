@@ -97,7 +97,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
-    @CircuitBreaker(name = "locationGetPage", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "locationGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<LocationVO> getLocationPage(Page<Location> page, String keyword) {
 
@@ -241,7 +241,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
-    public LocationVO getByIdFallback(Long id) {
+    public LocationVO getByIdFallback(Long id,Throwable e) {
         Object store;
         store = cache.getIfPresent(CaffeineConstants.LOCATION + id);
         if (store != null) {

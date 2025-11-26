@@ -92,7 +92,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<ShootVO> getShootPage(Page<Shoot> page, String keyword) {
         long current = page.getCurrent();
@@ -228,7 +228,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    public ShootVO getByIdFallback(Long id) {
+    public ShootVO getByIdFallback(Long id,Throwable e) {
         Object store;
         store = cache.getIfPresent(CaffeineConstants.SHOOT + id);
         if (store != null) {

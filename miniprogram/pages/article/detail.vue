@@ -33,7 +33,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import { getArticleById } from '../../services/api'
+import { getArticleById } from '../../services/backend-api'
 
 export default {
   components: {

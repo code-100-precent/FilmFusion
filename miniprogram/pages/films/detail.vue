@@ -43,14 +43,18 @@
       </view>
     </view>
     
-    <view v-else class="loading-wrapper">
+    <view v-else-if="loading" class="loading-wrapper">
       <text>加载中...</text>
+    </view>
+    <view v-else class="error-wrapper">
+      <text>作品信息加载失败</text>
     </view>
   </view>
 </template>
 
 <script>
 import NavBar from '../../components/NavBar/NavBar.vue'
+import { getDramaById } from '../../services/backend-api'
 
 export default {
   components: {
@@ -59,57 +63,63 @@ export default {
   data() {
     return {
       film: null,
-      allFilms: [
-        {
-          id: 1,
-          name: "云上雅安",
-          type: "纪录片",
-          genre: "人文/自然",
-          releaseDate: "2023-05-12",
-          poster: "https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/film_poster_1.jpg",
-          director: "张三",
-          actors: ["李四", "王五"],
-          description: "一部展示雅安自然风光和人文历史的纪录片。",
-          scenes: ["碧峰峡", "上里古镇"]
-        },
-        {
-          id: 2,
-          name: "茶马古道",
-          type: "电视剧",
-          genre: "历史/剧情",
-          releaseDate: "2022-10-01",
-          poster: "https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/film_poster_2.jpg",
-          director: "李四",
-          actors: ["赵六", "钱七"],
-          description: "讲述茶马古道上的传奇故事。",
-          scenes: ["蒙顶山", "望鱼古镇"]
-        },
-         {
-          id: 3,
-          name: "熊猫奇缘",
-          type: "电影",
-          genre: "喜剧/冒险",
-          releaseDate: "2024-01-25",
-          poster: "https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/film_poster_3.jpg",
-          director: "王五",
-          actors: ["孙八", "周九"],
-          description: "一只大熊猫的冒险之旅。",
-          scenes: ["熊猫基地"]
-        }
-      ]
+      loading: true
     }
   },
   onLoad(options) {
     if (options.id) {
-      this.loadFilmDetail(options.id)
+      // 检查用户是否已登录
+      const token = uni.getStorageSync('token')
+      if (!token) {
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none'
+        })
+        // 延迟跳转，让用户看到提示
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/login/login'
+          })
+        }, 1500)
+        this.loading = false
+      } else {
+        this.loadFilmDetail(options.id)
+      }
     }
   },
   methods: {
-    loadFilmDetail(id) {
-      // Mock API call
-      const film = this.allFilms.find(f => f.id == id);
-      if (film) {
-        this.film = film;
+    async loadFilmDetail(id) {
+      this.loading = true;
+      try {
+        const response = await getDramaById(id);
+        
+        if (response.code === 200) {
+          // 确保 actors 和 scenes 是数组格式
+          if (response.data) {
+            this.film = {
+              ...response.data,
+              actors: Array.isArray(response.data.actors) ? response.data.actors : [],
+              scenes: Array.isArray(response.data.scenes) ? response.data.scenes : []
+            };
+          }
+        } else {
+          uni.showToast({
+            title: response.message || '获取作品详情失败',
+            icon: 'none'
+          });
+        }
+      } catch (error) {
+        console.error('加载作品详情失败:', error);
+        // 不重复显示toast，因为http拦截器已经处理了401错误的跳转
+        // 只有在非401错误时才显示自定义提示
+        if (error.statusCode !== 401) {
+          uni.showToast({
+            title: '网络错误，请稍后重试',
+            icon: 'none'
+          });
+        }
+      } finally {
+        this.loading = false;
       }
     }
   }
@@ -247,9 +257,15 @@ export default {
   font-weight: 500;
 }
 
-.loading-wrapper {
-  padding: 100rpx;
-  text-align: center;
+.loading-wrapper, .error-wrapper {
+  padding: 100rpx 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   color: #9ca3af;
+}
+
+.error-wrapper {
+  color: #ef4444;
 }
 </style>

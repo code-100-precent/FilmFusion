@@ -127,7 +127,8 @@
 <script>
 import NavBar from '../../components/NavBar/NavBar.vue'
 import TabBar from '../../components/TabBar/TabBar.vue'
-import { getCurrentUserInfo, userLogout } from '../../services/api'
+// 使用真实后端API，使用别名避免与vuex action冲突
+import { getUserInfo, logout as apiLogout } from '../../services/backend-api'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -167,7 +168,7 @@ export default {
 
       this.loading = true
       try {
-        const res = await getCurrentUserInfo()
+        const res = await getUserInfo()
         if (res.code === 200 && res.data) {
           this.userInfo = res.data
         }
@@ -224,7 +225,7 @@ export default {
         success: async (res) => {
           if (res.confirm) {
             try {
-              await userLogout()
+              await apiLogout()
             } catch (error) {
               console.error('退出登录失败:', error)
             } finally {

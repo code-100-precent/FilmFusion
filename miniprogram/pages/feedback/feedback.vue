@@ -55,7 +55,7 @@
 
 <script>
 import NavBar from '@/components/NavBar/NavBar.vue'
-import { createFeedback } from '../../services/api'
+import { createFeedback } from '../../services/backend-api'
 import { mapGetters } from 'vuex'
 
 export default {

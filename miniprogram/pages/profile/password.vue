@@ -61,7 +61,7 @@
 
 <script>
 import NavBar from '../../components/NavBar/NavBar.vue'
-import { changePassword } from '../../services/api'
+import { changePassword } from '../../services/backend-api'
 
 export default {
   components: {

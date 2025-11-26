@@ -23,17 +23,9 @@
           class="feedback-card"
         >
           <view class="feedback-header">
-            <view class="feedback-type">{{ getTypeText(feedback.type) }}</view>
-            <view 
-              class="feedback-status" 
-              :class="{
-                'status-pending': feedback.status === 'PENDING',
-                'status-processing': feedback.status === 'PROCESSING',
-                'status-resolved': feedback.status === 'RESOLVED',
-                'status-rejected': feedback.status === 'REJECTED'
-              }"
-            >
-              {{ getStatusText(feedback.status) }}
+            <view class="feedback-type">{{ feedback.type }}</view>
+            <view class="feedback-status" :class="statusClassObj[feedback.status] || 'status-pending'">
+              {{ statusTextMap[feedback.status] || '待处理' }}
             </view>
           </view>
           <text class="feedback-content">{{ feedback.content }}</text>
@@ -67,24 +59,15 @@ export default {
       loading: false,
       refreshing: false,
       hasMore: true,
-      statusClassMap: {
+      statusClassObj: {
         'PENDING': 'status-pending',
         'PROCESSING': 'status-processing',
-        'RESOLVED': 'status-resolved',
-        'REJECTED': 'status-rejected'
+        'RESOLVED': 'status-resolved'
       },
       statusTextMap: {
         'PENDING': '待处理',
         'PROCESSING': '处理中',
-        'RESOLVED': '已解决',
-        'REJECTED': '已拒绝'
-      },
-      typeTextMap: {
-        'SUGGESTION': '建议',
-        'BUG_REPORT': '错误报告',
-        'FEATURE_REQUEST': '功能请求',
-        'COMPLAINT': '投诉',
-        'OTHER': '其他'
+        'RESOLVED': '已解决'
       }
     }
   },
@@ -157,12 +140,6 @@ export default {
       if (!this.hasMore || this.loading) return
       this.current++
       this.loadFeedbacks()
-    },
-    getStatusText(status) {
-      return this.statusTextMap[status] || '待处理'
-    },
-    getTypeText(type) {
-      return this.typeTextMap[type] || '其他'
     },
     formatDate(dateStr) {
       if (!dateStr) return ''

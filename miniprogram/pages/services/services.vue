@@ -110,7 +110,8 @@ import NavBar from '../../components/NavBar/NavBar.vue'
 import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
-import { getShootPage } from '../../services/api'
+// 使用真实后端API
+import { getShootPage } from '../../services/backend-api'
 
 export default {
   components: {
@@ -164,7 +165,7 @@ export default {
         })
 
         if (res.code === 200) {
-          // 后端返回格式: { code: 200, message: "请求成功", data: [...], pagination: {...} }
+          // 后端返回格式: { code: 200, message: string, data: [], pagination: {...} }
           const dataList = Array.isArray(res.data) ? res.data : []
           const pagination = res.pagination || {}
           

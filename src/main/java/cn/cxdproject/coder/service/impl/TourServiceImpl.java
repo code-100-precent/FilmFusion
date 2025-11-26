@@ -84,7 +84,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     }
 
     @Override
-    @CircuitBreaker(name = "tourGetPage", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "tourGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<TourVO> getTourPage(Page<Tour> page, String keyword) {
         long current = page.getCurrent();
@@ -221,7 +221,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     }
 
     @Override
-    public TourVO getByIdFallback(Long id) {
+    public TourVO getByIdFallback(Long id,Throwable e) {
         Object store;
         store = cache.getIfPresent(CaffeineConstants.TOUR + id);
         if (store != null) {

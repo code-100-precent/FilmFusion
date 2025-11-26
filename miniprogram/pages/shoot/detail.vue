@@ -63,7 +63,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import { getShootById } from '../../services/api'
+import { getShootById } from '../../services/backend-api'
 
 export default {
   components: {

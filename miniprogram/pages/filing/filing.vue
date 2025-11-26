@@ -5,7 +5,7 @@
     <scroll-view class="content" scroll-y>
       <!-- 页面标题 -->
       <view class="page-title">
-        <text class="title-text">剧组报备</text>
+        <text class="title-text">{{ reportId ? '编辑报备' : '剧组报备' }}</text>
       </view>
       <!-- 说明卡片 -->
       <view class="intro-card">
@@ -236,7 +236,7 @@
           :loading="submitting"
           @click="handleSubmit"
         >
-          {{ submitting ? '提交中...' : '提交报备' }}
+          {{ submitting ? '提交中...' : (reportId ? '更新报备' : '提交报备') }}
         </button>
         <text class="submit-tip">提交后，工作人员将在1个工作日内联系您</text>
       </view>
@@ -246,7 +246,8 @@
 
 <script>
 import NavBar from '../../components/NavBar/NavBar.vue'
-import { createReport } from '../../services/api'
+// 使用真实后端API
+import { createReport, updateReport, getReportById, uploadFile as apiUploadFile } from '../../services/backend-api'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -256,6 +257,7 @@ export default {
   data() {
     return {
       submitting: false,
+      reportId: '',
       typeOptions: ['电视剧', '电影', '网络剧', '纪录片', '其他'],
       genreOptions: ['历史', '现代', '古装', '悬疑', '爱情', '喜剧', '动作', '科幻', '文化', '其他'],
       crewScaleOptions: ['小型', '中型', '大型'],
@@ -302,14 +304,13 @@ export default {
         this.form.crewScale &&
         this.form.contact &&
         this.form.phoneNumber &&
-        this.form.phoneNumber &&
         this.form.crewPosition &&
         this.form.files.permit &&
         this.form.files.approval
       )
     }
   },
-  onLoad() {
+  onLoad(options) {
     if (!this.isLoggedIn) {
       uni.showModal({
         title: '提示',
@@ -321,9 +322,62 @@ export default {
           })
         }
       })
+      return
+    }
+    
+    // 如果传入了报备ID，则加载报备详情
+    if (options.id) {
+      this.reportId = options.id
+      this.loadReportDetail()
     }
   },
+  
   methods: {
+    async loadReportDetail() {
+      try {
+        uni.showLoading({ title: '加载中...' })
+        const res = await getReportById(this.reportId)
+        
+        if (res.code === 200 && res.data) {
+          const reportData = res.data
+          this.form = {
+            name: reportData.name || '',
+            type: reportData.type || '',
+            genre: reportData.genre || '',
+            episodes: reportData.episodes || null,
+            investAmount: reportData.investAmount || null,
+            mainCreators: reportData.mainCreators || '',
+            leadProducer: reportData.leadProducer || '',
+            producerUnit: reportData.producerUnit || '',
+            startDate: reportData.startDate || '',
+            endDate: reportData.endDate || '',
+            crewScale: reportData.crewScale || '',
+            contact: reportData.contact || '',
+            phoneNumber: reportData.phoneNumber || '',
+            crewPosition: reportData.crewPosition || '',
+            files: reportData.files || {
+              permit: '',
+              approval: '',
+              application: ''
+            }
+          }
+          
+          // 设置选项索引
+          this.typeIndex = this.typeOptions.indexOf(this.form.type)
+          this.genreIndex = this.genreOptions.indexOf(this.form.genre)
+          this.crewScaleIndex = this.crewScaleOptions.indexOf(this.form.crewScale)
+        } else {
+          uni.showToast({ title: '加载失败', icon: 'none' })
+          uni.navigateBack()
+        }
+      } catch (error) {
+        console.error('加载报备详情失败:', error)
+        uni.showToast({ title: '加载失败', icon: 'none' })
+        uni.navigateBack()
+      } finally {
+        uni.hideLoading()
+      }
+    },
     onTypeChange(e) {
       this.typeIndex = e.detail.value
       this.form.type = this.typeOptions[e.detail.value]
@@ -336,28 +390,171 @@ export default {
       this.crewScaleIndex = e.detail.value
       this.form.crewScale = this.crewScaleOptions[e.detail.value]
     },
+    
     onDateChange(e, field) {
       this.form[field] = e.detail.value
     },
-    uploadFile(type) {
-      // Mock upload
-      uni.chooseImage({
-        count: 1,
-        success: (res) => {
-          const tempFilePath = res.tempFilePaths[0];
-          // In a real app, upload to server here.
-          // For now, just use the temp path.
-          this.form.files[type] = tempFilePath;
-          uni.showToast({
-            title: '上传成功',
-            icon: 'success'
-          });
+    
+    async uploadFile(field) {
+      console.log('开始处理文件上传，字段:', field)
+      
+      if (!this.isLoggedIn) {
+        console.log('用户未登录')
+        uni.showModal({
+          title: '提示',
+          content: '请先登录',
+          showCancel: false,
+          success: () => {
+            uni.navigateTo({
+              url: '/pages/login/login'
+            })
+          }
+        })
+        return
+      }
+      
+      try {
+        console.log('1. 开始选择文件...')
+        // 使用uni.chooseMessageFile确保在各平台的兼容性
+        const fileResult = await uni.chooseMessageFile({
+          count: 1,
+          type: 'file',
+          extension: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+          showFileExtension: true
+        })
+        
+        console.log('2. 文件选择结果:', JSON.stringify(fileResult))
+        
+        // 兼容两种返回格式：tempFilePaths数组 或 tempFiles数组
+        let filePath = null
+        
+        // 检查是否有tempFilePaths数组
+        if (fileResult && fileResult.tempFilePaths && fileResult.tempFilePaths.length > 0) {
+          filePath = fileResult.tempFilePaths[0]
+          console.log('3. 选择的文件路径:', filePath)
+        } else if (fileResult && fileResult.tempFiles && fileResult.tempFiles.length > 0) {
+          // 从tempFiles数组中提取路径
+          filePath = fileResult.tempFiles[0].path
+          console.log('3. 从tempFiles中提取的文件路径:', filePath)
+          console.log('3.1 文件名称:', fileResult.tempFiles[0].name)
+          console.log('3.2 文件大小:', fileResult.tempFiles[0].size)
+            
+          if (filePath) {
+            uni.showLoading({ title: '上传中...' })
+              
+            try {
+              console.log('4. 开始调用上传API...')
+              console.log('4.1 上传目标URL:', 'http://localhost:8080/api/file')
+              
+              // 记录开始时间用于监控响应延迟
+              const startTime = Date.now()
+              // 调用后端API上传文件
+              const response = await apiUploadFile(filePath)
+              const endTime = Date.now()
+              
+              console.log(`5. API调用完成，响应 (耗时: ${endTime - startTime}ms):`, JSON.stringify(response))
+              
+              // 处理API响应
+              if (response) {
+                // 支持code为200或0的成功状态
+                const isSuccess = response.code === 200 || response.code === 0
+                
+                if (isSuccess) {
+                // 新的响应格式：data直接是文件名
+                const fileUrl = response.data
+                this.form.files[field] = fileUrl
+                
+                console.log(`6. 文件上传成功，文件名:`, fileUrl)
+                console.log(`6.1 文件存储路径:`, fileUrl)
+                uni.showToast({ 
+                  title: '上传成功', 
+                  icon: 'success' 
+                })
+              } else {
+                  const errorMsg = response.message || response.msg || '上传失败，请重试'
+                  console.error('7. API返回错误:', errorMsg, '完整响应:', JSON.stringify(response))
+                  uni.showToast({ 
+                    title: errorMsg, 
+                    icon: 'none',
+                    duration: 3000
+                  })
+                }
+              } else {
+                console.error('7. API未返回响应')
+                uni.showToast({ 
+                  title: '服务器未响应', 
+                  icon: 'none',
+                  duration: 3000
+                })
+              }
+            } catch (apiError) {
+              console.error('7. API调用异常:', apiError, '错误堆栈:', apiError?.stack || '无堆栈')
+              
+              // 详细的错误类型判断
+              let errorTitle = '上传请求失败'
+              if (apiError?.errMsg?.includes('request:fail')) {
+                errorTitle = '网络请求失败，请检查网络连接'
+              } else if (apiError?.errMsg?.includes('timeout')) {
+                errorTitle = '请求超时，请重试'
+              } else if (apiError?.code === 401) {
+                errorTitle = '登录已过期，请重新登录'
+              } else if (apiError?.code === 500) {
+                errorTitle = '服务器错误，请稍后重试'
+              }
+              
+              uni.showToast({ 
+                title: errorTitle, 
+                icon: 'none',
+                duration: 3000
+              })
+            } finally {
+              uni.hideLoading()
+            }
+          } else {
+            console.error('3. 文件路径未找到，无法上传')
+            uni.showToast({
+              title: '文件读取失败，请重试',
+              icon: 'none',
+              duration: 3000
+            })
+          }
         }
-      });
+      } catch (error) {
+        console.error('8. 文件上传过程中发生错误:', error)
+        // 用户取消选择不显示错误提示
+        if (error && error.errMsg !== 'chooseMessageFile:fail cancel') {
+          const errorMsg = error.message || error.errMsg || '文件处理失败，请重试'
+          console.error('8. 文件选择/上传失败:', errorMsg)
+          uni.showToast({ 
+            title: errorMsg, 
+            icon: 'none',
+            duration: 3000
+          })
+        }
+      } finally {
+        console.log('9. 上传流程结束')
+        uni.hideLoading()
+      }
     },
-    removeFile(type) {
-      this.form.files[type] = '';
+    
+    removeFile(field) {
+      // 显示确认对话框
+      uni.showModal({
+        title: '确认删除',
+        content: '确定要移除该文件吗？',
+        success: (res) => {
+          if (res.confirm) {
+            this.form.files[field] = ''
+            uni.showToast({ 
+              title: '文件已移除', 
+              icon: 'success',
+              duration: 1500
+            })
+          }
+        }
+      })
     },
+    
     async handleSubmit() {
       if (!this.isLoggedIn) {
         uni.showModal({
@@ -375,7 +572,7 @@ export default {
 
       if (!this.canSubmit) {
         uni.showToast({
-          title: '请填写完整的报备信息',
+          title: '请完善所有必填信息',
           icon: 'none'
         })
         return
@@ -389,48 +586,85 @@ export default {
         return
       }
 
+      // 验证文件上传
+      if (!this.form.files.permit || !this.form.files.approval) {
+        uni.showToast({ title: '请上传必要的文件材料', icon: 'none' })
+        return
+      }
+
       this.submitting = true
       try {
-        const res = await createReport({
-          name: this.form.name,
-          type: this.form.type,
-          genre: this.form.genre,
-          episodes: this.form.episodes,
-          investAmount: this.form.investAmount,
-          mainCreators: this.form.mainCreators,
-          leadProducer: this.form.leadProducer,
-          producerUnit: this.form.producerUnit,
-          startDate: this.form.startDate,
-          endDate: this.form.endDate,
-          crewScale: this.form.crewScale,
-          contact: this.form.contact,
-          phoneNumber: this.form.phoneNumber,
-          crewPosition: this.form.crewPosition
-        })
+        // 准备提交数据，调整文件字段命名以匹配后端API要求
+      const reportData = {
+        name: this.form.name,
+        type: this.form.type,
+        genre: this.form.genre,
+        episodes: this.form.episodes,
+        investAmount: this.form.investAmount,
+        mainCreators: this.form.mainCreators,
+        leadProducer: this.form.leadProducer,
+        producerUnit: this.form.producerUnit,
+        startDate: this.form.startDate,
+        endDate: this.form.endDate,
+        crewScale: this.form.crewScale,
+        contact: this.form.contact,
+        phoneNumber: this.form.phoneNumber,
+        crewPosition: this.form.crewPosition,
+        // 兼容两种可能的文件字段格式
+        files: {
+          permit: this.form.files.permit,
+          approval: this.form.files.approval,
+          application: this.form.files.application
+        },
+        permitFilePath: this.form.files.permit,
+        approvalFilePath: this.form.files.approval,
+        applicationFilePath: this.form.files.application
+      }
+        
+        console.log('提交数据:', reportData)
+        
+        // 根据是否有reportId决定是创建还是更新报备
+        let res
+        if (this.reportId) {
+          // 更新报备
+          res = await updateReport(this.reportId, reportData)
+        } else {
+          // 创建报备
+          res = await createReport(reportData)
+        }
 
-        if (res.code === 200) {
+        if (res.code === 200 || res.code === 0) {
+          const isUpdate = !!this.reportId
           uni.showModal({
-            title: '提交成功',
-            content: '您的报备信息已提交，工作人员将在1个工作日内联系您',
+            title: isUpdate ? '更新成功' : '提交成功',
+            content: isUpdate ? '您的报备信息已更新' : '您的报备信息已提交，工作人员将在1个工作日内联系您',
             showCancel: false,
             success: () => {
-              this.resetForm()
-              uni.switchTab({
-                url: '/pages/index/index'
-              })
+              if (isUpdate) {
+                // 更新成功后返回上一页
+                uni.navigateBack()
+              } else {
+                // 创建成功后重置表单并跳转
+                this.resetForm()
+                uni.switchTab({
+                  url: '/pages/index/index'
+                })
+              }
             }
           })
         } else {
           uni.showToast({
-            title: res.message || '提交失败',
-            icon: 'none'
+            title: res.message || res.msg || '操作失败',
+            icon: 'none',
+            duration: 2000
           })
         }
       } catch (error) {
         console.error('提交报备失败:', error)
         uni.showToast({
           title: error.message || '提交失败，请稍后重试',
-          icon: 'none'
+          icon: 'none',
+          duration: 2000
         })
       } finally {
         this.submitting = false
@@ -450,7 +684,6 @@ export default {
         endDate: '',
         crewScale: '',
         contact: '',
-        phoneNumber: '',
         phoneNumber: '',
         crewPosition: '',
         files: {

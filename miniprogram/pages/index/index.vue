@@ -142,7 +142,8 @@ import NavBar from '../../components/NavBar/NavBar.vue'
 import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
-import { getArticlePage, getLocationPage } from '../../services/api'
+// 使用真实后端API
+import { getArticlePage, getLocationPage } from '../../services/backend-api'
 
 export default {
   components: {
@@ -220,11 +221,11 @@ export default {
         ])
 
         if (articleRes && articleRes.code === 200) {
-          // 后端返回格式: { code: 200, message: "请求成功", data: [...], pagination: {...} }
+          // 后端返回格式: { code: 200, data: [...], pagination: {...} }
           this.articles = Array.isArray(articleRes.data) ? articleRes.data : []
         }
         if (locationRes && locationRes.code === 200) {
-          // 后端返回格式: { code: 200, message: "请求成功", data: [...], pagination: {...} }
+          // 后端返回格式: { code: 200, data: [...], pagination: {...} }
           this.locations = Array.isArray(locationRes.data) ? locationRes.data : []
         }
       } catch (error) {

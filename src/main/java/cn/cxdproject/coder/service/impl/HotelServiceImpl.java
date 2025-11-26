@@ -90,7 +90,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     }
 
     @Override
-    @CircuitBreaker(name = "hotelGetPage", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "hotelGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<HotelVO> getHotelPage(Page<Hotel> page, String keyword) {
 
@@ -224,7 +224,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     }
 
     @Override
-    public HotelVO getByIdFallback(Long id) {
+    public HotelVO getByIdFallback(Long id,Throwable e) {
         Object store;
         store = cache.getIfPresent(CaffeineConstants.HOTEL + id);
         if (store != null) {
