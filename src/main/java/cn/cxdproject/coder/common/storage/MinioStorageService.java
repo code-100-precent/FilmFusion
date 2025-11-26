@@ -1,13 +1,14 @@
 package cn.cxdproject.coder.common.storage;
 
 import cn.cxdproject.coder.exception.BusinessException;
+import cn.cxdproject.coder.model.vo.ImageVO;
 import io.minio.*;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
+import java.util.concurrent.CompletableFuture;
 
 import static cn.cxdproject.coder.common.constants.Constants.HTTP;
 import static cn.cxdproject.coder.common.constants.Constants.HTTPS;
@@ -39,40 +40,85 @@ public class MinioStorageService implements FileStorageAdapter {
      * 上传文件
      */
     @Override
-    public String upload(MultipartFile file) {
+    public ImageVO upload(MultipartFile file) {
         try {
-            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            InputStream inputStream = file.getInputStream();
+            String baseName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            String originalFilename = "origin/" + baseName;
+            String thumbFilename = "thumb/" + baseName;
+            String originalUrl;
+            String thumbUrl;
 
+            byte[] fileBytes = file.getBytes();
+            String contentType = file.getContentType();
+
+            // 1. 上传原图
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(properties.getMinioBucket())
-                            .object(filename)
-                            .stream(inputStream, file.getSize(), -1)
-                            .contentType(file.getContentType())
+                            .object(originalFilename)
+                            .stream(new ByteArrayInputStream(fileBytes), fileBytes.length, -1)
+                            .contentType(contentType)
                             .build()
             );
-            return properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + filename;
+
+            // 2. 如果是图片，异步生成缩略图
+            if (isImageFile(file)) {
+                CompletableFuture.runAsync(() -> {
+                    try (InputStream is = new ByteArrayInputStream(fileBytes)) {
+                        generateAndUploadThumbnail(thumbFilename, is);
+                    } catch (Exception e) {
+                        throw new RuntimeException("压缩图片失败", e);
+                    }
+                });
+            }
+
+            originalUrl = properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + originalFilename;
+            thumbUrl = properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + thumbFilename;
+
+            return new ImageVO(originalUrl,thumbUrl);
         } catch (Exception e) {
-            throw new BusinessException(SYSTEM_ERROR.code(), "MinIO上传失败" + e);
+            throw new BusinessException(SYSTEM_ERROR.code(), "MinIO上传失败: " + e.getMessage());
         }
     }
 
     @Override
-    public String upload(String prefix, MultipartFile file) {
+    public ImageVO upload(String prefix, MultipartFile file) {
         try {
-            String filename = System.currentTimeMillis() + "_" + prefix + "/" + file.getOriginalFilename();
-            InputStream inputStream = file.getInputStream();
+            String baseName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            String originalFilename = "origin/" + baseName;
+            String thumbFilename = "thumb/" + baseName;
+            String originalUrl;
+            String thumbUrl;
 
+            byte[] fileBytes = file.getBytes();
+            String contentType = file.getContentType();
+
+            // 1. 上传原图
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(properties.getMinioBucket())
-                            .object(filename)
-                            .stream(inputStream, file.getSize(), -1)
-                            .contentType(file.getContentType())
+                            .object(originalFilename)
+                            .stream(new ByteArrayInputStream(fileBytes), fileBytes.length, -1)
+                            .contentType(contentType)
                             .build()
             );
-            return properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + filename;
+
+            // 2. 如果是图片，异步生成缩略图
+            if (isImageFile(file)) {
+                CompletableFuture.runAsync(() -> {
+                    try (InputStream is = new ByteArrayInputStream(fileBytes)) {
+                        generateAndUploadThumbnail(thumbFilename, is);
+                    } catch (Exception e) {
+                        throw new RuntimeException("压缩图片失败", e);
+                    }
+                });
+            }
+
+            originalUrl = properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + originalFilename;
+            thumbUrl = properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + thumbFilename;
+
+
+            return new ImageVO(originalUrl,thumbUrl);
         } catch (Exception e) {
             throw new BusinessException(SYSTEM_ERROR.code(), "MinIO上传失败" + e);
         }
@@ -247,4 +293,37 @@ public class MinioStorageService implements FileStorageAdapter {
         }
     }
 
+    private boolean isImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        String originalFilename = file.getOriginalFilename();
+
+        if (contentType == null || originalFilename == null) {
+            return false;
+        }
+
+        boolean validContentType = contentType.startsWith("image/");
+        boolean validExtension = originalFilename.matches(".*\\.(?i)(jpg|jpeg|png|gif|webp)$");
+
+        return validContentType && validExtension;
+    }
+
+    // 生成缩略图并上传到 MinIO
+    private void generateAndUploadThumbnail(String thumbKey, InputStream originalStream) throws Exception {
+        try (ByteArrayOutputStream thumbOut = new ByteArrayOutputStream()) {
+            Thumbnails.of(originalStream)
+                    .size(300, 300)           // 最大宽高 300px（等比缩放）
+                    .outputQuality(0.4f)      // JPEG 质量 40%
+                    .outputFormat("jpg")      // 统一转为 jpg（减小体积）
+                    .toOutputStream(thumbOut);
+
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(properties.getMinioBucket())
+                            .object(thumbKey)
+                            .stream(new ByteArrayInputStream(thumbOut.toByteArray()), thumbOut.size(), -1)
+                            .contentType("image/jpeg")
+                            .build()
+            );
+        }
+    }
 }

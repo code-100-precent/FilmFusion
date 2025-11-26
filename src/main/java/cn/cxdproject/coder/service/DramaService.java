@@ -46,7 +46,7 @@ public interface DramaService extends IService<Drama> {
      */
     DramaVO toDramaVO(Drama drama);
 
-    DramaVO getByIdFallback(Long id);
+    DramaVO getByIdFallback(Long id,Throwable e);
 
     Page<DramaVO> getPageFallback(Page<Drama> page, String keyword, Throwable e);
 }

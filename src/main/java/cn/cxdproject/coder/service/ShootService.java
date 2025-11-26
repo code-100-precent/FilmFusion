@@ -23,6 +23,6 @@ public interface ShootService extends IService<Shoot> {
     ShootVO updateShootByAdmin(Long shootId, UpdateShootDTO updateDTO);
     void deleteShootByAdmin(Long shootId);
     ShootVO toShootVO(Shoot shoot);
-    ShootVO getByIdFallback(Long id);
+    ShootVO getByIdFallback(Long id,Throwable e);
     Page<ShootVO> getPageFallback(Page<Shoot> page, String keyword, Throwable e);
 }

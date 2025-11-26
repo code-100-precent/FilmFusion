@@ -26,7 +26,7 @@ public interface HotelService extends IService<Hotel> {
 
     HotelVO toHotelVO(Hotel hotel);
 
-    HotelVO getByIdFallback(Long id);
+    HotelVO getByIdFallback(Long id,Throwable e);
 
     Page<HotelVO> getPageFallback(Page<Hotel> page, String keyword, Throwable e);
 

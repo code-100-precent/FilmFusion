@@ -88,7 +88,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
             if (drama == null || Boolean.TRUE.equals(drama.getDeleted())) {
                 throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
-            cache.asMap().put(CaffeineConstants.DRAMA + dramaId, dramaId);
+            cache.asMap().put(CaffeineConstants.DRAMA + dramaId, drama);
             return toDramaVO(drama);
         }
     }
@@ -235,7 +235,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     }
 
     @Override
-    public DramaVO getByIdFallback(Long id) {
+    public DramaVO getByIdFallback(Long id,Throwable e) {
         Object store;
         store = cache.getIfPresent(CaffeineConstants.DRAMA + id);
         if (store != null) {

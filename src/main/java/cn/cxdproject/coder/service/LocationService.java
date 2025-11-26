@@ -29,7 +29,7 @@ public interface LocationService extends IService<Location> {
     
     LocationVO toLocationVO(Location location);
 
-    LocationVO getByIdFallback(Long id);
+    LocationVO getByIdFallback(Long id,Throwable e);
 
     Page<LocationVO> getPageFallback(Page<Location> page, String keyword, Throwable e);
 }

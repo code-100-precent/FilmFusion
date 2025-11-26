@@ -4,6 +4,7 @@ import cn.cxdproject.coder.model.dto.LoginResponseDTO;
 import cn.cxdproject.coder.model.dto.RegisterDTO;
 import cn.cxdproject.coder.model.dto.UpdateUserDTO;
 import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.ImageVO;
 import cn.cxdproject.coder.model.vo.UserVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -116,5 +117,5 @@ public interface UserService extends IService<User> {
      * @param avatarFile 头像文件
      * @return 头像URL
      */
-    String uploadAvatar(Long userId, org.springframework.web.multipart.MultipartFile avatarFile);
+    ImageVO uploadAvatar(Long userId, org.springframework.web.multipart.MultipartFile avatarFile);
 }

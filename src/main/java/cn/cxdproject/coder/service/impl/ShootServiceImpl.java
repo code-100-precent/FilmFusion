@@ -228,7 +228,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    public ShootVO getByIdFallback(Long id) {
+    public ShootVO getByIdFallback(Long id,Throwable e) {
         Object store;
         store = cache.getIfPresent(CaffeineConstants.SHOOT + id);
         if (store != null) {
