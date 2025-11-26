@@ -610,6 +610,7 @@ export default {
         contact: this.form.contact,
         phoneNumber: this.form.phoneNumber,
         crewPosition: this.form.crewPosition,
+        status: this.reportId ? undefined : '未处理', // 新增报备设置为'未处理'，编辑时保持原状态
         // 兼容两种可能的文件字段格式
         files: {
           permit: this.form.files.permit,
@@ -646,7 +647,7 @@ export default {
               } else {
                 // 创建成功后重置表单并跳转
                 this.resetForm()
-                uni.switchTab({
+                uni.navigateTo({
                   url: '/pages/index/index'
                 })
               }

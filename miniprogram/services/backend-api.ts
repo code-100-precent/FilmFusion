@@ -231,114 +231,66 @@ export const deleteReport = (id: number) => {
  */
 export const uploadFile = (filePath: string) => {
     return new Promise<ApiResponse<any>>((resolve, reject) => {
-        console.log(`[${new Date().toISOString()}] API-1: 开始上传文件函数调用，文件路径:`, filePath)
-        
+        // 获取token
         const token = uni.getStorageSync('token')
-        console.log(`[${new Date().toISOString()}] API-2: 检查token，状态:`, token ? '已获取token (长度:' + token.length + ')' : '无token')
         
-        // 使用固定的开发环境URL，确保可访问
+        // 上传地址
         const baseURL = 'http://localhost:8080/api'
         const uploadUrl = baseURL + '/file'
-        console.log(`[${new Date().toISOString()}] API-3: 确定上传地址:`, uploadUrl)
 
-        // 记录开始时间
-        const startTime = Date.now()
-        console.log(`[${new Date().toISOString()}] API-4: 准备调用uni.uploadFile...`)
-        // 获取文件名
-        const fileName = filePath.substring(filePath.lastIndexOf('\\') + 1)
-        console.log(`[${new Date().toISOString()}] API-4.1: 文件名:`, fileName)
-
+        // 上传文件
         uni.uploadFile({
             url: uploadUrl,
             filePath: filePath,
             name: 'file',
-            // 设置method为PUT
-            method: 'PUT',
+            method: 'POST',
             header: {
                 'Authorization': token ? `Bearer ${token}` : '',
                 'source-client': 'miniapp'
             },
-            timeout: 60000, // 设置60秒超时
+            timeout: 60000,
             success: (res) => {
-                const endTime = Date.now()
-                console.log(`[${new Date().toISOString()}] API-5: 上传请求成功返回 (耗时: ${endTime - startTime}ms)`)
-                console.log(`[${new Date().toISOString()}] API-5.1: HTTP状态码: ${res.statusCode}`)
-                console.log(`[${new Date().toISOString()}] API-5.2: 原始响应数据:`, res.data)
-                
-                // 检查响应状态码
+                // 检查HTTP状态码
                 if (res.statusCode !== 200) {
-                    const errorMsg = `上传失败，HTTP状态码: ${res.statusCode}`
-                    console.error(`[${new Date().toISOString()}] API-ERROR:`, errorMsg)
-                    reject({ code: res.statusCode, message: errorMsg, originalResponse: res })
+                    reject({ 
+                        code: res.statusCode, 
+                        message: `上传失败，HTTP状态码: ${res.statusCode}` 
+                    })
                     return
                 }
                 
+                // 解析响应数据
                 try {
-                    console.log(`[${new Date().toISOString()}] API-6: 开始解析JSON响应...`)
                     const data = JSON.parse(res.data)
-                    console.log(`[${new Date().toISOString()}] API-7: 解析成功，响应数据:`, JSON.stringify(data))
                     
-                    // 支持200和0两种成功状态码
+                    // 处理成功响应
                     if (data.code === 200 || data.code === 0) {
-                        console.log(`[${new Date().toISOString()}] API-8: 上传成功，返回数据给调用方`)
-                        // 确保返回的数据格式一致
                         resolve({
                             code: data.code,
                             message: data.message || '请求成功',
                             data: data.data
                         })
                     } else {
-                        const errorMsg = data.message || data.msg || '上传失败'
-                        console.error(`[${new Date().toISOString()}] API-ERROR: 上传失败，code: ${data.code}, message: ${errorMsg}`)
+                        // 处理失败响应
                         reject({
-                            code: data.code,
-                            message: errorMsg,
-                            originalData: data
+                            code: data.code || 500,
+                            message: data.message || data.msg || '上传失败'
                         })
                     }
-                } catch (parseError: any) {
-                    console.error(`[${new Date().toISOString()}] API-ERROR: 响应数据解析失败:`, parseError)
-                    console.error(`[${new Date().toISOString()}] API-ERROR: 无法解析的原始数据:`, res.data)
+                } catch (parseError) {
+                    // 响应解析失败
                     reject({
                         code: 500,
-                        message: '服务器响应格式错误',
-                        parseError: parseError?.message || 'JSON解析失败',
-                        rawData: res.data
+                        message: '服务器响应格式错误'
                     })
                 }
             },
             fail: (err) => {
-                const endTime = Date.now()
-                console.error(`[${new Date().toISOString()}] API-ERROR: 上传请求失败 (耗时: ${endTime - startTime}ms):`, JSON.stringify(err))
-                
-                // 详细的错误类型判断
-                let errorCode = 0
-                let errorMsg = err.errMsg || '网络连接失败，请检查网络设置'
-                
-                if (errorMsg.includes('request:fail')) {
-                    errorCode = 1001
-                } else if (errorMsg.includes('timeout')) {
-                    errorCode = 1002
-                } else if (errorMsg.includes('ssl')) {
-                    errorCode = 1003
-                } else if (errorMsg.includes('network')) {
-                    errorCode = 1004
-                }
-                
-                const errorResponse = {
-                    code: errorCode,
-                    message: errorMsg,
-                    originalError: err
-                }
-                
-                console.error(`[${new Date().toISOString()}] API-ERROR: 错误详情:`, JSON.stringify(errorResponse))
-                reject(errorResponse)
-            },
-            complete: () => {
-                const endTime = Date.now()
-                console.log(`[${new Date().toISOString()}] API-9: 上传操作完成 (总耗时: ${endTime - startTime}ms)`)
-                console.log('----------------------------------------')
-                console.log('\n')
+                // 请求失败
+                reject({
+                    code: 1000,
+                    message: err.errMsg || '网络连接失败，请检查网络设置'
+                })
             }
         })
     })
