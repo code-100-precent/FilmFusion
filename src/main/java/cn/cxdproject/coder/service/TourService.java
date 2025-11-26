@@ -24,7 +24,7 @@ public interface TourService extends IService<Tour> {
     TourVO updateTourByAdmin(Long tourId, UpdateTourDTO updateDTO);
     void deleteTourByAdmin(Long tourId);
     TourVO toTourVO(Tour tour);
-    TourVO getByIdFallback(Long id);
+    TourVO getByIdFallback(Long id,Throwable e);
     Page<TourVO> getPageFallback(Page<Tour> page, String keyword, Throwable e);
 
 }

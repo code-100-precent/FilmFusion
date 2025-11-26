@@ -1,11 +1,13 @@
 package cn.cxdproject.coder.common.storage;
 
 
+import cn.cxdproject.coder.model.vo.ImageVO;
+import io.minio.PutObjectArgs;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,32 +27,73 @@ public class LocalStorageService implements FileStorageAdapter {
     public LocalStorageService(FileStorageProperties properties) {
         this.properties = properties;
     }
-
     /**
      * 上传文件
      */
     @Override
-    public String upload(MultipartFile file) {
+    public ImageVO upload(MultipartFile file) {
         try {
-            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path path = Paths.get(properties.getLocalBasePath(), filename);
-            Files.createDirectories(path.getParent());
-            file.transferTo(path.toFile());
-            return filename;
+            String baseName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+            // 构造本地存储路径
+            Path originDir = Paths.get(properties.getLocalBasePath(), "origin");
+            Path thumbDir = Paths.get(properties.getLocalBasePath(), "thumb");
+            Files.createDirectories(originDir);
+            Files.createDirectories(thumbDir);
+
+            Path originPath = originDir.resolve(baseName);
+            Path thumbPath = thumbDir.resolve(baseName);
+
+            // 1. 保存原图
+            file.transferTo(originPath.toFile());
+
+            String baseUrl = "/api/files"; // 假设你通过此路径提供静态资源访问
+            String originalUrl = baseUrl + "/origin/" + baseName;
+            String thumbnailUrl = null;
+
+            // 2. 如果是图片，生成缩略图（建议同步生成，避免前端访问不到）
+            if (isImageFile(file)) {
+                thumbnailUrl = baseUrl + "/thumb/" + baseName;
+                // 同步生成缩略图（更可靠）
+                generateLocalThumbnail(originPath, thumbPath);
+            }
+
+            return new ImageVO(originalUrl, thumbnailUrl);
         } catch (IOException e) {
             throw new RuntimeException("本地文件上传失败", e);
         }
     }
 
     @Override
-    public String upload(String prefix, MultipartFile file) {
+    public ImageVO upload(String prefix, MultipartFile file) {
 
         try {
-            String filename = System.currentTimeMillis() + "_" + prefix + "/" + file.getOriginalFilename();
-            Path path = Paths.get(properties.getLocalBasePath(), filename);
-            Files.createDirectories(path.getParent());
-            file.transferTo(path.toFile());
-            return filename;
+            String baseName = System.currentTimeMillis() + "_" + prefix + "/" + file.getOriginalFilename();
+
+            // 构造本地存储路径
+            Path originDir = Paths.get(properties.getLocalBasePath(), "origin");
+            Path thumbDir = Paths.get(properties.getLocalBasePath(), "thumb");
+            Files.createDirectories(originDir);
+            Files.createDirectories(thumbDir);
+
+            Path originPath = originDir.resolve(baseName);
+            Path thumbPath = thumbDir.resolve(baseName);
+
+            // 1. 保存原图
+            file.transferTo(originPath.toFile());
+
+            String baseUrl = "/api/files"; // 假设你通过此路径提供静态资源访问
+            String originalUrl = baseUrl + "/origin/" + baseName;
+            String thumbnailUrl = null;
+
+            // 2. 如果是图片，生成缩略图（建议同步生成，避免前端访问不到）
+            if (isImageFile(file)) {
+                thumbnailUrl = baseUrl + "/thumb/" + baseName;
+                // 同步生成缩略图（更可靠）
+                generateLocalThumbnail(originPath, thumbPath);
+            }
+
+            return new ImageVO(originalUrl, thumbnailUrl);
         } catch (IOException e) {
             throw new RuntimeException("本地文件上传失败", e);
         }
@@ -176,5 +219,28 @@ public class LocalStorageService implements FileStorageAdapter {
         } catch (IOException e) {
             throw new RuntimeException("本地文件上传失败", e);
         }
+    }
+
+    private boolean isImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        String originalFilename = file.getOriginalFilename();
+
+        if (contentType == null || originalFilename == null) {
+            return false;
+        }
+
+        boolean validContentType = contentType.startsWith("image/");
+        boolean validExtension = originalFilename.matches(".*\\.(?i)(jpg|jpeg|png|gif|webp)$");
+
+        return validContentType && validExtension;
+    }
+
+    // 生成缩略图并上传到本地
+    private void generateLocalThumbnail(Path originPath, Path thumbPath) throws IOException {
+        Thumbnails.of(originPath.toFile())
+                .size(200, 200)          // 缩略图尺寸
+                .keepAspectRatio(true)
+                .outputQuality(0.8f)
+                .toFile(thumbPath.toFile());
     }
 }

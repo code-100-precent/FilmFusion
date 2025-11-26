@@ -241,7 +241,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
-    public LocationVO getByIdFallback(Long id) {
+    public LocationVO getByIdFallback(Long id,Throwable e) {
         Object store;
         store = cache.getIfPresent(CaffeineConstants.LOCATION + id);
         if (store != null) {

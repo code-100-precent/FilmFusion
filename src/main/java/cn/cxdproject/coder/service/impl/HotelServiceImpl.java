@@ -224,7 +224,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     }
 
     @Override
-    public HotelVO getByIdFallback(Long id) {
+    public HotelVO getByIdFallback(Long id,Throwable e) {
         Object store;
         store = cache.getIfPresent(CaffeineConstants.HOTEL + id);
         if (store != null) {

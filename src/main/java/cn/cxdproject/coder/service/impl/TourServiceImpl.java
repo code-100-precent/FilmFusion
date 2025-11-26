@@ -221,7 +221,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     }
 
     @Override
-    public TourVO getByIdFallback(Long id) {
+    public TourVO getByIdFallback(Long id,Throwable e) {
         Object store;
         store = cache.getIfPresent(CaffeineConstants.TOUR + id);
         if (store != null) {
