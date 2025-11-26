@@ -28,7 +28,7 @@ public class FileController {
         this.fileService = fileService;
     }
 
-    @PutMapping
+    @PostMapping
     public ApiResponse imageUpload(@RequestPart("file") MultipartFile file) throws Exception {
         ImageVO imageVO = fileService.imageUpload(file);
         return ApiResponse.success(imageVO);
