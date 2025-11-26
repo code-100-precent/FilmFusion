@@ -7,6 +7,7 @@ import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.config.JwtConfig;
 import cn.cxdproject.coder.model.dto.*;
 import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.ImageVO;
 import cn.cxdproject.coder.model.vo.UserVO;
 import cn.cxdproject.coder.service.UserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -104,13 +105,13 @@ public class UserController {
      * 上传头像
      */
     @PostMapping("/avatar")
-    public ApiResponse<String> uploadAvatar(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+    public ApiResponse<ImageVO> uploadAvatar(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
             return ApiResponse.error(401, "未登录");
         }
-        String avatarUrl = userService.uploadAvatar(currentUser.getId(), file);
-        return ApiResponse.success(avatarUrl);
+        ImageVO imageVO = userService.uploadAvatar(currentUser.getId(), file);
+        return ApiResponse.success(imageVO);
     }
 
     /**

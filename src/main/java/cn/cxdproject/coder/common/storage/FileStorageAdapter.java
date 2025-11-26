@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.common.storage;
 
+import cn.cxdproject.coder.model.vo.ImageVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -12,12 +13,12 @@ public interface FileStorageAdapter {
     /**
      * 上传文件
      */
-    String upload(MultipartFile file);
+    ImageVO upload(MultipartFile file);
 
     /**
      * 上传文件
      */
-    String upload(String prefix, MultipartFile file);
+    ImageVO upload(String prefix, MultipartFile file);
 
     /**
      * 下载文件
