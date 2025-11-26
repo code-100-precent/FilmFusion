@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,17 +31,11 @@ public class ShootVO {
     private Long userId;
     private String cover;
     private String image;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
-    public ShootVO(Long id, String name, String description, BigDecimal price, Boolean status, String cover, String address) {
-        this.id=id;
-        this.name=name;
-        this.description=description;
-        this.price=price;
-        this.status=status;
-        this.cover=cover;
-        this.address=address;
-    }
+
 }
 

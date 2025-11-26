@@ -61,7 +61,11 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .excludePathPatterns("/api/shoot/page", "/api/shoot/*")
                 // 反馈模块 - 全部需要登录，但排除管理员接口（管理员接口由adminInterceptor处理）
                 .addPathPatterns("/api/feedback/**")
-                .excludePathPatterns("/api/feedback/admin/**");
+                .excludePathPatterns("/api/feedback/admin/**")
+                .addPathPatterns("/api/hotel/**")
+                .excludePathPatterns("/api/hotel/admin/**")
+                .addPathPatterns("/api/tour/**")
+                .excludePathPatterns("/api/tour/admin/**");
         
         // 管理员权限拦截器
         registry.addInterceptor(adminInterceptor)
@@ -79,8 +83,13 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 // 协拍服务模块的管理员接口
                 .addPathPatterns("/api/shoot/admin/**")
                 // 反馈模块的管理员接口
-                .addPathPatterns("/api/feedback/admin/**");
-        
+                .addPathPatterns("/api/feedback/admin/**")
+                // 旅游路线模块的管理员接口
+                .addPathPatterns("/api/tour/admin/**")
+                // 旅店模块管理员接口
+                .addPathPatterns("/api/hotel/admin/**")
+                //banner模块接口
+                . addPathPatterns("/api/banner/**");
         registry.addInterceptor(registrationInterceptor)
                 .addPathPatterns("/api/admin/register/email");
     }

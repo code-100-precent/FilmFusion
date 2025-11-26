@@ -69,14 +69,5 @@ public class ArticleVO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
-
-    public ArticleVO(Long id, String title, String issueUnit, LocalDateTime issueTime, Long userId,String cover) {
-        this.id=id;
-        this.issueTime=issueTime;
-        this.title=title;
-        this.issueUnit=issueUnit;
-        this.userId=userId;
-        this.cover=cover;
-    }
 }
 

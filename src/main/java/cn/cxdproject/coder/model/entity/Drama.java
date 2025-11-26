@@ -96,17 +96,9 @@ public class Drama extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
-    @TableField("deleted")
-    private Boolean deleted;
-
     @TableField("cover")
     private String cover;
 
-    @TableField("created_at")
-    private LocalDateTime createdAt;
-
-    @TableField("updated_at")
-    private LocalDateTime updatedAt;
 
     @TableField("image")
     private String image;

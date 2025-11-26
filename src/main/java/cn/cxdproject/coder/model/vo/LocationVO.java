@@ -1,6 +1,7 @@
 package cn.cxdproject.coder.model.vo;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,26 +26,20 @@ public class LocationVO {
     private String type;
     private Boolean status;
     private String locationDescription;
-    private String contactPhone;
-    private String contactName;
+    private String locationPrincipalPhone;
+    private String locationPrincipalName;
+    private String govPrincipalPhone;
+    private String govPrincipalName;
     private String address;
     private BigDecimal price;
     private Long userId;
     private String cover;
     private String image;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
 
-    public LocationVO(Long id, String name, Boolean status, String type, String locationDescription, String cover, String address, BigDecimal price) {
-        this.id = id;
-        this.name = name;
-        this.type = type;
-        this.status = status;
-        this.locationDescription = locationDescription;
-        this.address = address;
-        this.price = price;
-        this.cover = cover;
-    }
 }
 

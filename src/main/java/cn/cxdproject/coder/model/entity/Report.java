@@ -5,6 +5,7 @@ import java.io.Serializable;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -84,12 +85,14 @@ public class Report extends BaseEntity implements Serializable, Cloneable {
      * 拍摄开始日期
      */
     @TableField("start_date")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
 
     /**
      * 拍摄结束日期
      */
     @TableField("end_date")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate endDate;
 
     /**
@@ -122,20 +125,13 @@ public class Report extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
-    @TableField("deleted")
-    private Boolean deleted;
-
     @TableField("status")
     private String status;
 
     @TableField("image")
     private String image;
 
-    @TableField("created_at")
-    private LocalDateTime createdAt;
 
-    @TableField("updated_at")
-    private LocalDateTime updatedAt;
 
     @Override
     public Report clone() {

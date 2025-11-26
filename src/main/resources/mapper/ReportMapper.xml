@@ -52,4 +52,33 @@
             'image'
     </sql>
 
+    <select id="selectMyPage" resultType="cn.cxdproject.coder.model.entity.Report">
+        SELECT r.*
+        FROM report r
+                 INNER JOIN (
+            SELECT id
+            FROM report
+            WHERE user_id = #{userId}
+              AND deleted = 0
+            ORDER BY created_at DESC
+                LIMIT #{offset}, #{size}
+        ) tmp ON r.id = tmp.id
+    </select>
+
+    <select id="selectPageByAdmin" resultType="cn.cxdproject.coder.model.entity.Report">
+        SELECT r.id, r.user_id, r.contact
+        FROM report r
+        INNER JOIN (
+        SELECT id
+        FROM report
+        WHERE deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND contact LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+        ) tmp ON r.id = tmp.id
+    </select>
+
+
 </mapper>

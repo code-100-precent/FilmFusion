@@ -35,13 +35,10 @@ public class ReportController {
         this.reportService = reportService;
     }
 
-    // ==================== 公开接口 ====================
-
     /**
      * 获取影视剧备案详情（公开）
      */
     @GetMapping("/{id}")
-    @PublicAccess
     public ApiResponse<ReportVO> getReportById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
@@ -51,31 +48,12 @@ public class ReportController {
         return ApiResponse.success(reportVO);
     }
 
-//    /**
-//     * 分页获取影视剧备案列表（按时间倒序，公开）
-//     */
-//    @GetMapping("/page")
-//    @PublicAccess
-//    public PageResponse<ReportVO> getReportPage(
-//            @RequestParam(defaultValue = "1") Integer current,
-//            @RequestParam(defaultValue = "10") Integer size,
-//            @RequestParam(required = false) String keyword) {
-//        Page<Report> page = new Page<>(current, size);
-//        Page<ReportVO> reportPage = reportService.getReportPage(page, keyword);
-//        return PageResponse.of(
-//                (int) reportPage.getCurrent(),
-//                (int) reportPage.getSize(),
-//                reportPage.getTotal(),
-//                reportPage.getRecords()
-//        );
-//    }
-
     // ==================== 普通用户接口 ====================
 
     /**
      * 创建影视剧备案
      */
-    @PostMapping
+    @PostMapping("/create")
     public ApiResponse<ReportVO> createReport(@Valid @RequestBody CreateReportDTO createDTO) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
@@ -144,15 +122,6 @@ public class ReportController {
 
     // ==================== 管理员接口 ====================
 
-//    /**
-//     * 管理员创建影视剧备案
-//     */
-//    @PostMapping("/admin/create")
-//    public ApiResponse<ReportVO> createReportByAdmin(@Valid @RequestBody CreateReportDTO createDTO) {
-//        ReportVO reportVO = reportService.createReportByAdmin(createDTO);
-//        return ApiResponse.success(reportVO);
-//    }
-
     /**
      * 管理员更新影视剧备案
      */
@@ -163,16 +132,6 @@ public class ReportController {
         ReportVO reportVO = reportService.updateReportByAdmin(id, updateDTO);
         return ApiResponse.success(reportVO);
     }
-
-//    /**
-//     * 管理员删除影视剧备案
-//     */
-//    @DeleteMapping("/admin/{id}")
-//    public ApiResponse<Void> deleteReportByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-//        reportService.deleteReportByAdmin(id);
-//        return ApiResponse.success();
-//    }
-
     /**
      * 管理员分页查询影视剧备案
      */

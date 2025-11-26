@@ -1,0 +1,81 @@
+package cn.cxdproject.coder.common.task;
+
+
+import cn.cxdproject.coder.common.constants.TaskConstants;
+import cn.cxdproject.coder.mapper.HotelMapper;
+import cn.cxdproject.coder.model.entity.Hotel;
+import cn.cxdproject.coder.model.vo.DramaVO;
+import cn.cxdproject.coder.model.vo.HotelVO;
+import cn.cxdproject.coder.utils.JsonUtils;
+import cn.cxdproject.coder.utils.RedisUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Component
+@Slf4j
+public class DailyLatesHotelCacheTask {
+
+    private final HotelMapper hotelMapper;
+    private final RedisUtils redisUtils;
+
+    public DailyLatesHotelCacheTask(HotelMapper hotelMapper, RedisUtils redisUtils) {
+        this.hotelMapper = hotelMapper;
+        this.redisUtils = redisUtils;
+    }
+
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void cacheLatest10Hotel() {
+        try {
+            // 1. 从数据库查询最新10条
+            List<Hotel> latestHotels = hotelMapper.selectLatest10();
+
+            if (latestHotels == null || latestHotels.isEmpty()) {
+                log.warn("未查到影视数据，跳过缓存");
+                return;
+            }
+
+            // 2. 转为 VO 列表
+            List<HotelVO> voList = latestHotels.stream()
+                    .map(this::toHotelVO)
+                    .collect(Collectors.toList());
+
+            // 3. 序列化
+            String json = JsonUtils.toJson(voList);
+
+            // 4. 写入 Redis，有效期25小时
+            redisUtils.set(
+                    TaskConstants.HOTEL,
+                    json,
+                    Duration.ofHours(25)
+            );
+            log.info("成功缓存 {} 条影视信息到 Redis", voList.size());
+        } catch (Exception e) {
+            log.error("缓存失败", e);
+        }
+    }
+
+    public HotelVO toHotelVO(Hotel hotel) {
+        if (hotel == null) {
+            return null;
+        }
+        return HotelVO.builder()
+                .id(hotel.getId())
+                .name(hotel.getName())
+                .description(hotel.getDescription())
+                .managerName(hotel.getManagerName())
+                .managerPhone(hotel.getManagerPhone())
+                .address(hotel.getAddress())
+                .image(hotel.getImage())
+                .cover(hotel.getCover())
+                .updatedAt(hotel.getUpdatedAt())
+                .createdAt(hotel.getCreatedAt())
+                .build();
+    }
+
+}

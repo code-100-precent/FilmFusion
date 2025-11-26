@@ -1,6 +1,7 @@
 package cn.cxdproject.coder.model.vo;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -80,26 +81,15 @@ public class DramaVO {
     private Long userId;
 
     private String cover;
-    
-    /**
-     * 创建时间
-     */
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
-    
-    /**
-     * 更新时间
-     */
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
     private String image;
 
 
-    public DramaVO(Long id, String name, String dramaDescription, String cast, String cover) {
-        this.id=id;
-        this.name=name;
-        this.dramaDescription=dramaDescription;
-        this.cast=cast;
-        this.cover=cover;
-    }
 }
 

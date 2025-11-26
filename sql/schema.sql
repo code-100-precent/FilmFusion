@@ -91,8 +91,10 @@ CREATE TABLE `fi_locations`
     `type`                 VARCHAR(20)   NOT NULL COMMENT '类型',
     `status`               TINYINT       NOT NULL DEFAULT 1 COMMENT '可用状态（0：不可用，1：可用）',
     `location_description` VARCHAR(500)  NOT NULL COMMENT '场地介绍',
-    `contact_phone`        VARCHAR(20)   NOT NULL COMMENT '联系人电话',
-    `contact_name`         VARCHAR(50)   NOT NULL COMMENT '联系人',
+    `location_principal_phone`        VARCHAR(20)   NOT NULL COMMENT '场地联系人电话',
+    `location_principal_name`         VARCHAR(50)   NOT NULL COMMENT '场地联系人',
+    `gov_principal_phone`        VARCHAR(20)   NOT NULL COMMENT '政府联系人电话',
+    `gov_principal_name`         VARCHAR(50)   NOT NULL COMMENT '政府联系人',
     `address`              VARCHAR(255)  NOT NULL COMMENT '地址',
     `price`                DECIMAL(10,2) NOT NULL COMMENT '价格（元）',
     `user_id`              BIGINT        NOT NULL COMMENT '用户ID，关联到用户表',
@@ -183,8 +185,42 @@ CREATE TABLE `fi_banner` (
     `created_at`       DATETIME           NOT NULL COMMENT '创建时间',
     `updated_at`       DATETIME           NOT NULL COMMENT '更新时间',
     `sort`             INT                NOT NULL COMMENT '排序值，越小越靠前',
-    PRIMARY KEY ( `id` )
+    PRIMARY KEY ( `id` ),
+    UNIQUE KEY `sort` (`sort`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
+
+CREATE TABLE `fi_hotel` (
+     `id`              INT                NOT NULL AUTO_INCREMENT,
+     `name`            VARCHAR ( 30 )     NOT NULL COMMENT '住宿名称',
+     `description`     VARCHAR ( 255 )    NOT NULL COMMENT '介绍',
+     `address`         VARCHAR ( 50 )     NOT NULL COMMENT '地址',
+     `manager_name`    VARCHAR ( 15 )     NOT NULL COMMENT '负责人名称',
+     `manager_phone`   VARCHAR ( 20 )     NOT NULL COMMENT '负责人电话',
+     `cover`           VARCHAR ( 255 )    NOT NULL COMMENT '封面',
+     `image`           VARCHAR ( 300 )    DEFAULT NULL COMMENT '图片',
+     `created_at`      DATETIME           NOT NULL,
+     `updated_at`      DATETIME           NOT NULL,
+     `deleted`         TINYINT            NOT NULL,
+     `user_id`         int               NOT NULL,
+      PRIMARY KEY ( `id` )
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
+
+CREATE TABLE `fi_tour` (
+     `id`              int               NOT NULL AUTO_INCREMENT,
+     `name`            varchar(255)      NOT NULL COMMENT '体验游名称',
+     `description`     varchar(2550)     NOT NULL COMMENT '介绍',
+     `theme`           varchar(50)       NOT NULL COMMENT '主题',
+     `features`        varchar(2550)     NOT NULL COMMENT '特点',
+     `cover`           varchar(2550)     NOT NULL COMMENT '封面',
+     `transport`       varchar(2550)     NOT NULL COMMENT '交通方式',
+      `hotel`          varchar(2550)     NOT NULL COMMENT '周边旅馆',
+     `food`            varchar(2550)     NOT NULL COMMENT '美食推荐',
+     `created_at`      datetime          NOT NULL,
+     `updated_at`      datetime          NOT NULL,
+     `deleted`         tinyint           NOT NULL,
+     `image`          varchar(2550)     DEFAULT NULL,
+      PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 # ==================== 插入Mock数据 ====================
 

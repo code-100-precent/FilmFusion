@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.cxdproject.coder.mapper.TourMapper">
+
+    <resultMap id="BaseResultMap" type="cn.cxdproject.coder.model.entity.Tour">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="description" property="description" />
+        <result column="theme" property="theme" />
+        <result column="features" property="features" />
+        <result column="cover" property="cover" />
+        <result column="transport" property="transport" />
+        <result column="hotel" property="hotel" />
+        <result column="food" property="food" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="deleted" property="deleted" />
+        <result column="image" property="image" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+            `id`,
+            `name`,
+            `description`,
+            `theme`,
+            `features`,
+            `cover`,
+            `transport`,
+            `hotel`,
+            `food`,
+            `created_at`,
+            `updated_at`,
+            `deleted`,
+            `image`
+    </sql>
+
+    <select id="getPageTourIds" resultType="java.lang.Long">
+        SELECT id
+        FROM fi_tour
+        <where>
+            <if test="keyword != null and keyword != ''">
+                description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByKeyword" resultType="long">
+        SELECT COUNT(*)
+        FROM fi_tour
+        <where>
+            <if test="keyword != null and keyword != ''">
+                description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Tour">
+        SELECT id, name, description, theme, features,cover
+        FROM fi_tour
+        ORDER BY created_at DESC
+            LIMIT 10
+    </select>
+
+</mapper>

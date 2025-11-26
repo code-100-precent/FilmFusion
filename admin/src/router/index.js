@@ -20,70 +20,70 @@ const routes = [
         component: () => import('@/views/profile/Profile.vue'),
         meta: { title: '个人中心', icon: 'UserFilled', transition: 'slide' }
       },
-        {
-          path: 'article',
-          name: 'article',
-          component: () => import('../views/article/ArticleList.vue'),
-          meta: {
-            title: '文章管理'
-          }
-        },
-        {
-          path: 'drama',
-          name: 'drama',
-          component: () => import('../views/drama/DramaList.vue'),
-          meta: {
-            title: '电视剧管理'
-          }
-        },
-        {
-          path: 'location',
-          name: 'location',
-          component: () => import('../views/location/LocationList.vue'),
-          meta: {
-            title: '场地管理'
-          }
-        },
-        {
-          path: 'service',
-          name: 'service',
-          component: () => import('../views/service/ServiceList.vue'),
-          meta: {
-            title: '服务管理'
-          }
-        },
-        {
-          path: 'report',
-          name: 'report',
-          component: () => import('../views/report/ReportList.vue'),
-          meta: {
-            title: '报备管理'
-          }
-        },
-        {
-          path: 'feedback',
-          name: 'feedback',
-          component: () => import('../views/feedback/FeedbackList.vue'),
-          meta: {
-            title: '反馈管理'
-          }
-        },
-        {
-          path: 'tourroute',
-          name: 'tourroute',
-          component: () => import('../views/tourroute/TourRouteList.vue'),
-          meta: {
-            title: '旅游线路管理'
-          }
-        },
-        {
-          path: 'policy',
-          name: 'policy',
-          component: () => import('../views/policy/PolicyList.vue'),
-          meta: {
-            title: '政策管理'
-          }
+      {
+        path: 'article',
+        name: 'article',
+        component: () => import('../views/article/ArticleList.vue'),
+        meta: {
+          title: '文章管理'
         }
+      },
+      {
+        path: 'drama',
+        name: 'drama',
+        component: () => import('../views/drama/DramaList.vue'),
+        meta: {
+          title: '电视剧管理'
+        }
+      },
+      {
+        path: 'location',
+        name: 'location',
+        component: () => import('../views/location/LocationList.vue'),
+        meta: {
+          title: '场地管理'
+        }
+      },
+      {
+        path: 'service',
+        name: 'service',
+        component: () => import('../views/service/ServiceList.vue'),
+        meta: {
+          title: '服务管理'
+        }
+      },
+      {
+        path: 'report',
+        name: 'report',
+        component: () => import('../views/report/ReportList.vue'),
+        meta: {
+          title: '报备管理'
+        }
+      },
+      {
+        path: 'feedback',
+        name: 'feedback',
+        component: () => import('../views/feedback/FeedbackList.vue'),
+        meta: {
+          title: '反馈管理'
+        }
+      },
+      {
+        path: 'tourroute',
+        name: 'tourroute',
+        component: () => import('../views/tourroute/TourRouteList.vue'),
+        meta: {
+          title: '旅游线路管理'
+        }
+      },
+      {
+        path: 'policy',
+        name: 'policy',
+        component: () => import('../views/policy/PolicyList.vue'),
+        meta: {
+          title: '政策管理'
+        }
+      }
     ]
   }
 ]
@@ -96,7 +96,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
-  
+
   if (to.path === '/login') {
     if (userStore.token) {
       next('/')
@@ -111,7 +111,7 @@ router.beforeEach(async (to, from, next) => {
       try {
         const { getAdminInfo } = await import('@/api')
         const res = await getAdminInfo()
-        
+
         if (res.code === 200 && res.data) {
           // 检查用户角色是否为管理员
           if (res.data.role !== 'ADMIN') {
@@ -119,7 +119,7 @@ router.beforeEach(async (to, from, next) => {
             next('/login')
             return
           }
-          
+
           // 更新用户信息
           userStore.setUserInfo(res.data)
           next()
