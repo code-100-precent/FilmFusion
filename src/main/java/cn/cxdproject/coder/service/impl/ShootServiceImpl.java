@@ -92,7 +92,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<ShootVO> getShootPage(Page<Shoot> page, String keyword) {
         long current = page.getCurrent();
