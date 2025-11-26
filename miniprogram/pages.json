@@ -15,6 +15,20 @@
 			}
 		},
 		{
+			"path": "pages/films/films",
+			"style": {
+				"navigationBarTitleText": "光影雅安",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/films/detail",
+			"style": {
+				"navigationBarTitleText": "作品详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/scenes/scenes",
 			"style": {
 				"navigationBarTitleText": "拍摄场地",

@@ -171,6 +171,63 @@
         </view>
       </view>
 
+      <view class="form-card">
+        <view class="form-section">
+          <view class="section-title">相关材料</view>
+          
+          <view class="form-item">
+            <text class="label required">影视拍摄许可证</text>
+            <view class="upload-area" @click="uploadFile('permit')">
+              <view v-if="!form.files.permit" class="upload-placeholder">
+                <uni-icons type="upload" size="24" color="#6366f1"></uni-icons>
+                <text>点击上传</text>
+              </view>
+              <view v-else class="file-preview">
+                <view class="file-info">
+                  <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
+                  <text class="file-name">已上传文件</text>
+                </view>
+                <uni-icons type="close" size="20" color="#ef4444" @click.stop="removeFile('permit')"></uni-icons>
+              </view>
+            </view>
+          </view>
+          
+          <view class="form-item">
+            <text class="label required">立项审批文件</text>
+            <view class="upload-area" @click="uploadFile('approval')">
+              <view v-if="!form.files.approval" class="upload-placeholder">
+                <uni-icons type="upload" size="24" color="#6366f1"></uni-icons>
+                <text>点击上传</text>
+              </view>
+              <view v-else class="file-preview">
+                <view class="file-info">
+                  <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
+                  <text class="file-name">已上传文件</text>
+                </view>
+                <uni-icons type="close" size="20" color="#ef4444" @click.stop="removeFile('approval')"></uni-icons>
+              </view>
+            </view>
+          </view>
+          
+          <view class="form-item">
+            <text class="label">协拍服务申请表</text>
+            <view class="upload-area" @click="uploadFile('application')">
+              <view v-if="!form.files.application" class="upload-placeholder">
+                <uni-icons type="upload" size="24" color="#6366f1"></uni-icons>
+                <text>点击上传</text>
+              </view>
+              <view v-else class="file-preview">
+                <view class="file-info">
+                  <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
+                  <text class="file-name">已上传文件</text>
+                </view>
+                <uni-icons type="close" size="20" color="#ef4444" @click.stop="removeFile('application')"></uni-icons>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <!-- 提交按钮 -->
       <view class="submit-section">
         <button
@@ -219,7 +276,12 @@ export default {
         crewScale: '',
         contact: '',
         phoneNumber: '',
-        crewPosition: ''
+        crewPosition: '',
+        files: {
+          permit: '',
+          approval: '',
+          application: ''
+        }
       }
     }
   },
@@ -240,7 +302,10 @@ export default {
         this.form.crewScale &&
         this.form.contact &&
         this.form.phoneNumber &&
-        this.form.crewPosition
+        this.form.phoneNumber &&
+        this.form.crewPosition &&
+        this.form.files.permit &&
+        this.form.files.approval
       )
     }
   },
@@ -273,6 +338,25 @@ export default {
     },
     onDateChange(e, field) {
       this.form[field] = e.detail.value
+    },
+    uploadFile(type) {
+      // Mock upload
+      uni.chooseImage({
+        count: 1,
+        success: (res) => {
+          const tempFilePath = res.tempFilePaths[0];
+          // In a real app, upload to server here.
+          // For now, just use the temp path.
+          this.form.files[type] = tempFilePath;
+          uni.showToast({
+            title: '上传成功',
+            icon: 'success'
+          });
+        }
+      });
+    },
+    removeFile(type) {
+      this.form.files[type] = '';
     },
     async handleSubmit() {
       if (!this.isLoggedIn) {
@@ -367,7 +451,13 @@ export default {
         crewScale: '',
         contact: '',
         phoneNumber: '',
-        crewPosition: ''
+        phoneNumber: '',
+        crewPosition: '',
+        files: {
+          permit: '',
+          approval: '',
+          application: ''
+        }
       }
       this.typeIndex = -1
       this.genreIndex = -1
@@ -387,8 +477,8 @@ export default {
 
 .content {
   height: calc(100vh - 132rpx - 100rpx);
-  padding: 32rpx;
-  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+  padding: 24rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   width: 100%;
   
@@ -418,8 +508,8 @@ export default {
 .intro-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 24rpx;
-  padding: 40rpx;
-  margin-bottom: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
   color: #fff;
   width: 100%;
   box-sizing: border-box;
@@ -440,15 +530,15 @@ export default {
 .form-card {
   background: #fff;
   border-radius: 24rpx;
-  padding: 40rpx;
-  margin-bottom: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
   width: 100%;
   box-sizing: border-box;
 }
 
 .form-section {
-  margin-bottom: 48rpx;
+  margin-bottom: 32rpx;
 }
 
 .form-section:last-child {
@@ -459,13 +549,13 @@ export default {
   font-size: 32rpx;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
   padding-bottom: 16rpx;
   border-bottom: 2rpx solid #f3f4f6;
 }
 
 .form-item {
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
 }
 
 .form-item:last-child {
@@ -497,7 +587,7 @@ export default {
 .input,
 .picker {
   width: 100%;
-  height: 88rpx;
+  height: 80rpx;
   background: #f9fafb;
   border: 2rpx solid #e5e7eb;
   border-radius: 16rpx;
@@ -520,12 +610,12 @@ export default {
 }
 
 .submit-section {
-  padding: 32rpx 0;
+  padding: 24rpx 0;
 }
 
 .submit-btn {
   width: 100%;
-  height: 96rpx;
+  height: 88rpx;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   font-size: 32rpx;
@@ -547,5 +637,48 @@ export default {
   text-align: center;
   font-size: 24rpx;
   color: #9ca3af;
+}
+.upload-area {
+  width: 100%;
+  height: 80rpx;
+  background: #f9fafb;
+  border: 2rpx dashed #cbd5e1;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.upload-area:active {
+  background: #f3f4f6;
+  border-color: #6366f1;
+}
+
+.upload-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  color: #6366f1;
+  font-size: 28rpx;
+}
+
+.file-preview {
+  width: 100%;
+  padding: 0 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.file-name {
+  font-size: 26rpx;
+  color: #374151;
 }
 </style>

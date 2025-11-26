@@ -159,20 +159,21 @@ export default {
         {
           title: '雅安影视服务',
           desc: '专业影视拍摄一站式服务平台',
-          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E9%9B%85%E5%AE%89%E5%BD%B1%E8%A7%86%E6%9C%8D%E5%8A%A1.png") center/cover no-repeat'
+          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E8%B5%B5%E6%AF%85%E2%80%94%E2%80%94%E3%80%8A%E8%90%A8%E9%87%8C%E5%AE%89%E5%A4%9A%E6%9B%BC%E3%80%8B%E2%80%94%E2%80%94%E7%9F%B3%E6%A3%89%E5%8E%BF%E8%9F%B9%E8%9E%BA%E8%97%8F%E6%97%8F%E4%B9%A1%E6%B1%9F%E5%9D%9D%E6%9D%91%EF%BC%8C%E5%B0%94%E8%8B%8F%E8%97%8F%E6%97%8F%E5%A6%87%E5%A5%B3%E8%B7%B3%E8%B5%B7%E6%AC%A2%E5%BF%AB%E7%9A%84%E6%AD%8C%E8%88%9E%E2%80%9C%E8%90%A8%E9%87%8C%E5%AE%89%E5%A4%9A%E6%9B%BC%E2%80%9D%E3%80%82%E6%AF%8F%E9%80%A2%E8%8A%82%E6%97%A5%E5%BA%86%E5%85%B8%E6%88%96%E7%A5%AD%E7%A5%80%E6%B4%BB%E5%8A%A8%EF%BC%8C%E5%B0%94%E8%8B%8F%E8%97%8F%E6%97%8F%E9%83%BD%E4%BC%9A%E4%BB%A5%E6%AD%8C%E8%88%9E%E5%BD%A2%E5%BC%8F%E8%A1%A8%E8%BE%BE%E5%96%9C%E6%82%A6%E5%BF%83%E6%83%85%EF%BC%8C%E2%80%9C%E8%90%A8%E9%87%8C%E5%AE%89%E5%A4%9A%E6%9B%BC%EF%BC%88%E6%84%8F%E6%80%9D%E6%98%AF%E5%A4%A7%E5%AE%B6%E5%94%B1%E8%B5%B7%E6%9D%A5%E3%80%81%E8%B7%B3%E8%B5%B7%E6%9D%A5%EF%BC%89%E2%80%9D%E5%B0%B1%E6%98%AF%E5%85%B6%E4%B8%AD%E4%B9%8B%E4%B8%80%EF%BC%8C%E8%BF%99%E6%98%AF%E5%B0%94%E8%8B%8F%E8%97%8F%E6%97%8F%E5%85%88%E6%B0%91%E7%95%99%E7%BB%99%E5%90%8E%E4%BA%BA%E7%9A%84%E7%8F%8D%E8%B4%B5%E6%96%87%E5%8C%96%E9%81%97%E4%BA%A7%E3%80%82%E2%80%94%E2%80%9413608260099.jpg") center/cover no-repeat'
         },
         {
           title: '发现精彩取景点',
           desc: '探索雅安最美拍摄场景',
-          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%8F%91%E7%8E%B0%E7%B2%BE%E5%BD%A9%E5%8F%96%E6%99%AF%E7%82%B9.png") center/cover no-repeat'
+          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%AE%8B%E6%9C%89%E5%AE%8F-%E3%80%8A%E6%AD%A3%E6%98%AF%E9%87%87%E8%8C%B6%E5%AD%A3%E3%80%8B%2B%E3%80%8122%E5%B9%B4%E6%8B%8D%E4%BA%8E%E9%9B%85%E5%AE%89%E5%90%8D%E5%B1%B1%E5%8C%BA%E7%BA%A2%E6%98%9F%E9%95%87.JPG") center/cover no-repeat'
         },
         {
           title: '专业协拍服务',
           desc: '提供全方位影视制作支持',
-          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E4%B8%93%E4%B8%9A%E5%8D%8F%E6%8B%8D%E6%9C%8D%E5%8A%A1.png") center/cover no-repeat'
+          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20251124103009.jpg") center/cover no-repeat'
         }
       ],
       functions: [
+        { icon: 'videocam', text: '光影雅安', desc: '影视作品展示', color: '#ef4444', bgColor: 'linear-gradient(135deg, #fecaca 0%, #fca5a5 100%)', path: '/pages/films/films' },
         { icon: 'location', text: '拍摄场地', desc: '寻找完美取景地', color: '#f59e0b', bgColor: 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)', path: '/pages/scenes/scenes' },
         { icon: 'calendar', text: '剧组报备', desc: '手续办理更便捷', color: '#8b5cf6', bgColor: 'linear-gradient(135deg, #f3e8ff 0%, #ddd6fe 100%)', path: '/pages/filing/filing' },
         { icon: 'phone', text: '协拍服务', desc: '专业团队支持', color: '#ec4899', bgColor: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', path: '/pages/services/services' },
@@ -322,8 +323,8 @@ export default {
 
 .content {
   height: calc(100vh - 132rpx - 100rpx);
-  padding: 0 32rpx;
-  padding-bottom: 40rpx;
+  padding: 0 24rpx;
+  padding-bottom: 32rpx;
   box-sizing: border-box;
   width: 100%;
   position: relative;
@@ -344,7 +345,7 @@ export default {
 }
 
 .banner-section {
-  margin: 32rpx 0 40rpx;
+  margin: 24rpx 0 32rpx;
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
@@ -354,7 +355,7 @@ export default {
 
 .banner-swiper {
   width: 100%;
-  height: 360rpx;
+  height: 320rpx;
   box-sizing: border-box;
 }
 
@@ -387,7 +388,7 @@ export default {
 }
 
 .banner-title {
-  font-size: 48rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: #fff;
   margin-bottom: 16rpx;
@@ -403,8 +404,8 @@ export default {
 
 .function-section {
   background: #fff;
-  margin-bottom: 32rpx;
-  padding: 32rpx 24rpx;
+  margin-bottom: 24rpx;
+  padding: 24rpx 16rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
   width: 100%;
@@ -440,8 +441,8 @@ export default {
 
 .function-grid {
   display: inline-flex;
-  gap: 16rpx;
-  padding: 0 24rpx;
+  gap: 12rpx;
+  padding: 0 16rpx;
   white-space: nowrap;
 }
 
@@ -450,9 +451,9 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 8rpx;
-  min-width: 160rpx;
-  width: 160rpx;
-  padding: 20rpx 12rpx;
+  min-width: 140rpx;
+  width: 140rpx;
+  padding: 16rpx 8rpx;
   border-radius: 16rpx;
   transition: all 0.3s ease;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
@@ -468,8 +469,8 @@ export default {
 }
 
 .function-icon {
-  width: 80rpx;
-  height: 80rpx;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 20rpx;
   display: flex;
   align-items: center;
@@ -497,8 +498,8 @@ export default {
 .news-section,
 .location-section {
   background: #fff;
-  margin-bottom: 32rpx;
-  padding: 32rpx;
+  margin-bottom: 24rpx;
+  padding: 24rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
   width: 100%;
@@ -545,7 +546,7 @@ export default {
   display: flex;
   align-items: flex-start;
   gap: 16rpx;
-  padding: 20rpx;
+  padding: 16rpx;
   background: #f9fafb;
   border-radius: 12rpx;
   transition: all 0.3s;
@@ -558,8 +559,8 @@ export default {
 }
 
 .article-cover {
-  width: 140rpx;
-  height: 140rpx;
+  width: 120rpx;
+  height: 120rpx;
   border-radius: 10rpx;
   overflow: hidden;
   flex-shrink: 0;
@@ -629,8 +630,8 @@ export default {
 }
 
 .location-card {
-  width: 480rpx;
-  min-width: 480rpx;
+  width: 440rpx;
+  min-width: 440rpx;
   padding: 0;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   border-radius: 20rpx;
@@ -644,7 +645,7 @@ export default {
 
 .location-cover {
   width: 100%;
-  height: 240rpx;
+  height: 220rpx;
   overflow: hidden;
 }
 
@@ -657,7 +658,7 @@ export default {
 .location-card > .location-header,
 .location-card > .location-desc,
 .location-card > .location-footer {
-  padding: 0 32rpx;
+  padding: 0 24rpx;
 }
 
 .location-card > .location-header {

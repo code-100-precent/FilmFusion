@@ -232,8 +232,8 @@ export default {
 }
 
 .content {
-  padding: 20rpx 32rpx;
-  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 24rpx;
+  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   width: 100%;
   position: relative;
@@ -263,16 +263,16 @@ export default {
 }
 
 .search-bar {
-  margin-top: 24rpx;
-  margin-bottom: 24rpx;
+  margin-top: 16rpx;
+  margin-bottom: 16rpx;
 }
 
 .search-input-wrapper {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  padding: 0 24rpx;
-  height: 80rpx;
+  padding: 0 20rpx;
+  height: 72rpx;
   background: #fff;
   border-radius: 16rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
@@ -288,8 +288,8 @@ export default {
 
 .filter-bar {
   display: flex;
-  gap: 16rpx;
-  margin-bottom: 32rpx;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
   overflow-x: auto;
   
   /* 隐藏滚动条 */
@@ -301,7 +301,7 @@ export default {
 }
 
 .filter-tag {
-  padding: 12rpx 28rpx;
+  padding: 10rpx 24rpx;
   background: #fff;
   border-radius: 20rpx;
   font-size: 26rpx;
@@ -332,8 +332,8 @@ export default {
 .policy-card {
   background: #fff;
   border-radius: 20rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s;
   width: 100%;
@@ -355,11 +355,11 @@ export default {
   display: flex;
   align-items: flex-start;
   gap: 16rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .policy-type-badge {
-  padding: 8rpx 16rpx;
+  padding: 6rpx 12rpx;
   border-radius: 8rpx;
   font-size: 22rpx;
   font-weight: 600;
@@ -378,7 +378,7 @@ export default {
 }
 
 .policy-title {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 700;
   color: #1f2937;
   line-height: 1.5;
@@ -407,7 +407,7 @@ export default {
   align-items: center;
   justify-content: flex-end;
   gap: 8rpx;
-  padding-top: 20rpx;
+  padding-top: 16rpx;
   border-top: 1rpx solid #f3f4f6;
 }
 

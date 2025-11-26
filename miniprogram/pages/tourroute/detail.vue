@@ -34,6 +34,25 @@
           </view>
         </view>
 
+        <!-- 路线地图 -->
+        <view class="info-section">
+          <view class="section-title">路线地图</view>
+          <view class="map-wrapper">
+            <map class="route-map" :latitude="29.98" :longitude="102.98" :scale="9"></map>
+          </view>
+        </view>
+
+        <!-- 影视场景 -->
+        <view class="info-section">
+          <view class="section-title">影视场景</view>
+          <view class="section-content">
+            <view class="info-item">
+              <uni-icons type="videocam-filled" size="16" color="#ef4444"></uni-icons>
+              <text>相关作品：{{ route.ipWorks }}</text>
+            </view>
+          </view>
+        </view>
+
         <!-- 交通方式 -->
         <view class="info-section">
           <view class="section-title">交通方式</view>
@@ -169,18 +188,17 @@ export default {
       }
     }
   },
-  onLoad() {
-    this.loadData()
+  onLoad(options) {
+    const id = parseInt(options.id)
+    if (id) {
+      this.loadData(id)
+    }
   },
   methods: {
-    async loadData() {
+    async loadData(id) {
       this.loading = true
       // 模拟网络延迟
       await new Promise(resolve => setTimeout(resolve, 500))
-
-      const pages = getCurrentPages()
-      const currentPage = pages[pages.length - 1]
-      const id = parseInt(currentPage.route.split('?id=')[1])
 
       this.route = this.mockRoutes[id] || null
       this.loading = false
@@ -331,6 +349,18 @@ export default {
   justify-content: center;
   align-items: center;
   height: 300px;
+}
+
+.map-wrapper {
+  width: 100%;
+  height: 200px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.route-map {
+  width: 100%;
+  height: 100%;
 }
 </style>
 
