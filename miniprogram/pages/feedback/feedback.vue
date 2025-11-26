@@ -55,7 +55,7 @@
 
 <script>
 import NavBar from '@/components/NavBar/NavBar.vue'
-import { createFeedback } from '../../services/api'
+import { createFeedback } from '../../services/backend-api'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -158,6 +158,15 @@ export default {
   padding: 24rpx 32rpx;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .form-card {

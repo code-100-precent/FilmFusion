@@ -1,8 +1,15 @@
 <template>
   <view class="services-page">
-    <NavBar title="协拍服务" :show-back="false"></NavBar>
+    <!-- 渐变背景层 -->
+    <view class="gradient-bg"></view>
+    
+    <NavBar :show-back="false"></NavBar>
 
     <view class="content">
+      <!-- 页面标题 -->
+      <view class="page-title">
+        <text class="title-text">协拍服务</text>
+      </view>
       <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
@@ -16,6 +23,20 @@
             @input="handleSearch"
           />
         </view>
+      </view>
+
+      <!-- Service Categories -->
+      <view class="category-filter">
+        <scroll-view class="category-scroll" scroll-x :show-scrollbar="false">
+          <view 
+            v-for="category in categories" 
+            :key="category"
+            class="category-item"
+            :class="{ active: selectedCategory === category }"
+            @click="selectCategory(category)">
+            <text>{{ category }}</text>
+          </view>
+        </scroll-view>
       </view>
 
       <!-- 服务列表 -->
@@ -89,7 +110,8 @@ import NavBar from '../../components/NavBar/NavBar.vue'
 import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
-import { getShootPage } from '../../services/api'
+// 使用真实后端API
+import { getShootPage } from '../../services/backend-api'
 
 export default {
   components: {
@@ -101,6 +123,16 @@ export default {
   data() {
     return {
       keyword: '',
+      keyword: '',
+      selectedCategory: '全部',
+      categories: [
+        '全部',
+        '场地服务',
+        '食宿服务',
+        '车辆租赁',
+        '器材租赁',
+        '其他服务'
+      ],
       shoots: [],
       current: 1,
       size: 10,
@@ -128,11 +160,12 @@ export default {
         const res = await getShootPage({
           current: this.current,
           size: this.size,
-          keyword: this.keyword || undefined
+          keyword: this.keyword || undefined,
+          type: this.selectedCategory !== '全部' ? this.selectedCategory : undefined
         })
 
         if (res.code === 200) {
-          // 后端返回格式: { code: 200, message: "请求成功", data: [...], pagination: {...} }
+          // 后端返回格式: { code: 200, message: string, data: [], pagination: {...} }
           const dataList = Array.isArray(res.data) ? res.data : []
           const pagination = res.pagination || {}
           
@@ -156,6 +189,10 @@ export default {
       }
     },
     handleSearch() {
+      this.loadShoots(true)
+    },
+    selectCategory(category) {
+      this.selectedCategory = category
       this.loadShoots(true)
     },
     handleRefresh() {
@@ -182,26 +219,89 @@ export default {
   background: #f5f7fa;
   padding-top: 132rpx;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 33.33vh;
+  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  z-index: 0;
 }
 
 .content {
-  padding: 20rpx 32rpx;
-  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 24rpx;
+  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
+}
+
+/* 页面标题样式 */
+.page-title {
+  padding: 32rpx 0 8rpx 0;
   width: 100%;
 }
 
+.title-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
 .search-bar {
-  margin-top: 24rpx;
-  margin-bottom: 32rpx;
+  margin-top: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.category-filter {
+  margin-bottom: 24rpx;
+}
+
+.category-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.category-item {
+  display: inline-block;
+  padding: 10rpx 24rpx;
+  margin-right: 12rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #6b7280;
+  transition: all 0.3s;
+  border: 1rpx solid transparent;
+  
+  &.active {
+    background: #ec4899;
+    color: #fff;
+    box-shadow: 0 4rpx 12rpx rgba(236, 72, 153, 0.3);
+  }
 }
 
 .search-input-wrapper {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  padding: 0 24rpx;
-  height: 80rpx;
+  padding: 0 20rpx;
+  height: 72rpx;
   background: #fff;
   border-radius: 16rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
@@ -217,6 +317,15 @@ export default {
 
 .shoot-list {
   height: calc(100vh - 88rpx - 200rpx);
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .loading-wrapper,
@@ -229,8 +338,8 @@ export default {
 .shoot-card {
   background: #fff;
   border-radius: 20rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s;
   width: 100%;
@@ -243,7 +352,7 @@ export default {
 }
 
 .shoot-header {
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .shoot-title-row {
@@ -259,7 +368,7 @@ export default {
 }
 
 .shoot-status {
-  padding: 6rpx 16rpx;
+  padding: 4rpx 12rpx;
   background: #fee2e2;
   color: #ef4444;
   font-size: 22rpx;
@@ -277,7 +386,7 @@ export default {
   font-size: 28rpx;
   color: #6b7280;
   line-height: 1.8;
-  margin-bottom: 24rpx;
+  margin-bottom: 16rpx;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -288,8 +397,8 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12rpx;
-  margin-bottom: 24rpx;
-  padding: 20rpx;
+  margin-bottom: 16rpx;
+  padding: 16rpx;
   background: #f9fafb;
   border-radius: 12rpx;
 }
@@ -306,12 +415,12 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 20rpx;
+  padding-top: 16rpx;
   border-top: 1rpx solid #f3f4f6;
 }
 
 .shoot-price {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 700;
   color: #f59e0b;
 }

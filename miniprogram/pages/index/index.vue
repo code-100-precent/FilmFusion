@@ -1,10 +1,18 @@
 <template>
   <view class="index-page">
+    <!-- 渐变背景层 -->
+    <view class="gradient-bg"></view>
+    
     <!-- 自定义导航栏 -->
-    <NavBar title="雅安影视服务" :show-back="false"></NavBar>
+    <NavBar :show-back="false"></NavBar>
 
     <!-- 内容区域 -->
     <scroll-view class="content" scroll-y @scrolltolower="onScrollToLower">
+      <!-- 页面标题 -->
+      <view class="page-title">
+        <text class="title-text">雅安影视服务</text>
+      </view>
+
       <!-- Banner轮播 -->
       <view class="banner-section">
         <swiper
@@ -28,20 +36,22 @@
 
       <!-- 功能入口 -->
       <view class="function-section">
-        <view class="section-title">快速入口</view>
-        <view class="function-grid">
-          <view
-            v-for="(item, index) in functions"
-            :key="index"
-            class="function-item"
-            @click="handleFunctionClick(item)"
-          >
-            <view class="function-icon" :style="{ background: item.bgColor }">
-              <uni-icons :type="item.icon" :color="item.color" size="32"></uni-icons>
+        <scroll-view class="function-scroll" scroll-x :show-scrollbar="false" :enable-flex="true">
+          <view class="function-grid">
+            <view
+              v-for="(item, index) in functions"
+              :key="index"
+              class="function-item"
+              @click="handleFunctionClick(item)"
+            >
+              <view class="function-icon" :style="{ background: item.bgColor }">
+                <uni-icons :type="item.icon" :color="item.color" size="30"></uni-icons>
+              </view>
+              <text class="function-text">{{ item.text }}</text>
+              <text class="function-desc">{{ item.desc }}</text>
             </view>
-            <text class="function-text">{{ item.text }}</text>
           </view>
-        </view>
+        </scroll-view>
       </view>
 
       <!-- 最新资讯 -->
@@ -63,6 +73,9 @@
             class="article-item"
             @click="goToArticleDetail(article.id)"
           >
+            <view class="article-cover">
+              <image :src="getArticleCover(article.cover)" class="cover-image" mode="aspectFill"></image>
+            </view>
             <view class="article-content">
               <text class="article-title">{{ article.title }}</text>
               <text class="article-meta">{{ article.issueUnit }} · {{ formatDate(article.issueTime) }}</text>
@@ -84,7 +97,13 @@
         <view v-else-if="locations.length === 0" class="empty-wrapper">
           <Empty text="暂无场地"></Empty>
         </view>
-        <scroll-view v-else class="location-scroll" scroll-x>
+        <scroll-view 
+          v-else 
+          class="location-scroll" 
+          scroll-x 
+          :show-scrollbar="false"
+          :enable-flex="true"
+        >
           <view class="location-list">
             <view
               v-for="location in locations"
@@ -92,6 +111,9 @@
               class="location-card"
               @click="goToLocationDetail(location.id)"
             >
+              <view v-if="location.cover" class="location-cover">
+                <image :src="location.cover" class="cover-image" mode="aspectFill"></image>
+              </view>
               <view class="location-header">
                 <text class="location-name">{{ location.name }}</text>
                 <view class="location-badge">{{ location.type }}</view>
@@ -120,7 +142,8 @@ import NavBar from '../../components/NavBar/NavBar.vue'
 import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
-import { getArticlePage, getLocationPage } from '../../services/api'
+// 使用真实后端API
+import { getArticlePage, getLocationPage } from '../../services/backend-api'
 
 export default {
   components: {
@@ -132,28 +155,32 @@ export default {
   data() {
     return {
       loading: false,
+      loadingTimer: null,
       banners: [
         {
           title: '雅安影视服务',
           desc: '专业影视拍摄一站式服务平台',
-          bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E8%B5%B5%E6%AF%85%E2%80%94%E2%80%94%E3%80%8A%E8%90%A8%E9%87%8C%E5%AE%89%E5%A4%9A%E6%9B%BC%E3%80%8B%E2%80%94%E2%80%94%E7%9F%B3%E6%A3%89%E5%8E%BF%E8%9F%B9%E8%9E%BA%E8%97%8F%E6%97%8F%E4%B9%A1%E6%B1%9F%E5%9D%9D%E6%9D%91%EF%BC%8C%E5%B0%94%E8%8B%8F%E8%97%8F%E6%97%8F%E5%A6%87%E5%A5%B3%E8%B7%B3%E8%B5%B7%E6%AC%A2%E5%BF%AB%E7%9A%84%E6%AD%8C%E8%88%9E%E2%80%9C%E8%90%A8%E9%87%8C%E5%AE%89%E5%A4%9A%E6%9B%BC%E2%80%9D%E3%80%82%E6%AF%8F%E9%80%A2%E8%8A%82%E6%97%A5%E5%BA%86%E5%85%B8%E6%88%96%E7%A5%AD%E7%A5%80%E6%B4%BB%E5%8A%A8%EF%BC%8C%E5%B0%94%E8%8B%8F%E8%97%8F%E6%97%8F%E9%83%BD%E4%BC%9A%E4%BB%A5%E6%AD%8C%E8%88%9E%E5%BD%A2%E5%BC%8F%E8%A1%A8%E8%BE%BE%E5%96%9C%E6%82%A6%E5%BF%83%E6%83%85%EF%BC%8C%E2%80%9C%E8%90%A8%E9%87%8C%E5%AE%89%E5%A4%9A%E6%9B%BC%EF%BC%88%E6%84%8F%E6%80%9D%E6%98%AF%E5%A4%A7%E5%AE%B6%E5%94%B1%E8%B5%B7%E6%9D%A5%E3%80%81%E8%B7%B3%E8%B5%B7%E6%9D%A5%EF%BC%89%E2%80%9D%E5%B0%B1%E6%98%AF%E5%85%B6%E4%B8%AD%E4%B9%8B%E4%B8%80%EF%BC%8C%E8%BF%99%E6%98%AF%E5%B0%94%E8%8B%8F%E8%97%8F%E6%97%8F%E5%85%88%E6%B0%91%E7%95%99%E7%BB%99%E5%90%8E%E4%BA%BA%E7%9A%84%E7%8F%8D%E8%B4%B5%E6%96%87%E5%8C%96%E9%81%97%E4%BA%A7%E3%80%82%E2%80%94%E2%80%9413608260099.jpg") center/cover no-repeat'
         },
         {
           title: '发现精彩取景点',
           desc: '探索雅安最美拍摄场景',
-          bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%AE%8B%E6%9C%89%E5%AE%8F-%E3%80%8A%E6%AD%A3%E6%98%AF%E9%87%87%E8%8C%B6%E5%AD%A3%E3%80%8B%2B%E3%80%8122%E5%B9%B4%E6%8B%8D%E4%BA%8E%E9%9B%85%E5%AE%89%E5%90%8D%E5%B1%B1%E5%8C%BA%E7%BA%A2%E6%98%9F%E9%95%87.JPG") center/cover no-repeat'
         },
         {
           title: '专业协拍服务',
           desc: '提供全方位影视制作支持',
-          bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20251124103009.jpg") center/cover no-repeat'
         }
       ],
       functions: [
-        { icon: 'location', text: '拍摄场地', color: '#6366f1', bgColor: '#eef2ff', path: '/pages/scenes/scenes' },
-        { icon: 'calendar', text: '剧组报备', color: '#8b5cf6', bgColor: '#f3e8ff', path: '/pages/filing/filing' },
-        { icon: 'phone', text: '协拍服务', color: '#ec4899', bgColor: '#fce7f3', path: '/pages/services/services' },
-        { icon: 'chatbubble', text: '影视资讯', color: '#06b6d4', bgColor: '#cffafe', path: '/pages/news/news' }
+        { icon: 'videocam', text: '光影雅安', desc: '影视作品展示', color: '#ef4444', bgColor: 'linear-gradient(135deg, #fecaca 0%, #fca5a5 100%)', path: '/pages/films/films' },
+        { icon: 'location', text: '拍摄场地', desc: '寻找完美取景地', color: '#f59e0b', bgColor: 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)', path: '/pages/scenes/scenes' },
+        { icon: 'calendar', text: '剧组报备', desc: '手续办理更便捷', color: '#8b5cf6', bgColor: 'linear-gradient(135deg, #f3e8ff 0%, #ddd6fe 100%)', path: '/pages/filing/filing' },
+        { icon: 'phone', text: '协拍服务', desc: '专业团队支持', color: '#ec4899', bgColor: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', path: '/pages/services/services' },
+        { icon: 'chatbubble', text: '影视资讯', desc: '掌握行业动态', color: '#06b6d4', bgColor: 'linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%)', path: '/pages/news/news' },
+        { icon: 'map', text: '跟着影视游', desc: '探寻影视足迹', color: '#10b981', bgColor: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', path: '/pages/tourroute/tourroute' },
+        { icon: 'document', text: '视听政策', desc: '了解扶持政策', color: '#3b82f6', bgColor: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', path: '/pages/policy/policy' }
       ],
       articles: [],
       locations: []
@@ -162,9 +189,31 @@ export default {
   onLoad() {
     this.loadData()
   },
+  onUnload() {
+    // 组件销毁时清除定时器
+    if (this.loadingTimer) {
+      clearTimeout(this.loadingTimer)
+      this.loadingTimer = null
+    }
+  },
   methods: {
     async loadData() {
+      // 清除之前的定时器
+      if (this.loadingTimer) {
+        clearTimeout(this.loadingTimer)
+        this.loadingTimer = null
+      }
+      
       this.loading = true
+      
+      // 设置2秒超时，最多显示2秒加载状态
+      this.loadingTimer = setTimeout(() => {
+        if (this.loading) {
+          this.loading = false
+          this.loadingTimer = null
+        }
+      }, 2000)
+      
       try {
         const [articleRes, locationRes] = await Promise.all([
           getArticlePage({ current: 1, size: 5 }),
@@ -172,16 +221,21 @@ export default {
         ])
 
         if (articleRes && articleRes.code === 200) {
-          // 后端返回格式: { code: 200, message: "请求成功", data: [...], pagination: {...} }
+          // 后端返回格式: { code: 200, data: [...], pagination: {...} }
           this.articles = Array.isArray(articleRes.data) ? articleRes.data : []
         }
         if (locationRes && locationRes.code === 200) {
-          // 后端返回格式: { code: 200, message: "请求成功", data: [...], pagination: {...} }
+          // 后端返回格式: { code: 200, data: [...], pagination: {...} }
           this.locations = Array.isArray(locationRes.data) ? locationRes.data : []
         }
       } catch (error) {
         console.error('加载数据失败:', error)
       } finally {
+        // 清除定时器
+        if (this.loadingTimer) {
+          clearTimeout(this.loadingTimer)
+          this.loadingTimer = null
+        }
         this.loading = false
       }
     },
@@ -218,6 +272,10 @@ export default {
         url: `/pages/location/detail?id=${id}`
       })
     },
+    getArticleCover(cover) {
+      // 如果 cover 为 null 或空，使用默认图片
+      return cover || 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png'
+    },
     formatDate(dateStr) {
       if (!dateStr) return ''
       let date
@@ -229,13 +287,9 @@ export default {
         } else {
           return ''
         }
-      } else if (typeof dateStr === 'string') {
-        date = new Date(dateStr)
       } else {
-        return ''
+        date = new Date(dateStr)
       }
-      
-      if (isNaN(date.getTime())) return ''
       
       const month = date.getMonth() + 1
       const day = date.getDate()
@@ -254,18 +308,45 @@ export default {
   background: #f5f7fa;
   padding-top: 132rpx;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 33.33vh;
+  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  z-index: 0;
 }
 
 .content {
   height: calc(100vh - 132rpx - 100rpx);
-  padding: 0 32rpx;
-  padding-bottom: 40rpx;
+  padding: 0 24rpx;
+  padding-bottom: 32rpx;
   box-sizing: border-box;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* 页面标题样式 */
+.page-title {
+  padding: 32rpx 0 8rpx 0;
   width: 100%;
 }
 
+.title-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
 .banner-section {
-  margin: 32rpx 0 40rpx;
+  margin: 24rpx 0 32rpx;
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
@@ -275,7 +356,7 @@ export default {
 
 .banner-swiper {
   width: 100%;
-  height: 360rpx;
+  height: 320rpx;
   box-sizing: border-box;
 }
 
@@ -286,26 +367,46 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40rpx;
+  padding: 20rpx;  /* 减少内边距 */
+  position: relative;
+}
+
+.banner-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.banner-title,
+.banner-desc {
+  position: relative;
+  z-index: 2;
 }
 
 .banner-title {
-  font-size: 48rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: #fff;
   margin-bottom: 16rpx;
   text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
+  text-align: center;
 }
 
 .banner-desc {
   font-size: 28rpx;
   color: rgba(255, 255, 255, 0.9);
+  text-align: center;
 }
 
 .function-section {
   background: #fff;
-  margin-bottom: 32rpx;
-  padding: 40rpx;
+  margin-bottom: 24rpx;
+  padding: 24rpx 16rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
   width: 100%;
@@ -313,53 +414,109 @@ export default {
 }
 
 .section-title {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 32rpx;
+  line-height: 1.2;
+}
+
+.news-section .section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.function-scroll {
+  width: 100%;
+  white-space: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .function-grid {
-  display: flex;
-  justify-content: space-between;
+  display: inline-flex;
+  gap: 12rpx;
+  padding: 0 16rpx;
+  white-space: nowrap;
 }
 
 .function-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16rpx;
-  flex: 1;
+  gap: 8rpx;
+  min-width: 140rpx;
+  width: 140rpx;
+  padding: 16rpx 8rpx;
+  border-radius: 16rpx;
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+  border: 1rpx solid rgba(229, 231, 235, 0.5);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  white-space: normal;
+}
+
+.function-item:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
 }
 
 .function-icon {
-  width: 100rpx;
-  height: 100rpx;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  margin-bottom: 4rpx;
 }
 
 .function-text {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #374151;
-  font-weight: 500;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.function-desc {
+  font-size: 20rpx;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.2;
+  margin-top: 2rpx;
 }
 
 .news-section,
 .location-section {
   background: #fff;
-  margin-bottom: 32rpx;
-  padding: 40rpx;
+  margin-bottom: 24rpx;
+  padding: 24rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
   width: 100%;
   box-sizing: border-box;
 }
 
-.section-header {
+.news-section .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f3f4f6;
+}
+
+.location-section .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -367,9 +524,10 @@ export default {
 }
 
 .section-more {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #6366f1;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 .loading-wrapper,
@@ -382,17 +540,18 @@ export default {
 .article-list {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: 16rpx;
 }
 
 .article-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 32rpx;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 16rpx;
   background: #f9fafb;
-  border-radius: 16rpx;
+  border-radius: 12rpx;
   transition: all 0.3s;
+  overflow: hidden;
 }
 
 .article-item:active {
@@ -400,43 +559,121 @@ export default {
   transform: translateX(4rpx);
 }
 
+.article-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 10rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f3f4f6;
+}
+
+.article-cover .cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .article-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 8rpx;
+  min-width: 0;
+  justify-content: center;
+}
+
+.article-item > uni-icons {
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 0;
 }
 
 .article-title {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: #1f2937;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-all;
 }
 
 .article-meta {
-  font-size: 24rpx;
-  color: #6b7280;
+  font-size: 22rpx;
+  color: #9ca3af;
+  line-height: 1.4;
 }
 
 .location-scroll {
+  width: 100%;
   white-space: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .location-list {
-  display: flex;
+  display: inline-flex;
   gap: 24rpx;
-  padding-bottom: 20rpx;
+  padding: 0 0 20rpx 0;
+  white-space: nowrap;
 }
 
 .location-card {
-  width: 480rpx;
-  padding: 32rpx;
+  width: 440rpx;
+  min-width: 440rpx;
+  padding: 0;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   border-radius: 20rpx;
   border: 2rpx solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.location-cover {
+  width: 100%;
+  height: 220rpx;
+  overflow: hidden;
+}
+
+.location-cover .cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.location-card > .location-header,
+.location-card > .location-desc,
+.location-card > .location-footer {
+  padding: 0 24rpx;
+}
+
+.location-card > .location-header {
+  padding-top: 16rpx;
+  padding-bottom: 8rpx;
+}
+
+.location-card > .location-desc {
+  padding-bottom: 8rpx;
+}
+
+.location-card > .location-footer {
+  padding-bottom: 16rpx;
+  padding-top: 8rpx;
 }
 
 .location-header {
@@ -490,4 +727,17 @@ export default {
 .bottom-spacer {
   height: 40rpx;
 }
+
+/* 隐藏滚动条样式 */
+.content {
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
+}
+
 </style>

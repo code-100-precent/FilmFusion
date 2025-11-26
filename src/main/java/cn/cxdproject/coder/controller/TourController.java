@@ -38,7 +38,7 @@ public class TourController {
 
     /**
      * 新增 Tour 记录
-     * @param entity 实体对象
+     * @param id 实体对象
      * @return 是否新增成功
      */
     @GetMapping("/{id}")

@@ -13,8 +13,13 @@
 </template>
 
 <script>
+	import uniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
+
 	export default {
 		name: 'Empty',
+		components: {
+			uniIcons
+		},
 		props: {
 			text: {
 				type: String,

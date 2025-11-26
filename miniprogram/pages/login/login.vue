@@ -54,7 +54,8 @@
 </template>
 
 <script>
-import { userLogin } from '../../services/api'
+// 使用真实后端API，使用别名避免与vuex action冲突
+import { login as apiLogin } from '../../services/backend-api'
 import { mapActions } from 'vuex'
 
 export default {
@@ -85,7 +86,7 @@ export default {
 
       this.loading = true
       try {
-        const res = await userLogin({
+        const res = await apiLogin({
           username: this.form.username.trim(),
           password: this.form.password
         })

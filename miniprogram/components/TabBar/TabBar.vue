@@ -16,6 +16,8 @@
 </template>
 
 <script>
+import uniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
+
 const DEFAULT_ITEMS = [
   { key: 'index', path: '/pages/index/index', text: '首页', icon: 'home' },
   { key: 'scenes', path: '/pages/scenes/scenes', text: '场地', icon: 'location' },
@@ -26,6 +28,9 @@ const DEFAULT_ITEMS = [
 
 export default {
   name: 'TabBar',
+  components: {
+    uniIcons
+  },
   props: {
     current: {
       type: String,
@@ -41,11 +46,11 @@ export default {
     },
     activeColor: {
       type: String,
-      default: '#4F46E5'
+      default: '#20B2AA'
     },
     inactiveColor: {
       type: String,
-      default: '#A9A7B7'
+      default: '#9CA3AF'
     }
   },
   computed: {
@@ -73,22 +78,15 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(24rpx) saturate(180%);
-  -webkit-backdrop-filter: blur(24rpx) saturate(180%);
-  border: none;
-  border-top: 1rpx solid rgba(234, 236, 244, 0.8);
+  background: #fff;
+  border-top: 1rpx solid #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: space-around;
   z-index: 999;
-  padding: 13rpx 32rpx;
-  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  margin: 0;
-  box-sizing: border-box;
+  padding: 12rpx 0;
+  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
 .tabbar-item {
@@ -97,82 +95,55 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 8rpx 0;
   position: relative;
-  color: #8a8fa0;
-  min-height: 64rpx;
+  transition: all 0.3s ease;
+}
+
+.tabbar-item:active {
+  transform: scale(0.95);
 }
 
 .icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 16rpx;
-  background: rgba(79, 70, 229, 0.08);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
   flex-shrink: 0;
-}
-
-.icon-wrap::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .icon-wrap.bounce {
-  transform: translateY(-4rpx) scale(1.05);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-  box-shadow: 0 4rpx 16rpx rgba(99, 102, 241, 0.2);
+  transform: scale(1.15);
+  background: rgba(32, 178, 170, 0.12);
+  animation: bounceIn 0.3s ease;
 }
 
-.icon-wrap.bounce::before {
-  transform: translate(-50%, -50%) scale(1);
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1.15);
+  }
 }
 
 .tabbar-text {
-  font-size: 22rpx;
-  margin-top: 8rpx;
-  font-weight: 500;
+  font-size: 20rpx;
+  margin-top: 6rpx;
+  font-weight: 400;
   line-height: 1;
-  flex-shrink: 0;
+  transition: all 0.3s ease;
+  color: #9CA3AF;
 }
 
 .tabbar-item.active .tabbar-text {
-  color: #4f46e5;
-}
-
-.tabbar-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 8rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40rpx;
-  height: 6rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
-  box-shadow: 0 2rpx 8rpx rgba(99, 102, 241, 0.4);
-  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes slideIn {
-  from {
-    width: 0;
-    opacity: 0;
-  }
-  to {
-    width: 40rpx;
-    opacity: 1;
-  }
+  color: #20B2AA;
+  font-weight: 500;
 }
 </style>

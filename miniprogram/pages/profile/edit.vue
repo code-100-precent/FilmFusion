@@ -44,8 +44,11 @@
 
 <script>
 import NavBar from '../../components/NavBar/NavBar.vue'
-import { getCurrentUserInfo, updateUserInfo } from '../../services/api'
+
+// 使用真实后端API
+import { getUserInfo, updateUserInfo } from '../../services/backend-api'
 import { mapGetters, mapActions } from 'vuex'
+
 
 export default {
   components: {
@@ -74,7 +77,7 @@ export default {
     ...mapActions(['setUserInfo']),
     async loadUserInfo() {
       try {
-        const res = await getCurrentUserInfo()
+        const res = await getUserInfo()
         if (res.code === 200 && res.data) {
           this.form.username = res.data.username || ''
           this.form.phoneNumber = res.data.phoneNumber || ''
@@ -142,6 +145,15 @@ export default {
   padding-bottom: 40rpx;
   box-sizing: border-box;
   width: 100%;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .form-card {
