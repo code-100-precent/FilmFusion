@@ -56,10 +56,10 @@
 
     <select id="selectMyPage" resultType="cn.cxdproject.coder.model.entity.Report">
         SELECT r.*
-        FROM report r
+        FROM fi_reports r
                  INNER JOIN (
             SELECT id
-            FROM report
+            FROM fi_reports
             WHERE user_id = #{userId}
               AND deleted = 0
             ORDER BY created_at DESC
@@ -69,10 +69,10 @@
 
     <select id="selectPageByAdmin" resultType="cn.cxdproject.coder.model.entity.Report">
         SELECT r.id, r.user_id, r.contact
-        FROM report r
+        FROM fi_reports r
         INNER JOIN (
         SELECT id
-        FROM report
+        FROM fi_reports
         WHERE deleted = 0
         <if test="keyword != null and keyword != ''">
             AND contact LIKE CONCAT('%', #{keyword}, '%')

@@ -83,14 +83,11 @@
       </view>
     </scroll-view>
 
-    <!-- 底部导航栏 -->
-    <TabBar :current="'tourroute'"></TabBar>
   </view>
 </template>
 
 <script>
 import NavBar from '@/components/NavBar/NavBar.vue'
-import TabBar from '@/components/TabBar/TabBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 import { getTourPage } from '@/services/backend-api'
@@ -98,7 +95,6 @@ import { getTourPage } from '@/services/backend-api'
 export default {
   components: {
     NavBar,
-    TabBar,
     Loading,
     Empty
   },

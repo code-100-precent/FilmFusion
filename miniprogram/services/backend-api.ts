@@ -164,6 +164,34 @@ export const getArticleById = (id: number) => {
     })
 }
 
+// ==================== 4.1 视听政策 (Policy) ====================
+
+/**
+ * 获取政策列表（分页）
+ */
+export const getPolicyPage = (params: {
+    current?: number
+    size?: number
+    keyword?: string
+    type?: string
+}) => {
+    return http<PageResponse<any>>({
+        url: '/policy/page',
+        method: 'GET',
+        data: params
+    })
+}
+
+/**
+ * 获取政策详情
+ */
+export const getPolicyById = (id: number) => {
+    return http<any>({
+        url: `/policy/${id}`,
+        method: 'GET'
+    })
+}
+
 // ==================== 5. 协拍服务 (Shoot) ====================
 
 /**
@@ -500,6 +528,8 @@ export default {
     // 视听政策
     getArticlePage,
     getArticleById,
+    getPolicyPage,
+    getPolicyById,
 
     // 协拍服务
     getShootPage,

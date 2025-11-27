@@ -36,13 +36,12 @@
             `deleted`
     </sql>
 
-    <select id="getPolicyLocationIds" resultType="java.lang.Long">
+    <select id="getPagePolicyIds" resultType="java.lang.Long">
         SELECT id
         FROM fi_policy
         <where>
             <if test="keyword != null and keyword != ''">
-                (title LIKE CONCAT('%', #{keyword}, '%')
-                OR type LIKE CONCAT('%', #{keyword}, '%'))
+                title LIKE CONCAT('%', #{keyword}, '%')
             </if>
         </where>
         ORDER BY issue_time DESC

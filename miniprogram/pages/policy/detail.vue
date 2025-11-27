@@ -1,48 +1,61 @@
 <template>
   <view class="detail-page">
-    <NavBar :show-back="true" :title="policy ? policy.title : ''"></NavBar>
+    <NavBar :show-back="true"></NavBar>
+
     <scroll-view class="content" scroll-y>
       <view v-if="loading" class="loading-wrapper">
         <Loading></Loading>
       </view>
       <view v-else-if="policy">
-        <view class="policy-header">
-          <view class="policy-type-badge" :class="policy.type === '省级' ? 'type-prov' : 'type-city'">{{ policy.type }}</view>
+        <!-- 政策标题卡片 -->
+        <view class="header-card">
+          <view class="policy-type-badge" :class="policy.type === '省级' ? 'type-prov' : 'type-city'">
+            {{ policy.type }}
+          </view>
           <view class="policy-title">{{ policy.title }}</view>
         </view>
+
+        <!-- 基本信息 -->
         <view class="info-section">
-          <view class="info-item">
-            <text class="info-label">发布单位</text>
-            <text class="info-value">{{ policy.issueUnit }}</text>
-          </view>
-          <view class="info-item">
-            <text class="info-label">发布日期</text>
-            <text class="info-value">{{ formatDate(policy.issueDate) }}</text>
-          </view>
-        </view>
-        <view class="content-section">
-          <view class="section-title">政策内容</view>
-          <view class="section-content"><text>{{ policy.content }}</text></view>
-        </view>
-        <view class="action-buttons">
-          <button class="btn btn-primary" @click="handleShare">
-            <uni-icons type="share" size="18" color="white"></uni-icons>
-            分享政策
-          </button>
-          <button class="btn btn-secondary" @click="handleCollect">
-            <uni-icons type="heart" size="18" :color="collected ? '#ef4444' : 'white'"></uni-icons>
-            {{ collected ? '已收藏' : '收藏' }}
-          </button>
-        </view>
-        <view class="related-section">
-          <view class="section-title">相关政策</view>
-          <view class="related-list">
-            <view v-for="item in relatedPolicies" :key="item.id" class="related-item" @click="goToPolicy(item.id)">
-              <text class="related-title">{{ item.title }}</text>
-              <uni-icons type="right" size="14" color="#9ca3af"></uni-icons>
+          <view class="section-title">基本信息</view>
+          <view class="info-list">
+            <view class="info-item">
+              <view class="info-label">
+                <uni-icons type="person" size="16" color="#6366f1"></uni-icons>
+                <text>发布单位</text>
+              </view>
+              <text class="info-value">{{ policy.issueUnit }}</text>
+            </view>
+            <view class="info-item">
+              <view class="info-label">
+                <uni-icons type="calendar" size="16" color="#10b981"></uni-icons>
+                <text>发布时间</text>
+              </view>
+              <text class="info-value">{{ formatDate(policy.issueTime) }}</text>
             </view>
           </view>
         </view>
+
+        <!-- 政策内容 -->
+        <view class="info-section">
+          <view class="section-title">政策内容</view>
+          <view class="section-content">
+            <text>{{ policy.content }}</text>
+          </view>
+        </view>
+
+        <!-- 附件列表（如果有） -->
+        <view v-if="policy.attachments && policy.attachments.length > 0" class="info-section">
+          <view class="section-title">相关附件</view>
+          <view class="attachment-list">
+            <view v-for="(item, index) in policy.attachments" :key="index" class="attachment-item">
+              <uni-icons type="paperclip" size="16" color="#6366f1"></uni-icons>
+              <text class="attachment-name">{{ item.name }}</text>
+              <text class="attachment-size">{{ formatFileSize(item.size) }}</text>
+            </view>
+          </view>
+        </view>
+
         <view style="height: 20px;"></view>
       </view>
       <view v-else class="empty-wrapper">
@@ -56,82 +69,229 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
+import { getPolicyById } from '@/services/backend-api'
 
 export default {
   components: { NavBar, Loading, Empty },
   data() {
     return {
+      policyId: null,
       policy: null,
-      loading: true,
-      collected: false,
-      relatedPolicies: [],
-      mockPolicies: {
-        1: { id: 1, title: '四川省影视产业发展扶持政策', type: '省级', issueUnit: '四川省文化和旅游厅', issueDate: '2024-01-10', content: '为促进四川省影视产业发展，提升文化软实力，特制定本政策。' },
-        2: { id: 2, title: '雅安市影视产业发展规划', type: '市级', issueUnit: '雅安市文化和旅游局', issueDate: '2024-01-15', content: '为推动雅安市影视产业发展，特制定本规划。' },
-        3: { id: 3, title: '雅安市影视拍摄协拍服务补助办法', type: '市级', issueUnit: '雅安市文化和旅游局', issueDate: '2024-02-01', content: '为鼓励社会力量参与影视拍摄协拍服务，特制定本办法。' },
-        4: { id: 4, title: '雅安市影视文旅融合发展实施方案', type: '市级', issueUnit: '雅安市文化和旅游局', issueDate: '2024-02-15', content: '为推动影视产业与文旅产业融合发展，特制定本方案。' }
-      }
+      loading: true
     }
   },
-  onLoad() {
-    this.loadData()
+  onLoad(options) {
+    if (options.id) {
+      this.policyId = parseInt(options.id)
+      this.loadData()
+    } else {
+      this.loading = false
+      uni.showToast({
+        title: '政策ID不存在',
+        icon: 'none'
+      })
+    }
   },
   methods: {
     async loadData() {
       this.loading = true
-      await new Promise(resolve => setTimeout(resolve, 500))
-      const pages = getCurrentPages()
-      const currentPage = pages[pages.length - 1]
-      const id = parseInt(currentPage.route.split('?id=')[1])
-      this.policy = this.mockPolicies[id] || null
-      if (this.policy) {
-        this.relatedPolicies = Object.values(this.mockPolicies).filter(p => p.id !== id && p.type === this.policy.type).slice(0, 3)
+      try {
+        const res = await getPolicyById(this.policyId)
+        
+        if (res.code === 200 && res.data) {
+          this.policy = {
+            id: res.data.id,
+            title: res.data.title,
+            type: res.data.type,
+            issueUnit: res.data.issueUnit,
+            issueTime: res.data.issueTime,
+            content: res.data.content,
+            attachments: res.data.attachments || []
+          }
+        } else {
+          uni.showToast({
+            title: res.message || '加载失败',
+            icon: 'none'
+          })
+          this.policy = null
+        }
+      } catch (error) {
+        console.error('加载政策详情失败:', error)
+        uni.showToast({
+          title: '加载失败，请稍后重试',
+          icon: 'none'
+        })
+        this.policy = null
+      } finally {
+        this.loading = false
       }
-      this.loading = false
     },
-    handleShare() {
-      uni.showToast({ title: '分享成功', icon: 'success' })
+    formatDate(dateArray) {
+      if (!dateArray) return '-'
+      
+      // 处理数组格式 [2024, 5, 20, 10, 30]
+      if (Array.isArray(dateArray)) {
+        const year = dateArray[0]
+        const month = String(dateArray[1]).padStart(2, '0')
+        const day = String(dateArray[2]).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+      
+      // 处理字符串格式
+      if (typeof dateArray === 'string') {
+        const d = new Date(dateArray)
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      }
+      
+      return '-'
     },
-    handleCollect() {
-      this.collected = !this.collected
-      uni.showToast({ title: this.collected ? '已收藏' : '已取消收藏', icon: 'success' })
-    },
-    goToPolicy(id) {
-      uni.redirectTo({ url: `/pages/policy/detail?id=${id}` })
-    },
-    formatDate(date) {
-      if (!date) return '-'
-      const d = new Date(date)
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    formatFileSize(bytes) {
+      if (!bytes) return '0 B'
+      const k = 1024
+      const sizes = ['B', 'KB', 'MB', 'GB']
+      const i = Math.floor(Math.log(bytes) / Math.log(k))
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
-.detail-page { display: flex; flex-direction: column; height: 100vh; background: #f8fafc; }
-.content { flex: 1; overflow-y: auto; }
-.policy-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px 16px; color: white; }
-.policy-type-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; margin-bottom: 12px; background: rgba(255, 255, 255, 0.2); }
-.policy-type-badge.type-prov { background: rgba(30, 64, 175, 0.3); }
-.policy-type-badge.type-city { background: rgba(22, 101, 52, 0.3); }
-.policy-title { font-size: 20px; font-weight: 600; line-height: 1.4; color: white; }
-.info-section { background: white; margin: 12px 16px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-.info-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
-.info-item:last-child { border-bottom: none; }
-.info-label { font-size: 14px; color: #6b7280; font-weight: 500; }
-.info-value { font-size: 14px; color: #1f2937; font-weight: 500; }
-.content-section { background: white; margin: 12px 16px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-.section-title { font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 12px; }
-.section-content { font-size: 14px; color: #6b7280; line-height: 1.8; white-space: pre-wrap; word-break: break-word; }
-.action-buttons { display: flex; gap: 12px; padding: 16px; margin: 12px 0; }
-.btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 8px; border: none; font-size: 14px; font-weight: 500; }
-.btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-.btn-secondary { background: white; color: #6366f1; border: 2px solid #6366f1; }
-.related-section { background: white; margin: 12px 16px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-.related-list { display: flex; flex-direction: column; gap: 12px; }
-.related-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f8fafc; border-radius: 8px; }
-.related-title { font-size: 13px; color: #6b7280; flex: 1; }
-.loading-wrapper, .empty-wrapper { display: flex; justify-content: center; align-items: center; height: 300px; }
-</style>
+.detail-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f8fafc;
+}
 
+.content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.header-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 32rpx;
+  margin: 24rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
+}
+
+.policy-type-badge {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  backdrop-filter: blur(10rpx);
+}
+
+.policy-type-badge.type-prov {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.policy-type-badge.type-city {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.policy-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: white;
+  line-height: 1.5;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.info-section {
+  background: white;
+  margin: 0 24rpx 24rpx 24rpx;
+  padding: 32rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f3f4f6;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
+}
+
+.info-label {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 28rpx;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.section-content {
+  font-size: 28rpx;
+  color: #4b5563;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
+  border: 2rpx solid #e5e7eb;
+}
+
+.attachment-name {
+  flex: 1;
+  font-size: 26rpx;
+  color: #1f2937;
+}
+
+.attachment-size {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.loading-wrapper,
+.empty-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 600rpx;
+}
+</style>

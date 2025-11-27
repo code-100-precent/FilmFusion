@@ -70,7 +70,7 @@
               </view>
               <view class="policy-meta">
                 <text class="policy-unit">{{ policy.issueUnit }}</text>
-                <text class="policy-date">{{ formatDate(policy.issueDate) }}</text>
+                <text class="policy-date">{{ formatDate(policy.issueTime) }}</text>
               </view>
               <view class="policy-footer">
                 <text class="view-more">查看详情</text>
@@ -89,21 +89,18 @@
       </scroll-view>
     </view>
 
-    <!-- 底部导航栏 -->
-    <TabBar :current="'policy'"></TabBar>
   </view>
 </template>
 
 <script>
 import NavBar from '@/components/NavBar/NavBar.vue'
-import TabBar from '@/components/TabBar/TabBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
+import { getPolicyPage } from '@/services/backend-api'
 
 export default {
   components: {
     NavBar,
-    TabBar,
     Loading,
     Empty
   },
@@ -117,41 +114,8 @@ export default {
       hasMore: true,
       currentPage: 1,
       pageSize: 10,
-      typeOptions: ['全部', '省级', '市级'],
-      mockPolicies: [
-  {
-    id: 1,
-    title: '四川省影视产业发展扶持政策',
-    type: '省级',
-    issueUnit: '四川省文化和旅游厅',
-    issueDate: '2024-01-10',
-    content: '为促进四川省影视产业发展，提升文化软实力，特制定本政策。对在四川拍摄的影视作品给予资金扶持，最高补助500万元。'
-  },
-  {
-    id: 2,
-    title: '雅安市影视产业发展规划（2024-2030）',
-    type: '市级',
-    issueUnit: '雅安市文化和旅游局',
-    issueDate: '2024-01-15',
-    content: '将雅安打造成为西南地区重要的影视拍摄基地和影视产业集聚区。对来雅拍摄的剧组提供场地优惠、税收优惠等政策支持。'
-  },
-  {
-    id: 3,
-    title: '雅安市影视拍摄协拍服务补助办法',
-    type: '市级',
-    issueUnit: '雅安市文化和旅游局',
-    issueDate: '2024-02-01',
-    content: '对为影视剧组提供协拍服务的企业和个人给予补助。补助标准：场地服务补助最高50万元，其他服务补助最高30万元。'
-  },
-      {
-        id: 4,
-        title: '雅安市影视文旅融合发展实施方案',
-        type: '市级',
-        issueUnit: '雅安市文化和旅游局',
-        issueDate: '2024-02-15',
-        content: '推动影视产业与文旅产业融合发展。支持开发影视主题旅游线路，建设影视文化体验基地，打造影视文旅品牌。'
-      }
-      ]
+      totalPages: 0,
+      typeOptions: ['全部', '省级', '市级']
     }
   },
   onLoad() {
@@ -159,36 +123,65 @@ export default {
   },
   methods: {
     async loadData() {
+      if (this.loading) return
+      
       this.loading = true
-      // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 500))
+      try {
+        const res = await getPolicyPage({
+          current: this.currentPage,
+          size: this.pageSize,
+          keyword: this.keyword || undefined,
+          type: this.selectedType === '全部' ? undefined : this.selectedType
+        })
 
-      let filtered = this.mockPolicies
+        if (res.code === 200 && res.data) {
+          const newPolicies = res.data.map(item => ({
+            id: item.id,
+            title: item.title,
+            type: item.type,
+            issueUnit: item.issueUnit,
+            issueTime: item.issueTime,
+            content: item.content
+          }))
 
-      if (this.keyword) {
-        filtered = filtered.filter(policy =>
-          policy.title.includes(this.keyword) || policy.content.includes(this.keyword)
-        )
+          if (this.currentPage === 1) {
+            this.policies = newPolicies
+          } else {
+            this.policies = [...this.policies, ...newPolicies]
+          }
+
+          // 更新分页信息
+          if (res.pagination) {
+            this.totalPages = res.pagination.totalPages
+            this.hasMore = this.currentPage < this.totalPages
+          } else {
+            this.hasMore = newPolicies.length >= this.pageSize
+          }
+        } else {
+          uni.showToast({
+            title: res.message || '加载失败',
+            icon: 'none'
+          })
+        }
+      } catch (error) {
+        console.error('加载政策失败:', error)
+        uni.showToast({
+          title: '加载失败，请稍后重试',
+          icon: 'none'
+        })
+      } finally {
+        this.loading = false
       }
-
-      if (this.selectedType !== '全部') {
-        filtered = filtered.filter(policy => policy.type === this.selectedType)
-      }
-
-      const start = (this.currentPage - 1) * this.pageSize
-      const end = start + this.pageSize
-      this.policies = filtered.slice(0, end)
-      this.hasMore = end < filtered.length
-
-      this.loading = false
     },
     handleSearch() {
       this.currentPage = 1
+      this.policies = []
       this.loadData()
     },
     async handleRefresh() {
       this.refreshing = true
       this.currentPage = 1
+      this.policies = []
       await this.loadData()
       this.refreshing = false
     },
@@ -202,10 +195,24 @@ export default {
         url: `/pages/policy/detail?id=${id}`
       })
     },
-    formatDate(date) {
-      if (!date) return '-'
-      const d = new Date(date)
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    formatDate(dateArray) {
+      if (!dateArray) return '-'
+      
+      // 处理数组格式 [2024, 5, 20, 10, 30]
+      if (Array.isArray(dateArray)) {
+        const year = dateArray[0]
+        const month = String(dateArray[1]).padStart(2, '0')
+        const day = String(dateArray[2]).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+      
+      // 处理字符串格式
+      if (typeof dateArray === 'string') {
+        const d = new Date(dateArray)
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      }
+      
+      return '-'
     }
   }
 }
