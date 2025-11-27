@@ -62,6 +62,8 @@ public class CreateReportDTO {
 
     private String image;
 
+    private String thumbImage;
+
 
 }
 

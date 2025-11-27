@@ -73,6 +73,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .userId(userId)
                 .image(createDTO.getImage())
                 .cover(createDTO.getCover())
+                .thumbCover(createDTO.getThumbCover())
+                .thumbImage(createDTO.getThumbImage())
                 .build();
 
         this.save(location);
@@ -189,6 +191,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         if (updateDTO.getPrice() != null) location.setPrice(updateDTO.getPrice());
         if(updateDTO.getCover() != null) location.setCover(updateDTO.getCover());
         if(updateDTO.getImage() != null) location.setImage(updateDTO.getImage());
+        if(updateDTO.getThumbCover() != null) location.setThumbCover(updateDTO.getThumbCover());
+        if(updateDTO.getThumbImage() != null) location.setThumbImage(updateDTO.getThumbImage());
 
         cache.asMap().put(CaffeineConstants.LOCATION + locationId, location);
         this.updateById(location);
@@ -237,6 +241,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                .createdAt(location.getCreatedAt())
                .updatedAt(location.getUpdatedAt())
                .image(location.getImage())
+               .thumbCover(location.getThumbCover())
+               .thumbImage(location.getThumbImage())
                .build();
     }
 

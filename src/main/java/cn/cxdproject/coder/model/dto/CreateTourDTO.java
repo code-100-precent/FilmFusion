@@ -63,4 +63,8 @@ public class CreateTourDTO {
      */
     private String image;
 
+    private String thumbCover;
+
+    private String thumbImage;
+
 }

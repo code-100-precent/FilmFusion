@@ -65,5 +65,9 @@ public class HotelVO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
+    private String thumbCover;
+
+    private String thumbImage;
+
 
 }

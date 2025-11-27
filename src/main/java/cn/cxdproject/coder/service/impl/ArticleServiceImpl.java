@@ -163,6 +163,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .userId(currentUser.getId())
                 .cover(createDTO.getCover())
                 .image(createDTO.getImage())
+                .thumbCover(createDTO.getThumbCover())
+                .thumbImage(createDTO.getThumbImage())
                 .build();
 
         // 保存文章
@@ -178,21 +180,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
-        if (updateDTO.getTitle() != null) {
-            article.setTitle(updateDTO.getTitle());
-        }
-        if (updateDTO.getIssueUnit() != null) {
-            article.setIssueUnit(updateDTO.getIssueUnit());
-        }
-        if (updateDTO.getContent() != null) {
-            article.setContent(updateDTO.getContent());
-        }
-        if (updateDTO.getCover() != null) {
-            article.setCover(updateDTO.getCover());
-        }
-        if (updateDTO.getImage() != null) {
-            article.setImage(updateDTO.getImage());
-        }
+        if (updateDTO.getTitle() != null) article.setTitle(updateDTO.getTitle());
+        if (updateDTO.getIssueUnit() != null) article.setIssueUnit(updateDTO.getIssueUnit());
+        if (updateDTO.getContent() != null) article.setContent(updateDTO.getContent());
+        if (updateDTO.getCover() != null) article.setCover(updateDTO.getCover());
+        if (updateDTO.getThumbCover() != null) article.setThumbCover(updateDTO.getThumbCover());
+        if (updateDTO.getThumbImage() != null) article.setThumbImage(updateDTO.getThumbImage());
+
 
         cache.asMap().put(CaffeineConstants.ARTICLE + articleId, article);
         this.updateById(article);
@@ -235,6 +229,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .createdAt(article.getCreatedAt())
                 .updatedAt(article.getUpdatedAt())
                 .image(article.getImage())
+                .thumbCover(article.getThumbCover())
+                .thumbImage(article.getThumbImage())
                 .build();
     }
 

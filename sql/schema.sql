@@ -5,16 +5,17 @@ USE film_fusion;
 # user 用户表
 CREATE TABLE `fi_users`
 (
-    `id`          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '管理员ID',
-    `username`    VARCHAR(255) NOT NULL COMMENT '用户名',
-    `password`    VARCHAR(255) NOT NULL COMMENT '密码',
-    `phoneNumber` VARCHAR(15)  DEFAULT NULL COMMENT '电话号码',
-    `avatar`      VARCHAR(255) DEFAULT NULL COMMENT '头像',
-    `role`        VARCHAR(255) DEFAULT NULL COMMENT '角色',
-    `enabled`     BOOLEAN      DEFAULT TRUE COMMENT '是否启用',
-    `deleted`     TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
-    `created_at`  DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `updated_at`  DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `id`             BIGINT        NOT NULL AUTO_INCREMENT COMMENT '管理员ID',
+    `username`       VARCHAR(255)  NOT NULL COMMENT '用户名',
+    `password`       VARCHAR(255)  NOT NULL COMMENT '密码',
+    `phoneNumber`    VARCHAR(15)   DEFAULT NULL COMMENT '电话号码',
+    `avatar`         VARCHAR(255)  DEFAULT NULL COMMENT '头像',
+    `role`           VARCHAR(255)  DEFAULT NULL COMMENT '角色',
+    `enabled`        BOOLEAN       DEFAULT TRUE COMMENT '是否启用',
+    `deleted`        TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
+    `created_at`     DATETIME      DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`     DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `thumb_avatar`   varchar(2550) DEFAULT NULL COMMENT '压缩后头像',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -78,6 +79,7 @@ CREATE TABLE `fi_reports`
     `updated_at`    DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `status`        varchar(10)   NOT NULL COMMENT '申报状态(未处理，处理中，申请成功，申请失败)',
     `image`         varchar(2550) DEFAULT NULL COMMENT '图片',
+    `thumb_image`   varchar(2550) DEFAULT NULL COMMENT '压缩后图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -102,7 +104,9 @@ CREATE TABLE `fi_locations`
     `created_at`           DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`           DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `cover`                varchar(200)  NOT NULL,
-    `image`                varchar(2550) DEFAULT NULL COMMENT '图片',
+    `image`                varchar(2550)          DEFAULT NULL COMMENT '图片',
+    `thumb_cover`          varchar(2550)          DEFAULT NULL COMMENT '压缩后封面',
+    `thumb_image`          varchar(2550)          DEFAULT NULL COMMENT '压缩后图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -111,17 +115,19 @@ CREATE TABLE `fi_locations`
 # article 资讯文章表
 CREATE TABLE `fi_articles`
 (
-    `id`         BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    `title`      VARCHAR(100) NOT NULL COMMENT '文章标题',
-    `issue_unit` VARCHAR(100) NOT NULL COMMENT '发布单位',
-    `issue_time` DATETIME     NOT NULL COMMENT '发布时间',
-    `content`    TEXT         NOT NULL COMMENT '内容',
-    `user_id`    BIGINT       NOT NULL COMMENT '用户ID，关联到用户表',
-    `deleted`    TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
-    `created_at` DATETIME              DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `updated_at` DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `cover`      varchar(200)  NOT NULL,
-    `image`      varchar(2550) DEFAULT NULL COMMENT '图片',
+    `id`            BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `title`         VARCHAR(100) NOT NULL COMMENT '文章标题',
+    `issue_unit`    VARCHAR(100) NOT NULL COMMENT '发布单位',
+    `issue_time`    DATETIME     NOT NULL COMMENT '发布时间',
+    `content`       TEXT         NOT NULL COMMENT '内容',
+    `user_id`       BIGINT       NOT NULL COMMENT '用户ID，关联到用户表',
+    `deleted`       TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除（0：正常，1：删除）',
+    `created_at`    DATETIME              DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`    DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `cover`         varchar(200)  NOT NULL,
+    `image`         varchar(2550) DEFAULT NULL COMMENT '图片',
+    `thumb_cover`   varchar(2550) DEFAULT NULL COMMENT '压缩后封面',
+    `thumb_image`   varchar(2550) DEFAULT NULL COMMENT '压缩后图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -144,6 +150,8 @@ CREATE TABLE `fi_shoots`
     `updated_at`   DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `cover`        varchar(200)  NOT NULL,
     `image`        varchar(2550) DEFAULT NULL COMMENT '图片',
+    `thumb_cover`  varchar(2550) DEFAULT NULL COMMENT '压缩后封面',
+    `thumb_image`  varchar(2550) DEFAULT NULL COMMENT '压缩后图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -169,6 +177,8 @@ CREATE TABLE `fi_dramas`
     `updated_at`        DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `cover`             varchar(200) NOT NULL,
     `image`             varchar(2550)         DEFAULT NULL COMMENT '图片',
+    `thumb_cover`       varchar(2550) DEFAULT NULL COMMENT '压缩后封面',
+    `thumb_image`       varchar(2550) DEFAULT NULL COMMENT '压缩后图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -201,7 +211,9 @@ CREATE TABLE `fi_hotel` (
      `created_at`      DATETIME           NOT NULL,
      `updated_at`      DATETIME           NOT NULL,
      `deleted`         TINYINT            NOT NULL,
-     `user_id`         int               NOT NULL,
+     `user_id`         int                NOT NULL,
+     `thumb_cover`     varchar(2550)      DEFAULT NULL COMMENT '压缩后封面',
+     `thumb_image`     varchar(2550)      DEFAULT NULL COMMENT '压缩后图片',
       PRIMARY KEY ( `id` )
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
 
@@ -218,7 +230,9 @@ CREATE TABLE `fi_tour` (
      `created_at`      datetime          NOT NULL,
      `updated_at`      datetime          NOT NULL,
      `deleted`         tinyint           NOT NULL,
-     `image`          varchar(2550)     DEFAULT NULL,
+     `image`           varchar(2550)     DEFAULT NULL,
+     `thumb_cover`     varchar(2550)     DEFAULT NULL COMMENT '压缩后封面',
+     `thumb_image`     varchar(2550)     DEFAULT NULL COMMENT '压缩后图片',
       PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 

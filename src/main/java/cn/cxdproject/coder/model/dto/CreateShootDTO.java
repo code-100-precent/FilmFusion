@@ -38,5 +38,9 @@ public class CreateShootDTO {
     private String cover;
 
     private String image;
+
+    private String thumbCover;
+
+    private String thumbImage;
 }
 

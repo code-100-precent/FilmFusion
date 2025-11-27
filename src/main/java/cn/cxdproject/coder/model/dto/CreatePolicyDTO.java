@@ -3,38 +3,37 @@ package cn.cxdproject.coder.model.dto;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 
 @Data
-public class UpdateHotelDTO {
-    /**
-     * 住宿名称
-     */
+public class CreatePolicyDTO {
+
     @NotBlank
-    private String name;
+    private String title;
 
     /**
-     * 介绍
+     * 政策类型："省级" | "市级"
      */
     @NotBlank
-    private String description;
+    private String type;
 
     /**
-     * 地址
+     * 发布单位
      */
     @NotBlank
-    private String address;
+    private String issueUnit;
 
     /**
-     * 负责人名称
+     * 发布时间
      */
     @NotBlank
-    private String managerName;
+    private LocalDateTime issueTime;
 
     /**
-     * 负责人电话
+     * 内容
      */
     @NotBlank
-    private String managerPhone;
+    private String content;
 
     /**
      * 封面
@@ -45,9 +44,20 @@ public class UpdateHotelDTO {
     /**
      * 图片
      */
+
     private String image;
 
+    /**
+     * 压缩封面
+     */
+    @NotBlank
     private String thumbCover;
 
+    /**
+     * 压缩图片
+     */
+
     private String thumbImage;
+
+
 }

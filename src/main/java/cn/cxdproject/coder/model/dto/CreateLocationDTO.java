@@ -48,5 +48,9 @@ public class CreateLocationDTO {
     private String cover;
 
     private String image;
+
+    private String thumbCover;
+
+    private String thumbImage;
 }
 

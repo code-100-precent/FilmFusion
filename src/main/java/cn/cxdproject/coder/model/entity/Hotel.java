@@ -71,6 +71,12 @@ public class Hotel extends BaseEntity {
     @TableField("user_id")
     private Long userId;
 
+    @TableField("thumb_cover")
+    private String thumbCover;
+
+    @TableField("thumb_image")
+    private String thumbImage;
+
 
     @Override
     public Hotel clone() {
