@@ -261,16 +261,36 @@ export default {
         PENDING: '待审核',
         APPROVED: '已通过',
         REJECTED: '已驳回',
-        PROCESSING: '处理中'
+        PROCESSING: '处理中',
+        // 兼容中文状态
+        '未处理': '待审核',
+        '待审核': '待审核',
+        '已通过': '已通过',
+        '已驳回': '已驳回',
+        '处理中': '处理中',
+        // 兼容数字状态 (假设 0:待审核, 1:已通过, 2:已驳回)
+        0: '待审核',
+        1: '已通过',
+        2: '已驳回'
       }
-      return statusMap[status] || '未知状态'
+      return statusMap[status] || status || '未知状态'
     },
     getStatusClass(status) {
       const classMap = {
         PENDING: 'status-pending',
         APPROVED: 'status-approved',
         REJECTED: 'status-rejected',
-        PROCESSING: 'status-processing'
+        PROCESSING: 'status-processing',
+        // 兼容中文状态
+        '未处理': 'status-pending',
+        '待审核': 'status-pending',
+        '已通过': 'status-approved',
+        '已驳回': 'status-rejected',
+        '处理中': 'status-processing',
+        // 兼容数字状态
+        0: 'status-pending',
+        1: 'status-approved',
+        2: 'status-rejected'
       }
       return classMap[status] || ''
     },
@@ -279,7 +299,14 @@ export default {
       let date
       if (Array.isArray(dateStr)) {
         if (dateStr.length >= 3) {
-          date = new Date(dateStr[0], dateStr[1] - 1, dateStr[2])
+          // 处理 [year, month, day, hour, minute, second]
+          const year = dateStr[0]
+          const month = dateStr[1] - 1
+          const day = dateStr[2]
+          const hour = dateStr[3] || 0
+          const minute = dateStr[4] || 0
+          const second = dateStr[5] || 0
+          date = new Date(year, month, day, hour, minute, second)
         } else {
           return '-'
         }
