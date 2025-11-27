@@ -88,60 +88,61 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @CircuitBreaker(name = "policyGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<PolicyVO> getPolicyPage(Page<Policy> page, String keyword) {
+try {
+    long current = page.getCurrent();
+    long size = page.getSize();
+    long offset = (current - 1) * size;
 
-        long current = page.getCurrent();
-        long size = page.getSize();
-        long offset = (current - 1) * size;
+    List<Long> ids = policyMapper.getPagePolicyIds(keyword, offset, size);
+    long total = policyMapper.countByKeyword(keyword);
 
-        List<Long> ids = policyMapper.getPagePolicyIds(keyword, offset, size);
-        long total = policyMapper.countByKeyword(keyword);
+    if (ids.isEmpty()) {
+        throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+    }
 
-        if (ids.isEmpty()) {
-            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
-        }
+    // 1. 批量从 Redis 获取缓存
+    List<String> keys = ids.stream().map(id -> RedisKeyConstants.POLICY + id).collect(Collectors.toList());
+    List<String> cachedJsons = redisUtils.multiGet(keys);
 
-        // 1. 批量从 Redis 获取缓存
-        List<String> keys = ids.stream().map(id -> RedisKeyConstants.POLICY + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisUtils.multiGet(keys);
+    // 2. 构建Location列表：优先用缓存，缺失的记录 ID
+    List<Policy> policys = new ArrayList<>(Collections.nCopies(ids.size(), null));
+    List<Long> missingIds = new ArrayList<>();
 
-        // 2. 构建Location列表：优先用缓存，缺失的记录 ID
-        List<Policy> policys = new ArrayList<>(Collections.nCopies(ids.size(), null));
-        List<Long> missingIds = new ArrayList<>();
-
-        for (int i = 0; i < ids.size(); i++) {
-            String json = cachedJsons.get(i);
-            if (json != null) {
-                try {
-                    policys.set(i, JsonUtils.fromJson(json, Policy.class));
-                } catch (Exception e) {
-                    missingIds.add(ids.get(i));
-                }
-            } else {
+    for (int i = 0; i < ids.size(); i++) {
+        String json = cachedJsons.get(i);
+        if (json != null) {
+            try {
+                policys.set(i, JsonUtils.fromJson(json, Policy.class));
+            } catch (Exception e) {
                 missingIds.add(ids.get(i));
             }
+        } else {
+            missingIds.add(ids.get(i));
         }
+    }
 
-        if (!missingIds.isEmpty()) {
-            List<Policy> dbPolicys = policyMapper.selectBatchIds(missingIds);
-            Map<Long, Policy> dbMap = dbPolicys.stream()
-                    .peek(policy -> {
-                        // 回填 Redis 缓存
-                        redisUtils.set(
-                                RedisKeyConstants.POLICY + policy.getId(),
-                                JsonUtils.toJson(policy),
-                                Duration.ofMinutes(30)
-                        );
-                        cache.put(CaffeineConstants.POLICY + policy.getId(), policy);
-                    })
-                    .collect(Collectors.toMap(Policy::getId, a -> a));
+    if (!missingIds.isEmpty()) {
+        List<Policy> dbPolicys = policyMapper.selectBatchIds(missingIds);
+        Map<Long, Policy> dbMap = dbPolicys.stream()
+                .peek(policy -> {
+                    // 回填 Redis 缓存
+                    redisUtils.set(
+                            RedisKeyConstants.POLICY + policy.getId(),
+                            JsonUtils.toJson(policy),
+                            Duration.ofMinutes(30)
+                    );
+                    cache.put(CaffeineConstants.POLICY + policy.getId(), policy);
+                })
+                .collect(Collectors.toMap(Policy::getId, a -> a));
 
-            // 填回原位置
-            for (int i = 0; i < ids.size(); i++) {
-                if (policys.get(i) == null) {
-                    policys.set(i, dbMap.get(ids.get(i)));
-                }
+        // 填回原位置
+        for (int i = 0; i < ids.size(); i++) {
+            if (policys.get(i) == null) {
+                policys.set(i, dbMap.get(ids.get(i)));
             }
         }
+    }
+
 
         List<PolicyVO> voList = policys.stream()
                 .map(this::toPolicyVO)
@@ -153,6 +154,10 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .setSize(size)
                 .setTotal(total)
                 .setRecords(voList);
+}catch (Exception e){
+    e.printStackTrace(); // 强制打印
+    throw e;
+}
 
     }
 
