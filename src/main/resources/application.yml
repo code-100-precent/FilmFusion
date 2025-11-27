@@ -217,3 +217,14 @@ resilience4j:
         base-config: default
         ignore-exceptions:
           - cn.cxdproject.coder.exception.NotFoundException
+
+
+      policyGetPage:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
+
+      policyGetById:
+        base-config: default
+        ignore-exceptions:
+          - cn.cxdproject.coder.exception.NotFoundException
