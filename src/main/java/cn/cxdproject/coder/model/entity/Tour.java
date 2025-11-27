@@ -80,7 +80,7 @@ public class Tour extends BaseEntity implements Serializable {
     /**
     * images
     */
-    @TableField("images")
+    @TableField("image")
     private String image;
 
     @Override

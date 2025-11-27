@@ -111,6 +111,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
+import { getTourById } from '@/services/backend-api'
 
 export default {
   components: {
@@ -123,69 +124,7 @@ export default {
       route: null,
       loading: true,
       collected: false,
-      defaultCover: 'https://via.placeholder.com/400x200?text=Tour+Route',
-      mockRoutes: {
-  1: {
-    id: 1,
-    name: '熊猫家园探秘游',
-    description: '以在雅安拍摄的熊猫主题影视作品为线索，串联碧峰峡熊猫基地、宝兴蜂桶寨邓池沟等景区景点。线路介绍中注明各景点在影视作品中的出现场景，附游览路线图、交通方式、周边住宿及特色美食推荐，让游客在游览中追寻影视足迹，感受雅安的生态之美。',
-    theme: '熊猫文化',
-    features: '熊猫文化深度游+熊猫文创市集',
-    cover: 'https://via.placeholder.com/400x200?text=Panda+Route',
-    transportInfo: '自驾或包车，全程约2-3天。路线：碧峰峡→蜂桶寨邓池沟→貊貊家园、龙苍沟→栗子坪',
-    accommodation: '碧峰峡景区周边民宿、五星级酒店',
-    foodRecommendation: '雅安特色美食：雨城茶、野生菌、竹笋等',
-    ipWorks: '《熊猫计划》《熊猫守护日记》《我和花花是发小》《寻找会说话的貊貊》'
-  },
-  2: {
-    id: 2,
-    name: '世界茶源寻根游',
-    description: '结合以茶园为背景的影视作品，涵盖蒙顶山茶园、牛碾坪、大地指纹等景点。介绍茶园在影视作品里呈现的四季美景、采茶场景等，提供采茶、制茶体验、特色民宿等推荐。',
-    theme: '茶文化',
-    features: '茶文化体验+主题民宿+茶艺表演',
-    cover: 'https://via.placeholder.com/400x200?text=Tea+Route',
-    transportInfo: '自驾或包车，全程约2天。路线：蒙顶山→牛碾坪→大地指纹',
-    accommodation: '蒙顶山茶园周边特色民宿',
-    foodRecommendation: '蒙顶山茶、茶叶蛋、茶香鸡等',
-    ipWorks: '《茶马古道》《爸爸的茶》'
-  },
-  3: {
-    id: 3,
-    name: '红色文化体验游',
-    description: '围绕红色题材影视作品在雅安的拍摄地，打造包含红军长征翻越夹金山纪念馆、石棉安顺场、宝兴夹金山等景点的主题线路。',
-    theme: '红色文化',
-    features: '红色记忆追溯+对话人文山川',
-    cover: 'https://via.placeholder.com/400x200?text=Red+Culture',
-    transportInfo: '自驾或包车，全程约2-3天。路线：名山百丈关→石棉安顺场→宝兴夹金山',
-    accommodation: '宝兴县城周边酒店',
-    foodRecommendation: '红军餐、山野菜、高山蔬菜等',
-    ipWorks: '《红色粮仓》《突进夹金山》《星火》'
-  },
-  4: {
-    id: 4,
-    name: '川西古镇风情游',
-    description: '循着古镇题材影视作品的拍摄轨迹，将上里古镇、望鱼古镇等串联起来。介绍古镇在影视中展现的独特建筑风貌、民俗风情等场景。',
-    theme: '古镇文化',
-    features: '古镇休闲+民俗体验',
-    cover: 'https://via.placeholder.com/400x200?text=Ancient+Town',
-    transportInfo: '自驾或包车，全程约2天。路线：上里古镇→望鱼古镇→清溪古镇→龙门古镇',
-    accommodation: '古镇内特色客栈',
-    foodRecommendation: '古镇特色小吃、手工豆制品等',
-    ipWorks: '《情归上里》《西康往事》《"声"生不息》'
-  },
-  5: {
-    id: 5,
-    name: '峡谷秘境探险游',
-    description: '依据在峡谷取景的影视作品，串联大渡河峡谷、二郎山喇叭河等景点。介绍峡谷在影视中展现的险峻地势、独特生态等场景。',
-    theme: '峡谷探险',
-    features: '原生态美景+峡谷探秘',
-    cover: 'https://via.placeholder.com/400x200?text=Canyon+Adventure',
-    transportInfo: '自驾或包车，全程约2-3天。路线：二郎山喇叭河→龙苍沟→大渡河峡谷→东拉山大峡谷',
-    accommodation: '峡谷周边度假村',
-    foodRecommendation: '河鱼、野生菌、山野菜等',
-        ipWorks: '《囧途之预演告别》'
-      }
-      }
+      defaultCover: 'https://via.placeholder.com/400x200?text=Tour+Route'
     }
   },
   onLoad(options) {
@@ -197,11 +136,42 @@ export default {
   methods: {
     async loadData(id) {
       this.loading = true
-      // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      this.route = this.mockRoutes[id] || null
-      this.loading = false
+      try {
+        const res = await getTourById(id)
+        
+        if (res.code === 200 && res.data) {
+          this.route = {
+            id: res.data.id,
+            name: res.data.name,
+            description: res.data.description,
+            theme: res.data.theme,
+            features: res.data.features,
+            cover: res.data.cover,
+            transportInfo: res.data.transport,
+            accommodation: res.data.hotel,
+            foodRecommendation: res.data.food,
+            ipWorks: res.data.ipWorks || '暂无相关影视作品',
+            image: res.data.image,
+            latitude: res.data.latitude || 30.075,
+            longitude: res.data.longitude || 102.993
+          }
+        } else {
+          uni.showToast({
+            title: res.message || '加载失败',
+            icon: 'none'
+          })
+          this.route = null
+        }
+      } catch (error) {
+        console.error('加载线路详情失败:', error)
+        uni.showToast({
+          title: '加载失败，请稍后重试',
+          icon: 'none'
+        })
+        this.route = null
+      } finally {
+        this.loading = false
+      }
     },
     handleShare() {
       uni.showToast({

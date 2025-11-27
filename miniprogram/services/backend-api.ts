@@ -81,6 +81,33 @@ export const getTourById = (id: number) => {
     })
 }
 
+// ==================== 2.1 住宿推荐 (Hotel) ====================
+
+/**
+ * 获取住宿列表（分页）
+ */
+export const getHotelPage = (params: {
+    current?: number
+    size?: number
+    keyword?: string
+}) => {
+    return http<PageResponse<any>>({
+        url: '/hotel/page',
+        method: 'GET',
+        data: params
+    })
+}
+
+/**
+ * 获取住宿详情
+ */
+export const getHotelById = (id: number) => {
+    return http<any>({
+        url: `/hotel/${id}`,
+        method: 'GET'
+    })
+}
+
 // ==================== 3. 拍摄场景 (Location) ====================
 
 /**
@@ -233,7 +260,7 @@ export const uploadFile = (filePath: string) => {
     return new Promise<ApiResponse<any>>((resolve, reject) => {
         // 获取token
         const token = uni.getStorageSync('token')
-        
+
         // 上传地址
         const baseURL = 'http://localhost:8080/api'
         const uploadUrl = baseURL + '/file'
@@ -252,17 +279,17 @@ export const uploadFile = (filePath: string) => {
             success: (res) => {
                 // 检查HTTP状态码
                 if (res.statusCode !== 200) {
-                    reject({ 
-                        code: res.statusCode, 
-                        message: `上传失败，HTTP状态码: ${res.statusCode}` 
+                    reject({
+                        code: res.statusCode,
+                        message: `上传失败，HTTP状态码: ${res.statusCode}`
                     })
                     return
                 }
-                
+
                 // 解析响应数据
                 try {
                     const data = JSON.parse(res.data)
-                    
+
                     // 处理成功响应
                     if (data.code === 200 || data.code === 0) {
                         resolve({
@@ -461,6 +488,10 @@ export default {
     // 跟着影视游雅安
     getTourPage,
     getTourById,
+
+    // 住宿推荐
+    getHotelPage,
+    getHotelById,
 
     // 拍摄场景
     getLocationPage,
