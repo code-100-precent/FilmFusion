@@ -236,6 +236,23 @@ CREATE TABLE `fi_tour` (
       PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+CREATE TABLE `fi_policy` (
+      `id`             int               NOT NULL AUTO_INCREMENT,
+      `title`          varchar(255)      NOT NULL COMMENT '政策标题',
+      `type`           varchar(255)      NOT NULL COMMENT '政策类型："省级" | "市级"',
+      `issue_unit`     varchar(255)      NOT NULL COMMENT '发布单位',
+      `issue_time`     datetime          NOT NULL COMMENT '发布时间',
+      `content`        text              NOT NULL COMMENT '内容',
+      `cover`          varchar(255)      NOT NULL COMMENT '封面',
+      `image`          varchar(2550)     DEFAULT NULL COMMENT '图片',
+      `thumb_cover`    varchar(255)      NOT NULL COMMENT '压缩封面',
+      `thumb_image`    varchar(2550)     DEFAULT NULL COMMENT '压缩图片',
+      `created_at`     datetime          NOT NULL,
+      `updated_at`     datetime          NOT NULL,
+      `deleted`        tinyint           NOT NULL,
+      PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
 # ==================== 插入Mock数据 ====================
 
 # 插入用户数据（密码都是123456的BCrypt加密值）
