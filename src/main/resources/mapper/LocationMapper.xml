@@ -22,6 +22,8 @@
         <result column="updated_at" property="updatedAt" />
         <result column="cover" property="cover" />
         <result column="image" property="image" />
+        <result column="thumb_cover" property="thumbCover"/>
+        <result column="thumb_image" property="thumbImage"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -42,7 +44,9 @@
             `deleted`,
             `created_at`,
             `updated_at`,
-            'image'
+            'image',
+            'thumb_cover',
+            'thumb_image'
     </sql>
 
     <select id="getPageLocationIds" resultType="java.lang.Long">
@@ -68,7 +72,7 @@
     </select>
 
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Location">
-        SELECT id, name, type,cover,location_description,address
+        SELECT *
         FROM fi_locations
         ORDER BY created_at DESC
             LIMIT 10

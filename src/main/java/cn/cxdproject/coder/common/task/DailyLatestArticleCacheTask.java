@@ -74,6 +74,8 @@ public class DailyLatestArticleCacheTask {
                 .createdAt(article.getCreatedAt())
                 .updatedAt(article.getUpdatedAt())
                 .image(article.getImage())
+                .thumbCover(article.getThumbCover())
+                .thumbImage(article.getThumbImage())
                 .build();
     }
 }

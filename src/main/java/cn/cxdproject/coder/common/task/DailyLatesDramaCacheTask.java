@@ -85,6 +85,8 @@ public class DailyLatesDramaCacheTask {
                 .createdAt(drama.getCreatedAt())
                 .updatedAt(drama.getUpdatedAt())
                 .image(drama.getImage())
+                .thumbCover(drama.getThumbCover())
+                .thumbImage(drama.getThumbImage())
                 .build();
 
     }

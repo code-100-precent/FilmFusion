@@ -29,5 +29,6 @@ public class UpdateReportDTO {
     private String crewPosition;
     private String status;
     private String image;
+    private String thumbImage;
 }
 

@@ -25,5 +25,7 @@ public class UpdateLocationDTO {
     private BigDecimal price;
     private String cover;
     private String image;
+    private String thumbCover;
+    private String thumbImage;
 }
 

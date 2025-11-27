@@ -9,4 +9,5 @@ public interface CaffeineConstants {
     String SHOOT = "shoot";
     String HOTEL = "hotel";
     String TOUR = "tour";
+    String POLICY = "policy";
 }

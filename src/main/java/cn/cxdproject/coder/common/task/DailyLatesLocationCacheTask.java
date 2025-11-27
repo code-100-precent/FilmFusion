@@ -82,6 +82,8 @@ public class DailyLatesLocationCacheTask {
                 .createdAt(location.getCreatedAt())
                 .updatedAt(location.getUpdatedAt())
                 .image(location.getImage())
+                .thumbCover(location.getThumbCover())
+                .thumbImage(location.getThumbImage())
                 .build();
     }
 }

@@ -65,7 +65,9 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .addPathPatterns("/api/hotel/**")
                 .excludePathPatterns("/api/hotel/admin/**")
                 .addPathPatterns("/api/tour/**")
-                .excludePathPatterns("/api/tour/admin/**");
+                .excludePathPatterns("/api/tour/admin/**")
+                .addPathPatterns("/api/policy/**")
+                .excludePathPatterns("/api/policy/admin/**");
         
         // 管理员权限拦截器
         registry.addInterceptor(adminInterceptor)
@@ -88,6 +90,8 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .addPathPatterns("/api/tour/admin/**")
                 // 旅店模块管理员接口
                 .addPathPatterns("/api/hotel/admin/**")
+                // 政策模块管理员接口
+                .addPathPatterns("/api/policy/admin/**")
                 //banner模块接口
                 . addPathPatterns("/api/banner/**");
         registry.addInterceptor(registrationInterceptor)

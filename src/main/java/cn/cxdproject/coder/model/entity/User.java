@@ -64,6 +64,10 @@ public class User extends BaseEntity implements Serializable, Cloneable {
     @TableField("enabled")
     private Boolean enabled;
 
+    @TableField("thumb_avatar")
+    private String thumbAvatar;
+
+
     @Override
     public User clone() {
         try {

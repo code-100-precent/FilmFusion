@@ -4,7 +4,9 @@ import cn.cxdproject.coder.common.constants.*;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateTourDTO;
 import cn.cxdproject.coder.model.dto.UpdateTourDTO;
+import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Shoot;
+import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.model.vo.TourVO;
 import cn.cxdproject.coder.utils.JsonUtils;
@@ -60,6 +62,8 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .features(createDTO.getFeatures())
                 .transport(createDTO.getFeatures())
                 .image(createDTO.getImage())
+                .thumbCover(createDTO.getThumbCover())
+                .thumbImage(createDTO.getThumbImage())
                 .build();
 
         this.save(tour);
@@ -91,6 +95,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         long size = page.getSize();
         long offset = (current - 1) * size;
 
+
         List<Long> ids = tourMapper.getPageTourIds(keyword, offset, size);
         long total = tourMapper.countByKeyword(keyword);
 
@@ -102,7 +107,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         List<String> keys = ids.stream().map(id -> RedisKeyConstants.TOUR + id).collect(Collectors.toList());
         List<String> cachedJsons = redisUtils.multiGet(keys);
 
-        // 2. 构建Shoot列表：优先用缓存，缺失的记录 ID
+        // 2. 构建Drama列表：优先用缓存，缺失的记录 ID
         List<Tour> tours = new ArrayList<>(Collections.nCopies(ids.size(), null));
         List<Long> missingIds = new ArrayList<>();
 
@@ -119,27 +124,28 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
             }
         }
 
-        if (!missingIds.isEmpty()) {
-            List<Tour> dbTours = tourMapper.selectBatchIds(missingIds);
-            Map<Long, Tour> dbMap = dbTours.stream()
-                    .peek(tour -> {
-                        // 回填 Redis 缓存
-                        redisUtils.set(
-                                RedisKeyConstants.TOUR + tour.getId(),
-                                JsonUtils.toJson(tour),
-                                Duration.ofMinutes(30)
-                        );
-                        cache.put(CaffeineConstants.TOUR+tour.getId(),tour);
-                    })
-                    .collect(Collectors.toMap(Tour::getId, a -> a));
+            if (!missingIds.isEmpty()) {
+                List<Tour> dbTours = tourMapper.selectBatchIds(missingIds);
+                Map<Long, Tour> dbMap = dbTours.stream()
+                        .peek(tour -> {
+                            // 回填 Redis 缓存
+                            redisUtils.set(
+                                    RedisKeyConstants.TOUR + tour.getId(),
+                                    JsonUtils.toJson(tour),
+                                    Duration.ofMinutes(30)
+                            );
+                            cache.put(CaffeineConstants.TOUR + tour.getId(), tour);
+                        })
+                        .collect(Collectors.toMap(Tour::getId, a -> a));
 
-            // 填回原位置
-            for (int i = 0; i < ids.size(); i++) {
-                if (tours.get(i) == null) {
-                    tours.set(i, dbMap.get(ids.get(i)));
+                // 填回原位置
+                for (int i = 0; i < ids.size(); i++) {
+                    if (tours.get(i) == null) {
+                        tours.set(i, dbMap.get(ids.get(i)));
+                    }
                 }
             }
-        }
+
 
         List<TourVO> voList = tours.stream()
                 .map(this::toTourVO)
@@ -172,6 +178,9 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         if (updateDTO.getHotel() != null) tour.setHotel(updateDTO.getHotel());
         if (updateDTO.getFood() != null) tour.setFood(updateDTO.getFood());
         if (updateDTO.getImage() != null) tour.setImage(updateDTO.getImage());
+        if (updateDTO.getThumbCover() != null) tour.setThumbCover(updateDTO.getThumbCover());
+        if (updateDTO.getThumbImage() != null) tour.setThumbImage(updateDTO.getThumbImage());
+
 
         tour.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.TOUR + tourId, tour);
@@ -217,6 +226,8 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .image(tour.getImage())
                 .createdAt(tour.getCreatedAt())
                 .updatedAt(tour.getUpdatedAt())
+                .thumbCover(tour.getThumbCover())
+                .thumbImage(tour.getThumbImage())
                 .build();
     }
 
@@ -251,6 +262,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
             List<TourVO> list = array != null ? Arrays.asList(array) : Collections.emptyList();
 
             long total = list.size();
+
 
             return new Page<TourVO>()
                     .setCurrent(page.getCurrent())

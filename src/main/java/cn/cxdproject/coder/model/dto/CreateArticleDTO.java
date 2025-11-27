@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -23,6 +24,10 @@ public class CreateArticleDTO {
      */
     @NotBlank(message = "发布单位不能为空")
     private String issueUnit;
+
+    private String thumbCover;
+
+    private String thumbImage;
     
     /**
      * 内容

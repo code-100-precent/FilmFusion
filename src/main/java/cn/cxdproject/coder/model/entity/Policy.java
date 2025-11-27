@@ -1,41 +1,40 @@
 package cn.cxdproject.coder.model.entity;
 
-import java.io.Serial;
 import java.io.Serializable;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
-/**
- * Article 实体类
- * @author Hibiscus-code-generate
- */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("fi_articles")
+@TableName("fi_policy")
 @EqualsAndHashCode(callSuper = true)
-public class Article extends BaseEntity implements Serializable, Cloneable {
+public class Policy extends BaseEntity implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
-    * 主键ID
+    * id
     */
     @TableId
     private Long id;
 
     /**
-    * 文章标题
+    * 政策标题
     */
     @TableField("title")
     private String title;
+
+    /**
+    * 政策类型："省级" | "市级"
+    */
+    @TableField("type")
+    private String type;
 
     /**
     * 发布单位
@@ -47,7 +46,6 @@ public class Article extends BaseEntity implements Serializable, Cloneable {
     * 发布时间
     */
     @TableField("issue_time")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime issueTime;
 
     /**
@@ -57,30 +55,37 @@ public class Article extends BaseEntity implements Serializable, Cloneable {
     private String content;
 
     /**
-    * 用户ID，关联到用户表
+    * 封面
     */
-    @TableField("user_id")
-    private Long userId;
-
     @TableField("cover")
     private String cover;
 
+    /**
+    * 图片
+    */
     @TableField("image")
     private String image;
 
+    /**
+    * 压缩封面
+    */
     @TableField("thumb_cover")
     private String thumbCover;
 
+    /**
+    * 压缩图片
+    */
     @TableField("thumb_image")
     private String thumbImage;
 
+
     @Override
-    public Article clone() {
+    public Location clone() {
         try {
-            return (Article) super.clone();
+            return (Location) super.clone();
         } catch (CloneNotSupportedException e) {
             // This should never happen since we implement Cloneable
-            throw new RuntimeException("Failed to clone User object", e);
+            throw new RuntimeException("Failed to clone Location object", e);
         }
     }
 }

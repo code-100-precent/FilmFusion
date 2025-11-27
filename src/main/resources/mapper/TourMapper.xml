@@ -18,6 +18,8 @@
         <result column="updated_at" property="updatedAt" />
         <result column="deleted" property="deleted" />
         <result column="image" property="image" />
+        <result column="thumb_cover" property="thumbCover"/>
+        <result column="thumb_image" property="thumbImage"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -33,7 +35,9 @@
             `created_at`,
             `updated_at`,
             `deleted`,
-            `image`
+            `image`,
+            'thumb_cover',
+            'thumb_image'
     </sql>
 
     <select id="getPageTourIds" resultType="java.lang.Long">
@@ -59,7 +63,7 @@
     </select>
 
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Tour">
-        SELECT id, name, description, theme, features,cover
+        SELECT *
         FROM fi_tour
         ORDER BY created_at DESC
             LIMIT 10

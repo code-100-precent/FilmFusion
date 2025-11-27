@@ -41,6 +41,7 @@ public class ReportVO {
     private Long userId;
     private String status;
     private String image;
+    private String thumbImage;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

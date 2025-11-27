@@ -9,4 +9,5 @@ public interface TaskConstants {
     String SHOOT = "fallback:shoot";
     String HOTEL = "fallback:hotel";
     String TOUR = "fallback:tour";
+    String POLICY = "fallback:policy";
 }
