@@ -77,6 +77,8 @@ public class DailyLatesTourCacheTask {
                 .image(tour.getImage())
                 .createdAt(tour.getCreatedAt())
                 .updatedAt(tour.getUpdatedAt())
+                .thumbCover(tour.getThumbCover())
+                .thumbImage(tour.getThumbImage())
                 .build();
     }
 }

@@ -1,8 +1,7 @@
 package cn.cxdproject.coder.model.vo;
 
-import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,68 +9,80 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * 文章视图对象
- * 
- * @author heathcetide
- */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ArticleVO {
-    
-    /**
-     * 文章ID
-     */
+public class PolicyVO {
+
+
     private Long id;
-    
+
     /**
-     * 文章标题
+     * 政策标题
      */
+
     private String title;
-    
+
+    /**
+     * 政策类型："省级" | "市级"
+     */
+
+    private String type;
+
     /**
      * 发布单位
      */
+
     private String issueUnit;
-    
+
     /**
      * 发布时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+
     private LocalDateTime issueTime;
-    
+
     /**
      * 内容
      */
+
     private String content;
-    
+
     /**
-     * 用户ID
+     * 封面
      */
-    private Long userId;
 
     private String cover;
 
+    /**
+     * 图片
+     */
+
     private String image;
+
+    /**
+     * 压缩封面
+     */
 
     private String thumbCover;
 
+    /**
+     * 压缩图片
+     */
+
     private String thumbImage;
 
+    /**
+     * created_at
+     */
+
+    private LocalDateTime createdAt;
 
     /**
-     * 创建时间
+     * updated_at
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
-    
-    /**
-     * 更新时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+
     private LocalDateTime updatedAt;
 
-}
 
+}

@@ -19,6 +19,8 @@
         <result column="updated_at" property="updatedAt" />
         <result column="cover" property="cover" />
         <result column="image" property="image" />
+        <result column="thumb_cover" property="thumbCover"/>
+        <result column="thumb_image" property="thumbImage"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -35,7 +37,9 @@
             `deleted`,
             `created_at`,
             `updated_at`,
-            'image'
+            'image',
+            'thumb_cover',
+            'thumb_image'
     </sql>
 
     <select id="getPageShootIds" resultType="java.lang.Long">
@@ -61,7 +65,7 @@
     </select>
 
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Shoot">
-        SELECT id, name, description, price, status,cover,address
+        SELECT *
         FROM fi_shoots
         ORDER BY created_at DESC
             LIMIT 10

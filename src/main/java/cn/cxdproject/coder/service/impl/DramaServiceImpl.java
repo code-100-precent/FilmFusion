@@ -70,6 +70,8 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .userId(userId)
                 .image(createDTO.getImage())
                 .cover(createDTO.getCover())
+                .thumbCover(createDTO.getThumbCover())
+                .thumbImage(createDTO.getThumbImage())
                 .build();
 
         this.save(drama);
@@ -184,6 +186,8 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         if (updateDTO.getServiceId() != null) drama.setServiceId(updateDTO.getServiceId());
         if(updateDTO.getCover() != null) drama.setCover(updateDTO.getCover());
         if(updateDTO.getImage() != null) drama.setImage(updateDTO.getImage());
+        if(updateDTO.getThumbCover() != null) drama.setThumbCover(updateDTO.getThumbCover());
+        if(updateDTO.getThumbImage() != null) drama.setThumbImage(updateDTO.getThumbImage());
 
         drama.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.DRAMA + dramaId, dramaId);
@@ -230,6 +234,8 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .createdAt(drama.getCreatedAt())
                 .updatedAt(drama.getUpdatedAt())
                 .image(drama.getImage())
+                .thumbCover(drama.getThumbCover())
+                .thumbImage(drama.getThumbImage())
                 .build();
 
     }

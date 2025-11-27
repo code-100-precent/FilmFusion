@@ -66,6 +66,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .cover(createDTO.getCover())
                 .image(createDTO.getImage())
                 .userId(userId)
+                .thumbCover(createDTO.getThumbCover())
+                .thumbImage(createDTO.getThumbImage())
                 .build();
 
         this.save(hotel);
@@ -177,6 +179,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         if (updateDTO.getManagerPhone() != null) hotel.setManagerPhone(updateDTO.getManagerPhone());
         if (updateDTO.getCover() != null) hotel.setCover(updateDTO.getCover());
         if (updateDTO.getImage() != null) hotel.setImage(updateDTO.getImage());
+        if (updateDTO.getThumbCover() != null) hotel.setThumbCover(updateDTO.getThumbCover());
+        if (updateDTO.getThumbImage() != null) hotel.setThumbImage(updateDTO.getThumbImage());
 
         cache.asMap().put(CaffeineConstants.HOTEL + hotelId, hotel);
         this.updateById(hotel);
@@ -220,6 +224,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .updatedAt(hotel.getUpdatedAt())
                 .createdAt(hotel.getCreatedAt())
                 .userId(hotel.getUserId())
+                .thumbCover(hotel.getThumbCover())
+                .thumbImage(hotel.getThumbImage())
                 .build();
     }
 

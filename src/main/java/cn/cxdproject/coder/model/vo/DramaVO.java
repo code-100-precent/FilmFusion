@@ -90,6 +90,10 @@ public class DramaVO {
 
     private String image;
 
+    private String thumbCover;
+
+    private String thumbImage;
+
 
 }
 

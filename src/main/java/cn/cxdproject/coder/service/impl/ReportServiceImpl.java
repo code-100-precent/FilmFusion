@@ -64,6 +64,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                 .crewPosition(createDTO.getCrewPosition())
                 .userId(userId)
                 .status(createDTO.getStatus())
+                .thumbImage(createDTO.getThumbImage())
                 .build();
 
         this.save(report);
@@ -97,6 +98,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         if (updateDTO.getCrewPosition() != null) report.setCrewPosition(updateDTO.getCrewPosition());
         if (updateDTO.getImage() != null) report.setImage(updateDTO.getImage());
         if (updateDTO.getStatus() != null) throw new BusinessException(FORBIDDEN.code(), "无权修改申请状态");;
+        if (updateDTO.getThumbImage() != null) report.setThumbImage(updateDTO.getThumbImage());
 
         this.updateById(report);
         return toReportVO(report);
@@ -253,6 +255,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .image(report.getImage())
+                .thumbImage(report.getThumbImage())
                 .build();
     }
 }

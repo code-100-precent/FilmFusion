@@ -26,6 +26,7 @@
         <result column="updated_at" property="updatedAt" />
         <result column="status" property="status" />
         <result column="image" property="image" />
+        <result column="thumb_image" property="thumbImage"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -49,7 +50,8 @@
             `created_at`,
             `updated_at`,
             'status',
-            'image'
+            'image',
+            'thumb_image'
     </sql>
 
     <select id="selectMyPage" resultType="cn.cxdproject.coder.model.entity.Report">

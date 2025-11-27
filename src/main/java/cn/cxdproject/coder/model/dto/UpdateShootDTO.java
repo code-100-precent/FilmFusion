@@ -21,5 +21,7 @@ public class UpdateShootDTO {
     private String contactName;
     private String cover;
     private String image;
+    private String thumbCover;
+    private String thumbImage;
 }
 

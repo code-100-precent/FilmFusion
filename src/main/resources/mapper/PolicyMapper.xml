@@ -2,46 +2,47 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="cn.cxdproject.coder.mapper.ArticleMapper">
+<mapper namespace="cn.cxdproject.coder.mapper.PolicyMapper">
 
-    <resultMap id="BaseResultMap" type="cn.cxdproject.coder.model.entity.Article">
+    <resultMap id="BaseResultMap" type="cn.cxdproject.coder.model.entity.Policy">
         <id column="id" property="id" />
         <result column="title" property="title" />
+        <result column="type" property="type" />
         <result column="issue_unit" property="issueUnit" />
         <result column="issue_time" property="issueTime" />
         <result column="content" property="content" />
-        <result column="user_id" property="userId" />
-        <result column="deleted" property="deleted" />
+        <result column="cover" property="cover" />
+        <result column="image" property="image" />
+        <result column="thumb_cover" property="thumbCover" />
+        <result column="thumb_image" property="thumbImage" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
-        <result column="cover" property="cover" />
-        <result column="image" property="cover" />
-        <result column="thumb_cover" property="thumbCover"/>
-        <result column="thumb_image" property="thumbImage"/>
+        <result column="deleted" property="deleted" />
     </resultMap>
 
     <sql id="Base_Column_List">
             `id`,
             `title`,
+            `type`,
             `issue_unit`,
             `issue_time`,
             `content`,
-            `user_id`,
-            `deleted`,
-            'cover',
+            `cover`,
+            `image`,
+            `thumb_cover`,
+            `thumb_image`,
             `created_at`,
             `updated_at`,
-            'image',
-            'thumb_cover',
-            'thumb_image'
+            `deleted`
     </sql>
 
-    <select id="getPageArticleIds" resultType="java.lang.Long">
+    <select id="getPolicyLocationIds" resultType="java.lang.Long">
         SELECT id
-        FROM fi_articles
+        FROM fi_policy
         <where>
             <if test="keyword != null and keyword != ''">
-                title LIKE CONCAT('%', #{keyword}, '%')
+                (title LIKE CONCAT('%', #{keyword}, '%')
+                OR type LIKE CONCAT('%', #{keyword}, '%'))
             </if>
         </where>
         ORDER BY issue_time DESC
@@ -50,19 +51,21 @@
 
     <select id="countByKeyword" resultType="long">
         SELECT COUNT(*)
-        FROM fi_articles
+        FROM fi_policy
         <where>
             <if test="keyword != null and keyword != ''">
-                title LIKE CONCAT('%', #{keyword}, '%')
+                (title LIKE CONCAT('%', #{keyword}, '%')
+                OR type LIKE CONCAT('%', #{keyword}, '%'))
             </if>
         </where>
     </select>
 
-    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Article">
+    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Policy">
         SELECT *
-        FROM fi_articles
-        ORDER BY create_time DESC
+        FROM fi_policy
+        ORDER BY issue_time DESC
             LIMIT 10
     </select>
+
 
 </mapper>

@@ -75,6 +75,8 @@ public class DailyLatesHotelCacheTask {
                 .cover(hotel.getCover())
                 .updatedAt(hotel.getUpdatedAt())
                 .createdAt(hotel.getCreatedAt())
+                .thumbCover(hotel.getThumbCover())
+                .thumbImage(hotel.getThumbImage())
                 .build();
     }
 

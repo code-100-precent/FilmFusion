@@ -58,4 +58,8 @@ public class UpdateTourDTO {
      * images
      */
     private String image;
+
+    private String thumbCover;
+
+    private String thumbImage;
 }

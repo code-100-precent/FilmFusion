@@ -68,6 +68,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .userId(userId)
                 .cover(createDTO.getCover())
                 .image(createDTO.getImage())
+                .thumbCover(createDTO.getThumbCover())
+                .thumbImage(createDTO.getThumbImage())
                 .build();
 
         this.save(shoot);
@@ -179,6 +181,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (updateDTO.getContactName() != null) shoot.setContactName(updateDTO.getContactName());
         if (updateDTO.getCover() != null) shoot.setCover(updateDTO.getCover());
         if (updateDTO.getImage() != null) shoot.setImage(updateDTO.getImage());
+        if (updateDTO.getThumbCover() != null) shoot.setThumbCover(updateDTO.getThumbCover());
+        if (updateDTO.getThumbImage() != null) shoot.setThumbImage(updateDTO.getThumbImage());
 
         shoot.setUpdatedAt(LocalDateTime.now());
         cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
@@ -224,6 +228,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .createdAt(shoot.getCreatedAt())
                 .updatedAt(shoot.getUpdatedAt())
                 .image(shoot.getImage())
+                .thumbCover(shoot.getThumbCover())
+                .thumbImage(shoot.getThumbImage())
                 .build();
     }
 

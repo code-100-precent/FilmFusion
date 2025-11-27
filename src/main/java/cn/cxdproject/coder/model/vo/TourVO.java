@@ -35,9 +35,15 @@ public class TourVO {
     private String food;
 
     private String image;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    private String thumbCover;
+
+    private String thumbImage;
 
 }

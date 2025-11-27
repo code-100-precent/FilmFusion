@@ -79,6 +79,8 @@ public class DailyLatesShootCacheTask {
                 .createdAt(shoot.getCreatedAt())
                 .updatedAt(shoot.getUpdatedAt())
                 .image(shoot.getImage())
+                .thumbCover(shoot.getThumbCover())
+                .thumbImage(shoot.getThumbImage())
                 .build();
     }
 }
