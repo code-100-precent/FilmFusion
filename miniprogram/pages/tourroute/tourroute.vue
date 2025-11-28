@@ -12,7 +12,7 @@
         <text class="title-text">跟着影视游</text>
       </view>
 
-      <!-- 搜索栏和视图切换 -->
+      <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
           <uni-icons type="search" size="18" color="#9ca3af"></uni-icons>
@@ -25,30 +25,10 @@
             @input="handleSearch"
           />
         </view>
-        <!-- 视图切换按钮 -->
-        <view class="view-toggle" @click="toggleView">
-          <uni-icons :type="isMapView ? 'list' : 'map'" size="20" color="#fff"></uni-icons>
-          <text>{{ isMapView ? '列表' : '地图' }}</text>
-        </view>
-      </view>
-
-      <!-- 地图模式 -->
-      <view v-if="isMapView" class="map-container">
-        <map
-          id="routeMap"
-          class="route-map"
-          :latitude="30.075"
-          :longitude="102.993"
-          :scale="9"
-          :markers="markers"
-          @markertap="onMarkerTap"
-          @callouttap="onCalloutTap"
-          show-location
-        ></map>
       </view>
 
       <!-- 线路列表 -->
-      <view v-else class="route-list">
+      <view class="route-list">
         <view v-if="loading && routes.length === 0" class="loading-wrapper">
           <Loading></Loading>
         </view>
@@ -100,10 +80,8 @@ export default {
   },
   data() {
     return {
-      isMapView: true,
       keyword: '',
       routes: [],
-      markers: [],
       loading: false,
       refreshing: false,
       hasMore: true,
@@ -139,9 +117,7 @@ export default {
             transport: item.transport,
             hotel: item.hotel,
             food: item.food,
-            image: item.image,
-            latitude: item.latitude || 30.075,
-            longitude: item.longitude || 102.993
+            image: item.image
           }))
 
           if (this.currentPage === 1) {
@@ -157,8 +133,6 @@ export default {
           } else {
             this.hasMore = newRoutes.length >= this.pageSize
           }
-
-          this.updateMarkers()
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -174,37 +148,6 @@ export default {
       } finally {
         this.loading = false
       }
-    },
-    updateMarkers() {
-      this.markers = this.routes
-        .filter(route => route.latitude && route.longitude)
-        .map(route => ({
-          id: route.id,
-          latitude: route.latitude,
-          longitude: route.longitude,
-          title: route.name,
-          iconPath: '/static/location.png',
-          width: 30,
-          height: 30,
-          callout: {
-            content: route.name,
-            color: '#ffffff',
-            fontSize: 14,
-            borderRadius: 8,
-            bgColor: '#6366f1',
-            padding: 8,
-            display: 'ALWAYS'
-          }
-        }))
-    },
-    toggleView() {
-      this.isMapView = !this.isMapView
-    },
-    onMarkerTap(e) {
-      this.goToDetail(e.detail.markerId)
-    },
-    onCalloutTap(e) {
-      this.goToDetail(e.detail.markerId)
     },
     handleSearch() {
       this.currentPage = 1
@@ -395,36 +338,6 @@ export default {
   font-size: 26rpx;
   color: #9ca3af;
 }
-.view-toggle {
-  background: rgba(99, 102, 241, 0.9);
-  padding: 0 20rpx;
-  border-radius: 16rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6rpx;
-  color: #fff;
-  font-size: 22rpx;
-  height: 72rpx;
-  flex-shrink: 0;
-  box-shadow: 0 2rpx 8rpx rgba(99, 102, 241, 0.3);
-  transition: all 0.3s;
-  
-  &:active {
-    background: rgba(99, 102, 241, 1);
-    transform: scale(0.95);
-  }
-}
 
-.map-container {
-  width: 100%;
-  height: calc(100vh - 132rpx - 140rpx);
-  position: relative;
-}
-
-.route-map {
-  width: 100%;
-  height: 100%;
-}
 </style>
 

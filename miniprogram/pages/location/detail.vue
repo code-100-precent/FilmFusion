@@ -120,9 +120,13 @@ export default {
         if (res.code === 200 && res.data) {
           this.location = res.data
           // Mock coordinates if missing
-          if (!this.location.latitude) {
             this.location.latitude = 30.0 + Math.random() * 0.1
             this.location.longitude = 103.0 + Math.random() * 0.1
+          }
+          
+          // Mock bestShootingTime if missing
+          if (!this.location.bestShootingTime) {
+            this.location.bestShootingTime = '春秋两季，清晨或傍晚光线最佳'
           }
         } else {
           uni.showToast({
