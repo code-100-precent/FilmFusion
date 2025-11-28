@@ -41,7 +41,8 @@ public class LocationVO {
     private LocalDateTime updatedAt;
     private String thumbCover;
     private String thumbImage;
-
+    private String longitude;
+    private String latitude;
 
 }
 

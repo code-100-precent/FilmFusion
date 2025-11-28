@@ -103,6 +103,12 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
     @TableField("thumb_image")
     private String thumbImage;
 
+    @TableField("longitude")
+    private String longitude;
+
+    @TableField("latitude")
+    private String latitude;
+
     @Override
     public Location clone() {
         try {

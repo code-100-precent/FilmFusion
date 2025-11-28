@@ -41,7 +41,7 @@
         FROM fi_policy
         <where>
             <if test="keyword != null and keyword != ''">
-                location_description LIKE CONCAT('%', #{keyword}, '%')
+                title LIKE CONCAT('%', #{keyword}, '%')
             </if>
         </where>
         ORDER BY issue_time DESC

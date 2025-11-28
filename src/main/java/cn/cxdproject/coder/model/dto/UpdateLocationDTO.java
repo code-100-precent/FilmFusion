@@ -27,5 +27,7 @@ public class UpdateLocationDTO {
     private String image;
     private String thumbCover;
     private String thumbImage;
+    private String longitude;
+    private String latitude;
 }
 
