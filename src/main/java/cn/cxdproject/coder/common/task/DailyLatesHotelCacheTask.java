@@ -77,6 +77,8 @@ public class DailyLatesHotelCacheTask {
                 .createdAt(hotel.getCreatedAt())
                 .thumbCover(hotel.getThumbCover())
                 .thumbImage(hotel.getThumbImage())
+                .latitude(hotel.getLatitude())
+                .longitude(hotel.getLongitude())
                 .build();
     }
 

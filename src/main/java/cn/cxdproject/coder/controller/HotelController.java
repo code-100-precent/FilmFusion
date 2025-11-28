@@ -20,7 +20,7 @@ import javax.validation.constraints.NotNull;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/accommodation")
+@RequestMapping("/api/hotel")
 @Validated
 public class HotelController {
 

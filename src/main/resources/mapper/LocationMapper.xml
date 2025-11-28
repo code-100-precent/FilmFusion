@@ -24,6 +24,8 @@
         <result column="image" property="image" />
         <result column="thumb_cover" property="thumbCover"/>
         <result column="thumb_image" property="thumbImage"/>
+        <result column="longitude" property="longitude"/>
+        <result column="latitude" property="latitude"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -46,7 +48,9 @@
             `updated_at`,
             'image',
             'thumb_cover',
-            'thumb_image'
+            'thumb_image',
+            'longitude',
+            'latitude'
     </sql>
 
     <select id="getPageLocationIds" resultType="java.lang.Long">

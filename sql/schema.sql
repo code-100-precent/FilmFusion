@@ -107,6 +107,8 @@ CREATE TABLE `fi_locations`
     `image`                varchar(2550)          DEFAULT NULL COMMENT '图片',
     `thumb_cover`          varchar(2550)          DEFAULT NULL COMMENT '压缩后封面',
     `thumb_image`          varchar(2550)          DEFAULT NULL COMMENT '压缩后图片',
+    `longitude`       varchar(40)       NOT NULL COMMENT '经度',
+    `latitude`        varchar(40)       NOT NULL COMMENT '纬度',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -214,6 +216,8 @@ CREATE TABLE `fi_hotel` (
      `user_id`         int                NOT NULL,
      `thumb_cover`     varchar(2550)      DEFAULT NULL COMMENT '压缩后封面',
      `thumb_image`     varchar(2550)      DEFAULT NULL COMMENT '压缩后图片',
+     `longitude`       varchar(40)       NOT NULL COMMENT '经度',
+     `latitude`        varchar(40)       NOT NULL COMMENT '纬度',
       PRIMARY KEY ( `id` )
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
 
@@ -233,7 +237,11 @@ CREATE TABLE `fi_tour` (
      `image`           varchar(2550)     DEFAULT NULL,
      `thumb_cover`     varchar(2550)     DEFAULT NULL COMMENT '压缩后封面',
      `thumb_image`     varchar(2550)     DEFAULT NULL COMMENT '压缩后图片',
-      PRIMARY KEY (`id`)
+     `longitude`       varchar(40)       NOT NULL COMMENT '经度',
+     `latitude`        varchar(40)       NOT NULL COMMENT '纬度',
+     `location_id`     varchar(255)      NOT NULL COMMENT '景点id',
+
+     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 CREATE TABLE `fi_policy` (

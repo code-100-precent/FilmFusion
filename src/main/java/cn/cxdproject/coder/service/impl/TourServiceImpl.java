@@ -64,6 +64,9 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .image(createDTO.getImage())
                 .thumbCover(createDTO.getThumbCover())
                 .thumbImage(createDTO.getThumbImage())
+                .latitude(createDTO.getLatitude())
+                .longitude(createDTO.getLongitude())
+                .locationId(createDTO.getLocationId())
                 .build();
 
         this.save(tour);
@@ -180,6 +183,10 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         if (updateDTO.getImage() != null) tour.setImage(updateDTO.getImage());
         if (updateDTO.getThumbCover() != null) tour.setThumbCover(updateDTO.getThumbCover());
         if (updateDTO.getThumbImage() != null) tour.setThumbImage(updateDTO.getThumbImage());
+        if (updateDTO.getLongitude() != null) tour.setLongitude(updateDTO.getLongitude());
+        if (updateDTO.getLatitude() != null) tour.setLatitude(updateDTO.getLatitude());
+        if (updateDTO.getLocationId() != null) tour.setLocationId(updateDTO.getLocationId());
+
 
 
         tour.setUpdatedAt(LocalDateTime.now());
@@ -228,6 +235,9 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .updatedAt(tour.getUpdatedAt())
                 .thumbCover(tour.getThumbCover())
                 .thumbImage(tour.getThumbImage())
+                .longitude(tour.getLongitude())
+                .latitude(tour.getLatitude())
+                .locationId(tour.getLocationId())
                 .build();
     }
 

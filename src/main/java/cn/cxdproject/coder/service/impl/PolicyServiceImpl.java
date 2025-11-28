@@ -88,7 +88,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @CircuitBreaker(name = "policyGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<PolicyVO> getPolicyPage(Page<Policy> page, String keyword) {
-try {
+
     long current = page.getCurrent();
     long size = page.getSize();
     long offset = (current - 1) * size;
@@ -154,11 +154,6 @@ try {
                 .setSize(size)
                 .setTotal(total)
                 .setRecords(voList);
-}catch (Exception e){
-    e.printStackTrace(); // 强制打印
-    throw e;
-}
-
     }
 
     @Override
