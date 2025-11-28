@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -51,5 +52,9 @@ public class CreateHotelDTO {
     private String thumbCover;
 
     private String thumbImage;
+
+    private String longitude;
+
+    private String latitude;
 
 }

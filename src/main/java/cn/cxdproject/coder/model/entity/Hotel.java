@@ -11,7 +11,7 @@ import java.io.Serial;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("fi_accommodation")
+@TableName("fi_hotel")
 @EqualsAndHashCode(callSuper = true)
 public class Hotel extends BaseEntity {
 
@@ -77,6 +77,11 @@ public class Hotel extends BaseEntity {
     @TableField("thumb_image")
     private String thumbImage;
 
+    @TableField("longitude")
+    private String longitude;
+
+    @TableField("latitude")
+    private String latitude;
 
     @Override
     public Hotel clone() {

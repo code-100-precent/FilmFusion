@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -68,6 +69,10 @@ public class HotelVO {
     private String thumbCover;
 
     private String thumbImage;
+
+    private String longitude;
+
+    private String latitude;
 
 
 }

@@ -67,4 +67,10 @@ public class CreateTourDTO {
 
     private String thumbImage;
 
+    private String longitude;
+
+    private String latitude;
+
+    private String locationId;
+
 }

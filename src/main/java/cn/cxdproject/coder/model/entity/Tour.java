@@ -89,6 +89,15 @@ public class Tour extends BaseEntity implements Serializable {
     @TableField("thumb_image")
     private String thumbImage;
 
+    @TableField("longitude")
+    private String longitude;
+
+    @TableField("latitude")
+    private String latitude;
+
+    @TableField("location_id")
+    private String locationId;
+
     @Override
     public User clone() {
         try {

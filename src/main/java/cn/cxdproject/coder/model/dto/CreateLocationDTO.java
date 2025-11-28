@@ -52,5 +52,9 @@ public class CreateLocationDTO {
     private String thumbCover;
 
     private String thumbImage;
+
+    private String longitude;
+
+    private String latitude;
 }
 

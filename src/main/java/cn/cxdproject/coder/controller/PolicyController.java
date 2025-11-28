@@ -54,8 +54,7 @@ public class PolicyController {
     public PageResponse<PolicyVO> getPolicyPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String title) {
+            @RequestParam(required = false) String keyword) {
         Page<Policy> page = new Page<>(current, size);
         Page<PolicyVO> locationPage = policyService.getPolicyPage(page, keyword);
         return PageResponse.of(

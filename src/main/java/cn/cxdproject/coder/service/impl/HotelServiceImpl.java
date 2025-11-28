@@ -68,6 +68,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .userId(userId)
                 .thumbCover(createDTO.getThumbCover())
                 .thumbImage(createDTO.getThumbImage())
+                .latitude(createDTO.getLatitude())
+                .longitude(createDTO.getLongitude())
                 .build();
 
         this.save(hotel);
@@ -96,70 +98,77 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public Page<HotelVO> getHotelPage(Page<Hotel> page, String keyword) {
 
-        long current = page.getCurrent();
-        long size = page.getSize();
-        long offset = (current - 1) * size;
+        try {
+            long current = page.getCurrent();
+            long size = page.getSize();
+            long offset = (current - 1) * size;
 
-        List<Long> ids = hotelMapper.getPageHotelIds(keyword, offset, size);
-        long total = hotelMapper.countByKeyword(keyword);
+            List<Long> ids = hotelMapper.getPageHotelIds(keyword, offset, size);
+            long total = hotelMapper.countByKeyword(keyword);
 
-        if (ids.isEmpty()) {
-            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
-        }
+            if (ids.isEmpty()) {
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+            }
 
-        // 1. 批量从 Redis 获取缓存
-        List<String> keys = ids.stream().map(id -> RedisKeyConstants.HOTEL + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisUtils.multiGet(keys);
+            // 1. 批量从 Redis 获取缓存
+            List<String> keys = ids.stream().map(id -> RedisKeyConstants.HOTEL + id).collect(Collectors.toList());
+            List<String> cachedJsons = redisUtils.multiGet(keys);
 
-        // 2. 构建Location列表：优先用缓存，缺失的记录 ID
-        List<Hotel> locations = new ArrayList<>(Collections.nCopies(ids.size(), null));
-        List<Long> missingIds = new ArrayList<>();
+            // 2. 构建Location列表：优先用缓存，缺失的记录 ID
+            List<Hotel> locations = new ArrayList<>(Collections.nCopies(ids.size(), null));
+            List<Long> missingIds = new ArrayList<>();
 
-        for (int i = 0; i < ids.size(); i++) {
-            String json = cachedJsons.get(i);
-            if (json != null) {
-                try {
-                    locations.set(i, JsonUtils.fromJson(json, Hotel.class));
-                } catch (Exception e) {
+            for (int i = 0; i < ids.size(); i++) {
+                String json = cachedJsons.get(i);
+                if (json != null) {
+                    try {
+                        locations.set(i, JsonUtils.fromJson(json, Hotel.class));
+                    } catch (Exception e) {
+                        missingIds.add(ids.get(i));
+                    }
+                } else {
                     missingIds.add(ids.get(i));
                 }
-            } else {
-                missingIds.add(ids.get(i));
             }
-        }
 
-        if (!missingIds.isEmpty()) {
-            List<Hotel> dbArticles = hotelMapper.selectBatchIds(missingIds);
-            Map<Long, Hotel> dbMap = dbArticles.stream()
-                    .peek(hotel -> {
-                        // 回填 Redis 缓存
-                        redisUtils.set(
-                                RedisKeyConstants.HOTEL + hotel.getId(),
-                                JsonUtils.toJson(hotel),
-                                Duration.ofMinutes(30)
-                        );
-                        cache.put(CaffeineConstants.HOTEL+hotel.getId(),hotel);
-                    })
-                    .collect(Collectors.toMap(Hotel::getId, a -> a));
+            if (!missingIds.isEmpty()) {
+                List<Hotel> dbArticles = hotelMapper.selectBatchIds(missingIds);
+                Map<Long, Hotel> dbMap = dbArticles.stream()
+                        .peek(hotel -> {
+                            // 回填 Redis 缓存
+                            redisUtils.set(
+                                    RedisKeyConstants.HOTEL + hotel.getId(),
+                                    JsonUtils.toJson(hotel),
+                                    Duration.ofMinutes(30)
+                            );
+                            cache.put(CaffeineConstants.HOTEL + hotel.getId(), hotel);
+                        })
+                        .collect(Collectors.toMap(Hotel::getId, a -> a));
 
-            // 填回原位置
-            for (int i = 0; i < ids.size(); i++) {
-                if (locations.get(i) == null) {
-                    locations.set(i, dbMap.get(ids.get(i)));
+                // 填回原位置
+                for (int i = 0; i < ids.size(); i++) {
+                    if (locations.get(i) == null) {
+                        locations.set(i, dbMap.get(ids.get(i)));
+                    }
                 }
             }
+
+
+            List<HotelVO> voList = locations.stream()
+                    .map(this::toHotelVO)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            return new Page<HotelVO>()
+                    .setCurrent(current)
+                    .setSize(size)
+                    .setTotal(total)
+                    .setRecords(voList);
+        }catch (Exception e){
+            e.printStackTrace(); // 强制打印
+            throw e;
         }
 
-        List<HotelVO> voList = locations.stream()
-                .map(this::toHotelVO)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        return new Page<HotelVO>()
-                .setCurrent(current)
-                .setSize(size)
-                .setTotal(total)
-                .setRecords(voList);
 
     }
 
@@ -181,6 +190,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         if (updateDTO.getImage() != null) hotel.setImage(updateDTO.getImage());
         if (updateDTO.getThumbCover() != null) hotel.setThumbCover(updateDTO.getThumbCover());
         if (updateDTO.getThumbImage() != null) hotel.setThumbImage(updateDTO.getThumbImage());
+        if (updateDTO.getLongitude() != null) hotel.setLongitude(updateDTO.getLongitude());
+        if (updateDTO.getLatitude() != null) hotel.setLatitude(updateDTO.getLatitude());
 
         cache.asMap().put(CaffeineConstants.HOTEL + hotelId, hotel);
         this.updateById(hotel);
@@ -226,6 +237,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .userId(hotel.getUserId())
                 .thumbCover(hotel.getThumbCover())
                 .thumbImage(hotel.getThumbImage())
+                .longitude(hotel.getLongitude())
+                .latitude(hotel.getLatitude())
                 .build();
     }
 
