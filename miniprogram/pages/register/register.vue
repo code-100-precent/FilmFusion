@@ -82,7 +82,8 @@
 </template>
 
 <script>
-import { userRegister } from '../../services/api'
+// 使用真实后端API
+import { register } from '../../services/backend-api'
 import { mapActions } from 'vuex'
 
 export default {
@@ -129,9 +130,9 @@ export default {
 
       this.loading = true
       try {
-        const res = await userRegister({
+        const res = await register({
           username: this.form.username.trim(),
-          phoneNumber: this.form.phoneNumber,
+          phone: this.form.phoneNumber,
           password: this.form.password
         })
 

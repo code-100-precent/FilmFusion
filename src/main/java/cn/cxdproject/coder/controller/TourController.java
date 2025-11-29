@@ -38,10 +38,7 @@ public class TourController {
         this.tourService = tourService;
     }
 
-    /**
-     * 新增 Tour 记录
-     * @return 是否新增成功
-     */
+    
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<TourVO> getTourById(@PathVariable @NotNull(message = "ID不能为空") Long id) {

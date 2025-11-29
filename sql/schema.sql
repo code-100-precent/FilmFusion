@@ -1,5 +1,6 @@
 CREATE DATABASE if not exists film_fusion;
 
+
 USE film_fusion;
 
 # user 用户表

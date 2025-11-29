@@ -4,6 +4,23 @@
 
     <scroll-view class="content" scroll-y>
       <view class="form-card">
+        <view class="avatar-section" @click="handleUploadAvatar">
+          <view class="avatar-wrapper">
+            <image
+              v-if="form.avatar"
+              class="avatar"
+              :src="form.avatar"
+              mode="aspectFill"
+            ></image>
+            <view v-else class="avatar avatar--default">
+              <uni-icons type="contact-filled" size="60" color="#9ca3af"></uni-icons>
+            </view>
+            <view class="avatar-edit-icon">
+              <uni-icons type="camera-filled" size="20" color="#fff"></uni-icons>
+            </view>
+          </view>
+          <text class="avatar-tip">点击更换头像</text>
+        </view>
         <view class="form-item">
           <view class="form-label">
             <uni-icons type="person" size="18" color="#6366f1"></uni-icons>
@@ -44,8 +61,11 @@
 
 <script>
 import NavBar from '../../components/NavBar/NavBar.vue'
-import { getCurrentUserInfo, updateUserInfo } from '../../services/api'
+
+// 使用真实后端API
+import { getUserInfo, updateUserInfo, uploadFile } from '../../services/backend-api'
 import { mapGetters, mapActions } from 'vuex'
+
 
 export default {
   components: {
@@ -55,7 +75,8 @@ export default {
     return {
       form: {
         username: '',
-        phoneNumber: ''
+        phoneNumber: '',
+        avatar: ''
       },
       loading: false
     }
@@ -74,13 +95,113 @@ export default {
     ...mapActions(['setUserInfo']),
     async loadUserInfo() {
       try {
-        const res = await getCurrentUserInfo()
+        const res = await getUserInfo()
         if (res.code === 200 && res.data) {
           this.form.username = res.data.username || ''
           this.form.phoneNumber = res.data.phoneNumber || ''
+          this.form.avatar = res.data.avatar || ''
         }
       } catch (error) {
         console.error('加载用户信息失败:', error)
+      }
+    },
+
+    async handleUploadAvatar() {
+      try {
+        const res = await uni.chooseImage({
+          count: 1,
+          sizeType: ['compressed'],
+          sourceType: ['album', 'camera']
+        })
+        
+        const tempFilePath = res.tempFilePaths[0]
+        
+        uni.showLoading({ title: '上传中...' })
+        
+        try {
+          // 1. 先上传文件
+          const uploadRes = await uploadFile(tempFilePath)
+          console.log('上传接口完整响应:', JSON.stringify(uploadRes))
+          
+          if (uploadRes.code === 200) {
+            let avatarUrl = uploadRes.data
+            console.log('上传接口返回的数据(data):', JSON.stringify(avatarUrl))
+            
+            // 处理返回数据可能是对象的情况
+            if (typeof avatarUrl === 'object' && avatarUrl !== null) {
+              // 尝试从常见字段中获取URL，优先使用 originUrl
+              avatarUrl = avatarUrl.originUrl || avatarUrl.url || avatarUrl.fileUrl || avatarUrl.path || avatarUrl.link || avatarUrl.data || avatarUrl.fileName
+              console.log('提取后的URL:', avatarUrl)
+              
+              // 处理相对路径
+              if (avatarUrl && typeof avatarUrl === 'string' && !avatarUrl.startsWith('http')) {
+                // 假设后端服务运行在 localhost:8080，实际项目中应从配置文件获取
+                const serverUrl = 'http://localhost:8080'
+                // 如果返回的路径已经包含 /api，则不需要重复拼接 /api
+                // 但这里返回的是 /api/files/...，所以直接拼接到 serverUrl 即可
+                // 注意：如果 serverUrl 结尾有 /，或者 avatarUrl 开头有 /，需要处理
+                if (serverUrl.endsWith('/') && avatarUrl.startsWith('/')) {
+                  avatarUrl = serverUrl + avatarUrl.substring(1)
+                } else if (!serverUrl.endsWith('/') && !avatarUrl.startsWith('/')) {
+                  avatarUrl = serverUrl + '/' + avatarUrl
+                } else {
+                  avatarUrl = serverUrl + avatarUrl
+                }
+                console.log('拼接后的完整URL:', avatarUrl)
+              }
+              
+              // 如果还是对象，可能需要查看具体结构
+              if (typeof avatarUrl === 'object') {
+                console.error('无法从对象中提取URL，对象结构:', JSON.stringify(uploadRes.data))
+                uni.showToast({ title: '上传返回格式错误', icon: 'none' })
+                return
+              }
+            }
+            
+            if (!avatarUrl) {
+              uni.showToast({ title: '上传失败：未获取到图片地址', icon: 'none' })
+              return
+            }
+            
+            // 2. 更新用户信息中的头像字段
+            const updateRes = await updateUserInfo({
+              avatar: avatarUrl
+            })
+            
+            if (updateRes.code === 200) {
+              this.form.avatar = avatarUrl
+              // 更新Vuex中的用户信息
+              this.setUserInfo({
+                ...this.userInfo,
+                avatar: avatarUrl
+              })
+              uni.showToast({
+                title: '头像更新成功',
+                icon: 'success'
+              })
+            } else {
+              uni.showToast({
+                title: updateRes.message || '更新头像失败',
+                icon: 'none'
+              })
+            }
+          } else {
+            uni.showToast({
+              title: uploadRes.message || '上传失败',
+              icon: 'none'
+            })
+          }
+        } catch (error) {
+          console.error('上传头像失败:', error)
+          uni.showToast({
+            title: '上传失败，请重试',
+            icon: 'none'
+          })
+        } finally {
+          uni.hideLoading()
+        }
+      } catch (error) {
+        console.error('选择图片失败:', error)
       }
     },
     async handleSubmit() {
@@ -142,6 +263,66 @@ export default {
   padding-bottom: 40rpx;
   box-sizing: border-box;
   width: 100%;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
+}
+
+
+
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 48rpx;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+}
+
+.avatar {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  border: 4rpx solid #f3f4f6;
+}
+
+.avatar--default {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+  border-radius: 50%;
+  border: 4rpx solid #f3f4f6;
+}
+
+.avatar-edit-icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 48rpx;
+  height: 48rpx;
+  background: #6366f1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid #fff;
+}
+
+.avatar-tip {
+  font-size: 24rpx;
+  color: #6b7280;
 }
 
 .form-card {

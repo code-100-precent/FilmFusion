@@ -74,13 +74,13 @@
             "urlCheck" : false
         },
         "usingComponents" : true,
-        /* 确保添加了这些权限，以便于获取位置  */
+        /* 确保添加了这些权限，以便于获取位置和地图导航  */
         "permission" : {
             "scope.userLocation" : {
-                "desc" : "你的位置信息将用于小程序定位"
+                "desc" : "你的位置信息将用于地图导航"
             }
         },
-        "requiredPrivateInfos" : [ "getLocation" ]
+        "requiredPrivateInfos" : [ "getLocation", "chooseLocation" ]
     },
     "mp-alipay" : {
         "usingComponents" : true

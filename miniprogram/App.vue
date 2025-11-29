@@ -6,10 +6,17 @@
 		},
 		onLaunch: function() {
 			console.log('App Launch')
-			// 获取系统信息
-			const systemInfo = uni.getSystemInfoSync()
+			// 获取系统信息（使用新的 API）
+			let statusBarHeight = 44
+			try {
+				const windowInfo = uni.getWindowInfo()
+				statusBarHeight = windowInfo.statusBarHeight || 44
+			} catch (e) {
+				// 兼容旧版本
+				const systemInfo = uni.getSystemInfoSync()
+				statusBarHeight = systemInfo.statusBarHeight || 44
+			}
 			// 计算导航栏总高度
-			const statusBarHeight = systemInfo.statusBarHeight || 44
 			const navbarHeight = statusBarHeight + 44
 			// 全局存储导航栏高度，供页面使用
 			const app = getApp()
@@ -41,6 +48,58 @@
 		font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimSun, sans-serif;
 		line-height: 1.6;
 		box-sizing: border-box;
+		
+		/* 隐藏页面滚动条 */
+		::-webkit-scrollbar {
+			width: 0;
+			height: 0;
+		}
+		::-webkit-scrollbar-track {
+			display: none;
+		}
+		::-webkit-scrollbar-thumb {
+			display: none;
+		}
+		/* 兼容火狐浏览器 */
+		scrollbar-width: none;
+		/* 兼容IE浏览器 */
+		-ms-overflow-style: none;
+	}
+	
+	/* 全局隐藏所有元素的滚动条 */
+	* {
+		/* 隐藏WebKit滚动条 */
+		::-webkit-scrollbar {
+			display: none !important;
+			width: 0 !important;
+			height: 0 !important;
+		}
+		/* 兼容火狐浏览器 */
+		scrollbar-width: none !important;
+		/* 兼容IE浏览器 */
+		-ms-overflow-style: none !important;
+	}
+	
+	/* 针对滚动容器的特殊处理 */
+	scroll-view,
+	.content,
+	.policy-list {
+		/* 隐藏滚动条 */
+		::-webkit-scrollbar {
+			display: none !important;
+			width: 0 !important;
+			height: 0 !important;
+		}
+		::-webkit-scrollbar-track {
+			display: none !important;
+		}
+		::-webkit-scrollbar-thumb {
+			display: none !important;
+		}
+		/* 兼容火狐浏览器 */
+		scrollbar-width: none !important;
+		/* 兼容IE浏览器 */
+		-ms-overflow-style: none !important;
 	}
 	
 	/* 全局box-sizing */
