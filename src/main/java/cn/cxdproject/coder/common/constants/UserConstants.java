@@ -73,6 +73,8 @@ public interface UserConstants {
 
     String DEFAULT_USER = "https://cetide-1325039295.cos.ap-chengdu.myqcloud.com/codeforge/course/Docker/default-avatar.png";
 
+    String DEFAULT_THUMB_USER = "暂未设置";
+
     String USER_LANGUAGE_DEFAULT = "zh-CN";
 
     Boolean USER_NOTIFICATIONS_DEFAULT = true;

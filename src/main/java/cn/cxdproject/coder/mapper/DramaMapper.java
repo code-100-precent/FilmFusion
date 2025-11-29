@@ -16,16 +16,17 @@ import java.util.List;
 @Mapper
 public interface DramaMapper extends BaseMapper<Drama> {
 
-    List<Long> getPageDramaIds(
+    List<Long> selectIds(@Param("lastId") Long lastId,
+                         @Param("size") int size,
+                         @Param("keyword") String keyword);
+
+    List<Drama> getAdminPage(
             @Param("keyword") String keyword,
             @Param("offset") long offset,
             @Param("size") long size
     );
 
-    /**
-     * 获取总数量（用于分页 total）
-     */
-    long countByKeyword(@Param("keyword") String keyword);
+
 
     List<Drama> selectLatest10();
 

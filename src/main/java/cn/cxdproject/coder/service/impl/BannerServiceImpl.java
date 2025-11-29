@@ -96,17 +96,11 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         long size = page.getSize();
         long offset = (current - 1) * size;
 
-        List<Banner> images = bannerMapper.getPage(keyword, offset, size);
 
-        List<BannerVO> voList = images.stream()
-                .map(banner -> new BannerVO(
-                        banner.getId(),
-                        banner.getImageName(),
-                        banner.getImageUrl(),
-                        banner.getTargetModule(),
-                        banner.getStatus(),
-                        banner.getSort()
-                ))
+        List<Banner> banners = bannerMapper.getPage(keyword, offset, size);
+
+        List<BannerVO> voList = banners.stream()
+                .map(this::toBannerVO)
                 .collect(Collectors.toList());
 
         return new Page<BannerVO>()

@@ -5,11 +5,14 @@ import cn.cxdproject.coder.model.dto.CreatePolicyDTO;
 import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
 import cn.cxdproject.coder.model.dto.UpdatePolicyDTO;
 import cn.cxdproject.coder.model.entity.Location;
+import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.PolicyVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.cxdproject.coder.model.entity.Policy;
+
+import java.util.List;
 
 /**
  * Policy 服务接口
@@ -20,7 +23,7 @@ public interface PolicyService extends IService<Policy> {
 
     PolicyVO getPolicyById(Long policyId);
 
-    Page<PolicyVO> getPolicyPage(Page<Policy> page, String keyword);
+    List<PolicyVO> getPolicyPage(Long lastId,int size, String keyword);
 
     PolicyVO updatePolicyByAdmin(Long policyId, UpdatePolicyDTO updateDTO);
 
@@ -30,6 +33,7 @@ public interface PolicyService extends IService<Policy> {
 
     PolicyVO getByIdFallback(Long id,Throwable e);
 
-    Page<PolicyVO> getPageFallback(Page<Policy> page, String keyword, Throwable e);
+    List<PolicyVO> getPageFallback(Long lastId, int size, String keyword, Throwable e);
 
+    Page<PolicyVO> getPolicyPageAdmin(Page<Policy> page, String keyword);
 }

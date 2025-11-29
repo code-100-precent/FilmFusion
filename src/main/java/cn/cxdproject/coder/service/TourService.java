@@ -5,6 +5,8 @@ import cn.cxdproject.coder.model.dto.CreateTourDTO;
 import cn.cxdproject.coder.model.dto.UpdateShootDTO;
 import cn.cxdproject.coder.model.dto.UpdateTourDTO;
 import cn.cxdproject.coder.model.entity.Shoot;
+import cn.cxdproject.coder.model.vo.ArticleVO;
+import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.model.vo.TourVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,11 +22,11 @@ import java.util.List;
 public interface TourService extends IService<Tour> {
     TourVO createTourByAdmin(CreateTourDTO createDTO);
     TourVO getTourById(Long tourId);
-    Page<TourVO> getTourPage(Page<Tour> page, String keyword);
+    List<TourVO> getTourPage(Long lastId, int size, String keyword);
     TourVO updateTourByAdmin(Long tourId, UpdateTourDTO updateDTO);
     void deleteTourByAdmin(Long tourId);
     TourVO toTourVO(Tour tour);
     TourVO getByIdFallback(Long id,Throwable e);
-    Page<TourVO> getPageFallback(Page<Tour> page, String keyword, Throwable e);
-
+    List<TourVO> getPageFallback(Long lastId, int size, String keyword, Throwable e);
+    Page<TourVO> getTourPageAdmin(Page<Tour> page, String keyword);
 }

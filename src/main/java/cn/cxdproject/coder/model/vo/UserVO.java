@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,8 @@ public class UserVO {
      * 头像
      */
     private String avatar;
+
+    private String thumbAvatar;
     
     /**
      * 角色

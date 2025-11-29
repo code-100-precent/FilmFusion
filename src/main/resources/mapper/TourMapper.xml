@@ -23,6 +23,7 @@
         <result column="longitude" property="longitude"/>
         <result column="latitude" property="latitude"/>
         <result column="location_id" property="locationId"/>
+        <result column="drama_id" property="dramaId"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -43,29 +44,46 @@
             'thumb_image',
             'longitude',
             'latitude',
-            'locationId'
+            'locationId',
+            'dramaId'
     </sql>
 
-    <select id="getPageTourIds" resultType="java.lang.Long">
+    <select id="selectIds" resultType="long">
         SELECT id
         FROM fi_tour
         <where>
+            deleted = 0
+            <!-- 模糊搜索 -->
             <if test="keyword != null and keyword != ''">
-                description LIKE CONCAT('%', #{keyword}, '%')
+                AND (
+                name LIKE CONCAT('%', #{keyword}, '%')
+                OR description LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+
+            <if test="lastId != null">
+                AND id &lt; #{lastId}
             </if>
         </where>
-        ORDER BY created_at DESC
-        LIMIT #{offset}, #{size}
+        ORDER BY id DESC
+        LIMIT #{size}
     </select>
 
-    <select id="countByKeyword" resultType="long">
-        SELECT COUNT(*)
-        FROM fi_tour
-        <where>
-            <if test="keyword != null and keyword != ''">
-                description LIKE CONCAT('%', #{keyword}, '%')
-            </if>
-        </where>
+    <select id="getAdminPage" resultType="cn.cxdproject.coder.model.entity.Tour">
+        SELECT *
+        FROM fi_tours
+        WHERE deleted = 0
+        AND id IN (
+        SELECT id
+        FROM fi_tours
+        WHERE deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND title LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+        )
+        ORDER BY created_at DESC
     </select>
 
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Tour">

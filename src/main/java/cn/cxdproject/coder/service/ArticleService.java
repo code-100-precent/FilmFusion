@@ -32,7 +32,7 @@ public interface ArticleService extends IService<Article> {
      * @param keyword 关键字（搜索标题或内容）
      * @return 分页结果
      */
-    Page<ArticleVO> getArticlePage(Page<Article> page, String keyword);
+   List<ArticleVO> getArticlePage(Long lastId,int size, String keyword);
 
     /**
      * 管理员创建文章
@@ -68,5 +68,7 @@ public interface ArticleService extends IService<Article> {
 
     ArticleVO getByIdFallback(Long id,Throwable e);
 
-    Page<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e);
+    List<ArticleVO> getPageFallback(Long lastId, int size, String keyword, Throwable e);
+
+    Page<ArticleVO> getArticlePagAdmine(Page<Article> page, String keyword);
 }

@@ -7,9 +7,11 @@ import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateArticleDTO;
 import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
 import cn.cxdproject.coder.model.entity.Article;
+import cn.cxdproject.coder.model.entity.Banner;
 import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.mapper.ArticleMapper;
+import cn.cxdproject.coder.model.vo.BannerVO;
 import cn.cxdproject.coder.service.ArticleService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
@@ -75,72 +77,23 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @CircuitBreaker(name = "articleGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public Page<ArticleVO> getArticlePage(Page<Article> page, String keyword) {
-
-        long current = page.getCurrent();
-        long size = page.getSize();
-        long offset = (current - 1) * size;
-
-        List<Long> ids = articleMapper.getPageArticleIds(keyword, offset, size);
-        long total = articleMapper.countByKeyword(keyword);
-
+    public List<ArticleVO> getArticlePage(Long lastId, int size, String keyword) {
+        List<Long> ids = articleMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
-            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+            return Collections.emptyList();
         }
 
-        // 1. 批量从 Redis 获取缓存
-        List<String> keys = ids.stream().map(id -> RedisKeyConstants.ARTICLE + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisUtils.multiGet(keys);
+        List<Article> articles = articleMapper.selectBatchIds(ids);
 
-        // 2. 构建 Article 列表：优先用缓存，缺失的记录 ID
-        List<Article> articles = new ArrayList<>(Collections.nCopies(ids.size(), null));
-        List<Long> missingIds = new ArrayList<>();
+        Map<Long, Article> articleMap = articles.stream()
+                .collect(Collectors.toMap(Article::getId, a -> a));
 
-        for (int i = 0; i < ids.size(); i++) {
-            String json = cachedJsons.get(i);
-            if (json != null) {
-                try {
-                    articles.set(i, JsonUtils.fromJson(json, Article.class));
-                } catch (Exception e) {
-                    missingIds.add(ids.get(i));
-                }
-            } else {
-                missingIds.add(ids.get(i));
-            }
-        }
 
-        if (!missingIds.isEmpty()) {
-            List<Article> dbArticles = articleMapper.selectBatchIds(missingIds);
-            Map<Long, Article> dbMap = dbArticles.stream()
-                    .peek(article -> {
-                        // 回填 Redis 缓存
-                        redisUtils.set(
-                                RedisKeyConstants.ARTICLE + article.getId(),
-                                JsonUtils.toJson(article),
-                                Duration.ofMinutes(30)
-                        );
-                        cache.put(CaffeineConstants.ARTICLE + article.getId(), article);
-                    })
-                    .collect(Collectors.toMap(Article::getId, a -> a));
-
-            // 填回原位置
-            for (int i = 0; i < ids.size(); i++) {
-                if (articles.get(i) == null) {
-                    articles.set(i, dbMap.get(ids.get(i)));
-                }
-            }
-        }
-
-        List<ArticleVO> voList = articles.stream()
-                .map(this::toArticleVO)
+        return ids.stream()
+                .map(articleMap::get)
                 .filter(Objects::nonNull)
+                .map(this::toArticleVO)
                 .collect(Collectors.toList());
-
-        return new Page<ArticleVO>()
-                .setCurrent(current)
-                .setSize(size)
-                .setTotal(total)
-                .setRecords(voList);
     }
 
     @Override
@@ -250,34 +203,46 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public Page<ArticleVO> getPageFallback(Page<Article> page, String keyword, Throwable e) {
+    public List<ArticleVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+
         try {
+            // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
             String json = (String) redisUtils.get(TaskConstants.ARTICLE);
             if (json == null || json.isEmpty()) {
-                return new Page<ArticleVO>()
-                        .setCurrent(page.getCurrent())
-                        .setSize(page.getSize())
-                        .setTotal(0)
-                        .setRecords(Collections.emptyList());
+                return Collections.emptyList();
             }
 
             ArticleVO[] array = JsonUtils.fromJson(json, ArticleVO[].class);
-            List<ArticleVO> list = array != null ? Arrays.asList(array) : Collections.emptyList();
+            if (array == null || array.length == 0) {
+                return Collections.emptyList();
+            }
 
-            long total = list.size();
+            // 直接取前 N 条（N = min(size, 缓存长度)）
+            // 注意：这里忽略 lastId 和 keyword，因为 fallback 只提供静态兜底数据
+            int take = Math.min(size, array.length);
+            return new ArrayList<>(Arrays.asList(array).subList(0, take));
 
-            return new Page<ArticleVO>()
-                    .setCurrent(page.getCurrent())
-                    .setSize(page.getSize())
-                    .setTotal(total)
-                    .setRecords(new ArrayList<>(list));
         } catch (Exception ex) {
-            log.error("getPageFallback error", ex);
-            return new Page<ArticleVO>()
-                    .setCurrent(page.getCurrent())
-                    .setSize(page.getSize())
-                    .setTotal(0)
-                    .setRecords(Collections.emptyList());
+            log.error("Fallback failed", ex);
+            return Collections.emptyList();
         }
+    }
+
+    @Override
+    public Page<ArticleVO> getArticlePagAdmine(Page<Article> page, String keyword) {
+        long current = page.getCurrent();
+        long size = page.getSize();
+        long offset = (current - 1) * size;
+
+        List<Article> articles = articleMapper.getAdminPage(keyword, offset, size);
+
+        List<ArticleVO> voList = articles.stream()
+                .map(this::toArticleVO)
+                .collect(Collectors.toList());
+
+        return new Page<ArticleVO>()
+                .setCurrent(current)
+                .setSize(size)
+                .setRecords(voList);
     }
 }
