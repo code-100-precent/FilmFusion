@@ -40,8 +40,12 @@ public class ReportVO {
     private String crewPosition;
     private Long userId;
     private String status;
-    private String image;
-    private String thumbImage;
+    private String shootPermit;
+    private String thumbShootPermit;
+    private String approvalFile;
+    private String thumbApprovalFile;
+    private String shootApply;
+    private String thumbShootApply;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

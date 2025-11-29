@@ -11,6 +11,7 @@ import cn.cxdproject.coder.model.entity.Report;
 import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.ReportVO;
 import cn.cxdproject.coder.mapper.ReportMapper;
+import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.service.ReportService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -64,7 +65,12 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                 .crewPosition(createDTO.getCrewPosition())
                 .userId(userId)
                 .status(createDTO.getStatus())
-                .thumbImage(createDTO.getThumbImage())
+                .shootPermit(createDTO.getShootPermit())
+                .thumbShootPermit(createDTO.getThumbShootPermit())
+                .shootApply(createDTO.getShootApply())
+                .thumbShootApply(createDTO.getThumbShootApply())
+                .approvalFile(createDTO.getApprovalFile())
+                .thumbApprovalFile(createDTO.getThumbApprovalFile())
                 .build();
 
         this.save(report);
@@ -96,9 +102,13 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         if (updateDTO.getContact() != null) report.setContact(updateDTO.getContact());
         if (updateDTO.getPhoneNumber() != null) report.setPhoneNumber(updateDTO.getPhoneNumber());
         if (updateDTO.getCrewPosition() != null) report.setCrewPosition(updateDTO.getCrewPosition());
-        if (updateDTO.getImage() != null) report.setImage(updateDTO.getImage());
+        if (updateDTO.getShootPermit() != null) report.setShootPermit(updateDTO.getShootPermit());
+        if (updateDTO.getThumbShootPermit() != null) report.setThumbShootPermit(updateDTO.getThumbShootPermit());
+        if (updateDTO.getApprovalFile() != null) report.setApprovalFile(updateDTO.getApprovalFile());
+        if (updateDTO.getThumbApprovalFile() != null) report.setThumbApprovalFile(updateDTO.getThumbApprovalFile());
+        if (updateDTO.getShootApply() != null) report.setShootApply(updateDTO.getShootApply());
+        if (updateDTO.getThumbShootApply() != null) report.setThumbShootApply(updateDTO.getThumbShootApply());
         if (updateDTO.getStatus() != null) throw new BusinessException(FORBIDDEN.code(), "无权修改申请状态");;
-        if (updateDTO.getThumbImage() != null) report.setThumbImage(updateDTO.getThumbImage());
 
         this.updateById(report);
         return toReportVO(report);
@@ -200,11 +210,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         long total = this.count(countWrapper);
 
         List<ReportVO> voList = reports.stream()
-                .map(report -> new ReportVO(
-                        report.getId(),
-                        report.getContact(),
-                        report.getUserId()
-                ))
+                .map(this::toReportVO)
                 .collect(Collectors.toList());
 
         return new Page<ReportVO>()
@@ -254,8 +260,12 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                 .status(report.getStatus())
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
-                .image(report.getImage())
-                .thumbImage(report.getThumbImage())
+                .shootPermit(report.getShootPermit())
+                .thumbShootPermit(report.getThumbShootPermit())
+                .shootApply(report.getShootApply())
+                .thumbShootApply(report.getThumbShootApply())
+                .approvalFile(report.getApprovalFile())
+                .thumbApprovalFile(report.getThumbApprovalFile())
                 .build();
     }
 }

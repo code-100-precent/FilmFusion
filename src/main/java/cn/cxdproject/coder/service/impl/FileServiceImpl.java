@@ -2,7 +2,7 @@ package cn.cxdproject.coder.service.impl;
 
 import cn.cxdproject.coder.common.storage.LocalStorageService;
 import cn.cxdproject.coder.common.storage.MinioStorageService;
-import cn.cxdproject.coder.model.vo.ImageVO;
+import cn.cxdproject.coder.model.vo.FileVO;
 import cn.cxdproject.coder.service.FileService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,8 +20,8 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
-    public ImageVO imageUpload(MultipartFile file) {
-        ImageVO imageVO = localStorageService.upload(file);
-        return imageVO;
+    public FileVO imageUpload(MultipartFile file) {
+        FileVO fileVO = minioStorageService.upload(file);
+        return fileVO;
     }
 }

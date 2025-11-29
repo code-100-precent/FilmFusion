@@ -28,7 +28,11 @@ public class UpdateReportDTO {
     private String phoneNumber;
     private String crewPosition;
     private String status;
-    private String image;
-    private String thumbImage;
+    private String shootPermit;
+    private String thumbShootPermit;
+    private String approvalFile;
+    private String thumbApprovalFile;
+    private String shootApply;
+    private String thumbShootApply;
 }
 

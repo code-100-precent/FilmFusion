@@ -78,8 +78,12 @@ CREATE TABLE `fi_reports`
     `created_at`    DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`    DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `status`        varchar(10)   NOT NULL COMMENT '申报状态(未处理，处理中，申请成功，申请失败)',
-    `image`         varchar(2550) DEFAULT NULL COMMENT '图片',
-    `thumb_image`   varchar(2550) DEFAULT NULL COMMENT '压缩后图片',
+    `shoot_permit`  varchar(2550) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '拍摄许可',
+    `thumb_shoot_permit`  varchar(2550)    DEFAULT NULL COMMENT '拍摄许可压缩图片',
+    `approval_file`       varchar(2550)    DEFAULT NULL COMMENT '立项审批',
+    `thumb_approval_file` varchar(2550)    DEFAULT NULL COMMENT '立项审批压缩图片',
+    `shoot_apply`         varchar(2550)    DEFAULT NULL COMMENT '协拍服务许可',
+    `thumb_shoot_apply`   varchar(2550)    DEFAULT NULL COMMENT '协拍服务许可压缩图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4

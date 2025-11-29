@@ -1,7 +1,7 @@
 package cn.cxdproject.coder.common.storage;
 
 import cn.cxdproject.coder.exception.BusinessException;
-import cn.cxdproject.coder.model.vo.ImageVO;
+import cn.cxdproject.coder.model.vo.FileVO;
 import io.minio.*;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
@@ -40,13 +40,13 @@ public class MinioStorageService implements FileStorageAdapter {
      * 上传文件
      */
     @Override
-    public ImageVO upload(MultipartFile file) {
+    public FileVO upload(MultipartFile file) {
         try {
             String baseName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
             String originalFilename = "origin/" + baseName;
             String thumbFilename = "thumb/" + baseName;
-            String originalUrl;
-            String thumbUrl;
+            String originalUrl = null;
+            String thumbUrl = null;
 
             byte[] fileBytes = file.getBytes();
             String contentType = file.getContentType();
@@ -60,7 +60,7 @@ public class MinioStorageService implements FileStorageAdapter {
                             .contentType(contentType)
                             .build()
             );
-
+            originalUrl = properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + originalFilename;
             // 2. 如果是图片，异步生成缩略图
             if (isImageFile(file)) {
                 CompletableFuture.runAsync(() -> {
@@ -70,19 +70,17 @@ public class MinioStorageService implements FileStorageAdapter {
                         throw new RuntimeException("压缩图片失败", e);
                     }
                 });
+                thumbUrl = properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + thumbFilename;
             }
 
-            originalUrl = properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + originalFilename;
-            thumbUrl = properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + thumbFilename;
-
-            return new ImageVO(originalUrl,thumbUrl);
+            return new FileVO(originalUrl,thumbUrl);
         } catch (Exception e) {
             throw new BusinessException(SYSTEM_ERROR.code(), "MinIO上传失败: " + e.getMessage());
         }
     }
 
     @Override
-    public ImageVO upload(String prefix, MultipartFile file) {
+    public FileVO upload(String prefix, MultipartFile file) {
         try {
             String baseName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
             String originalFilename = "origin/" + baseName;
@@ -118,7 +116,7 @@ public class MinioStorageService implements FileStorageAdapter {
             thumbUrl = properties.getMinioEndpoint() + '/' + properties.getMinioBucket() + '/' + thumbFilename;
 
 
-            return new ImageVO(originalUrl,thumbUrl);
+            return new FileVO(originalUrl,thumbUrl);
         } catch (Exception e) {
             throw new BusinessException(SYSTEM_ERROR.code(), "MinIO上传失败" + e);
         }

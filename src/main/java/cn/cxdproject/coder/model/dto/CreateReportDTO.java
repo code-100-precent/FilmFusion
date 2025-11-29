@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -60,9 +61,17 @@ public class CreateReportDTO {
     @NotBlank(message = "申请状态")
     private String status;
 
-    private String image;
+    private String shootPermit;
 
-    private String thumbImage;
+    private String thumbShootPermit;
+
+    private String approvalFile;
+
+    private String thumbApprovalFile;
+
+    private String shootApply;
+
+    private String thumbShootApply;
 
 
 }
