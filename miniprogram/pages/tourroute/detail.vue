@@ -50,20 +50,32 @@
             ></map>
           </view>
           <view class="route-points" v-if="routePoints.length > 0">
-            <view class="points-title">途经景点</view>
+            <view class="points-title">
+              <text>途经景点</text>
+              <text class="points-count">（{{ routePoints.length }}个）</text>
+            </view>
             <view 
               v-for="(point, index) in routePoints" 
               :key="index" 
-              class="point-item"
-              @click="navigateToPoint(point)"
+              class="point-card"
+              @click="onPointClick(index)"
             >
-              <view class="point-number">{{ index + 1 }}</view>
-              <view class="point-info">
-                <text class="point-name">{{ point.name }}</text>
-                <text class="point-desc">{{ point.description }}</text>
+              <image 
+                v-if="point.cover"
+                :src="point.thumbCover || point.cover || defaultCover" 
+                class="point-image" 
+                mode="aspectFill"
+              ></image>
+              <view class="point-content">
+                <view class="point-header">
+                  <view class="point-number">{{ index + 1 }}</view>
+                  <text class="point-name">{{ point.name }}</text>
+                </view>
+                <text v-if="point.address" class="point-address">{{ point.address }}</text>
+                <text class="point-desc">{{ point.description || point.locationDescription || point.type }}</text>
               </view>
-              <view class="nav-icon">
-                <uni-icons type="paperplane" size="18" color="#6366f1"></uni-icons>
+              <view class="point-nav-icon" @click.stop="onPointClick(index)">
+                <uni-icons type="paperplane" size="20" color="#6366f1"></uni-icons>
               </view>
             </view>
           </view>
@@ -113,6 +125,37 @@
           </view>
         </view>
 
+        <!-- 周边住宿 -->
+        <view class="info-section" v-if="nearbyHotels.length > 0">
+          <view class="section-title">
+            <text>周边住宿</text>
+            <text class="section-subtitle">（{{ nearbyHotels.length }}个）</text>
+          </view>
+          <view class="nearby-list">
+            <view 
+              v-for="hotel in nearbyHotels" 
+              :key="hotel.id" 
+              class="nearby-item"
+              @click="navigateToHotel(hotel)"
+            >
+              <image 
+                :src="hotel.thumbCover || hotel.cover || defaultCover" 
+                class="nearby-image" 
+                mode="aspectFill"
+              ></image>
+              <view class="nearby-info">
+                <text class="nearby-name">{{ hotel.name }}</text>
+                <text class="nearby-address">{{ hotel.address }}</text>
+                <text class="nearby-desc">{{ hotel.description }}</text>
+              </view>
+              <view class="nearby-action">
+                <uni-icons type="paperplane" size="20" color="#6366f1"></uni-icons>
+              </view>
+            </view>
+          </view>
+        </view>
+
+
         <view style="height: 20px;"></view>
       </view>
       <view v-else class="empty-wrapper">
@@ -126,7 +169,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import { getTourById } from '@/services/backend-api'
+import { getTourById, getNearbyHotels, getNearbyLocations, getLocationById } from '@/services/backend-api'
 
 export default {
   components: {
@@ -147,7 +190,9 @@ export default {
       },
       markers: [],
       polyline: [],
-      routePoints: []
+      routePoints: [],
+      // 周边数据
+      nearbyHotels: []
     }
   },
   onLoad(options) {
@@ -176,11 +221,15 @@ export default {
             ipWorks: res.data.ipWorks || '暂无相关影视作品',
             image: res.data.image,
             latitude: res.data.latitude || 30.075,
-            longitude: res.data.longitude || 102.993
+            longitude: res.data.longitude || 102.993,
+            locationId: res.data.locationId  // 途经景点ID列表
           }
           
-          // 加载路线数据
-          this.loadRouteData(id)
+          // 不再使用模拟数据，改为从后端加载真实的location数据
+          // this.loadRouteData(id)
+          
+          // 加载周边住宿和景点（景点将作为途经景点显示）
+          this.loadNearbyData(this.route.latitude, this.route.longitude)
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -197,6 +246,118 @@ export default {
         this.route = null
       } finally {
         this.loading = false
+      }
+    },
+    
+    // 加载周边住宿和景点
+    async loadNearbyData(latitude, longitude) {
+      try {
+        // 加载周边住宿
+        const hotelsRes = await getNearbyHotels({
+          latitude,
+          longitude,
+          size: 5
+        })
+        if (hotelsRes.code === 200 && hotelsRes.data) {
+          this.nearbyHotels = hotelsRes.data.map(hotel => ({
+            id: hotel.id,
+            name: hotel.name,
+            address: hotel.address,
+            description: hotel.description,
+            cover: hotel.cover,
+            thumbCover: hotel.thumbCover,
+            latitude: parseFloat(hotel.latitude) || 0,
+            longitude: parseFloat(hotel.longitude) || 0
+          }))
+        }
+        
+        // 加载途经景点
+        // 如果tour有locationId，则根据ID获取对应的location
+        // 如果没有，则获取周边的location
+        if (this.route && this.route.locationId) {
+          await this.loadLocationsByIds(this.route.locationId)
+        } else {
+          await this.loadNearbyLocations(latitude, longitude)
+        }
+      } catch (error) {
+        console.error('加载周边数据失败:', error)
+        // 不显示错误提示，静默失败
+      }
+    },
+    
+    // 根据ID列表加载location
+    async loadLocationsByIds(locationIds) {
+      try {
+        // locationIds可能是逗号分隔的字符串，如 "1,2,3"
+        const ids = locationIds.split(',').map(id => id.trim()).filter(id => id)
+        
+        if (ids.length === 0) {
+          console.log('没有途经景点ID')
+          return
+        }
+        
+        // 逐个获取location详情
+        const locationPromises = ids.map(id => getLocationById(parseInt(id)))
+        const results = await Promise.all(locationPromises)
+        
+        // 过滤成功的结果并映射数据
+        this.routePoints = results
+          .filter(res => res.code === 200 && res.data)
+          .map(res => {
+            const location = res.data
+            return {
+              id: location.id,
+              name: location.name,
+              address: location.address,
+              description: location.locationDescription || location.type || '暂无描述',
+              locationDescription: location.locationDescription,
+              type: location.type,
+              cover: location.cover,
+              thumbCover: location.thumbCover,
+              latitude: parseFloat(location.latitude) || 0,
+              longitude: parseFloat(location.longitude) || 0
+            }
+          })
+        
+        // 使用真实的location数据初始化地图
+        if (this.routePoints.length > 0) {
+          this.initMap(this.routePoints, '#6366f1')
+        }
+      } catch (error) {
+        console.error('根据ID加载景点失败:', error)
+      }
+    },
+    
+    // 加载周边的location（当tour没有指定locationId时使用）
+    async loadNearbyLocations(latitude, longitude) {
+      try {
+        const locationsRes = await getNearbyLocations({
+          latitude,
+          longitude,
+          size: 10
+        })
+        if (locationsRes.code === 200 && locationsRes.data) {
+          // 将location数据映射到routePoints
+          this.routePoints = locationsRes.data.map(location => ({
+            id: location.id,
+            name: location.name,
+            address: location.address,
+            description: location.locationDescription || location.type || '暂无描述',
+            locationDescription: location.locationDescription,
+            type: location.type,
+            cover: location.cover,
+            thumbCover: location.thumbCover,
+            latitude: parseFloat(location.latitude) || 0,
+            longitude: parseFloat(location.longitude) || 0
+          }))
+          
+          // 使用真实的location数据初始化地图
+          if (this.routePoints.length > 0) {
+            this.initMap(this.routePoints, '#6366f1')
+          }
+        }
+      } catch (error) {
+        console.error('加载周边景点失败:', error)
       }
     },
     
@@ -571,9 +732,27 @@ export default {
       }
     },
     
+    // 点击景点列表项
+    onPointClick(index) {
+      if (index >= 0 && index < this.routePoints.length) {
+        const point = this.routePoints[index]
+        this.navigateToPoint(point)
+      } else {
+        console.error('无效的景点索引:', index)
+      }
+    },
+    
     // 导航到指定景点
     navigateToPoint(point) {
-      if (!point || !point.latitude || !point.longitude) {
+      console.log('导航到景点:', point)
+      
+      // 尝试转换经纬度
+      const lat = Number(point?.latitude)
+      const lng = Number(point?.longitude)
+      
+      // 检查经纬度是否有效（非NaN且非0）
+      if (!point || isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) {
+        console.warn('位置信息无效:', point)
         uni.showToast({
           title: '暂无位置信息',
           icon: 'none'
@@ -582,13 +761,42 @@ export default {
       }
       
       uni.openLocation({
-        latitude: point.latitude,
-        longitude: point.longitude,
-        name: point.name,
-        address: point.description,
+        latitude: lat,
+        longitude: lng,
+        name: point.name || '未知地点',
+        address: point.address || point.description || '',
         scale: 15,
         success: () => {
           console.log('打开地图成功')
+        },
+        fail: (err) => {
+          console.error('打开地图失败:', err)
+          uni.showToast({
+            title: '打开地图失败',
+            icon: 'none'
+          })
+        }
+      })
+    },
+    
+    // 导航到住宿
+    navigateToHotel(hotel) {
+      if (!hotel || !hotel.latitude || !hotel.longitude) {
+        uni.showToast({
+          title: '暂无位置信息',
+          icon: 'none'
+        })
+        return
+      }
+      
+      uni.openLocation({
+        latitude: hotel.latitude,
+        longitude: hotel.longitude,
+        name: hotel.name,
+        address: hotel.address,
+        scale: 15,
+        success: () => {
+          console.log('打开地图导航成功')
         },
         fail: (err) => {
           console.error('打开地图失败:', err)
@@ -662,7 +870,17 @@ export default {
   font-weight: 600;
   color: #1f2937;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+
+.section-subtitle {
+  font-size: 13px;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
 
 .section-content {
   font-size: 14px;
@@ -757,44 +975,47 @@ export default {
   font-weight: 600;
   color: #1f2937;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.point-item {
+.points-count {
+  font-size: 13px;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.point-card {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px;
   background: #f9fafb;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  border-radius: 10px;
+  margin-bottom: 12px;
   transition: all 0.2s;
   cursor: pointer;
 }
 
-.point-item:active {
+.point-card:active {
   background: #f3f4f6;
   transform: scale(0.98);
 }
 
-.point-item:last-child {
+.point-card:last-child {
   margin-bottom: 0;
 }
 
-.point-number {
-  width: 28px;
-  height: 28px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
+.point-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
   flex-shrink: 0;
+  object-fit: cover;
 }
 
-.point-info {
+.point-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -802,10 +1023,42 @@ export default {
   min-width: 0;
 }
 
+.point-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.point-number {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
 .point-name {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.point-address {
+  font-size: 12px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .point-desc {
@@ -813,13 +1066,16 @@ export default {
   color: #9ca3af;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
 }
 
-.nav-icon {
+.point-nav-icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -827,4 +1083,85 @@ export default {
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+
+// 周边住宿和景点样式
+.nearby-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nearby-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.nearby-item:active {
+  background: #f3f4f6;
+  transform: scale(0.98);
+}
+
+.nearby-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.nearby-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.nearby-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nearby-address {
+  font-size: 12px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nearby-desc {
+  font-size: 12px;
+  color: #9ca3af;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.nearby-action {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 </style>

@@ -52,4 +52,6 @@ public class TourVO {
 
     private String locationId;
 
+    private String ipWorks;
+
 }

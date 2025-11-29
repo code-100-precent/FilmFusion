@@ -4,6 +4,7 @@
  */
 
 import { http } from '../utils/http'
+import { baseURL } from '../utils/http'
 
 // ==================== 类型定义 ====================
 
@@ -108,6 +109,27 @@ export const getHotelById = (id: number) => {
     })
 }
 
+/**
+ * 获取附近的住宿（用于tour详情页）
+ * @param latitude 纬度
+ * @param longitude 经度
+ * @param size 返回数量，默认5个
+ */
+export const getNearbyHotels = (params: {
+    latitude?: number
+    longitude?: number
+    size?: number
+}) => {
+    return http<PageResponse<any>>({
+        url: '/hotel/page',
+        method: 'GET',
+        data: {
+            current: 1,
+            size: params.size || 5
+        }
+    })
+}
+
 // ==================== 3. 拍摄场景 (Location) ====================
 
 /**
@@ -133,6 +155,27 @@ export const getLocationById = (id: number) => {
     return http<any>({
         url: `/location/${id}`,
         method: 'GET'
+    })
+}
+
+/**
+ * 获取附近的拍摄场景（用于tour详情页）
+ * @param latitude 纬度
+ * @param longitude 经度
+ * @param size 返回数量，默认5个
+ */
+export const getNearbyLocations = (params: {
+    latitude?: number
+    longitude?: number
+    size?: number
+}) => {
+    return http<PageResponse<any>>({
+        url: '/location/page',
+        method: 'GET',
+        data: {
+            current: 1,
+            size: params.size || 5
+        }
     })
 }
 
@@ -289,8 +332,7 @@ export const uploadFile = (filePath: string) => {
         // 获取token
         const token = uni.getStorageSync('token')
 
-        // 上传地址
-        const baseURL = 'http://localhost:8080/api'
+        // 上传地址 - 使用统一的baseURL配置
         const uploadUrl = baseURL + '/file'
 
         // 上传文件
@@ -520,10 +562,12 @@ export default {
     // 住宿推荐
     getHotelPage,
     getHotelById,
+    getNearbyHotels,
 
     // 拍摄场景
     getLocationPage,
     getLocationById,
+    getNearbyLocations,
 
     // 视听政策
     getArticlePage,

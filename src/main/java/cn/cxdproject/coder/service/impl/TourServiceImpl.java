@@ -39,11 +39,13 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     private final TourMapper tourMapper;
     private final Cache<String, Object> cache;
     private final RedisUtils redisUtils;
+    private final cn.cxdproject.coder.mapper.DramaMapper dramaMapper;
 
-    public TourServiceImpl(TourMapper tourMapper, Cache<String, Object> cache, RedisUtils redisUtils) {
+    public TourServiceImpl(TourMapper tourMapper, Cache<String, Object> cache, RedisUtils redisUtils, cn.cxdproject.coder.mapper.DramaMapper dramaMapper) {
         this.tourMapper = tourMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.dramaMapper = dramaMapper;
     }
 
     @Override
@@ -66,7 +68,9 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .thumbImage(createDTO.getThumbImage())
                 .latitude(createDTO.getLatitude())
                 .longitude(createDTO.getLongitude())
+                .longitude(createDTO.getLongitude())
                 .locationId(createDTO.getLocationId())
+                .dramaId(createDTO.getDramaId())
                 .build();
 
         this.save(tour);
@@ -186,6 +190,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         if (updateDTO.getLongitude() != null) tour.setLongitude(updateDTO.getLongitude());
         if (updateDTO.getLatitude() != null) tour.setLatitude(updateDTO.getLatitude());
         if (updateDTO.getLocationId() != null) tour.setLocationId(updateDTO.getLocationId());
+        if (updateDTO.getDramaId() != null) tour.setDramaId(updateDTO.getDramaId());
 
 
 
@@ -220,6 +225,32 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         if (tour == null) {
             return null;
         }
+
+        // 处理影视IP名称拼接
+        String ipWorks = "";
+        if (tour.getDramaId() != null && !tour.getDramaId().isEmpty()) {
+            try {
+                String[] ids = tour.getDramaId().split(",");
+                List<Long> dramaIds = new ArrayList<>();
+                for (String id : ids) {
+                    if (!id.trim().isEmpty()) {
+                        dramaIds.add(Long.parseLong(id.trim()));
+                    }
+                }
+                
+                if (!dramaIds.isEmpty()) {
+                    List<Drama> dramas = dramaMapper.selectBatchIds(dramaIds);
+                    if (dramas != null && !dramas.isEmpty()) {
+                        ipWorks = dramas.stream()
+                                .map(d -> "《" + d.getName() + "》")
+                                .collect(Collectors.joining(""));
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to load drama info for tour: " + tour.getId(), e);
+            }
+        }
+
         return TourVO.builder()
                 .id(tour.getId())
                 .name(tour.getName())
@@ -238,6 +269,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .longitude(tour.getLongitude())
                 .latitude(tour.getLatitude())
                 .locationId(tour.getLocationId())
+                .ipWorks(ipWorks) // 使用拼接好的名称
                 .build();
     }
 

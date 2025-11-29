@@ -48,6 +48,7 @@
             <view class="route-content">
               <view class="route-header">
                 <text class="route-title">{{ route.name }}</text>
+                <view class="route-theme" v-if="route.theme">{{ route.theme }}</view>
               </view>
               <text class="route-meta">{{ route.description }}</text>
             </view>
@@ -310,7 +311,10 @@ export default {
 }
 
 .route-header {
-  margin-bottom: 0;
+  margin-bottom: 4rpx;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .route-title {
@@ -323,6 +327,17 @@ export default {
   -webkit-line-clamp: 2;
   overflow: hidden;
   word-break: break-all;
+}
+
+.route-theme {
+  display: inline-block;
+  font-size: 20rpx;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2rpx 8rpx;
+  border-radius: 6rpx;
+  margin-left: 12rpx;
+  flex-shrink: 0;
 }
 
 .route-meta {

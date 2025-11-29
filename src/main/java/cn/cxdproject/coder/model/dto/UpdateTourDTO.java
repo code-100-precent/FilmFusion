@@ -69,4 +69,6 @@ public class UpdateTourDTO {
     private String latitude;
 
     private String locationId;
+
+    private String dramaId;
 }
