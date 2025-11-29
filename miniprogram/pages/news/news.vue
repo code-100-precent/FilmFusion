@@ -1,8 +1,15 @@
 <template>
   <view class="news-page">
-    <NavBar title="影视资讯" :show-back="false"></NavBar>
+    <!-- 渐变背景层 -->
+    <view class="gradient-bg"></view>
+    
+    <NavBar :show-back="false"></NavBar>
 
     <view class="content">
+      <!-- 页面标题 -->
+      <view class="page-title">
+        <text class="title-text">影视资讯</text>
+      </view>
       <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
@@ -40,17 +47,22 @@
             class="article-card"
             @click="goToDetail(article.id)"
           >
-            <view class="article-header">
-              <text class="article-title">{{ article.title }}</text>
+            <view class="article-cover-wrapper">
+              <image :src="getArticleCover(article.cover)" class="article-cover" mode="aspectFill"></image>
             </view>
-            <view class="article-meta">
-              <text class="article-unit">{{ article.issueUnit }}</text>
-              <text class="article-time">{{ formatDate(article.issueTime) }}</text>
-            </view>
-            <text class="article-content">{{ getContentPreview(article.content) }}</text>
-            <view class="article-footer">
-              <text class="read-more">查看详情</text>
-              <uni-icons type="right" size="14" color="#6366f1"></uni-icons>
+            <view class="article-info">
+              <view class="article-header">
+                <text class="article-title">{{ article.title }}</text>
+              </view>
+              <view class="article-meta">
+                <text class="article-unit">{{ article.issueUnit }}</text>
+                <text class="article-time">{{ formatDate(article.issueTime) }}</text>
+              </view>
+              <text class="article-content">{{ getContentPreview(article.content) }}</text>
+              <view class="article-footer">
+                <text class="read-more">查看详情</text>
+                <uni-icons type="right" size="14" color="#6366f1"></uni-icons>
+              </view>
             </view>
           </view>
         </view>
@@ -74,7 +86,8 @@ import NavBar from '../../components/NavBar/NavBar.vue'
 import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
-import { getArticlePage } from '../../services/api'
+// 使用真实后端API
+import { getArticlePage } from '../../services/backend-api'
 
 export default {
   components: {
@@ -117,16 +130,15 @@ export default {
         })
 
         if (res.code === 200) {
-          // 后端返回格式: { code: 200, message: "请求成功", data: [...], pagination: {...} }
+          // 后端返回格式: { code: 200, data: [...], pagination: { totalItems, ... } }
           const dataList = Array.isArray(res.data) ? res.data : []
-          const pagination = res.pagination || {}
           
           if (reset) {
             this.articles = dataList
           } else {
             this.articles = [...this.articles, ...dataList]
           }
-          this.total = pagination.totalItems || 0
+          this.total = res.pagination?.totalItems || 0
           this.hasMore = this.articles.length < this.total
         }
       } catch (error) {
@@ -181,6 +193,10 @@ export default {
       const day = String(date.getDate()).padStart(2, '0')
       return `${year}-${month}-${day}`
     },
+    getArticleCover(cover) {
+      // 如果 cover 为 null 或空，使用默认图片
+      return cover || 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png'
+    },
     getContentPreview(content) {
       if (!content) return ''
       return content.length > 100 ? content.substring(0, 100) + '...' : content
@@ -195,6 +211,18 @@ export default {
   background: #f5f7fa;
   padding-top: 132rpx;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 33.33vh;
+  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  z-index: 0;
 }
 
 .content {
@@ -202,6 +230,30 @@ export default {
   padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   width: 100%;
+  position: relative;
+  z-index: 1;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
+}
+
+/* 页面标题样式 */
+.page-title {
+  padding: 32rpx 0 8rpx 0;
+  width: 100%;
+}
+
+.title-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
 }
 
 .search-bar {
@@ -248,11 +300,35 @@ export default {
   transition: all 0.3s;
   width: 100%;
   box-sizing: border-box;
+  display: flex;
+  gap: 24rpx;
 }
 
 .article-card:active {
   transform: translateY(-4rpx);
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.article-cover-wrapper {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f3f4f6;
+}
+
+.article-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.article-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .article-header {

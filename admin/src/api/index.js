@@ -901,3 +901,152 @@ export const getReportPage = (current = 1, size = 10, keyword = '') => {
   })
 }
 
+// ==================== 旅游线路相关接口 ====================
+
+/**
+ * 分页获取旅游线路
+ */
+export const getTourRoutePage = (current = 1, size = 10, keyword = '') => {
+  if (USE_MOCK) {
+    return mockApi.getTourRoutePage(current, size, keyword)
+  }
+  return request({
+    url: '/tourroute/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
+  })
+}
+
+/**
+ * 根据ID获取旅游线路
+ */
+export const getTourRouteById = (id) => {
+  if (USE_MOCK) {
+    return mockApi.getTourRouteById(id)
+  }
+  return request({
+    url: `/tourroute/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 新增旅游线路
+ */
+export const addTourRoute = (data) => {
+  if (USE_MOCK) {
+    return mockApi.addTourRoute(data)
+  }
+  return request({
+    url: '/tourroute/admin',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新旅游线路
+ */
+export const updateTourRoute = (data) => {
+  if (USE_MOCK) {
+    return mockApi.updateTourRoute(data)
+  }
+  return request({
+    url: `/tourroute/admin/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除旅游线路
+ */
+export const deleteTourRoute = (id) => {
+  if (USE_MOCK) {
+    return mockApi.deleteTourRoute(id)
+  }
+  return request({
+    url: `/tourroute/admin/${id}`,
+    method: 'delete'
+  })
+}
+
+// ==================== 政策相关接口 ====================
+
+/**
+ * 分页获取政策
+ */
+export const getPolicyPage = (current = 1, size = 10, keyword = '', type = '') => {
+  if (USE_MOCK) {
+    return mockApi.getPolicyPage(current, size, keyword, type)
+  }
+  return request({
+    url: '/policy/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword,
+      type
+    }
+  })
+}
+
+/**
+ * 根据ID获取政策
+ */
+export const getPolicyById = (id) => {
+  if (USE_MOCK) {
+    return mockApi.getPolicyById(id)
+  }
+  return request({
+    url: `/policy/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 新增政策
+ */
+export const addPolicy = (data) => {
+  if (USE_MOCK) {
+    return mockApi.addPolicy(data)
+  }
+  return request({
+    url: '/policy/admin',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新政策
+ */
+export const updatePolicy = (data) => {
+  if (USE_MOCK) {
+    return mockApi.updatePolicy(data)
+  }
+  return request({
+    url: `/policy/admin/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除政策
+ */
+export const deletePolicy = (id) => {
+  if (USE_MOCK) {
+    return mockApi.deletePolicy(id)
+  }
+  return request({
+    url: `/policy/admin/${id}`,
+    method: 'delete'
+  })
+}
+

@@ -23,9 +23,9 @@
           class="feedback-card"
         >
           <view class="feedback-header">
-            <view class="feedback-type">{{ getTypeText(feedback.type) }}</view>
-            <view class="feedback-status" :class="statusClassMap[feedback.status] || 'status-pending'">
-              {{ getStatusText(feedback.status) }}
+            <view class="feedback-type">{{ feedback.type }}</view>
+            <view class="feedback-status" :class="statusClassObj[feedback.status] || 'status-pending'">
+              {{ statusTextMap[feedback.status] || '待处理' }}
             </view>
           </view>
           <text class="feedback-content">{{ feedback.content }}</text>
@@ -59,11 +59,15 @@ export default {
       loading: false,
       refreshing: false,
       hasMore: true,
-      statusClassMap: {
+      statusClassObj: {
         'PENDING': 'status-pending',
         'PROCESSING': 'status-processing',
-        'RESOLVED': 'status-resolved',
-        'REJECTED': 'status-rejected'
+        'RESOLVED': 'status-resolved'
+      },
+      statusTextMap: {
+        'PENDING': '待处理',
+        'PROCESSING': '处理中',
+        'RESOLVED': '已解决'
       }
     }
   },
@@ -137,31 +141,6 @@ export default {
       this.current++
       this.loadFeedbacks()
     },
-    getStatusClass(status) {
-      if (status === 'PENDING') return 'status-pending'
-      if (status === 'PROCESSING') return 'status-processing'
-      if (status === 'RESOLVED') return 'status-resolved'
-      if (status === 'REJECTED') return 'status-rejected'
-      return 'status-pending'
-    },
-    getStatusText(status) {
-      const statusMap = {
-        'PENDING': '待处理',
-        'PROCESSING': '处理中',
-        'RESOLVED': '已解决',
-        'REJECTED': '已拒绝'
-      }
-      return statusMap[status] || '待处理'
-    },
-    getTypeText(type) {
-      const typeMap = {
-        'SUGGESTION': '建议',
-        'BUG': 'Bug',
-        'FEATURE': '功能',
-        'OTHER': '其他'
-      }
-      return typeMap[type] || type || '其他'
-    },
     formatDate(dateStr) {
       if (!dateStr) return ''
       let date
@@ -215,6 +194,15 @@ export default {
   padding: 24rpx 32rpx;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .feedback-card {

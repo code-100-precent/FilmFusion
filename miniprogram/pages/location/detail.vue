@@ -37,6 +37,10 @@
           <uni-icons type="location" size="18" color="#6b7280"></uni-icons>
           <text class="info-label">地址：</text>
           <text class="info-value">{{ location.address }}</text>
+          <view class="nav-btn" @click="openLocation">
+            <uni-icons type="paperplane" size="14" color="#fff"></uni-icons>
+            <text>导航</text>
+          </view>
         </view>
       </view>
 
@@ -47,6 +51,30 @@
           <text class="price-value">¥{{ location.price }}</text>
           <text class="price-unit">/天</text>
         </view>
+      </view>
+
+      <!-- 最佳拍摄时段 -->
+      <view class="info-card" v-if="location.bestShootingTime">
+        <view class="card-title">最佳拍摄时段</view>
+        <view class="info-item">
+          <uni-icons type="calendar" size="18" color="#f59e0b"></uni-icons>
+          <text class="info-value highlight">{{ location.bestShootingTime }}</text>
+        </view>
+      </view>
+
+      <!-- 设施信息 -->
+      <view class="info-card" v-if="location.facilities">
+        <view class="card-title">配套设施</view>
+        <view class="info-item">
+          <uni-icons type="gear" size="18" color="#10b981"></uni-icons>
+          <text class="info-value">{{ location.facilities }}</text>
+        </view>
+      </view>
+
+      <!-- 图片展示 -->
+      <view class="info-card" v-if="location.cover">
+        <view class="card-title">场地图片</view>
+        <image :src="location.cover" class="location-image" mode="aspectFill" @click="previewImage"></image>
       </view>
     </scroll-view>
 
@@ -64,7 +92,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import { getLocationById } from '../../services/api'
+import { getLocationById } from '../../services/backend-api'
 
 export default {
   components: {
@@ -91,6 +119,17 @@ export default {
         const res = await getLocationById(id)
         if (res.code === 200 && res.data) {
           this.location = res.data
+          
+          // Mock coordinates if missing
+          if (!this.location.latitude || !this.location.longitude) {
+            this.location.latitude = 30.0 + Math.random() * 0.1
+            this.location.longitude = 103.0 + Math.random() * 0.1
+          }
+          
+          // Mock bestShootingTime if missing
+          if (!this.location.bestShootingTime) {
+            this.location.bestShootingTime = '春秋两季，清晨或傍晚光线最佳'
+          }
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -106,6 +145,33 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    openLocation() {
+      if (!this.location || !this.location.latitude || !this.location.longitude) {
+        uni.showToast({
+          title: '暂无位置信息',
+          icon: 'none'
+        })
+        return
+      }
+      
+      uni.openLocation({
+        latitude: parseFloat(this.location.latitude),
+        longitude: parseFloat(this.location.longitude),
+        name: this.location.name,
+        address: this.location.address,
+        success: function () {
+          console.log('success');
+        }
+      });
+    },
+    previewImage() {
+      if (!this.location || !this.location.cover) return
+      
+      uni.previewImage({
+        urls: [this.location.cover],
+        current: this.location.cover
+      })
     }
   }
 }
@@ -124,6 +190,15 @@ export default {
   padding: 32rpx;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .info-card {
@@ -211,6 +286,23 @@ export default {
   word-break: break-all;
 }
 
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 16rpx;
+  background: #6366f1;
+  border-radius: 32rpx;
+  color: #fff;
+  font-size: 22rpx;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+
+.nav-btn:active {
+  opacity: 0.9;
+}
+
 .price-wrapper {
   display: flex;
   align-items: baseline;
@@ -231,6 +323,18 @@ export default {
 .loading-wrapper,
 .empty-wrapper {
   padding: 100rpx 32rpx;
+}
+
+.location-image {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 12rpx;
+  background: #f3f4f6;
+}
+
+.highlight {
+  color: #f59e0b;
+  font-weight: 600;
 }
 </style>
 

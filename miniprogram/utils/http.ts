@@ -3,15 +3,15 @@
  * 需要配置 baseURL
  */
 // 根据环境配置API地址
-const baseURL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:8080/api'  // 开发环境
+export const baseURL = process.env.NODE_ENV === 'development' 
+  ? 'http://10.120.4.241:8080/api'  // 开发环境
   : 'https://your-production-domain.com/api'  // 生产环境，请替换为实际域名
 
-// 添加拦截器
-const httpInterceptor = {
+// 为不同类型的请求创建不同的拦截器配置
+const requestInterceptor = {
   // 拦截前触发
   invoke(options: UniApp.RequestOptions) {
-    console.log('拦截器触发:', options.url)
+    console.log('请求拦截器触发:', options.url)
     
     // 1. 非 http 开头需拼接地址
     if (!options.url.startsWith('http')) {
@@ -20,8 +20,10 @@ const httpInterceptor = {
     
     console.log('最终请求URL:', options.url)
     
-    // 2. 请求超时, 默认 10s
-    options.timeout = 10000
+    // 2. 请求超时, 默认 10s，但不覆盖已设置的值
+    if (!options.timeout) {
+      options.timeout = 10000
+    }
     // 3. 添加小程序端请求头标识
     options.header = {
       ...options.header,
@@ -39,8 +41,8 @@ const httpInterceptor = {
     console.log('请求头:', options.header)
   },
 }
-uni.addInterceptor('request', httpInterceptor)
-uni.addInterceptor('uploadFile', httpInterceptor)
+// 只对普通请求应用拦截器，不对uploadFile应用拦截器
+uni.addInterceptor('request', requestInterceptor)
 
 /**
  * 请求函数
