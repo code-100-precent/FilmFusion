@@ -10,7 +10,7 @@ import cn.cxdproject.coder.model.dto.LoginResponseDTO;
 import cn.cxdproject.coder.model.dto.RegisterDTO;
 import cn.cxdproject.coder.model.dto.UpdateUserDTO;
 import cn.cxdproject.coder.model.entity.User;
-import cn.cxdproject.coder.model.vo.ImageVO;
+import cn.cxdproject.coder.model.vo.FileVO;
 import cn.cxdproject.coder.model.vo.UserVO;
 import cn.cxdproject.coder.mapper.UserMapper;
 import cn.cxdproject.coder.service.UserService;
@@ -397,7 +397,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ImageVO uploadAvatar(Long userId, MultipartFile avatarFile) {
+    public FileVO uploadAvatar(Long userId, MultipartFile avatarFile) {
         // 验证文件
         if (avatarFile == null || avatarFile.isEmpty()) {
             throw new BusinessException(VALIDATION_ERROR.code(), "头像文件不能为空");
@@ -430,19 +430,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 上传新头像
-        ImageVO imageVO = fileStorageAdapter.upload("avatars", avatarFile);
+        FileVO fileVO = fileStorageAdapter.upload("avatars", avatarFile);
         
         // 构建访问URL（本地存储使用/api/files/前缀）
-        String originUrl = "/api/files/" + imageVO.getOriginUrl();
-        String thumbUrl =  "/api/files/" + imageVO.getThumbUrl();
+        String originUrl = "/api/files/" + fileVO.getOriginUrl();
+        String thumbUrl =  "/api/files/" + fileVO.getThumbUrl();
 
-        imageVO.setOriginUrl(originUrl);
-        imageVO.setThumbUrl(thumbUrl);
+        fileVO.setOriginUrl(originUrl);
+        fileVO.setThumbUrl(thumbUrl);
 
         // 更新用户头像
         user.setAvatar(originUrl);
         this.updateById(user);
 
-        return imageVO;
+        return fileVO;
     }
 }

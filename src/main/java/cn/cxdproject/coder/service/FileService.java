@@ -1,8 +1,8 @@
 package cn.cxdproject.coder.service;
 
-import cn.cxdproject.coder.model.vo.ImageVO;
+import cn.cxdproject.coder.model.vo.FileVO;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface FileService {
-   ImageVO imageUpload(MultipartFile file);
+   FileVO imageUpload(MultipartFile file);
 }

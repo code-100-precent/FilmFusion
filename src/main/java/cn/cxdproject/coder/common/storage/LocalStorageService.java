@@ -1,8 +1,7 @@
 package cn.cxdproject.coder.common.storage;
 
 
-import cn.cxdproject.coder.model.vo.ImageVO;
-import io.minio.PutObjectArgs;
+import cn.cxdproject.coder.model.vo.FileVO;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,7 +30,7 @@ public class LocalStorageService implements FileStorageAdapter {
      * 上传文件
      */
     @Override
-    public ImageVO upload(MultipartFile file) {
+    public FileVO upload(MultipartFile file) {
         try {
             String baseName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
@@ -58,14 +57,14 @@ public class LocalStorageService implements FileStorageAdapter {
                 generateLocalThumbnail(originPath, thumbPath);
             }
 
-            return new ImageVO(originalUrl, thumbnailUrl);
+            return new FileVO(originalUrl, thumbnailUrl);
         } catch (IOException e) {
             throw new RuntimeException("本地文件上传失败", e);
         }
     }
 
     @Override
-    public ImageVO upload(String prefix, MultipartFile file) {
+    public FileVO upload(String prefix, MultipartFile file) {
 
         try {
             String baseName = System.currentTimeMillis() + "_" + prefix + "/" + file.getOriginalFilename();
@@ -93,7 +92,7 @@ public class LocalStorageService implements FileStorageAdapter {
                 generateLocalThumbnail(originPath, thumbPath);
             }
 
-            return new ImageVO(originalUrl, thumbnailUrl);
+            return new FileVO(originalUrl, thumbnailUrl);
         } catch (IOException e) {
             throw new RuntimeException("本地文件上传失败", e);
         }

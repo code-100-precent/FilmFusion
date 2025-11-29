@@ -128,11 +128,23 @@ public class Report extends BaseEntity implements Serializable, Cloneable {
     @TableField("status")
     private String status;
 
-    @TableField("image")
-    private String image;
+    @TableField(value = "shoot_permit")
+    private String shootPermit;
 
-    @TableField("thumb_image")
-    private String thumbImage;
+    @TableField(value = "thumb_shoot_permit")
+    private String thumbShootPermit;
+
+    @TableField(value = "approval_file")
+    private String approvalFile;
+
+    @TableField(value = "thumb_approval_file")
+    private String thumbApprovalFile;
+
+    @TableField(value = "shoot_apply")
+    private String shootApply;
+
+    @TableField(value = "thumb_shoot_apply")
+    private String thumbShootApply;
 
     @Override
     public Report clone() {
