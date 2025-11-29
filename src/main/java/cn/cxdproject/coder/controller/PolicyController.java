@@ -11,6 +11,8 @@ import cn.cxdproject.coder.model.dto.UpdatePolicyDTO;
 import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.entity.Policy;
 import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.CursorPageResponseVO;
+import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.PolicyVO;
 import cn.cxdproject.coder.service.PolicyService;
@@ -51,18 +53,29 @@ public class PolicyController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public PageResponse<PolicyVO> getPolicyPage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
+    public CursorPageResponseVO<PolicyVO> page(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword) {
-        Page<Policy> page = new Page<>(current, size);
-        Page<PolicyVO> locationPage = policyService.getPolicyPage(page, keyword);
-        return PageResponse.of(
-                (int) locationPage.getCurrent(),
-                (int) locationPage.getSize(),
-                locationPage.getTotal(),
-                locationPage.getRecords()
-        );
+
+        Long lastId = null;
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            try {
+                lastId = Long.parseLong(cursor.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid cursor");
+            }
+        }
+
+        List<PolicyVO> list = policyService.getPolicyPage(lastId, size, keyword);
+
+        String nextCursor = null;
+        if (list.size() == size && !list.isEmpty()) {
+            // 升序：最后一条是最大的 id
+            nextCursor = String.valueOf(list.get(list.size() - 1).getId());
+        }
+
+        return new CursorPageResponseVO<>(list, nextCursor);
     }
 
     // ==================== 普通用户接口 ====================
@@ -81,6 +94,23 @@ public class PolicyController {
         }
         PolicyVO policyVO = policyService.createPolicyByAdmin(createDTO);
         return ApiResponse.success(policyVO);
+    }
+
+    @GetMapping("/admin/page")
+    public PageResponse<PolicyVO> getPolicyPageAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+
+        Page<Policy> page = new Page<>(current, size);
+        Page<PolicyVO> policyPage = policyService.getPolicyPageAdmin(page, keyword);
+
+        return PageResponse.of(
+                (int) policyPage.getCurrent(),
+                (int) policyPage.getSize(),
+                policyPage.getTotal(),
+                policyPage.getRecords()
+        );
     }
 
     /**

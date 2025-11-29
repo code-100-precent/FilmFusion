@@ -5,9 +5,8 @@ import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateTourDTO;
 import cn.cxdproject.coder.model.dto.UpdateTourDTO;
 import cn.cxdproject.coder.model.entity.Drama;
-import cn.cxdproject.coder.model.entity.Shoot;
+import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
-import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.model.vo.TourVO;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
@@ -67,6 +66,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .latitude(createDTO.getLatitude())
                 .longitude(createDTO.getLongitude())
                 .locationId(createDTO.getLocationId())
+                .dramaId(createDTO.getDramaId())
                 .build();
 
         this.save(tour);
@@ -93,74 +93,22 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     @CircuitBreaker(name = "tourGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public Page<TourVO> getTourPage(Page<Tour> page, String keyword) {
-        long current = page.getCurrent();
-        long size = page.getSize();
-        long offset = (current - 1) * size;
-
-
-        List<Long> ids = tourMapper.getPageTourIds(keyword, offset, size);
-        long total = tourMapper.countByKeyword(keyword);
-
+    public List<TourVO> getTourPage(Long lastId, int size, String keyword) {
+        List<Long> ids = tourMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
-            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+            return Collections.emptyList();
         }
 
-        // 1. 批量从 Redis 获取缓存
-        List<String> keys = ids.stream().map(id -> RedisKeyConstants.TOUR + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisUtils.multiGet(keys);
+        List<Tour> tours = tourMapper.selectBatchIds(ids);
 
-        // 2. 构建Drama列表：优先用缓存，缺失的记录 ID
-        List<Tour> tours = new ArrayList<>(Collections.nCopies(ids.size(), null));
-        List<Long> missingIds = new ArrayList<>();
+        Map<Long, Tour> tourMap = tours.stream()
+                .collect(Collectors.toMap(Tour::getId, a -> a));
 
-        for (int i = 0; i < ids.size(); i++) {
-            String json = cachedJsons.get(i);
-            if (json != null) {
-                try {
-                    tours.set(i, JsonUtils.fromJson(json, Tour.class));
-                } catch (Exception e) {
-                    missingIds.add(ids.get(i));
-                }
-            } else {
-                missingIds.add(ids.get(i));
-            }
-        }
-
-            if (!missingIds.isEmpty()) {
-                List<Tour> dbTours = tourMapper.selectBatchIds(missingIds);
-                Map<Long, Tour> dbMap = dbTours.stream()
-                        .peek(tour -> {
-                            // 回填 Redis 缓存
-                            redisUtils.set(
-                                    RedisKeyConstants.TOUR + tour.getId(),
-                                    JsonUtils.toJson(tour),
-                                    Duration.ofMinutes(30)
-                            );
-                            cache.put(CaffeineConstants.TOUR + tour.getId(), tour);
-                        })
-                        .collect(Collectors.toMap(Tour::getId, a -> a));
-
-                // 填回原位置
-                for (int i = 0; i < ids.size(); i++) {
-                    if (tours.get(i) == null) {
-                        tours.set(i, dbMap.get(ids.get(i)));
-                    }
-                }
-            }
-
-
-        List<TourVO> voList = tours.stream()
-                .map(this::toTourVO)
+        return ids.stream()
+                .map(tourMap::get)
                 .filter(Objects::nonNull)
+                .map(this::toTourVO)
                 .collect(Collectors.toList());
-
-        return new Page<TourVO>()
-                .setCurrent(current)
-                .setSize(size)
-                .setTotal(total)
-                .setRecords(voList);
-
     }
 
 
@@ -186,6 +134,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         if (updateDTO.getLongitude() != null) tour.setLongitude(updateDTO.getLongitude());
         if (updateDTO.getLatitude() != null) tour.setLatitude(updateDTO.getLatitude());
         if (updateDTO.getLocationId() != null) tour.setLocationId(updateDTO.getLocationId());
+        if (updateDTO.getDramaId() != null) tour.setDramaId(updateDTO.getDramaId());
 
 
 
@@ -238,6 +187,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .longitude(tour.getLongitude())
                 .latitude(tour.getLatitude())
                 .locationId(tour.getLocationId())
+                .dramaId(tour.getDramaId())
                 .build();
     }
 
@@ -257,35 +207,44 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     }
 
     @Override
-    public Page<TourVO> getPageFallback(Page<Tour> page, String keyword, Throwable e) {
+    public List<TourVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+
         try {
+
             String json = (String) redisUtils.get(TaskConstants.TOUR);
             if (json == null || json.isEmpty()) {
-                return new Page<TourVO>()
-                        .setCurrent(page.getCurrent())
-                        .setSize(page.getSize())
-                        .setTotal(0)
-                        .setRecords(Collections.emptyList());
+                return Collections.emptyList();
             }
 
             TourVO[] array = JsonUtils.fromJson(json, TourVO[].class);
-            List<TourVO> list = array != null ? Arrays.asList(array) : Collections.emptyList();
+            if (array == null || array.length == 0) {
+                return Collections.emptyList();
+            }
 
-            long total = list.size();
+            int take = Math.min(size, array.length);
+            return new ArrayList<>(Arrays.asList(array).subList(0, take));
 
-
-            return new Page<TourVO>()
-                    .setCurrent(page.getCurrent())
-                    .setSize(page.getSize())
-                    .setTotal(total)
-                    .setRecords(new ArrayList<>(list));
         } catch (Exception ex) {
-            log.error("getPageFallback error", ex);
-            return new Page<TourVO>()
-                    .setCurrent(page.getCurrent())
-                    .setSize(page.getSize())
-                    .setTotal(0)
-                    .setRecords(Collections.emptyList());
+            log.error("Fallback failed", ex);
+            return Collections.emptyList();
         }
+    }
+
+    @Override
+    public Page<TourVO> getTourPageAdmin(Page<Tour> page, String keyword) {
+        long current = page.getCurrent();
+        long size = page.getSize();
+        long offset = (current - 1) * size;
+
+        List<Tour> tours = tourMapper.getAdminPage(keyword, offset, size);
+
+        List<TourVO> voList = tours.stream()
+                .map(this::toTourVO)
+                .collect(Collectors.toList());
+
+        return new Page<TourVO>()
+                .setCurrent(current)
+                .setSize(size)
+                .setRecords(voList);
     }
 }

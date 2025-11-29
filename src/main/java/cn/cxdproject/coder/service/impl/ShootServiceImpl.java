@@ -5,8 +5,10 @@ import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateShootDTO;
 import cn.cxdproject.coder.model.dto.UpdateShootDTO;
+import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.entity.Shoot;
+import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.mapper.ShootMapper;
@@ -96,72 +98,22 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public Page<ShootVO> getShootPage(Page<Shoot> page, String keyword) {
-        long current = page.getCurrent();
-        long size = page.getSize();
-        long offset = (current - 1) * size;
-
-        List<Long> ids = shootMapper.getPageShootIds(keyword, offset, size);
-        long total = shootMapper.countByKeyword(keyword);
-
+    public List<ShootVO> getShootPage(Long lastId, int size, String keyword) {
+        List<Long> ids = shootMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
-            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+            return Collections.emptyList();
         }
 
-        // 1. 批量从 Redis 获取缓存
-        List<String> keys = ids.stream().map(id -> RedisKeyConstants.SHOOT + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisUtils.multiGet(keys);
+        List<Shoot> shoots = shootMapper.selectBatchIds(ids);
 
-        // 2. 构建Shoot列表：优先用缓存，缺失的记录 ID
-        List<Shoot> shoots = new ArrayList<>(Collections.nCopies(ids.size(), null));
-        List<Long> missingIds = new ArrayList<>();
+        Map<Long, Shoot> shootMap = shoots.stream()
+                .collect(Collectors.toMap(Shoot::getId, a -> a));
 
-        for (int i = 0; i < ids.size(); i++) {
-            String json = cachedJsons.get(i);
-            if (json != null) {
-                try {
-                    shoots.set(i, JsonUtils.fromJson(json, Shoot.class));
-                } catch (Exception e) {
-                    missingIds.add(ids.get(i));
-                }
-            } else {
-                missingIds.add(ids.get(i));
-            }
-        }
-
-        if (!missingIds.isEmpty()) {
-            List<Shoot> dbShoots = shootMapper.selectBatchIds(missingIds);
-            Map<Long, Shoot> dbMap = dbShoots.stream()
-                    .peek(shoot -> {
-                        // 回填 Redis 缓存
-                        redisUtils.set(
-                                RedisKeyConstants.SHOOT + shoot.getId(),
-                                JsonUtils.toJson(shoot),
-                                Duration.ofMinutes(30)
-                        );
-                        cache.put(CaffeineConstants.SHOOT+shoot.getId(),shoot);
-                    })
-                    .collect(Collectors.toMap(Shoot::getId, a -> a));
-
-            // 填回原位置
-            for (int i = 0; i < ids.size(); i++) {
-                if (shoots.get(i) == null) {
-                    shoots.set(i, dbMap.get(ids.get(i)));
-                }
-            }
-        }
-
-        List<ShootVO> voList = shoots.stream()
-                .map(this::toShootVO)
+        return ids.stream()
+                .map(shootMap::get)
                 .filter(Objects::nonNull)
+                .map(this::toShootVO)
                 .collect(Collectors.toList());
-
-        return new Page<ShootVO>()
-                .setCurrent(current)
-                .setSize(size)
-                .setTotal(total)
-                .setRecords(voList);
-
     }
 
     @Override
@@ -249,34 +201,46 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    public Page<ShootVO> getPageFallback(Page<Shoot> page, String keyword, Throwable e) {
+    public List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+
         try {
+            // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
             String json = (String) redisUtils.get(TaskConstants.SHOOT);
             if (json == null || json.isEmpty()) {
-                return new Page<ShootVO>()
-                        .setCurrent(page.getCurrent())
-                        .setSize(page.getSize())
-                        .setTotal(0)
-                        .setRecords(Collections.emptyList());
+                return Collections.emptyList();
             }
 
             ShootVO[] array = JsonUtils.fromJson(json, ShootVO[].class);
-            List<ShootVO> list = array != null ? Arrays.asList(array) : Collections.emptyList();
+            if (array == null || array.length == 0) {
+                return Collections.emptyList();
+            }
 
-            long total = list.size();
+            // 直接取前 N 条（N = min(size, 缓存长度)）
+            // 注意：这里忽略 lastId 和 keyword，因为 fallback 只提供静态兜底数据
+            int take = Math.min(size, array.length);
+            return new ArrayList<>(Arrays.asList(array).subList(0, take));
 
-            return new Page<ShootVO>()
-                    .setCurrent(page.getCurrent())
-                    .setSize(page.getSize())
-                    .setTotal(total)
-                    .setRecords(new ArrayList<>(list));
         } catch (Exception ex) {
-            log.error("getPageFallback error", ex);
-            return new Page<ShootVO>()
-                    .setCurrent(page.getCurrent())
-                    .setSize(page.getSize())
-                    .setTotal(0)
-                    .setRecords(Collections.emptyList());
+            log.error("Fallback failed", ex);
+            return Collections.emptyList();
         }
+    }
+
+    @Override
+    public Page<ShootVO> getShootPageAdmin(Page<Shoot> page, String keyword) {
+        long current = page.getCurrent();
+        long size = page.getSize();
+        long offset = (current - 1) * size;
+
+        List<Shoot> shoots = shootMapper.getAdminPage(keyword, offset, size);
+
+        List<ShootVO> voList = shoots.stream()
+                .map(this::toShootVO)
+                .collect(Collectors.toList());
+
+        return new Page<ShootVO>()
+                .setCurrent(current)
+                .setSize(size)
+                .setRecords(voList);
     }
 }

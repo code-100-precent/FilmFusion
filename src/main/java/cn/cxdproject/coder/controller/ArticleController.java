@@ -7,8 +7,11 @@ import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.model.dto.CreateArticleDTO;
 import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
 import cn.cxdproject.coder.model.entity.Article;
+import cn.cxdproject.coder.model.entity.Banner;
 import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.ArticleVO;
+import cn.cxdproject.coder.model.vo.BannerVO;
+import cn.cxdproject.coder.model.vo.CursorPageResponseVO;
 import cn.cxdproject.coder.service.ArticleService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -19,6 +22,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
 
 /**
  * 文章控制器
@@ -54,18 +60,29 @@ public class ArticleController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public PageResponse<ArticleVO> getArticlePage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
+    public CursorPageResponseVO<ArticleVO> page(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword) {
-        Page<Article> page = new Page<>(current, size);
-        Page<ArticleVO> articlePage = articleService.getArticlePage(page, keyword);
-        return PageResponse.of(
-                (int) articlePage.getCurrent(),
-                (int) articlePage.getSize(),
-                articlePage.getTotal(),
-                articlePage.getRecords()
-        );
+
+        Long lastId = null;
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            try {
+                lastId = Long.parseLong(cursor.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid cursor");
+            }
+        }
+
+        List<ArticleVO> list = articleService.getArticlePage(lastId, size, keyword);
+
+        String nextCursor = null;
+        if (list.size() == size && !list.isEmpty()) {
+            // 升序：最后一条是最大的 id
+            nextCursor = String.valueOf(list.get(list.size() - 1).getId());
+        }
+
+        return new CursorPageResponseVO<>(list, nextCursor);
     }
 
     // ==================== 管理员接口 ====================
@@ -77,6 +94,23 @@ public class ArticleController {
     public ApiResponse<ArticleVO> createArticleByAdmin(@Valid @RequestBody CreateArticleDTO createDTO) {
         ArticleVO articleVO = articleService.createArticleByAdmin(createDTO);
         return ApiResponse.success(articleVO);
+    }
+
+    @GetMapping("/admin/page")
+    public PageResponse<ArticleVO> getArticlePageAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+
+        Page<Article> page = new Page<>(current, size);
+        Page<ArticleVO> articlePage = articleService.getArticlePagAdmine(page, keyword);
+
+        return PageResponse.of(
+                (int) articlePage.getCurrent(),
+                (int) articlePage.getSize(),
+                articlePage.getTotal(),
+                articlePage.getRecords()
+        );
     }
 
     /**

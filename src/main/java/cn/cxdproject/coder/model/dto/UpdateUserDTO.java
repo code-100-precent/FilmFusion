@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import javax.validation.constraints.Pattern;
@@ -27,5 +28,7 @@ public class UpdateUserDTO {
      * 头像
      */
     private String avatar;
+
+    private String thumbAvatar;
 }
 

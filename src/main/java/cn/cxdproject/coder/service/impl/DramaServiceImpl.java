@@ -98,73 +98,23 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public Page<DramaVO> getDramaPage(Page<Drama> page, String keyword) {
-
-        long current = page.getCurrent();
-        long size = page.getSize();
-        long offset = (current - 1) * size;
-
-        List<Long> ids = dramaMapper.getPageDramaIds(keyword, offset, size);
-        long total = dramaMapper.countByKeyword(keyword);
-
+    public List<DramaVO> getDramaPage(Long lastId, int size, String keyword) {
+        List<Long> ids = dramaMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
-            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+            return Collections.emptyList();
         }
 
-        // 1. 批量从 Redis 获取缓存
-        List<String> keys = ids.stream().map(id -> RedisKeyConstants.DRAMA + id).collect(Collectors.toList());
-        List<String> cachedJsons = redisUtils.multiGet(keys);
+        List<Drama> dramas = dramaMapper.selectBatchIds(ids);
 
-        // 2. 构建Drama列表：优先用缓存，缺失的记录 ID
-        List<Drama> articles = new ArrayList<>(Collections.nCopies(ids.size(), null));
-        List<Long> missingIds = new ArrayList<>();
+        Map<Long, Drama> dramaMap = dramas.stream()
+                .collect(Collectors.toMap(Drama::getId, a -> a));
 
-        for (int i = 0; i < ids.size(); i++) {
-            String json = cachedJsons.get(i);
-            if (json != null) {
-                try {
-                    articles.set(i, JsonUtils.fromJson(json, Drama.class));
-                } catch (Exception e) {
-                    missingIds.add(ids.get(i));
-                }
-            } else {
-                missingIds.add(ids.get(i));
-            }
-        }
 
-        if (!missingIds.isEmpty()) {
-            List<Drama> dbArticles = dramaMapper.selectBatchIds(missingIds);
-            Map<Long, Drama> dbMap = dbArticles.stream()
-                    .peek(drama -> {
-                        // 回填 Redis 缓存
-                        redisUtils.set(
-                                RedisKeyConstants.DRAMA + drama.getId(),
-                                JsonUtils.toJson(drama),
-                                Duration.ofMinutes(30)
-                        );
-                        cache.put(CaffeineConstants.DRAMA+drama.getId(),drama);
-                    })
-                    .collect(Collectors.toMap(Drama::getId, a -> a));
-
-            // 填回原位置
-            for (int i = 0; i < ids.size(); i++) {
-                if (articles.get(i) == null) {
-                    articles.set(i, dbMap.get(ids.get(i)));
-                }
-            }
-        }
-
-        List<DramaVO> voList = articles.stream()
-                .map(this::toDramaVO)
+        return ids.stream()
+                .map(dramaMap::get)
                 .filter(Objects::nonNull)
+                .map(this::toDramaVO)
                 .collect(Collectors.toList());
-
-        return new Page<DramaVO>()
-                .setCurrent(current)
-                .setSize(size)
-                .setTotal(total)
-                .setRecords(voList);
-
     }
 
     @Override
@@ -256,34 +206,46 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     }
 
     @Override
-    public Page<DramaVO> getPageFallback(Page<Drama> page, String keyword, Throwable e) {
+    public List<DramaVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+
         try {
+            // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
             String json = (String) redisUtils.get(TaskConstants.DRAMA);
             if (json == null || json.isEmpty()) {
-                return new Page<DramaVO>()
-                        .setCurrent(page.getCurrent())
-                        .setSize(page.getSize())
-                        .setTotal(0)
-                        .setRecords(Collections.emptyList());
+                return Collections.emptyList();
             }
 
             DramaVO[] array = JsonUtils.fromJson(json, DramaVO[].class);
-            List<DramaVO> list = array != null ? Arrays.asList(array) : Collections.emptyList();
+            if (array == null || array.length == 0) {
+                return Collections.emptyList();
+            }
 
-            long total = list.size();
+            // 直接取前 N 条（N = min(size, 缓存长度)）
+            // 注意：这里忽略 lastId 和 keyword，因为 fallback 只提供静态兜底数据
+            int take = Math.min(size, array.length);
+            return new ArrayList<>(Arrays.asList(array).subList(0, take));
 
-            return new Page<DramaVO>()
-                    .setCurrent(page.getCurrent())
-                    .setSize(page.getSize())
-                    .setTotal(total)
-                    .setRecords(new ArrayList<>(list));
         } catch (Exception ex) {
-            log.error("getPageFallback error", ex);
-            return new Page<DramaVO>()
-                    .setCurrent(page.getCurrent())
-                    .setSize(page.getSize())
-                    .setTotal(0)
-                    .setRecords(Collections.emptyList());
+            log.error("Fallback failed", ex);
+            return Collections.emptyList();
         }
+    }
+
+    @Override
+    public Page<DramaVO> getDramaPageAdmin(Page<Drama> page, String keyword) {
+        long current = page.getCurrent();
+        long size = page.getSize();
+        long offset = (current - 1) * size;
+
+        List<Drama> dramas = dramaMapper.getAdminPage(keyword, offset, size);
+
+        List<DramaVO> voList = dramas.stream()
+                .map(this::toDramaVO)
+                .collect(Collectors.toList());
+
+        return new Page<DramaVO>()
+                .setCurrent(current)
+                .setSize(size)
+                .setRecords(voList);
     }
 }

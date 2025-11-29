@@ -240,7 +240,7 @@ CREATE TABLE `fi_tour` (
      `longitude`       varchar(40)       NOT NULL COMMENT '经度',
      `latitude`        varchar(40)       NOT NULL COMMENT '纬度',
      `location_id`     varchar(255)      NOT NULL COMMENT '景点id',
-
+     `drama_id`        varchar(255)      NOT NULL COMMENT '关联影视id',
      PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 

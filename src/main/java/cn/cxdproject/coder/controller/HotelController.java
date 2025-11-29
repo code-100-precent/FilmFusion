@@ -6,9 +6,13 @@ import cn.cxdproject.coder.common.anno.PublicAccess;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.model.dto.CreateHotelDTO;
 import cn.cxdproject.coder.model.dto.UpdateHotelDTO;
+import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Hotel;
 import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.ArticleVO;
+import cn.cxdproject.coder.model.vo.CursorPageResponseVO;
 import cn.cxdproject.coder.model.vo.HotelVO;
+import cn.cxdproject.coder.service.HotelService;
 import cn.cxdproject.coder.service.impl.HotelServiceImpl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -24,9 +29,9 @@ import javax.validation.constraints.NotNull;
 @Validated
 public class HotelController {
 
-    private final HotelServiceImpl hotelService;
+    private final HotelService hotelService;
 
-    public HotelController(HotelServiceImpl hotelService) {
+    public HotelController(HotelService hotelService) {
         this.hotelService = hotelService;
     }
 
@@ -44,18 +49,29 @@ public class HotelController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public PageResponse<HotelVO> getHotelPage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
+    public CursorPageResponseVO<HotelVO> page(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword) {
-        Page<Hotel> page = new Page<>(current, size);
-        Page<HotelVO> hotelPage = hotelService.getHotelPage(page, keyword);
-        return PageResponse.of(
-                (int) hotelPage.getCurrent(),
-                (int) hotelPage.getSize(),
-                hotelPage.getTotal(),
-                hotelPage.getRecords()
-        );
+
+        Long lastId = null;
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            try {
+                lastId = Long.parseLong(cursor.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid cursor");
+            }
+        }
+
+        List<HotelVO> list = hotelService.getHotelPage(lastId, size, keyword);
+
+        String nextCursor = null;
+        if (list.size() == size && !list.isEmpty()) {
+            // 升序：最后一条是最大的 id
+            nextCursor = String.valueOf(list.get(list.size() - 1).getId());
+        }
+
+        return new CursorPageResponseVO<>(list, nextCursor);
     }
 
     // ==================== 管理员接口 ====================
@@ -71,6 +87,23 @@ public class HotelController {
         }
         HotelVO hotelVO = hotelService.createHotelByAdmin(currentUser.getId(),createDTO);
         return ApiResponse.success(hotelVO);
+    }
+
+    @GetMapping("/admin/page")
+    public PageResponse<HotelVO> getHotelPageAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+
+        Page<Hotel> page = new Page<>(current, size);
+        Page<HotelVO> hotelPage = hotelService.getHotelPageAdmin(page, keyword);
+
+        return PageResponse.of(
+                (int) hotelPage.getCurrent(),
+                (int) hotelPage.getSize(),
+                hotelPage.getTotal(),
+                hotelPage.getRecords()
+        );
     }
 
     /**

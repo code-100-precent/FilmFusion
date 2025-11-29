@@ -21,7 +21,7 @@ public interface LocationService extends IService<Location> {
 
     LocationVO getLocationById(Long locationId);
 
-    Page<LocationVO> getLocationPage(Page<Location> page, String keyword);
+    List<LocationVO> getLocationPage(Long lastId,int size, String keyword);
 
     LocationVO updateLocationByAdmin(Long locationId, UpdateLocationDTO updateDTO);
 
@@ -31,5 +31,7 @@ public interface LocationService extends IService<Location> {
 
     LocationVO getByIdFallback(Long id,Throwable e);
 
-    Page<LocationVO> getPageFallback(Page<Location> page, String keyword, Throwable e);
+    List<LocationVO> getPageFallback(Long lastId, int size, String keyword, Throwable e);
+
+    Page<LocationVO> getLocationPageAdmin(Page<Location> page, String keyword);
 }

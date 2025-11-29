@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import static cn.cxdproject.coder.common.constants.RoleConstants.ADMIN;
 import static cn.cxdproject.coder.common.constants.RoleConstants.USER;
+import static cn.cxdproject.coder.common.constants.UserConstants.DEFAULT_THUMB_USER;
 import static cn.cxdproject.coder.common.constants.UserConstants.DEFAULT_USER;
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 
@@ -90,6 +91,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                         .avatar(user.getAvatar())
                         .role(user.getRole())
                         .enabled(user.getEnabled())
+                        .thumbAvatar(user.getThumbAvatar())
                         .build())
                 .build();
     }
@@ -118,7 +120,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .username(registerDTO.getUsername())
                 .password(passwordEncryptionService.encodeWithBCrypt(registerDTO.getPassword()))
                 .phoneNumber(registerDTO.getPhoneNumber())
-                .avatar(DEFAULT_USER) // 设置默认头像
+                .avatar(DEFAULT_USER)// 设置默认头像
+                .thumbAvatar(DEFAULT_THUMB_USER)
                 .role(USER) // 默认角色为普通用户
                 .enabled(true)
                 .build();
@@ -139,6 +142,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                         .avatar(user.getAvatar())
                         .role(user.getRole())
                         .enabled(user.getEnabled())
+                        .thumbAvatar(user.getThumbAvatar())
                         .build())
                 .build();
     }

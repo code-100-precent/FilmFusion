@@ -98,6 +98,9 @@ public class Tour extends BaseEntity implements Serializable {
     @TableField("location_id")
     private String locationId;
 
+    @TableField("drama_id")
+    private String dramaId;
+
     @Override
     public User clone() {
         try {

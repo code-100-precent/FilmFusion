@@ -6,8 +6,12 @@ import cn.cxdproject.coder.common.anno.PublicAccess;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.model.dto.CreateLocationDTO;
 import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
+import cn.cxdproject.coder.model.entity.Hotel;
 import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.CursorPageResponseVO;
+import cn.cxdproject.coder.model.vo.DramaVO;
+import cn.cxdproject.coder.model.vo.HotelVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.service.LocationService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 拍摄场地控制器
@@ -53,20 +58,30 @@ public class LocationController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public PageResponse<LocationVO> getLocationPage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
+    public CursorPageResponseVO<LocationVO> page(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword) {
-        Page<Location> page = new Page<>(current, size);
-        Page<LocationVO> locationPage = locationService.getLocationPage(page, keyword);
-        return PageResponse.of(
-                (int) locationPage.getCurrent(),
-                (int) locationPage.getSize(),
-                locationPage.getTotal(),
-                locationPage.getRecords()
-        );
-    }
 
+        Long lastId = null;
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            try {
+                lastId = Long.parseLong(cursor.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid cursor");
+            }
+        }
+
+        List<LocationVO> list = locationService.getLocationPage(lastId, size, keyword);
+
+        String nextCursor = null;
+        if (list.size() == size && !list.isEmpty()) {
+            // 升序：最后一条是最大的 id
+            nextCursor = String.valueOf(list.get(list.size() - 1).getId());
+        }
+
+        return new CursorPageResponseVO<>(list, nextCursor);
+    }
     // ==================== 普通用户接口 ====================
 
     // ==================== 管理员接口 ====================
@@ -83,6 +98,23 @@ public class LocationController {
         }
         LocationVO locationVO = locationService.createLocationByAdmin(currentUser.getId(), createDTO);
         return ApiResponse.success(locationVO);
+    }
+
+    @GetMapping("/admin/page")
+    public PageResponse<LocationVO> getLocationPageAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+
+        Page<Location> page = new Page<>(current, size);
+        Page<LocationVO> locationPage = locationService.getLocationPageAdmin(page, keyword);
+
+        return PageResponse.of(
+                (int) locationPage.getCurrent(),
+                (int) locationPage.getSize(),
+                locationPage.getTotal(),
+                locationPage.getRecords()
+        );
     }
 
     /**

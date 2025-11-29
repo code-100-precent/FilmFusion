@@ -53,26 +53,42 @@
             'latitude'
     </sql>
 
-    <select id="getPageLocationIds" resultType="java.lang.Long">
+    <select id="selectIds" resultType="long">
         SELECT id
         FROM fi_locations
         <where>
+            deleted = 0
+            <!-- 模糊搜索 -->
             <if test="keyword != null and keyword != ''">
-                location_description LIKE CONCAT('%', #{keyword}, '%')
+                AND (
+                name LIKE CONCAT('%', #{keyword}, '%')
+                OR location_description LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+
+            <if test="lastId != null">
+                AND id &lt; #{lastId}
             </if>
         </where>
-        ORDER BY created_at DESC
-        LIMIT #{offset}, #{size}
+        ORDER BY id DESC
+        LIMIT #{size}
     </select>
 
-    <select id="countByKeyword" resultType="long">
-        SELECT COUNT(*)
+    <select id="getAdminPage" resultType="cn.cxdproject.coder.model.entity.Location">
+        SELECT *
         FROM fi_locations
-        <where>
-            <if test="keyword != null and keyword != ''">
-                location_description LIKE CONCAT('%', #{keyword}, '%')
-            </if>
-        </where>
+        WHERE deleted = 0
+        AND id IN (
+        SELECT id
+        FROM fi_locations
+        WHERE deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND title LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+        )
+        ORDER BY created_at DESC
     </select>
 
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Location">

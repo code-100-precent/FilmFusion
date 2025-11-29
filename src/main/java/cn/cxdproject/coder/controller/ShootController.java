@@ -8,6 +8,8 @@ import cn.cxdproject.coder.model.dto.CreateShootDTO;
 import cn.cxdproject.coder.model.dto.UpdateShootDTO;
 import cn.cxdproject.coder.model.entity.Shoot;
 import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.CursorPageResponseVO;
+import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.service.ShootService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 协拍服务控制器
@@ -53,18 +56,29 @@ public class ShootController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public PageResponse<ShootVO> getShootPage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
+    public CursorPageResponseVO<ShootVO> page(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword) {
-        Page<Shoot> page = new Page<>(current, size);
-        Page<ShootVO> shootPage = shootService.getShootPage(page, keyword);
-        return PageResponse.of(
-                (int) shootPage.getCurrent(),
-                (int) shootPage.getSize(),
-                shootPage.getTotal(),
-                shootPage.getRecords()
-        );
+
+        Long lastId = null;
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            try {
+                lastId = Long.parseLong(cursor.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid cursor");
+            }
+        }
+
+        List<ShootVO> list = shootService.getShootPage(lastId, size, keyword);
+
+        String nextCursor = null;
+        if (list.size() == size && !list.isEmpty()) {
+            // 升序：最后一条是最大的 id
+            nextCursor = String.valueOf(list.get(list.size() - 1).getId());
+        }
+
+        return new CursorPageResponseVO<>(list, nextCursor);
     }
 
     // ==================== 管理员接口 ====================
@@ -80,6 +94,23 @@ public class ShootController {
         }
         ShootVO shootVO = shootService.createShootByAdmin(currentUser.getId(), createDTO);
         return ApiResponse.success(shootVO);
+    }
+
+    @GetMapping("/admin/page")
+    public PageResponse<ShootVO> getShootPageAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+
+        Page<Shoot> page = new Page<>(current, size);
+        Page<ShootVO> shootPage = shootService.getShootPageAdmin(page, keyword);
+
+        return PageResponse.of(
+                (int) shootPage.getCurrent(),
+                (int) shootPage.getSize(),
+                shootPage.getTotal(),
+                shootPage.getRecords()
+        );
     }
 
 

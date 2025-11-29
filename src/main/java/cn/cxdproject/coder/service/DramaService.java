@@ -29,7 +29,7 @@ public interface DramaService extends IService<Drama> {
     /**
      * 分页获取电视剧备案列表（按时间倒序，公开）
      */
-    Page<DramaVO> getDramaPage(Page<Drama> page, String keyword);
+    List<DramaVO> getDramaPage(Long lastId,int size, String keyword);
     
     /**
      * 管理员更新电视剧备案
@@ -48,5 +48,7 @@ public interface DramaService extends IService<Drama> {
 
     DramaVO getByIdFallback(Long id,Throwable e);
 
-    Page<DramaVO> getPageFallback(Page<Drama> page, String keyword, Throwable e);
+    List<DramaVO> getPageFallback(Long lastId, int size, String keyword, Throwable e);
+
+    Page<DramaVO> getDramaPageAdmin(Page<Drama> page, String keyword);
 }

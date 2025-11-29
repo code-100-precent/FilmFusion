@@ -11,6 +11,8 @@ import cn.cxdproject.coder.model.dto.UpdateTourDTO;
 import cn.cxdproject.coder.model.entity.Shoot;
 import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.CursorPageResponseVO;
+import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.model.vo.TourVO;
 import cn.cxdproject.coder.service.TourService;
@@ -38,7 +40,6 @@ public class TourController {
 
     /**
      * 新增 Tour 记录
-     * @param entity 实体对象
      * @return 是否新增成功
      */
     @GetMapping("/{id}")
@@ -53,18 +54,29 @@ public class TourController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public PageResponse<TourVO> getTourPage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
+    public CursorPageResponseVO<TourVO> page(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword) {
-        Page<Tour> page = new Page<>(current, size);
-        Page<TourVO> tourPage = tourService.getTourPage(page, keyword);
-        return PageResponse.of(
-                (int) tourPage.getCurrent(),
-                (int) tourPage.getSize(),
-                tourPage.getTotal(),
-                tourPage.getRecords()
-        );
+
+        Long lastId = null;
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            try {
+                lastId = Long.parseLong(cursor.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid cursor");
+            }
+        }
+
+        List<TourVO> list = tourService.getTourPage(lastId, size, keyword);
+
+        String nextCursor = null;
+        if (list.size() == size && !list.isEmpty()) {
+            // 升序：最后一条是最大的 id
+            nextCursor = String.valueOf(list.get(list.size() - 1).getId());
+        }
+
+        return new CursorPageResponseVO<>(list, nextCursor);
     }
 
     // ==================== 管理员接口 ====================
@@ -80,6 +92,23 @@ public class TourController {
         }
         TourVO tourVO = tourService.createTourByAdmin(createDTO);
         return ApiResponse.success(tourVO);
+    }
+
+    @GetMapping("/admin/page")
+    public PageResponse<TourVO> getTourPageAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+
+        Page<Tour> page = new Page<>(current, size);
+        Page<TourVO> tourPage = tourService.getTourPageAdmin(page, keyword);
+
+        return PageResponse.of(
+                (int) tourPage.getCurrent(),
+                (int) tourPage.getSize(),
+                tourPage.getTotal(),
+                tourPage.getRecords()
+        );
     }
 
 

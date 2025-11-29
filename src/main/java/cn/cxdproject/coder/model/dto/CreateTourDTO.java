@@ -73,4 +73,6 @@ public class CreateTourDTO {
 
     private String locationId;
 
+    private String dramaId;
+
 }

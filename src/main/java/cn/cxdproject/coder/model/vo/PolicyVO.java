@@ -2,6 +2,7 @@ package cn.cxdproject.coder.model.vo;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,7 +40,7 @@ public class PolicyVO {
     /**
      * 发布时间
      */
-
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime issueTime;
 
     /**
@@ -75,13 +76,13 @@ public class PolicyVO {
     /**
      * created_at
      */
-
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 
     /**
      * updated_at
      */
-
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
 

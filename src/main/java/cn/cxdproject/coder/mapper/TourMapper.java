@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.entity.Banner;
 import cn.cxdproject.coder.model.entity.Shoot;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import cn.cxdproject.coder.model.entity.Tour;
@@ -15,16 +16,15 @@ import java.util.List;
 @Mapper
 public interface TourMapper extends BaseMapper<Tour> {
 
-    List<Long> getPageTourIds(
+    List<Long> selectIds(@Param("lastId") Long lastId,
+                         @Param("size") int size,
+                         @Param("keyword") String keyword);
+
+    List<Tour> getAdminPage(
             @Param("keyword") String keyword,
             @Param("offset") long offset,
             @Param("size") long size
     );
-
-    /**
-     * 获取总数量（用于分页 total）
-     */
-    long countByKeyword(@Param("keyword") String keyword);
 
     List<Tour> selectLatest10();
 

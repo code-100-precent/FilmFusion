@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,6 +38,7 @@ public class LoginResponseDTO {
         private String avatar;
         private String role;
         private Boolean enabled;
+        private String thumbAvatar;
     }
 }
 

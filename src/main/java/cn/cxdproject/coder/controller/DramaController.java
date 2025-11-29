@@ -6,8 +6,11 @@ import cn.cxdproject.coder.common.anno.PublicAccess;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.model.dto.CreateDramaDTO;
 import cn.cxdproject.coder.model.dto.UpdateDramaDTO;
+import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.User;
+import cn.cxdproject.coder.model.vo.ArticleVO;
+import cn.cxdproject.coder.model.vo.CursorPageResponseVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.service.DramaService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 电视剧备案控制器
@@ -53,18 +57,29 @@ public class DramaController {
      */
     @GetMapping("/page")
     @PublicAccess
-    public PageResponse<DramaVO> getDramaPage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
+    public CursorPageResponseVO<DramaVO> page(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword) {
-        Page<Drama> page = new Page<>(current, size);
-        Page<DramaVO> dramaPage = dramaService.getDramaPage(page, keyword);
-        return PageResponse.of(
-                (int) dramaPage.getCurrent(),
-                (int) dramaPage.getSize(),
-                dramaPage.getTotal(),
-                dramaPage.getRecords()
-        );
+
+        Long lastId = null;
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            try {
+                lastId = Long.parseLong(cursor.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid cursor");
+            }
+        }
+
+        List<DramaVO> list = dramaService.getDramaPage(lastId, size, keyword);
+
+        String nextCursor = null;
+        if (list.size() == size && !list.isEmpty()) {
+            // 升序：最后一条是最大的 id
+            nextCursor = String.valueOf(list.get(list.size() - 1).getId());
+        }
+
+        return new CursorPageResponseVO<>(list, nextCursor);
     }
 
     // ==================== 普通用户接口 ====================
@@ -81,6 +96,23 @@ public class DramaController {
             @Valid @RequestBody UpdateDramaDTO updateDTO) {
         DramaVO dramaVO = dramaService.updateDramaByAdmin(id, updateDTO);
         return ApiResponse.success(dramaVO);
+    }
+
+    @GetMapping("/admin/page")
+    public PageResponse<DramaVO> getDramaPageAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+
+        Page<Drama> page = new Page<>(current, size);
+        Page<DramaVO> dramaPage = dramaService.getDramaPageAdmin(page, keyword);
+
+        return PageResponse.of(
+                (int) dramaPage.getCurrent(),
+                (int) dramaPage.getSize(),
+                dramaPage.getTotal(),
+                dramaPage.getRecords()
+        );
     }
 
     /**
