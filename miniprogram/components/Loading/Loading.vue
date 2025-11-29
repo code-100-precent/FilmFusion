@@ -1,9 +1,11 @@
 <template>
-	<view v-if="show" class="loading-mask">
-		<view class="loading-content">
-			<view class="loading-spinner"></view>
-			<text v-if="text" class="loading-text">{{ text }}</text>
+	<view class="loading-container">
+		<view class="dots-container">
+			<view class="dot dot1"></view>
+			<view class="dot dot2"></view>
+			<view class="dot dot3"></view>
 		</view>
+		<text class="loading-text">{{ text }}</text>
 	</view>
 </template>
 
@@ -11,59 +13,61 @@
 	export default {
 		name: 'Loading',
 		props: {
-			show: {
-				type: Boolean,
-				default: false
-			},
 			text: {
 				type: String,
-				default: '加载中...'
+				default: '正在加载中'
 			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
-	.loading-mask {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background-color: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 9999;
-	}
-	
-	.loading-content {
+	.loading-container {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		background-color: #fff;
-		border-radius: 20rpx;
-		padding: 60rpx 40rpx;
+		padding: 20rpx;
 	}
 	
-	.loading-spinner {
-		width: 60rpx;
-		height: 60rpx;
-		border: 6rpx solid #f3f3f3;
-		border-top: 6rpx solid #007aff;
+	.dots-container {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 16rpx;
+	}
+	
+	.dot {
+		width: 16rpx;
+		height: 16rpx;
 		border-radius: 50%;
-		animation: spin 1s linear infinite;
+		background-color: #6366f1; /* 使用主题色 */
+		margin: 0 6rpx;
+		animation: bounce 1.4s infinite ease-in-out both;
 	}
 	
-	@keyframes spin {
-		0% { transform: rotate(0deg); }
-		100% { transform: rotate(360deg); }
+	.dot1 {
+		animation-delay: -0.32s;
+	}
+	
+	.dot2 {
+		animation-delay: -0.16s;
+	}
+	
+	@keyframes bounce {
+		0%, 80%, 100% { 
+			transform: scale(0);
+			opacity: 0.5;
+		}
+		40% { 
+			transform: scale(1);
+			opacity: 1;
+		}
 	}
 	
 	.loading-text {
-		margin-top: 30rpx;
-		font-size: 28rpx;
-		color: #666;
+		font-size: 26rpx;
+		color: #9ca3af;
+		letter-spacing: 2rpx;
 	}
 </style>

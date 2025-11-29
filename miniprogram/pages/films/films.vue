@@ -88,7 +88,7 @@ export default {
     return {
       keyword: '',
       selectedCategory: '全部',
-      categories: ['全部', '电影', '电视剧', '网络剧', '微短剧', '纪录片'],
+      categories: ['全部', '自主创作', '外来剧组', '视听资讯', '视听四川', '电影', '电视剧'],
       films: [],
       loading: false,
       currentPage: 1,

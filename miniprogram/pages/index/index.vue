@@ -3,10 +3,8 @@
     <!-- 渐变背景层 -->
     <view class="gradient-bg"></view>
     
-    <!-- 自定义导航栏 -->
     <NavBar :show-back="false"></NavBar>
 
-    <!-- 内容区域 -->
     <scroll-view class="content" scroll-y @scrolltolower="onScrollToLower">
       <!-- 页面标题 -->
       <view class="page-title">
@@ -131,6 +129,7 @@
       <!-- 底部间距 -->
       <view class="bottom-spacer"></view>
     </scroll-view>
+  
 
     <!-- 底部导航栏 -->
     <TabBar :current="'index'"></TabBar>
@@ -144,6 +143,8 @@ import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
 // 使用真实后端API
 import { getArticlePage, getLocationPage } from '../../services/backend-api'
+// 使用加载状态管理Mixin
+import { loadingMixin } from '../../utils/index'
 
 export default {
   components: {
@@ -152,10 +153,9 @@ export default {
     Loading,
     Empty
   },
+  mixins: [loadingMixin],
   data() {
     return {
-      loading: false,
-      loadingTimer: null,
       banners: [
         {
           title: '雅安影视服务',
@@ -180,7 +180,7 @@ export default {
         { icon: 'phone', text: '协拍服务', desc: '专业团队支持', color: '#ec4899', bgColor: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', path: '/pages/services/services' },
         { icon: 'chatbubble', text: '影视资讯', desc: '掌握行业动态', color: '#06b6d4', bgColor: 'linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%)', path: '/pages/news/news' },
         { icon: 'map', text: '跟着影视游', desc: '探寻影视足迹', color: '#10b981', bgColor: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', path: '/pages/tourroute/tourroute' },
-        { icon: 'document', text: '视听政策', desc: '了解扶持政策', color: '#3b82f6', bgColor: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', path: '/pages/policy/policy' }
+        { icon: 'info', text: '视听政策', desc: '了解扶持政策', color: '#3b82f6', bgColor: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', path: '/pages/policy/policy' }
       ],
       articles: [],
       locations: []
@@ -189,54 +189,26 @@ export default {
   onLoad() {
     this.loadData()
   },
-  onUnload() {
-    // 组件销毁时清除定时器
-    if (this.loadingTimer) {
-      clearTimeout(this.loadingTimer)
-      this.loadingTimer = null
-    }
-  },
   methods: {
     async loadData() {
-      // 清除之前的定时器
-      if (this.loadingTimer) {
-        clearTimeout(this.loadingTimer)
-        this.loadingTimer = null
-      }
-      
-      this.loading = true
-      
-      // 设置2秒超时，最多显示2秒加载状态
-      this.loadingTimer = setTimeout(() => {
-        if (this.loading) {
-          this.loading = false
-          this.loadingTimer = null
-        }
-      }, 2000)
-      
       try {
-        const [articleRes, locationRes] = await Promise.all([
-          getArticlePage({ current: 1, size: 5 }),
-          getLocationPage({ current: 1, size: 5 })
-        ])
+        await this.withLoading(async () => {
+          const [articleRes, locationRes] = await Promise.all([
+            getArticlePage({ current: 1, size: 5 }),
+            getLocationPage({ current: 1, size: 5 })
+          ])
 
-        if (articleRes && articleRes.code === 200) {
-          // 后端返回格式: { code: 200, data: [...], pagination: {...} }
-          this.articles = Array.isArray(articleRes.data) ? articleRes.data : []
-        }
-        if (locationRes && locationRes.code === 200) {
-          // 后端返回格式: { code: 200, data: [...], pagination: {...} }
-          this.locations = Array.isArray(locationRes.data) ? locationRes.data : []
-        }
+          if (articleRes && articleRes.code === 200) {
+            // 后端返回格式: { code: 200, data: [...], pagination: {...} }
+            this.articles = Array.isArray(articleRes.data) ? articleRes.data : []
+          }
+          if (locationRes && locationRes.code === 200) {
+            // 后端返回格式: { code: 200, data: [...], pagination: {...} }
+            this.locations = Array.isArray(locationRes.data) ? locationRes.data : []
+          }
+        })
       } catch (error) {
         console.error('加载数据失败:', error)
-      } finally {
-        // 清除定时器
-        if (this.loadingTimer) {
-          clearTimeout(this.loadingTimer)
-          this.loadingTimer = null
-        }
-        this.loading = false
       }
     },
     handleFunctionClick(item) {
@@ -273,8 +245,8 @@ export default {
       })
     },
     getArticleCover(cover) {
-      // 如果 cover 为 null 或空，使用默认图片
-      return cover || 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png'
+      // 如果 cover 为 null、空或包含 example.com（测试URL），使用默认图片
+      return (!cover || cover.includes('example.com')) ? 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png' : cover
     },
     formatDate(dateStr) {
       if (!dateStr) return ''
@@ -323,13 +295,22 @@ export default {
 }
 
 .content {
-  height: calc(100vh - 132rpx - 100rpx);
-  padding: 0 24rpx;
-  padding-bottom: 32rpx;
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   width: 100%;
   position: relative;
   z-index: 1;
+  padding-top: 20rpx;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 /* 页面标题样式 */
@@ -728,16 +709,8 @@ export default {
   height: 40rpx;
 }
 
-/* 隐藏滚动条样式 */
-.content {
-  /* 隐藏滚动条 */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  /* 兼容火狐浏览器 */
-  scrollbar-width: none;
-  /* 兼容IE浏览器 */
-  -ms-overflow-style: none;
-}
+
 
 </style>
+
+
