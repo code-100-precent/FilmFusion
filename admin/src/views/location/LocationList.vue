@@ -34,6 +34,7 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
+        :scroll-x="2400"
       />
     </n-card>
     
@@ -87,6 +88,7 @@ import {
   NTag,
   NPopconfirm,
   NModal,
+  NImage,
   useMessage
 } from 'naive-ui'
 import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById } from '@/api'
@@ -149,34 +151,61 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '场地名称', key: 'name', ellipsis: { tooltip: true } },
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '场地名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
   {
     title: '类型',
     key: 'type',
     width: 120,
     render: (row) => {
       const typeMap = {
-        'NATURAL': '自然景观',
-        'HISTORICAL': '历史建筑',
-        'MODERN': '现代建筑',
-        'OTHER': '其他'
+        '自然风光': '自然风光',
+        '历史建筑': '历史建筑',
+        '现代建筑': '现代建筑',
+        '文化场所': '文化场所',
+        '商业场所': '商业场所',
+        '古镇古村': '古镇古村',
+        '其他': '其他'
       }
       return typeMap[row.type] || row.type
     }
   },
+  { title: '场地描述', key: 'locationDescription', width: 250, ellipsis: { tooltip: true } },
+  { title: '地址', key: 'address', width: 200, ellipsis: { tooltip: true } },
   { title: '价格', key: 'price', width: 120, render: (row) => `¥${row.price || 0}` },
+  { title: '场地联系人', key: 'locationPrincipalName', width: 120 },
+  { title: '场地电话', key: 'locationPrincipalPhone', width: 130 },
+  { title: '政府联系人', key: 'govPrincipalName', width: 120 },
+  { title: '政府电话', key: 'govPrincipalPhone', width: 130 },
+  { title: '经度', key: 'longitude', width: 100 },
+  { title: '纬度', key: 'latitude', width: 100 },
   {
     title: '状态',
     key: 'status',
     width: 100,
     render: (row) => {
-      const statusMap = {
-        1: { label: '可用', type: 'success' },
-        0: { label: '不可用', type: 'error' }
-      }
-      const statusInfo = statusMap[row.status] || { label: row.status, type: 'default' }
-      return h(NTag, { type: statusInfo.type, size: 'small' }, { default: () => statusInfo.label })
+      const isActive = row.status === true || row.status === 1
+      return h(NTag, { 
+        type: isActive ? 'success' : 'error', 
+        size: 'small' 
+      }, { 
+        default: () => isActive ? '可用' : '不可用' 
+      })
+    }
+  },
+  { 
+    title: '封面图', 
+    key: 'cover', 
+    width: 100,
+    render: (row) => {
+      if (!row.cover) return '-'
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.cover,
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
     }
   },
   {
@@ -193,7 +222,7 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 150,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [

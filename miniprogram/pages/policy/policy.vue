@@ -3,13 +3,7 @@
     <!-- 渐变背景层 -->
     <view class="gradient-bg"></view>
     
-    <NavBar title="视听政策" :show-back="true">
-      <template v-slot:right>
-          <view style="padding: 10rpx;">
-            <uni-icons type="info" size="24" color="#4f46e5" />
-          </view>
-        </template>
-    </NavBar>
+    <NavBar :show-back="true"></NavBar>
 
     <view class="content">
       <!-- 页面标题 -->
@@ -102,15 +96,13 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import uniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 import { getPolicyPage } from '@/services/backend-api'
 
 export default {
   components: {
     NavBar,
     Loading,
-    Empty,
-    uniIcons
+    Empty
   },
   data() {
     return {

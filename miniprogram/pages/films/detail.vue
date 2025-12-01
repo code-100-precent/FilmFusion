@@ -1,6 +1,6 @@
 <template>
   <view class="film-detail-page">
-    <NavBar :show-back="true" title="作品详情"></NavBar>
+    <NavBar :show-back="true"></NavBar>
     
     <view v-if="film" class="content">
       <!-- Poster & Header -->

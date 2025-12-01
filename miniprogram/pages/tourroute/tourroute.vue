@@ -7,11 +7,6 @@
 
     <!-- 内容区域 -->
     <scroll-view class="content" scroll-y @scrolltolower="loadMore" :refresher-enabled="true" :refresher-triggered="refreshing" @refresherrefresh="handleRefresh">
-      <!-- 页面标题 -->
-      <view class="page-title">
-        <text class="title-text">跟着影视游</text>
-      </view>
-
       <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
@@ -86,9 +81,7 @@ export default {
       loading: false,
       refreshing: false,
       hasMore: true,
-      currentPage: 1,
-      pageSize: 10,
-      totalPages: 0,
+      nextCursor: null, // 游标分页
       defaultCover: 'https://via.placeholder.com/400x200?text=Tour+Route'
     }
   },
@@ -96,19 +89,26 @@ export default {
     this.loadData()
   },
   methods: {
-    async loadData() {
+    async loadData(reset = false) {
       if (this.loading) return
       
+      if (reset) {
+        this.routes = []
+        this.nextCursor = null
+        this.hasMore = true
+      }
+
       this.loading = true
       try {
         const res = await getTourPage({
-          current: this.currentPage,
-          size: this.pageSize,
+          cursor: reset ? null : this.nextCursor,
+          size: 10,
           keyword: this.keyword || undefined
         })
 
-        if (res.code === 200 && res.data) {
-          const newRoutes = res.data.map(item => ({
+        // 处理游标分页响应
+        if (res && res.records) {
+          const newRoutes = res.records.map(item => ({
             id: item.id,
             name: item.name,
             description: item.description,
@@ -121,19 +121,14 @@ export default {
             image: item.image
           }))
 
-          if (this.currentPage === 1) {
+          if (reset) {
             this.routes = newRoutes
           } else {
             this.routes = [...this.routes, ...newRoutes]
           }
 
-          // Update pagination info
-          if (res.pagination) {
-            this.totalPages = res.pagination.totalPages
-            this.hasMore = this.currentPage < this.totalPages
-          } else {
-            this.hasMore = newRoutes.length >= this.pageSize
-          }
+          this.nextCursor = res.nextCursor
+          this.hasMore = res.hasMore || false
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -151,20 +146,15 @@ export default {
       }
     },
     handleSearch() {
-      this.currentPage = 1
-      this.routes = []
-      this.loadData()
+      this.loadData(true)
     },
     async handleRefresh() {
       this.refreshing = true
-      this.currentPage = 1
-      this.routes = []
-      await this.loadData()
+      await this.loadData(true)
       this.refreshing = false
     },
     loadMore() {
       if (!this.hasMore || this.loading) return
-      this.currentPage++
       this.loadData()
     },
     goToDetail(id) {

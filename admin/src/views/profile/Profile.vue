@@ -1,312 +1,146 @@
 <template>
   <div class="profile-page">
-    <n-grid :cols="24" :x-gap="24" :y-gap="24" responsive="screen" :s-cols="1">
-      <!-- 个人信息卡片 -->
-      <n-gi :span="24" class="profile-card-wrapper">
-        <n-card class="profile-card" :bordered="false">
-          <template #header>
-            <div class="card-header">
-              <div class="header-title">
-                <Icon icon="mdi:account-circle" :width="24" style="margin-right: 8px; color: #18a058;" />
-                <span>个人信息</span>
-              </div>
-              <div class="header-actions">
-                <n-button
-                  v-if="!isEditing"
-                  type="primary"
-                  @click="handleEdit"
-                  size="medium"
-                >
-                  <template #icon>
-                    <Icon icon="mdi:pencil-outline" />
-                  </template>
-                  编辑信息
-                </n-button>
-                <div v-else class="edit-actions">
-                  <n-button @click="handleCancel" size="medium">取消</n-button>
-                  <n-button type="primary" @click="handleSave" :loading="loading" size="medium">
-                    <template #icon>
-                      <Icon icon="mdi:check" />
-                    </template>
-                    保存
-                  </n-button>
-                </div>
-              </div>
-            </div>
-          </template>
-          
-          <div class="profile-content">
-            <!-- 头像和基本信息 -->
-            <div class="avatar-section">
-              <div class="avatar-wrapper">
-                <n-upload
-                  :file-list="avatarFileList"
-                  :max="1"
-                  :show-file-list="false"
-                  :custom-request="handleAvatarUpload"
-                  accept="image/*"
-                  :disabled="!isEditing"
-                >
-                  <template #trigger>
-                    <div class="avatar-container">
-                      <n-avatar
-                        :size="100"
-                        :src="formData.avatar"
-                        class="avatar"
-                        :fallback-src="null"
-                      >
-                        <Icon icon="mdi:account" :width="50" />
-                      </n-avatar>
-                      <div v-if="isEditing" class="avatar-overlay">
-                        <Icon icon="mdi:camera" :width="24" />
-                        <span>更换头像</span>
-                      </div>
-                    </div>
-                  </template>
-                </n-upload>
-              </div>
-              <div class="user-info">
-                <h2 class="username">{{ formData.username || '管理员' }}</h2>
-                <div class="user-tags">
-                  <n-tag :type="formData.role === 'ADMIN' ? 'success' : 'default'" size="medium" round>
-                    <template #icon>
-                      <Icon icon="mdi:shield-account" />
-                    </template>
-                    {{ formData.role === 'ADMIN' ? '管理员' : '普通用户' }}
-                  </n-tag>
-                  <n-tag :type="formData.enabled ? 'success' : 'error'" size="medium" round>
-                    <template #icon>
-                      <Icon :icon="formData.enabled ? 'mdi:check-circle' : 'mdi:close-circle'" />
-                    </template>
-                    {{ formData.enabled ? '已启用' : '已禁用' }}
-                  </n-tag>
-                </div>
-                <div class="user-meta">
-                  <div class="meta-item">
-                    <Icon icon="mdi:phone" :width="16" />
-                    <span>{{ formData.phoneNumber || '未设置' }}</span>
-                  </div>
-                  <div class="meta-item" v-if="formData.id">
-                    <Icon icon="mdi:identifier" :width="16" />
-                    <span>ID: {{ formData.id }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 编辑表单 -->
-            <n-divider v-if="!isMobile" />
-            <n-form
-              ref="formRef"
-              :model="formData"
-              :rules="formRules"
-              :label-placement="isMobile ? 'top' : 'left'"
-              :label-width="isMobile ? 'auto' : '120'"
-              :disabled="!isEditing"
-              class="profile-form"
-            >
-              <n-grid :cols="2" :x-gap="24" responsive="screen" :s-cols="1">
-                <n-gi>
-                  <n-form-item label="用户名" path="username">
-                    <n-input 
-                      v-model:value="formData.username" 
-                      placeholder="请输入用户名"
-                      :disabled="!isEditing"
-                      clearable
-                    >
-                      <template #prefix>
-                        <Icon icon="mdi:account" />
-                      </template>
-                    </n-input>
-                  </n-form-item>
-                </n-gi>
-                <n-gi>
-                  <n-form-item label="手机号">
-                    <n-input 
-                      v-model:value="formData.phoneNumber" 
-                      disabled 
-                      placeholder="手机号不可修改"
-                    >
-                      <template #prefix>
-                        <Icon icon="mdi:phone" />
-                      </template>
-                    </n-input>
-                  </n-form-item>
-                </n-gi>
-              </n-grid>
-            </n-form>
-          </div>
-        </n-card>
-      </n-gi>
+    <n-card class="profile-card">
+      <div class="profile-header">
+        <h2>个人中心</h2>
+        <p>管理您的个人信息和账户设置</p>
+      </div>
       
-      <!-- 修改密码卡片 -->
-      <n-gi :span="12" :s-span="24" class="password-card-wrapper">
-        <n-card class="password-card" :bordered="false">
-          <template #header>
-            <div class="card-header">
-              <div class="header-title">
-                <Icon icon="mdi:lock-reset" :width="24" style="margin-right: 8px; color: #2080f0;" />
-                <span>修改密码</span>
-              </div>
+      <div class="profile-content">
+        <!-- 头像区域 -->
+        <div class="avatar-section">
+          <div class="avatar-container">
+            <n-avatar 
+              :size="100" 
+              :src="userInfo.avatar" 
+              round
+              class="avatar"
+            >
+              <Icon icon="mdi:account" :width="40" />
+            </n-avatar>
+            <div class="avatar-actions">
+              <n-button @click="handleUploadAvatar" type="primary" size="small">
+                <template #icon>
+                  <Icon icon="mdi:camera" />
+                </template>
+                更换头像
+              </n-button>
             </div>
-          </template>
-          <n-form
-            ref="passwordFormRef"
-            :model="passwordForm"
-            :rules="passwordRules"
-            :label-placement="isMobile ? 'top' : 'left'"
-            :label-width="isMobile ? 'auto' : '100'"
-            class="password-form"
+          </div>
+          <input 
+            ref="avatarInput" 
+            type="file" 
+            accept="image/*" 
+            style="display: none" 
+            @change="handleAvatarChange"
+          />
+        </div>
+        
+        <!-- 基本信息表单 -->
+        <div class="form-section">
+          <h3>基本信息</h3>
+          <n-form 
+            ref="formRef" 
+            :model="userForm" 
+            :rules="formRules" 
+            label-placement="left" 
+            label-width="100"
           >
-            <n-form-item label="当前密码" path="oldPassword">
-              <n-input
-                v-model:value="passwordForm.oldPassword"
-                type="password"
-                placeholder="请输入当前密码"
-                show-password-on="click"
-                clearable
-              >
-                <template #prefix>
-                  <Icon icon="mdi:lock" />
-                </template>
-              </n-input>
+            <n-form-item label="用户名" path="username">
+              <n-input v-model:value="userForm.username" disabled />
             </n-form-item>
-            <n-form-item label="新密码" path="newPassword">
-              <n-input
-                v-model:value="passwordForm.newPassword"
-                type="password"
-                placeholder="请输入新密码（6-20个字符）"
-                show-password-on="click"
-                clearable
-              >
-                <template #prefix>
-                  <Icon icon="mdi:lock-outline" />
-                </template>
-              </n-input>
+            <n-form-item label="手机号" path="phoneNumber">
+              <n-input v-model:value="userForm.phoneNumber" disabled />
             </n-form-item>
-            <n-form-item label="确认密码" path="confirmPassword">
-              <n-input
-                v-model:value="passwordForm.confirmPassword"
-                type="password"
-                placeholder="请再次输入新密码"
-                show-password-on="click"
-                clearable
-              >
-                <template #prefix>
-                  <Icon icon="mdi:lock-check" />
-                </template>
-              </n-input>
-            </n-form-item>
-            <n-form-item>
-              <div class="form-actions">
-                <n-button type="primary" @click="handleChangePassword" :loading="loading" block>
-                  <template #icon>
-                    <Icon icon="mdi:check-circle" />
-                  </template>
-                  修改密码
-                </n-button>
-                <n-button @click="handleResetPassword" block style="margin-top: 12px">
-                  <template #icon>
-                    <Icon icon="mdi:refresh" />
-                  </template>
-                  重置
-                </n-button>
-              </div>
+            <n-form-item label="角色">
+              <n-tag :type="userInfo.role === 'ADMIN' ? 'success' : 'default'">
+                {{ userInfo.role === 'ADMIN' ? '管理员' : '普通用户' }}
+              </n-tag>
             </n-form-item>
           </n-form>
-        </n-card>
-      </n-gi>
-      
-      <!-- 账户信息卡片 -->
-      <n-gi :span="12" :s-span="24" class="info-card-wrapper">
-        <n-card class="info-card" :bordered="false">
-          <template #header>
-            <div class="card-header">
-              <div class="header-title">
-                <Icon icon="mdi:information" :width="24" style="margin-right: 8px; color: #f0a020;" />
-                <span>账户信息</span>
-              </div>
-            </div>
-          </template>
-          <n-descriptions :column="1" bordered size="medium" class="info-descriptions">
-            <n-descriptions-item label="用户ID">
-              <div class="info-value">
-                <Icon icon="mdi:identifier" :width="16" style="margin-right: 8px;" />
-                {{ formData.id || '-' }}
-              </div>
-            </n-descriptions-item>
-            <n-descriptions-item label="角色">
-              <n-tag :type="formData.role === 'ADMIN' ? 'success' : 'default'" size="medium" round>
-                <template #icon>
-                  <Icon icon="mdi:shield-account" />
-                </template>
-                {{ formData.role === 'ADMIN' ? '管理员' : '普通用户' }}
-              </n-tag>
-            </n-descriptions-item>
-            <n-descriptions-item label="账户状态">
-              <n-tag :type="formData.enabled ? 'success' : 'error'" size="medium" round>
-                <template #icon>
-                  <Icon :icon="formData.enabled ? 'mdi:check-circle' : 'mdi:close-circle'" />
-                </template>
-                {{ formData.enabled ? '已启用' : '已禁用' }}
-              </n-tag>
-            </n-descriptions-item>
-            <n-descriptions-item label="手机号">
-              <div class="info-value">
-                <Icon icon="mdi:phone" :width="16" style="margin-right: 8px;" />
-                {{ formData.phoneNumber || '未设置' }}
-              </div>
-            </n-descriptions-item>
-          </n-descriptions>
-        </n-card>
-      </n-gi>
-    </n-grid>
+        </div>
+        
+        <!-- 修改密码 -->
+        <div class="form-section">
+          <h3>修改密码</h3>
+          <n-form 
+            ref="passwordFormRef" 
+            :model="passwordForm" 
+            :rules="passwordRules" 
+            label-placement="left" 
+            label-width="100"
+          >
+            <n-form-item label="当前密码" path="oldPassword">
+              <n-input 
+                v-model:value="passwordForm.oldPassword" 
+                type="password" 
+                placeholder="请输入当前密码"
+                show-password-on="click"
+              />
+            </n-form-item>
+            <n-form-item label="新密码" path="newPassword">
+              <n-input 
+                v-model:value="passwordForm.newPassword" 
+                type="password" 
+                placeholder="请输入新密码"
+                show-password-on="click"
+              />
+            </n-form-item>
+            <n-form-item label="确认密码" path="confirmPassword">
+              <n-input 
+                v-model:value="passwordForm.confirmPassword" 
+                type="password" 
+                placeholder="请再次输入新密码"
+                show-password-on="click"
+              />
+            </n-form-item>
+            <n-form-item>
+              <n-button 
+                type="primary" 
+                @click="handleChangePassword" 
+                :loading="passwordLoading"
+                block
+              >
+                修改密码
+              </n-button>
+            </n-form-item>
+          </n-form>
+        </div>
+      </div>
+    </n-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { useUserStore } from '@/store/user'
+import { ref, reactive, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   NCard,
-  NGrid,
-  NGi,
-  NButton,
-  NUpload,
-  NAvatar,
-  NTag,
   NForm,
   NFormItem,
   NInput,
-  NDescriptions,
-  NDescriptionsItem,
-  NDivider,
+  NButton,
+  NAvatar,
+  NTag,
   useMessage
 } from 'naive-ui'
+import { useUserStore } from '@/store/user'
 import { getAdminInfo, updateAdminInfo, changePassword, uploadAvatar } from '@/api'
 
 const userStore = useUserStore()
 const message = useMessage()
+
+const userInfo = ref({})
+const loading = ref(false)
+const passwordLoading = ref(false)
 const formRef = ref(null)
 const passwordFormRef = ref(null)
-const isEditing = ref(false)
-const loading = ref(false)
-const avatarFileList = ref([])
-const isMobile = ref(false)
+const avatarInput = ref(null)
 
-// 检测移动端
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768
-}
-
-const formData = reactive({
-  id: null,
+const userForm = reactive({
   username: '',
   phoneNumber: '',
-  avatar: '',
-  role: '',
-  enabled: true
+  avatar: ''
 })
 
 const passwordForm = reactive({
@@ -317,8 +151,11 @@ const passwordForm = reactive({
 
 const formRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 32, message: '用户名长度在 2 到 32 个字符', trigger: 'blur' }
+    { required: true, message: '用户名不能为空', trigger: 'blur' }
+  ],
+  phoneNumber: [
+    { required: true, message: '手机号不能为空', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ]
 }
 
@@ -334,110 +171,73 @@ const passwordRules = {
     { required: true, message: '请确认新密码', trigger: 'blur' },
     {
       validator: (rule, value) => {
-        if (value !== passwordForm.newPassword) {
-          return new Error('两次输入密码不一致')
-        }
-        return true
+        return value === passwordForm.newPassword
       },
-      trigger: 'blur'
+      message: '两次输入的密码不一致',
+      trigger: ['blur', 'input']
     }
   ]
 }
 
-onMounted(async () => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-  await loadAdminInfo()
+onMounted(() => {
+  loadUserInfo()
 })
 
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
-})
-
-const loadAdminInfo = async () => {
+const loadUserInfo = async () => {
   try {
     loading.value = true
     const res = await getAdminInfo()
-    
     if (res.code === 200 && res.data) {
-      Object.assign(formData, {
-        id: res.data.id,
+      userInfo.value = res.data
+      Object.assign(userForm, {
         username: res.data.username || '',
         phoneNumber: res.data.phoneNumber || '',
-        avatar: res.data.avatar || '',
-        role: res.data.role || '',
-        enabled: res.data.enabled !== false
+        avatar: res.data.avatar || ''
       })
-      userStore.setUserInfo(res.data)
     }
   } catch (error) {
-    console.error('加载用户信息失败:', error)
+    console.error('获取用户信息失败:', error)
+    message.error('获取用户信息失败')
   } finally {
     loading.value = false
   }
 }
 
-const handleEdit = () => {
-  isEditing.value = true
+const handleUploadAvatar = () => {
+  avatarInput.value?.click()
 }
 
-const handleCancel = () => {
-  isEditing.value = false
-  // 恢复原始数据
-  if (userStore.userInfo) {
-    Object.assign(formData, {
-      id: userStore.userInfo.id,
-      username: userStore.userInfo.username || '',
-      phoneNumber: userStore.userInfo.phoneNumber || '',
-      avatar: userStore.userInfo.avatar || '',
-      role: userStore.userInfo.role || '',
-      enabled: userStore.userInfo.enabled !== false
-    })
-  }
-}
-
-const handleSave = async () => {
-  if (!formRef.value) return
+const handleAvatarChange = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
   
-  try {
-    await formRef.value.validate()
-  } catch (error) {
+  // 验证文件类型
+  if (!file.type.startsWith('image/')) {
+    message.error('请选择图片文件')
+    return
+  }
+  
+  // 验证文件大小（5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    message.error('图片大小不能超过5MB')
     return
   }
   
   try {
-    loading.value = true
-    const res = await updateAdminInfo({
-      username: formData.username
-    })
-    
-    if (res.code === 200) {
-      message.success('保存成功')
-      await loadAdminInfo()
-      isEditing.value = false
-    }
-  } catch (error) {
-    console.error('保存失败:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleAvatarUpload = async ({ file, onFinish, onError }) => {
-  try {
-    const res = await uploadAvatar(file.file)
+    const res = await uploadAvatar(file)
     if (res.code === 200 && res.data) {
-      formData.avatar = res.data
-      message.success('头像上传成功')
-      onFinish()
-      await loadAdminInfo()
-    } else {
-      onError()
+      userInfo.value.avatar = res.data.url || res.data.path
+      userForm.avatar = res.data.url || res.data.path
+      userStore.setUserInfo(userInfo.value)
+      message.success('头像更新成功')
     }
   } catch (error) {
-    console.error('头像上传失败:', error)
-    onError()
+    console.error('上传头像失败:', error)
+    message.error('上传头像失败')
   }
+  
+  // 清空文件选择
+  event.target.value = ''
 }
 
 const handleChangePassword = async () => {
@@ -450,439 +250,146 @@ const handleChangePassword = async () => {
   }
   
   try {
-    loading.value = true
+    passwordLoading.value = true
     const res = await changePassword(passwordForm.oldPassword, passwordForm.newPassword)
     
     if (res.code === 200) {
       message.success('密码修改成功')
-      handleResetPassword()
+      // 重置密码表单
+      Object.assign(passwordForm, {
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+      passwordFormRef.value?.restoreValidation()
     }
   } catch (error) {
-    console.error('密码修改失败:', error)
+    console.error('修改密码失败:', error)
   } finally {
-    loading.value = false
-  }
-}
-
-const handleResetPassword = () => {
-  passwordForm.oldPassword = ''
-  passwordForm.newPassword = ''
-  passwordForm.confirmPassword = ''
-  if (passwordFormRef.value) {
-    passwordFormRef.value.restoreValidation()
+    passwordLoading.value = false
   }
 }
 </script>
 
 <style scoped lang="scss">
 .profile-page {
+  max-width: 800px;
+  margin: 0 auto;
   animation: fadeIn 0.3s ease;
-  padding: 0;
-  min-height: calc(100vh - 64px);
 }
 
-.profile-card,
-.password-card,
-.info-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.3s ease;
-  
-  &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+.profile-card {
+  :deep(.n-card__content) {
+    padding: 24px;
   }
 }
 
-.password-card,
-.info-card {
-  height: 100%;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.profile-header {
+  text-align: center;
+  margin-bottom: 32px;
   
-  .header-title {
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    font-weight: 600;
+  h2 {
+    margin: 0 0 8px 0;
     color: #1f2937;
+    font-size: 24px;
+    font-weight: 600;
   }
   
-  .header-actions {
-    display: flex;
-    gap: 12px;
+  p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
   }
-}
-
-.edit-actions {
-  display: flex;
-  gap: 12px;
 }
 
 .profile-content {
-  .avatar-section {
-    display: flex;
-    align-items: flex-start;
-    gap: 32px;
-    margin-bottom: 24px;
-    padding: 24px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
-    border-radius: 12px;
-    
-    .avatar-wrapper {
-      flex-shrink: 0;
-    }
-    
-    .avatar-container {
-      position: relative;
-      cursor: pointer;
-      
-      .avatar {
-        border: 4px solid #ffffff;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transition: all 0.3s ease;
-        
-        &:hover {
-          transform: scale(1.05);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-        }
-      }
-      
-      .avatar-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: rgba(0, 0, 0, 0.6);
-        color: white;
-        padding: 8px;
-        border-radius: 0 0 50px 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        font-size: 12px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        
-        span {
-          font-size: 12px;
-        }
-      }
-      
-      &:hover .avatar-overlay {
-        opacity: 1;
-      }
-    }
-    
-    .user-info {
-      flex: 1;
-      
-      .username {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 16px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      
-      .user-tags {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-      }
-      
-      .user-meta {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        
-        .meta-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: #6b7280;
-          font-size: 14px;
-          
-          span {
-            color: #374151;
-          }
-        }
-      }
-    }
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
   
-  .profile-form {
-    padding: 24px;
+  .avatar-container {
+    position: relative;
     
-    :deep(.n-form-item) {
-      margin-bottom: 20px;
+    .avatar {
+      border: 3px solid #f3f4f6;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .avatar-actions {
+      position: absolute;
+      bottom: -8px;
+      right: -8px;
     }
   }
 }
 
-.password-form {
-  padding: 16px 0;
-  
-  :deep(.n-form-item) {
-    margin-bottom: 20px;
+.form-section {
+  h3 {
+    margin: 0 0 20px 0;
+    color: #1f2937;
+    font-size: 18px;
+    font-weight: 600;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 8px;
   }
 }
 
-.form-actions {
-  width: 100%;
-}
-
-.info-descriptions {
-  :deep(.n-descriptions-item__label) {
-    font-weight: 500;
-    color: #374151;
-  }
-  
-  .info-value {
-    display: flex;
-    align-items: center;
-    color: #6b7280;
-  }
-}
-
-// 响应式设计
+// 移动端适配
 @media (max-width: 768px) {
   .profile-page {
-    min-height: calc(100vh - 56px);
+    margin: 0 16px;
+  }
+  
+  .profile-card {
+    :deep(.n-card__content) {
+      padding: 16px;
+    }
+  }
+  
+  .profile-header {
+    margin-bottom: 24px;
+    
+    h2 {
+      font-size: 20px;
+    }
   }
   
   .profile-content {
-    .avatar-section {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding: 20px 16px;
-      gap: 20px;
-      margin-bottom: 20px;
-      
-      .avatar-wrapper {
-        .avatar-container {
-          .avatar {
-            width: 80px !important;
-            height: 80px !important;
-          }
-          
-          .avatar-overlay {
-            font-size: 11px;
-            padding: 6px;
-            
-            span {
-              font-size: 11px;
-            }
-          }
-        }
-      }
-      
-      .user-info {
-        width: 100%;
-        
-        .username {
-          font-size: 22px;
-          margin-bottom: 12px;
-        }
-        
-        .user-tags {
-          justify-content: center;
-          margin-bottom: 12px;
-          gap: 8px;
-          
-          :deep(.n-tag) {
-            font-size: 12px;
-            padding: 4px 10px;
-          }
-        }
-        
-        .user-meta {
-          align-items: center;
-          gap: 8px;
-          
-          .meta-item {
-            font-size: 13px;
-          }
-        }
-      }
-    }
-    
-    .profile-form {
-      padding: 0 16px 16px;
-      
-      :deep(.n-form-item) {
-        margin-bottom: 18px;
-        
-        .n-form-item-label {
-          font-weight: 500;
-          margin-bottom: 8px;
-          font-size: 14px;
-        }
-        
-        .n-input {
-          font-size: 14px;
-        }
-      }
-    }
+    gap: 24px;
   }
   
-  .card-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .avatar-section {
     gap: 12px;
     
-    .header-title {
-      font-size: 15px;
+    .avatar-container {
+      .avatar {
+        width: 80px !important;
+        height: 80px !important;
+      }
+    }
+  }
+  
+  .form-section {
+    h3 {
+      font-size: 16px;
+      margin-bottom: 16px;
     }
     
-    .header-actions {
-      width: 100%;
-      
-      button {
-        flex: 1;
-        font-size: 14px;
-      }
-      
-      .edit-actions {
-        width: 100%;
-        display: flex;
-        gap: 8px;
+    :deep(.n-form) {
+      .n-form-item {
+        margin-bottom: 16px;
         
-        button {
-          flex: 1;
+        .n-form-item-label {
+          width: 80px !important;
         }
       }
-    }
-  }
-  
-  .password-form {
-    padding: 16px 0;
-    
-    :deep(.n-form-item) {
-      margin-bottom: 18px;
-      
-      .n-form-item-label {
-        font-weight: 500;
-        margin-bottom: 8px;
-        font-size: 14px;
-      }
-      
-      .n-input {
-        width: 100%;
-        font-size: 14px;
-      }
-    }
-    
-    .form-actions {
-      margin-top: 8px;
-      
-      .n-button {
-        font-size: 14px;
-        height: 40px;
-      }
-    }
-  }
-  
-  .info-descriptions {
-    :deep(.n-descriptions-item) {
-      padding: 12px;
-      
-      .n-descriptions-item__label {
-        font-size: 14px;
-        width: 100px;
-      }
-      
-      .n-descriptions-item__content {
-        font-size: 14px;
-      }
-    }
-  }
-  
-  // 网格布局优化 - 移动端强制单列
-  :deep(.n-grid) {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-  
-  // 卡片间距优化 - 移动端强制垂直排列
-  :deep(.n-gi) {
-    width: 100% !important;
-    max-width: 100% !important;
-    flex: 0 0 auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  
-  // 确保所有卡片在移动端垂直排列
-  .profile-card-wrapper {
-    order: 1;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  
-  .password-card-wrapper {
-    order: 2;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  
-  .info-card-wrapper {
-    order: 3;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  
-  // 卡片内容优化
-  :deep(.n-card__content) {
-    padding: 20px 16px;
-  }
-  
-  .password-card,
-  .info-card {
-    width: 100%;
-    margin-bottom: 0;
-  }
-}
-
-// 小屏幕优化
-@media (max-width: 480px) {
-  .profile-content {
-    .avatar-section {
-      padding: 16px 12px;
-      
-      .avatar-wrapper {
-        .avatar-container {
-          .avatar {
-            width: 70px !important;
-            height: 70px !important;
-          }
-        }
-      }
-      
-      .user-info {
-        .username {
-          font-size: 20px;
-        }
-      }
-    }
-    
-    .profile-form {
-      padding: 0 12px;
-    }
-  }
-  
-  .card-header {
-    .header-title {
-      font-size: 14px;
     }
   }
 }

@@ -1,6 +1,6 @@
 <template>
   <view class="article-detail-page">
-    <NavBar title="资讯详情" :show-back="true"></NavBar>
+    <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y v-if="!loading && article">
       <!-- 文章标题 -->

@@ -37,6 +37,7 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
+        :scroll-x="1500"
       />
     </n-card>
     
@@ -56,6 +57,18 @@
         </n-form-item>
         <n-form-item label="政策内容" path="content">
           <n-input v-model:value="policyForm.content" type="textarea" :rows="8" placeholder="请输入政策内容" />
+        </n-form-item>
+        <n-form-item label="封面图片" path="cover">
+          <n-input v-model:value="policyForm.cover" placeholder="请输入封面图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略封面" path="thumbCover">
+          <n-input v-model:value="policyForm.thumbCover" placeholder="请输入缩略封面URL" />
+        </n-form-item>
+        <n-form-item label="详情图片" path="image">
+          <n-input v-model:value="policyForm.image" placeholder="请输入详情图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略详情图" path="thumbImage">
+          <n-input v-model:value="policyForm.thumbImage" placeholder="请输入缩略详情图URL" />
         </n-form-item>
         <n-form-item label="状态" path="status">
           <n-select v-model:value="policyForm.status" :options="statusOptions" />
@@ -83,7 +96,9 @@ import {
   NModal,
   NSelect,
   NDatePicker,
-  useMessage
+  useMessage,
+  NImage,
+  NTag
 } from 'naive-ui'
 import { getPolicyPage, addPolicy, updatePolicy, deletePolicy, getPolicyById } from '@/api'
 import dayjs from 'dayjs'
@@ -109,6 +124,10 @@ const policyForm = reactive({
   issueUnit: '',
   issueDate: null,
   content: '',
+  cover: '',
+  image: '',
+  thumbCover: '',
+  thumbImage: '',
   status: 1
 })
 
@@ -138,10 +157,26 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '政策标题', key: 'title', ellipsis: { tooltip: true } },
-  { title: '政策类型', key: 'type', width: 100 },
-  { title: '发布单位', key: 'issueUnit', width: 150 },
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '政策标题', key: 'title', width: 200, ellipsis: { tooltip: true }, fixed: 'left' },
+  {
+    title: '封面',
+    key: 'cover',
+    width: 100,
+    render: (row) => {
+      if (!row.cover) return '-'
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.cover,
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
+    }
+  },
+  { title: '政策类型', key: 'type', width: 120 },
+  { title: '发布单位', key: 'issueUnit', width: 150, ellipsis: { tooltip: true } },
+  { title: '政策内容', key: 'content', width: 300, ellipsis: { tooltip: true } },
   {
     title: '发布日期',
     key: 'issueDate',
@@ -152,12 +187,20 @@ const columns = [
     title: '状态',
     key: 'status',
     width: 100,
-    render: (row) => row.status === 1 ? '发布' : '草稿'
+    render: (row) => {
+      const isActive = row.status === 1
+      return h(NTag, { 
+        type: isActive ? 'success' : 'default', 
+        size: 'small' 
+      }, { 
+        default: () => isActive ? '发布' : '草稿' 
+      })
+    }
   },
   {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 150,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [
@@ -182,6 +225,12 @@ const loadData = async () => {
   try {
     loading.value = true
     const res = await getPolicyPage(pagination.page, pagination.pageSize, searchForm.keyword, searchForm.type)
+    
+    console.log('完整响应数据:', res)
+    console.log('res.code:', res.code)
+    console.log('res.data:', res.data)
+    console.log('res.pagination:', res.pagination)
+    
     if (res.code === 200) {
       policyList.value = res.data || []
       pagination.itemCount = res.pagination?.totalItems || 0
@@ -225,6 +274,10 @@ const handleAdd = () => {
     issueUnit: '',
     issueDate: null,
     content: '',
+    cover: '',
+    image: '',
+    thumbCover: '',
+    thumbImage: '',
     status: 1
   })
   dialogVisible.value = true
@@ -259,6 +312,10 @@ const handleDialogSave = async () => {
       issueUnit: policyForm.issueUnit,
       issueDate: policyForm.issueDate,
       content: policyForm.content,
+      cover: policyForm.cover,
+      image: policyForm.image,
+      thumbCover: policyForm.thumbCover,
+      thumbImage: policyForm.thumbImage,
       status: policyForm.status
     }
     

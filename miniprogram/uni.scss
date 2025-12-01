@@ -90,10 +90,7 @@ $uni-font-size-paragraph:15px;
 /* 强制隐藏所有滚动条的全局样式 */
 page, 
 uni-page-body,
-scroll-view,
-div,
-view,
-* {
+scroll-view {
   /* 隐藏滚动条 */
   &::-webkit-scrollbar {
     display: none !important;

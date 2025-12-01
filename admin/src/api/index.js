@@ -524,7 +524,7 @@ export const addArticle = (data) => {
  */
 export const updateArticle = (data) => {
   return request({
-    url: `/article/admin/${data.id}`,
+    url: `/article/admin/update/${data.id}`,
     method: 'put',
     data
   })
@@ -535,7 +535,7 @@ export const updateArticle = (data) => {
  */
 export const deleteArticle = (id) => {
   return request({
-    url: `/article/admin/${id}`,
+    url: `/article/admin/delete/${id}`,
     method: 'delete'
   })
 }
@@ -545,7 +545,7 @@ export const deleteArticle = (id) => {
  */
 export const getArticleById = (id) => {
   return request({
-    url: `/article/admin/${id}`,
+    url: `/article/${id}`,
     method: 'get'
   })
 }
@@ -593,7 +593,7 @@ export const addDrama = (data) => {
  */
 export const updateDrama = (data) => {
   return request({
-    url: `/drama/admin/${data.id}`,
+    url: `/drama/admin/update/${data.id}`,
     method: 'put',
     data
   })
@@ -604,7 +604,7 @@ export const updateDrama = (data) => {
  */
 export const deleteDrama = (id) => {
   return request({
-    url: `/drama/admin/${id}`,
+    url: `/drama/admin/delete/${id}`,
     method: 'delete'
   })
 }
@@ -614,7 +614,7 @@ export const deleteDrama = (id) => {
  */
 export const getDramaById = (id) => {
   return request({
-    url: `/drama/admin/${id}`,
+    url: `/drama/${id}`,
     method: 'get'
   })
 }
@@ -711,7 +711,7 @@ export const addLocation = (data) => {
  */
 export const updateLocation = (data) => {
   return request({
-    url: `/location/admin/${data.id}`,
+    url: `/location/admin/update/${data.id}`,
     method: 'put',
     data
   })
@@ -722,7 +722,7 @@ export const updateLocation = (data) => {
  */
 export const deleteLocation = (id) => {
   return request({
-    url: `/location/admin/${id}`,
+    url: `/location/admin/delete/${id}`,
     method: 'delete'
   })
 }
@@ -732,7 +732,7 @@ export const deleteLocation = (id) => {
  */
 export const getLocationById = (id) => {
   return request({
-    url: `/location/admin/${id}`,
+    url: `/location/${id}`,
     method: 'get'
   })
 }
@@ -780,7 +780,7 @@ export const addService = (data) => {
  */
 export const updateService = (data) => {
   return request({
-    url: `/shoot/admin/${data.id}`,
+    url: `/shoot/admin/update/${data.id}`,
     method: 'put',
     data
   })
@@ -791,7 +791,7 @@ export const updateService = (data) => {
  */
 export const deleteService = (id) => {
   return request({
-    url: `/shoot/admin/${id}`,
+    url: `/shoot/admin/delete/${id}`,
     method: 'delete'
   })
 }
@@ -801,7 +801,7 @@ export const deleteService = (id) => {
  */
 export const getServiceById = (id) => {
   return request({
-    url: `/shoot/admin/${id}`,
+    url: `/shoot/${id}`,
     method: 'get'
   })
 }
@@ -911,7 +911,7 @@ export const getTourRoutePage = (current = 1, size = 10, keyword = '') => {
     return mockApi.getTourRoutePage(current, size, keyword)
   }
   return request({
-    url: '/tourroute/page',
+    url: '/tour/admin/page',
     method: 'get',
     params: {
       current,
@@ -929,7 +929,7 @@ export const getTourRouteById = (id) => {
     return mockApi.getTourRouteById(id)
   }
   return request({
-    url: `/tourroute/${id}`,
+    url: `/tour/${id}`,
     method: 'get'
   })
 }
@@ -942,7 +942,7 @@ export const addTourRoute = (data) => {
     return mockApi.addTourRoute(data)
   }
   return request({
-    url: '/tourroute/admin',
+    url: '/tour/admin/create',
     method: 'post',
     data
   })
@@ -956,7 +956,7 @@ export const updateTourRoute = (data) => {
     return mockApi.updateTourRoute(data)
   }
   return request({
-    url: `/tourroute/admin/${data.id}`,
+    url: `/tour/admin/update/${data.id}`,
     method: 'put',
     data
   })
@@ -970,7 +970,7 @@ export const deleteTourRoute = (id) => {
     return mockApi.deleteTourRoute(id)
   }
   return request({
-    url: `/tourroute/admin/${id}`,
+    url: `/tour/admin/delete/${id}`,
     method: 'delete'
   })
 }
@@ -985,7 +985,7 @@ export const getPolicyPage = (current = 1, size = 10, keyword = '', type = '') =
     return mockApi.getPolicyPage(current, size, keyword, type)
   }
   return request({
-    url: '/policy/page',
+    url: '/policy/admin/page',
     method: 'get',
     params: {
       current,
@@ -1017,7 +1017,7 @@ export const addPolicy = (data) => {
     return mockApi.addPolicy(data)
   }
   return request({
-    url: '/policy/admin',
+    url: '/policy/admin/create',
     method: 'post',
     data
   })
@@ -1031,7 +1031,7 @@ export const updatePolicy = (data) => {
     return mockApi.updatePolicy(data)
   }
   return request({
-    url: `/policy/admin/${data.id}`,
+    url: `/policy/admin/update/${data.id}`,
     method: 'put',
     data
   })
@@ -1045,7 +1045,7 @@ export const deletePolicy = (id) => {
     return mockApi.deletePolicy(id)
   }
   return request({
-    url: `/policy/admin/${id}`,
+    url: `/policy/admin/delete/${id}`,
     method: 'delete'
   })
 }

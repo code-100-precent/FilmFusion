@@ -34,6 +34,7 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
+        :scroll-x="1800"
       />
     </n-card>
     
@@ -84,9 +85,11 @@ import {
   NTag,
   NPopconfirm,
   NModal,
+  NImage,
   useMessage
 } from 'naive-ui'
 import { getServicePage, addService, updateService, deleteService, getServiceById } from '@/api'
+import dayjs from 'dayjs'
 
 const message = useMessage()
 
@@ -136,26 +139,57 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '服务名称', key: 'name', ellipsis: { tooltip: true } },
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '服务名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+  { title: '服务描述', key: 'description', width: 250, ellipsis: { tooltip: true } },
   { title: '价格', key: 'price', width: 120, render: (row) => `¥${row.price || 0}` },
+  { title: '服务地址', key: 'address', width: 200, ellipsis: { tooltip: true } },
+  { title: '联系电话', key: 'phone', width: 130 },
+  { title: '联系人', key: 'contactName', width: 100 },
   {
     title: '状态',
     key: 'status',
     width: 100,
     render: (row) => {
-      const statusMap = {
-        1: { label: '可用', type: 'success' },
-        0: { label: '不可用', type: 'error' }
+      const isActive = row.status === true || row.status === 1
+      return h(NTag, { 
+        type: isActive ? 'success' : 'error', 
+        size: 'small' 
+      }, { 
+        default: () => isActive ? '可用' : '不可用' 
+      })
+    }
+  },
+  { 
+    title: '封面图', 
+    key: 'cover', 
+    width: 100,
+    render: (row) => {
+      if (!row.cover) return '-'
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.cover,
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
+    }
+  },
+  {
+    title: '创建时间',
+    key: 'createdAt',
+    width: 180,
+    render: (row) => {
+      if (Array.isArray(row.createdAt)) {
+        return dayjs(row.createdAt[0] + '-' + String(row.createdAt[1]).padStart(2, '0') + '-' + String(row.createdAt[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
       }
-      const statusInfo = statusMap[row.status] || { label: row.status, type: 'default' }
-      return h(NTag, { type: statusInfo.type, size: 'small' }, { default: () => statusInfo.label })
+      return row.createdAt ? dayjs(row.createdAt).format('YYYY-MM-DD HH:mm:ss') : '-'
     }
   },
   {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 150,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [

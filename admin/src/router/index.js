@@ -21,6 +21,15 @@ const routes = [
         meta: { title: '个人中心', icon: 'UserFilled', transition: 'slide' }
       },
       {
+        path: 'user',
+        name: 'user',
+        component: () => import('../views/user/UserList.vue'),
+        meta: {
+          title: '用户管理',
+          icon: 'User'
+        }
+      },
+      {
         path: 'article',
         name: 'article',
         component: () => import('../views/article/ArticleList.vue'),
@@ -69,11 +78,39 @@ const routes = [
         }
       },
       {
+        path: 'banner',
+        name: 'banner',
+        component: () => import('../views/banner/BannerList.vue'),
+        meta: {
+          title: 'Banner管理',
+          icon: 'Image'
+        }
+      },
+      {
+        path: 'hotel',
+        name: 'hotel',
+        component: () => import('../views/hotel/HotelList.vue'),
+        meta: {
+          title: '住宿管理',
+          icon: 'House'
+        }
+      },
+      {
+        path: 'tour',
+        name: 'tour',
+        component: () => import('../views/tour/TourList.vue'),
+        meta: {
+          title: '旅游管理',
+          icon: 'Location'
+        }
+      },
+      {
         path: 'tourroute',
         name: 'tourroute',
         component: () => import('../views/tourroute/TourRouteList.vue'),
         meta: {
-          title: '旅游线路管理'
+          title: '旅游线路管理',
+          icon: 'Guide'
         }
       },
       {
@@ -81,7 +118,8 @@ const routes = [
         name: 'policy',
         component: () => import('../views/policy/PolicyList.vue'),
         meta: {
-          title: '政策管理'
+          title: '政策管理',
+          icon: 'Document'
         }
       }
     ]
@@ -93,8 +131,27 @@ const router = createRouter({
   routes
 })
 
+// 添加日志管理路由
+try {
+  // 查找主布局路由
+  const mainLayoutRoute = router.options.routes.find(route => route.path === '/')
+  if (mainLayoutRoute && mainLayoutRoute.children) {
+    mainLayoutRoute.children.push({
+      path: 'log',
+      component: () => import('@/views/log/LogList.vue'),
+      name: 'LogList',
+      meta: {
+        title: '操作日志',
+        icon: 'mdi:file-clock-outline'
+      }
+    })
+  }
+} catch (error) {
+  console.error('Failed to add log route:', error)
+}
+
 // 路由守卫
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStore()
 
   if (to.path === '/login') {
