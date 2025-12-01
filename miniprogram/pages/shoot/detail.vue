@@ -1,6 +1,6 @@
 <template>
   <view class="shoot-detail-page">
-    <NavBar title="服务详情" :show-back="true"></NavBar>
+    <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y v-if="!loading && shoot">
       <!-- 服务基本信息 -->

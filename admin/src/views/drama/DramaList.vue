@@ -34,6 +34,7 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
+        :scroll-x="2000"
       />
     </n-card>
     
@@ -74,6 +75,7 @@ import {
   NDataTable,
   NPopconfirm,
   NModal,
+  NImage,
   useMessage
 } from 'naive-ui'
 import { getDramaPage, addDrama, updateDrama, deleteDrama, getDramaById } from '@/api'
@@ -122,23 +124,30 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '剧名', key: 'name', ellipsis: { tooltip: true } },
-  {
-    title: '类型',
-    key: 'type',
-    width: 120,
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '剧名', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+  { title: '备案号', key: 'filingNum', width: 180, ellipsis: { tooltip: true } },
+  { title: '出品公司', key: 'prodCompany', width: 150, ellipsis: { tooltip: true } },
+  { title: '剧组简介', key: 'crewDescription', width: 200, ellipsis: { tooltip: true } },
+  { title: '剧集简介', key: 'dramaDescription', width: 200, ellipsis: { tooltip: true } },
+  { title: '演员', key: 'cast', width: 150, ellipsis: { tooltip: true } },
+  { title: '拍摄地', key: 'shootLocation', width: 120 },
+  { title: '协拍服务', key: 'service', width: 150, ellipsis: { tooltip: true } },
+  { 
+    title: '封面图', 
+    key: 'cover', 
+    width: 100,
     render: (row) => {
-      const typeMap = {
-        'COSTUME': '古装剧',
-        'MODERN': '现代剧',
-        'PERIOD': '年代剧',
-        'OTHER': '其他'
-      }
-      return typeMap[row.type] || row.type
+      if (!row.cover) return '-'
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.cover,
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
     }
   },
-  { title: '集数', key: 'episodes', width: 100 },
   {
     title: '创建时间',
     key: 'createdAt',
@@ -153,7 +162,7 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 150,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [

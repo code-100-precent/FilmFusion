@@ -34,6 +34,7 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
+        :scroll-x="2000"
       />
     </n-card>
     
@@ -60,6 +61,18 @@
         <n-form-item label="美食推荐" path="foodRecommendation">
           <n-input v-model:value="tourRouteForm.foodRecommendation" type="textarea" :rows="3" placeholder="请输入美食推荐" />
         </n-form-item>
+        <n-form-item label="封面图片" path="cover">
+          <n-input v-model:value="tourRouteForm.cover" placeholder="请输入封面图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略封面" path="thumbCover">
+          <n-input v-model:value="tourRouteForm.thumbCover" placeholder="请输入缩略封面URL" />
+        </n-form-item>
+        <n-form-item label="详情图片" path="image">
+          <n-input v-model:value="tourRouteForm.image" placeholder="请输入详情图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略详情图" path="thumbImage">
+          <n-input v-model:value="tourRouteForm.thumbImage" placeholder="请输入缩略详情图URL" />
+        </n-form-item>
         <n-form-item label="状态" path="status">
           <n-select v-model:value="tourRouteForm.status" :options="statusOptions" />
         </n-form-item>
@@ -85,7 +98,9 @@ import {
   NPopconfirm,
   NModal,
   NSelect,
-  useMessage
+  useMessage,
+  NImage,
+  NTag
 } from 'naive-ui'
 import { getTourRoutePage, addTourRoute, updateTourRoute, deleteTourRoute, getTourRouteById } from '@/api'
 
@@ -110,7 +125,12 @@ const tourRouteForm = reactive({
   features: '',
   transportInfo: '',
   accommodation: '',
+  accommodation: '',
   foodRecommendation: '',
+  cover: '',
+  image: '',
+  thumbCover: '',
+  thumbImage: '',
   status: 1
 })
 
@@ -135,19 +155,47 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '线路名称', key: 'name', ellipsis: { tooltip: true } },
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '线路名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+  {
+    title: '封面',
+    key: 'cover',
+    width: 100,
+    render: (row) => {
+      if (!row.cover) return '-'
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.cover,
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
+    }
+  },
   { title: '主题', key: 'theme', width: 120 },
+  { title: '线路描述', key: 'description', width: 250, ellipsis: { tooltip: true } },
+  { title: '特色', key: 'features', width: 200, ellipsis: { tooltip: true } },
+  { title: '交通方式', key: 'transportInfo', width: 200, ellipsis: { tooltip: true } },
+  { title: '住宿推荐', key: 'accommodation', width: 200, ellipsis: { tooltip: true } },
+  { title: '美食推荐', key: 'foodRecommendation', width: 200, ellipsis: { tooltip: true } },
   {
     title: '状态',
     key: 'status',
     width: 100,
-    render: (row) => row.status === 1 ? '上线' : '下线'
+    render: (row) => {
+      const isActive = row.status === 1
+      return h(NTag, { 
+        type: isActive ? 'success' : 'default', 
+        size: 'small' 
+      }, { 
+        default: () => isActive ? '上线' : '下线' 
+      })
+    }
   },
   {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 150,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [
@@ -171,13 +219,30 @@ onMounted(() => {
 const loadData = async () => {
   try {
     loading.value = true
+    
+    console.log('开始加载旅游线路数据，参数:', {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      keyword: searchForm.keyword
+    })
+    
+    // 直接调用后端API获取真实数据
     const res = await getTourRoutePage(pagination.page, pagination.pageSize, searchForm.keyword)
+    console.log('后端API响应数据:', JSON.stringify(res))
+    
     if (res.code === 200) {
-      tourRouteList.value = res.data || []
-      pagination.itemCount = res.pagination?.totalItems || 0
+      tourRouteList.value = res.data?.records || res.data || []
+      pagination.itemCount = res.data?.total || res.total || 0
+      pagination.pageCount = res.data?.pages || 1
+      console.log('数据加载成功，获取到', tourRouteList.value.length, '条记录')
+    } else {
+      console.error('API返回非成功状态:', res.code, res.message)
+      message.error(res.message || '加载失败')
     }
   } catch (error) {
     console.error('加载线路列表失败:', error)
+    console.error('错误详情:', error.message, error.response)
+    message.error('加载线路列表失败：' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -216,6 +281,10 @@ const handleAdd = () => {
     transportInfo: '',
     accommodation: '',
     foodRecommendation: '',
+    cover: '',
+    image: '',
+    thumbCover: '',
+    thumbImage: '',
     status: 1
   })
   dialogVisible.value = true
@@ -228,9 +297,15 @@ const handleEdit = async (row) => {
       dialogTitle.value = '编辑线路'
       Object.assign(tourRouteForm, res.data)
       dialogVisible.value = true
+    } else {
+      // 处理业务逻辑错误
+      console.error('获取线路详情失败: 业务错误', res.code, res.message)
+      message.error(res.message || '获取详情失败')
     }
   } catch (error) {
     console.error('获取线路详情失败:', error)
+    console.error('错误详情:', error.message)
+    message.error('获取线路详情失败：' + (error.message || '未知错误'))
   }
 }
 
@@ -252,6 +327,10 @@ const handleDialogSave = async () => {
       transportInfo: tourRouteForm.transportInfo,
       accommodation: tourRouteForm.accommodation,
       foodRecommendation: tourRouteForm.foodRecommendation,
+      cover: tourRouteForm.cover,
+      image: tourRouteForm.image,
+      thumbCover: tourRouteForm.thumbCover,
+      thumbImage: tourRouteForm.thumbImage,
       status: tourRouteForm.status
     }
     

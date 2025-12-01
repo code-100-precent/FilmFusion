@@ -6,11 +6,6 @@
     <NavBar :show-back="true"></NavBar>
 
     <view class="content">
-      <!-- Page Title -->
-      <view class="page-title">
-        <text class="title-text">光影雅安</text>
-      </view>
-
       <!-- Search Bar -->
       <view class="search-bar">
         <view class="search-input-wrapper">
@@ -84,7 +79,7 @@ export default {
     NavBar,
     Empty
   },
-  data() {
+    data() {
     return {
       keyword: '',
       selectedCategory: '全部',
@@ -94,7 +89,8 @@ export default {
       currentPage: 1,
       pageSize: 10,
       totalItems: 0,
-      hasMore: true
+      hasMore: true,
+      nextCursor: null // 添加游标字段
     }
   },
   onLoad() {
@@ -115,20 +111,38 @@ export default {
           params.type = this.selectedCategory;
         }
         
+        console.log('加载影视作品，参数:', params);
         const response = await getDramaPage(params);
+        console.log('API返回结果:', response);
         
-        if (response.code === 200) {
-          this.films = response.data;
-          this.totalItems = response.pagination?.totalItems || 0;
+        // 后端返回的是游标分页格式：{records, nextCursor, hasMore}
+        // http工具会直接返回这个对象（因为没有code字段）
+        if (response.records) {
+          this.films = response.records;
           this.currentPage = 1;
-          this.hasMore = this.films.length < this.totalItems;
+          this.nextCursor = response.nextCursor; // 保存游标
+          this.hasMore = response.hasMore || false;
+          this.totalItems = this.films.length; // 游标分页不返回总数
+          
+          console.log('成功加载影视作品，数量:', this.films.length, '下一页游标:', this.nextCursor);
         } else {
-          uni.showToast({
-            title: response.message || '获取数据失败',
-            icon: 'none'
-          });
-          this.films = [];
-          this.hasMore = false;
+          // 如果是旧的PageResponse格式（有code字段）
+          if (response.code === 200 && response.data) {
+            const filmRecords = response.data.records || response.data || [];
+            this.films = filmRecords;
+            this.totalItems = response.data.total || filmRecords.length;
+            this.currentPage = 1;
+            this.hasMore = response.data.hasMore !== undefined ? response.data.hasMore : (this.films.length < this.totalItems);
+            console.log('成功加载影视作品（旧格式），数量:', this.films.length);
+          } else {
+            console.warn('API返回格式异常:', response);
+            uni.showToast({
+              title: '数据格式错误',
+              icon: 'none'
+            });
+            this.films = [];
+            this.hasMore = false;
+          }
         }
       } catch (error) {
         console.error('加载影视作品失败:', error);
@@ -157,7 +171,7 @@ export default {
       this.loading = true;
       try {
         const params = {
-          current: this.currentPage + 1,
+          cursor: this.nextCursor, // 使用游标而不是页码
           size: this.pageSize,
           keyword: this.keyword
         };
@@ -167,12 +181,21 @@ export default {
           params.type = this.selectedCategory;
         }
         
+        console.log('加载更多，参数:', params);
         const response = await getDramaPage(params);
         
-        if (response.code === 200) {
-          this.films = [...this.films, ...response.data];
+        // 处理游标分页格式
+        if (response.records) {
+          this.films = [...this.films, ...response.records];
+          this.nextCursor = response.nextCursor;
+          this.hasMore = response.hasMore || false;
+          console.log('成功加载更多，新增数量:', response.records.length, '下一页游标:', this.nextCursor);
+        } else if (response.code === 200 && response.data) {
+          // 兼容旧格式
+          const filmRecords = response.data.records || response.data || [];
+          this.films = [...this.films, ...filmRecords];
           this.currentPage++;
-          this.hasMore = this.films.length < this.totalItems;
+          this.hasMore = response.data.hasMore !== undefined ? response.data.hasMore : (this.films.length < this.totalItems);
         }
       } catch (error) {
         console.error('加载更多失败:', error);

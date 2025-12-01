@@ -6,10 +6,6 @@
     <NavBar :show-back="false"></NavBar>
 
     <view class="content">
-      <!-- 页面标题 -->
-      <view class="page-title">
-        <text class="title-text">影视资讯</text>
-      </view>
       <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
@@ -100,9 +96,7 @@ export default {
     return {
       keyword: '',
       articles: [],
-      current: 1,
-      size: 10,
-      total: 0,
+      nextCursor: null,  // 游标分页
       loading: false,
       refreshing: false,
       hasMore: true
@@ -116,30 +110,30 @@ export default {
       if (this.loading) return
 
       if (reset) {
-        this.current = 1
         this.articles = []
+        this.nextCursor = null
         this.hasMore = true
       }
 
       this.loading = true
       try {
         const res = await getArticlePage({
-          current: this.current,
-          size: this.size,
+          cursor: reset ? null : this.nextCursor,
+          size: 10,
           keyword: this.keyword || undefined
         })
 
-        if (res.code === 200) {
-          // 后端返回格式: { code: 200, data: [...], pagination: { totalItems, ... } }
-          const dataList = Array.isArray(res.data) ? res.data : []
+        // 处理游标分页响应
+        if (res && res.records) {
+          const dataList = Array.isArray(res.records) ? res.records : []
           
           if (reset) {
             this.articles = dataList
           } else {
             this.articles = [...this.articles, ...dataList]
           }
-          this.total = res.pagination?.totalItems || 0
-          this.hasMore = this.articles.length < this.total
+          this.nextCursor = res.nextCursor
+          this.hasMore = res.hasMore || false
         }
       } catch (error) {
         console.error('加载资讯失败:', error)
@@ -161,7 +155,6 @@ export default {
     },
     loadMore() {
       if (!this.hasMore || this.loading) return
-      this.current++
       this.loadArticles()
     },
     goToDetail(id) {

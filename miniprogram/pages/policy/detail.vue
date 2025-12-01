@@ -160,19 +160,32 @@ export default {
 .detail-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   background: #f8fafc;
+  padding-top: 132rpx;
+  box-sizing: border-box;
 }
 
 .content {
-  flex: 1;
-  overflow-y: auto;
+  width: 100%;
+  padding: 32rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  /* 兼容IE浏览器 */
+  -ms-overflow-style: none;
 }
 
 .header-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 32rpx;
-  margin: 24rpx;
+  margin-bottom: 24rpx;
   border-radius: 24rpx;
   box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
 }
@@ -207,7 +220,7 @@ export default {
 
 .info-section {
   background: white;
-  margin: 0 24rpx 24rpx 24rpx;
+  margin-bottom: 24rpx;
   padding: 32rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);

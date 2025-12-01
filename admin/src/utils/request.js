@@ -57,7 +57,7 @@ const showMessage = (message, type = 'error') => {
     animation: messageSlideDown 0.3s ease;
   `
   document.body.appendChild(messageEl)
-  
+
   setTimeout(() => {
     messageEl.style.animation = 'messageSlideUp 0.3s ease'
     setTimeout(() => {
@@ -101,70 +101,109 @@ if (!document.getElementById('naive-message-styles')) {
 service.interceptors.response.use(
   response => {
     const res = response.data
-    
+
+    // 记录成功响应的基本信息
+    console.log(`请求成功: ${response.config.url}, 状态码: ${response.status}`)
+    console.log('响应数据 response.data:', JSON.stringify(res))
+    console.log('res.code:', res.code)
+
     if (res.code === 200) {
       return res
     } else {
       // 统一错误处理
       const errorMsg = res.message || '请求失败'
+      console.error(`业务逻辑错误: ${response.config.url}, 错误码: ${res.code}, 错误信息: ${errorMsg}`)
       showMessage(errorMsg, 'error')
-      
+
       if (res.code === 401) {
+        console.warn('认证失效，清除token并跳转到登录页')
         localStorage.removeItem('token')
         setTimeout(() => {
           router.push('/login')
         }, 1000)
       }
-      
-      return Promise.reject(new Error(errorMsg))
+
+      // 构建详细的错误对象
+      const error = new Error(errorMsg)
+      error.code = res.code
+      error.response = response
+      error.requestUrl = response.config.url
+      return Promise.reject(error)
     }
   },
   error => {
-    console.error('响应错误:', error)
-    
-    // 统一异常处理
-    let errorMsg = '网络错误'
-    
+    // 增强错误日志记录
+    const requestInfo = error.config ?
+      `${error.config.method?.toUpperCase()} ${error.config.url}` : '未知请求'
+
+    console.error(`响应错误 - 请求: ${requestInfo}`)
+
+    // 声明 errorMsg 变量在函数作用域中
+    let errorMsg = '请求失败'
+
     if (error.response) {
       // 服务器返回了错误状态码
-      const status = error.response.status
+      const { status, statusText, config } = error.response
       const data = error.response.data
-      
+
+      console.error(`HTTP错误: ${status} ${statusText}`)
+      console.error(`请求详情: ${JSON.stringify(config)}`)
+      console.error(`响应数据: ${JSON.stringify(data)}`)
+
+      errorMsg = `请求失败 (${status} ${statusText})`
+
       switch (status) {
         case 400:
-          errorMsg = data?.message || '请求参数错误'
+          errorMsg = data?.message || '请求参数错误，请检查输入'
           break
         case 401:
-          errorMsg = data?.message || '未登录或登录已过期'
+          errorMsg = data?.message || '未登录或登录已过期，请重新登录'
+          console.warn('认证失败，清除token并跳转到登录页')
           localStorage.removeItem('token')
           setTimeout(() => {
             router.push('/login')
           }, 1000)
           break
         case 403:
-          errorMsg = data?.message || '没有权限访问'
+          errorMsg = data?.message || '没有权限访问此资源'
           break
         case 404:
-          errorMsg = data?.message || '请求的资源不存在'
+          errorMsg = data?.message || `请求的资源不存在 (${config.url})`
           break
         case 500:
-          errorMsg = data?.message || '服务器内部错误'
+          errorMsg = data?.message || '服务器内部错误，请稍后重试'
           break
         default:
-          errorMsg = data?.message || `请求失败 (${status})`
+          errorMsg = data?.message || `请求失败 (${status} ${statusText})`
       }
+
+      // 增强错误对象
+      error.httpStatus = status
+      error.errorType = 'http'
+      error.requestUrl = config.url
+      error.responseData = data
     } else if (error.request) {
       // 请求已发出但没有收到响应
-      errorMsg = '网络连接失败，请检查网络'
+      console.error('网络错误: 请求已发出但未收到响应')
+      console.error('请求详情:', JSON.stringify(error.config))
+      errorMsg = '网络连接失败，请检查网络连接或服务器状态'
+
+      // 增强错误对象
+      error.errorType = 'network'
+      error.requestUrl = error.config?.url
     } else {
       // 其他错误
-      errorMsg = error.message || '请求失败'
+      console.error('请求配置错误:', error.message)
+      errorMsg = error.message || '请求配置错误'
+
+      // 增强错误对象
+      error.errorType = 'config'
     }
-    
+
+    // 显示详细的错误信息
     showMessage(errorMsg, 'error')
     return Promise.reject(error)
   }
 )
 
 export default service
-

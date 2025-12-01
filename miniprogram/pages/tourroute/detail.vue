@@ -1,6 +1,6 @@
 <template>
   <view class="detail-page">
-    <NavBar :show-back="true" :title="route.name"></NavBar>
+    <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y>
       <view v-if="loading" class="loading-wrapper">
@@ -109,7 +109,7 @@
           <view class="section-content">
             <view class="info-item">
               <uni-icons type="home" size="16" color="#10b981"></uni-icons>
-              <text>{{ route.accommodation }}</text>
+              <text>{{ route.accommodation || '暂无住宿推荐' }}</text>
             </view>
           </view>
         </view>
@@ -121,36 +121,6 @@
             <view class="info-item">
               <uni-icons type="fire" size="16" color="#ef4444"></uni-icons>
               <text>{{ route.foodRecommendation }}</text>
-            </view>
-          </view>
-        </view>
-
-        <!-- 周边住宿 -->
-        <view class="info-section" v-if="nearbyHotels.length > 0">
-          <view class="section-title">
-            <text>周边住宿</text>
-            <text class="section-subtitle">（{{ nearbyHotels.length }}个）</text>
-          </view>
-          <view class="nearby-list">
-            <view 
-              v-for="hotel in nearbyHotels" 
-              :key="hotel.id" 
-              class="nearby-item"
-              @click="navigateToHotel(hotel)"
-            >
-              <image 
-                :src="hotel.thumbCover || hotel.cover || defaultCover" 
-                class="nearby-image" 
-                mode="aspectFill"
-              ></image>
-              <view class="nearby-info">
-                <text class="nearby-name">{{ hotel.name }}</text>
-                <text class="nearby-address">{{ hotel.address }}</text>
-                <text class="nearby-desc">{{ hotel.description }}</text>
-              </view>
-              <view class="nearby-action">
-                <uni-icons type="paperplane" size="20" color="#6366f1"></uni-icons>
-              </view>
             </view>
           </view>
         </view>
@@ -228,8 +198,8 @@ export default {
           // 不再使用模拟数据，改为从后端加载真实的location数据
           // this.loadRouteData(id)
           
-          // 加载周边住宿和景点（景点将作为途经景点显示）
-          this.loadNearbyData(this.route.latitude, this.route.longitude)
+          // 只加载途经景点，不加载住宿列表（住宿推荐只显示文本）
+          this.loadRoutePoints(this.route.latitude, this.route.longitude, this.route.locationId)
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -249,8 +219,24 @@ export default {
       }
     },
     
-    // 加载周边住宿和景点
+    // 只加载途经景点（不加载住宿）
+    async loadRoutePoints(latitude, longitude, locationId) {
+      try {
+        // 如果tour有locationId，则根据ID获取对应的location
+        // 如果没有，则获取周边的location
+        if (locationId) {
+          await this.loadLocationsByIds(locationId)
+        } else {
+          await this.loadNearbyLocations(latitude, longitude)
+        }
+      } catch (error) {
+        console.error('加载途经景点失败:', error)
+      }
+    },
+    
+    // 加载周边住宿和景点（已废弃，保留以防需要）
     async loadNearbyData(latitude, longitude) {
+      console.log('开始加载周边数据，经纬度:', latitude, longitude)
       try {
         // 加载周边住宿
         const hotelsRes = await getNearbyHotels({
@@ -258,8 +244,12 @@ export default {
           longitude,
           size: 5
         })
+        console.log('住宿API返回结果:', hotelsRes)
+        
+        // 修复：API返回的是PageResponse，数据在records字段中
         if (hotelsRes.code === 200 && hotelsRes.data) {
-          this.nearbyHotels = hotelsRes.data.map(hotel => ({
+          const hotelRecords = hotelsRes.data.records || hotelsRes.data || []
+          this.nearbyHotels = hotelRecords.map(hotel => ({
             id: hotel.id,
             name: hotel.name,
             address: hotel.address,
@@ -269,6 +259,11 @@ export default {
             latitude: parseFloat(hotel.latitude) || 0,
             longitude: parseFloat(hotel.longitude) || 0
           }))
+          console.log('成功加载住宿数据，数量:', this.nearbyHotels.length)
+          console.log('住宿列表:', this.nearbyHotels)
+        } else {
+          console.warn('住宿API返回失败:', hotelsRes.message)
+          this.nearbyHotels = []
         }
         
         // 加载途经景点
@@ -281,6 +276,7 @@ export default {
         }
       } catch (error) {
         console.error('加载周边数据失败:', error)
+        this.nearbyHotels = []
         // 不显示错误提示，静默失败
       }
     },
@@ -781,7 +777,14 @@ export default {
     
     // 导航到住宿
     navigateToHotel(hotel) {
-      if (!hotel || !hotel.latitude || !hotel.longitude) {
+      console.log('准备导航到酒店:', hotel)
+      
+      // 确保经纬度是有效的数字
+      const lat = parseFloat(hotel?.latitude)
+      const lng = parseFloat(hotel?.longitude)
+      
+      if (!hotel || isNaN(lat) || isNaN(lng) || (Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001)) {
+        console.warn('酒店位置信息无效:', hotel)
         uni.showToast({
           title: '暂无位置信息',
           icon: 'none'
@@ -790,10 +793,10 @@ export default {
       }
       
       uni.openLocation({
-        latitude: hotel.latitude,
-        longitude: hotel.longitude,
-        name: hotel.name,
-        address: hotel.address,
+        latitude: lat,
+        longitude: lng,
+        name: hotel.name || '目的地',
+        address: hotel.address || '',
         scale: 15,
         success: () => {
           console.log('打开地图导航成功')
@@ -806,7 +809,15 @@ export default {
           })
         }
       })
+    },
+
+    // 跳转到酒店详情
+    goToHotelDetail(id) {
+      uni.navigateTo({
+        url: `/pages/hotel/detail?id=${id}`
+      })
     }
+
   }
 }
 </script>
@@ -1154,14 +1165,34 @@ export default {
 
 .nearby-action {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  padding-left: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* 移除旧的背景样式，避免干扰新按钮 */
+  background: transparent;
+  box-shadow: none;
 }
 
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  background: #6366f1;
+  padding: 8rpx 16rpx;
+  border-radius: 32rpx;
+  transition: all 0.3s;
+  box-shadow: 0 2rpx 8rpx rgba(99, 102, 241, 0.3);
+}
+
+.nav-btn:active {
+  transform: scale(0.95);
+  background: #4f46e5;
+}
+
+.nav-text {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: 500;
+}
 </style>

@@ -6,11 +6,6 @@
     <NavBar :show-back="false"></NavBar>
 
     <scroll-view class="content" scroll-y @scrolltolower="onScrollToLower">
-      <!-- 页面标题 -->
-      <view class="page-title">
-        <text class="title-text">雅安影视服务</text>
-      </view>
-
       <!-- Banner轮播 -->
       <view class="banner-section">
         <swiper
@@ -198,13 +193,13 @@ export default {
             getLocationPage({ current: 1, size: 5 })
           ])
 
-          if (articleRes && articleRes.code === 200) {
-            // 后端返回格式: { code: 200, data: [...], pagination: {...} }
-            this.articles = Array.isArray(articleRes.data) ? articleRes.data : []
+          // 处理文章数据 - 游标分页格式
+          if (articleRes && articleRes.records) {
+            this.articles = Array.isArray(articleRes.records) ? articleRes.records : []
           }
-          if (locationRes && locationRes.code === 200) {
-            // 后端返回格式: { code: 200, data: [...], pagination: {...} }
-            this.locations = Array.isArray(locationRes.data) ? locationRes.data : []
+          // 处理场地数据 - 游标分页格式
+          if (locationRes && locationRes.records) {
+            this.locations = Array.isArray(locationRes.records) ? locationRes.records : []
           }
         })
       } catch (error) {
@@ -401,12 +396,7 @@ export default {
   line-height: 1.2;
 }
 
-.news-section .section-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1f2937;
-  line-height: 1.2;
-}
+/* 移除重复的样式定义 */
 
 .function-scroll {
   width: 100%;

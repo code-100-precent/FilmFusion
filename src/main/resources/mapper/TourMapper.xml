@@ -71,14 +71,14 @@
 
     <select id="getAdminPage" resultType="cn.cxdproject.coder.model.entity.Tour">
         SELECT *
-        FROM fi_tours
+        FROM fi_tour
         WHERE deleted = 0
         AND id IN (
         SELECT id
-        FROM fi_tours
+        FROM fi_tour
         WHERE deleted = 0
         <if test="keyword != null and keyword != ''">
-            AND title LIKE CONCAT('%', #{keyword}, '%')
+            AND name LIKE CONCAT('%', #{keyword}, '%')
         </if>
         ORDER BY created_at DESC
         LIMIT #{offset}, #{size}
