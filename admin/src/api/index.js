@@ -724,7 +724,6 @@ export const createTour = (data) => {
  */
 export const updateTour = (id, data) => {
   return request({
-    url: `/tour/admin/update/${id}`,
     method: 'put',
     data
   })
@@ -786,7 +785,7 @@ export const addPolicy = createPolicy
  */
 export const updatePolicy = (id, data) => {
   return request({
-    url: `/policy/admin/update/${id}`,
+    url: `/policy/admin/update/${data.id}`,
     method: 'put',
     data
   })
@@ -798,54 +797,6 @@ export const updatePolicy = (id, data) => {
 export const deletePolicy = (id) => {
   return request({
     url: `/policy/admin/delete/${id}`,
-    method: 'delete'
-  })
-}
-
-// ==================== 日志管理 ====================
-
-/**
- * 分页获取操作日志列表
- */
-export const getLogPage = (current = 1, size = 10, keyword = '') => {
-  return request({
-    url: '/api/operationlog/page',
-    method: 'post',
-    data: {
-      current: current,
-      size: size,
-      keyword: keyword
-    }
-  })
-}
-
-/**
- * 根据ID获取操作日志
- */
-export const getLogById = (id) => {
-  return request({
-    url: `/operationlog/${id}`,
-    method: 'get'
-  })
-}
-
-/**
- * 更新操作日志
- */
-export const updateLog = (data) => {
-  return request({
-    url: '/operationlog',
-    method: 'put',
-    data
-  })
-}
-
-/**
- * 删除操作日志
- */
-export const deleteLog = (id) => {
-  return request({
-    url: `/operationlog/${id}`,
     method: 'delete'
   })
 }

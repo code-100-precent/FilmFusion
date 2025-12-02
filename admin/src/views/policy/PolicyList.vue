@@ -39,7 +39,7 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
-        :scroll-x="1400"
+        :scroll-x="1500"
       />
       
       <!-- 移动端卡片列表 -->
@@ -161,19 +161,20 @@
         <n-form-item label="图片" path="image">
           <n-input v-model:value="policyForm.image" placeholder="请输入图片地址" />
         </n-form-item>
+        <n-form-item label="封面图片" path="cover">
+          <n-input v-model:value="policyForm.cover" placeholder="请输入封面图片URL" />
+        </n-form-item>
         <n-form-item label="缩略封面" path="thumbCover">
-          <n-input v-model:value="policyForm.thumbCover" placeholder="请输入缩略封面地址" />
+          <n-input v-model:value="policyForm.thumbCover" placeholder="请输入缩略封面URL" />
         </n-form-item>
-        <n-form-item label="缩略图片" path="thumbImage">
-          <n-input v-model:value="policyForm.thumbImage" placeholder="请输入缩略图片地址" />
+        <n-form-item label="详情图片" path="image">
+          <n-input v-model:value="policyForm.image" placeholder="请输入详情图片URL" />
         </n-form-item>
-        <n-form-item label="内容" path="content">
-          <n-input 
-            v-model:value="policyForm.content" 
-            type="textarea" 
-            :rows="8" 
-            placeholder="请输入政策内容"
-          />
+        <n-form-item label="缩略详情图" path="thumbImage">
+          <n-input v-model:value="policyForm.thumbImage" placeholder="请输入缩略详情图URL" />
+        </n-form-item>
+        <n-form-item label="状态" path="status">
+          <n-select v-model:value="policyForm.status" :options="statusOptions" />
         </n-form-item>
       </n-form>
       <template #action>
@@ -199,10 +200,9 @@ import {
   NModal,
   NImage,
   NDatePicker,
-  NSpin,
-  NPagination,
-  NTag,
-  useMessage
+  useMessage,
+  NImage,
+  NTag
 } from 'naive-ui'
 import { getPolicyPage, addPolicy, updatePolicy, deletePolicy, getPolicyById } from '@/api'
 import dayjs from 'dayjs'
@@ -238,7 +238,8 @@ const policyForm = reactive({
   cover: '',
   image: '',
   thumbCover: '',
-  thumbImage: ''
+  thumbImage: '',
+  status: 1
 })
 
 const typeOptions = [
@@ -273,7 +274,26 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '政策标题', key: 'title', width: 200, ellipsis: { tooltip: true }, fixed: 'left' },
+  {
+    title: '封面',
+    key: 'cover',
+    width: 100,
+    render: (row) => {
+      if (!row.cover) return '-'
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.cover,
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
+    }
+  },
+  { title: '政策类型', key: 'type', width: 120 },
+  { title: '发布单位', key: 'issueUnit', width: 150, ellipsis: { tooltip: true } },
+  { title: '政策内容', key: 'content', width: 300, ellipsis: { tooltip: true } },
   {
     title: '政策标题',
     key: 'title',
@@ -295,20 +315,23 @@ const columns = [
   },
   { title: '发布单位', key: 'issueUnit', width: 150, ellipsis: { tooltip: true } },
   {
-    title: '发布时间',
-    key: 'issueTime',
-    width: 180,
+    title: '状态',
+    key: 'status',
+    width: 100,
     render: (row) => {
-      if (Array.isArray(row.issueTime)) {
-        return dayjs(row.issueTime[0] + '-' + String(row.issueTime[1]).padStart(2, '0') + '-' + String(row.issueTime[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
-      }
-      return row.issueTime ? dayjs(row.issueTime).format('YYYY-MM-DD HH:mm:ss') : '-'
+      const isActive = row.status === 1
+      return h(NTag, { 
+        type: isActive ? 'success' : 'default', 
+        size: 'small' 
+      }, { 
+        default: () => isActive ? '发布' : '草稿' 
+      })
     }
   },
   {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 150,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [
@@ -347,7 +370,13 @@ const formatDate = (date) => {
 const loadData = async () => {
   try {
     loading.value = true
-    const res = await getPolicyPage(pagination.page, pagination.pageSize, searchForm.keyword)
+    const res = await getPolicyPage(pagination.page, pagination.pageSize, searchForm.keyword, searchForm.type)
+    
+    console.log('完整响应数据:', res)
+    console.log('res.code:', res.code)
+    console.log('res.data:', res.data)
+    console.log('res.pagination:', res.pagination)
+    
     if (res.code === 200) {
       policyList.value = res.data || []
       pagination.itemCount = res.pagination?.totalItems || 0
@@ -395,7 +424,8 @@ const handleAdd = () => {
     cover: '',
     image: '',
     thumbCover: '',
-    thumbImage: ''
+    thumbImage: '',
+    status: 1
   })
   dialogVisible.value = true
 }
@@ -437,7 +467,8 @@ const handleDialogSave = async () => {
       cover: policyForm.cover,
       image: policyForm.image,
       thumbCover: policyForm.thumbCover,
-      thumbImage: policyForm.thumbImage
+      thumbImage: policyForm.thumbImage,
+      status: policyForm.status
     }
     
     let res

@@ -1,10 +1,10 @@
 <template>
-  <div class="drama-management">
+  <div class="banner-management">
     <n-card class="management-card">
       <div class="search-header">
         <n-form :model="searchForm" inline class="search-form">
-          <n-form-item label="电视剧名称">
-            <n-input v-model:value="searchForm.keyword" placeholder="请输入电视剧名称" clearable @keyup.enter="handleSearch" />
+          <n-form-item label="标题">
+            <n-input v-model:value="searchForm.keyword" placeholder="请输入标题关键词" clearable @keyup.enter="handleSearch" />
           </n-form-item>
           <n-form-item>
             <n-button type="primary" @click="handleSearch">
@@ -21,7 +21,7 @@
             <template #icon>
               <Icon icon="mdi:plus" />
             </template>
-            新增电视剧
+            新增Banner
           </n-button>
         </div>
       </div>
@@ -30,73 +30,75 @@
       <n-data-table
         v-if="!isMobile"
         :columns="columns"
-        :data="dramaList"
+        :data="bannerList"
         :loading="loading"
         :pagination="pagination"
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
-
+        :scroll-x="1200"
       />
       
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
         <n-spin :show="loading">
-          <div v-if="dramaList.length === 0 && !loading" class="empty-state">
-            <Icon icon="mdi:film-off" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
+          <div v-if="bannerList.length === 0 && !loading" class="empty-state">
+            <Icon icon="mdi:image-off" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
             <p style="color: #9ca3af;">暂无数据</p>
           </div>
           <div v-else class="card-list">
             <n-card
-              v-for="drama in dramaList"
-              :key="drama.id"
+              v-for="banner in bannerList"
+              :key="banner.id"
               class="mobile-card"
               hoverable
             >
               <div class="card-header">
-                <div class="drama-info">
-                  <h3 class="drama-name">{{ drama.name }}</h3>
-                  <p class="drama-company">{{ drama.prodCompany }}</p>
+                <div class="banner-info">
+                  <h3 class="banner-title">{{ banner.title }}</h3>
+                  <p class="banner-link">{{ banner.link }}</p>
                 </div>
-                <div class="drama-cover">
+                <div class="banner-image">
                   <n-image
-                    v-if="drama.cover"
-                    :src="drama.cover"
+                    v-if="banner.imageUrl"
+                    :src="banner.imageUrl"
                     width="80"
                     height="60"
                     object-fit="cover"
                     preview-disabled
                   />
-                  <div v-else class="no-cover">
-                    <Icon icon="mdi:film" :width="32" />
+                  <div v-else class="no-image">
+                    <Icon icon="mdi:image" :width="32" />
                   </div>
                 </div>
               </div>
               <div class="card-content">
                 <div class="info-item">
-                  <span class="label">备案号：</span>
-                  <span>{{ drama.filingNum || '-' }}</span>
+                  <span class="label">状态：</span>
+                  <n-tag :type="banner.status === 1 ? 'success' : 'error'">
+                    {{ banner.status === 1 ? '启用' : '禁用' }}
+                  </n-tag>
                 </div>
                 <div class="info-item">
-                  <span class="label">拍摄地：</span>
-                  <span>{{ drama.shootLocation || '-' }}</span>
+                  <span class="label">排序：</span>
+                  <span>{{ banner.sortOrder }}</span>
                 </div>
                 <div class="info-item">
-                  <span class="label">演员：</span>
-                  <span class="cast-info">{{ drama.cast || '-' }}</span>
+                  <span class="label">描述：</span>
+                  <span>{{ banner.description || '-' }}</span>
                 </div>
               </div>
               <div class="card-actions">
-                <n-button size="small" @click="handleEdit(drama)" block style="margin-bottom: 8px">
+                <n-button size="small" @click="handleEdit(banner)" block style="margin-bottom: 8px">
                   编辑
                 </n-button>
-                <n-popconfirm @positive-click="handleDelete(drama.id)">
+                <n-popconfirm @positive-click="handleDelete(banner.id)">
                   <template #trigger>
                     <n-button size="small" type="error" quaternary block>
                       删除
                     </n-button>
                   </template>
-                  确定要删除这个电视剧吗？
+                  确定要删除这个Banner吗？
                 </n-popconfirm>
               </div>
             </n-card>
@@ -122,39 +124,52 @@
       v-model:show="dialogVisible" 
       preset="dialog" 
       :title="dialogTitle" 
-      style="width: 90%; max-width: 900px"
+      style="width: 90%; max-width: 800px"
       :mask-closable="false"
     >
       <n-form 
         ref="formRef" 
-        :model="dramaForm" 
+        :model="bannerForm" 
         :rules="formRules" 
         :label-placement="isMobile ? 'top' : 'left'"
-        :label-width="isMobile ? 'auto' : '120'"
+        :label-width="isMobile ? 'auto' : '100'"
       >
-        <n-form-item label="电视剧名称" path="name">
-          <n-input v-model:value="dramaForm.name" placeholder="请输入电视剧名称" />
+        <n-form-item label="标题" path="title">
+          <n-input v-model:value="bannerForm.title" placeholder="请输入Banner标题" />
         </n-form-item>
-        <n-form-item label="备案号" path="filingNum">
-          <n-input v-model:value="dramaForm.filingNum" placeholder="请输入备案号" />
+        <n-form-item label="链接" path="link">
+          <n-input v-model:value="bannerForm.link" placeholder="请输入跳转链接" />
         </n-form-item>
-        <n-form-item label="出品公司" path="prodCompany">
-          <n-input v-model:value="dramaForm.prodCompany" placeholder="请输入出品公司" />
+        <n-form-item label="图片" path="imageUrl">
+          <n-upload
+            :max="1"
+            :default-file-list="fileList"
+            @update:file-list="handleFileListChange"
+            @finish="handleUploadFinish"
+            :custom-request="handleUpload"
+          >
+            <n-button>上传图片</n-button>
+          </n-upload>
+          <div v-if="bannerForm.imageUrl" style="margin-top: 12px;">
+            <n-image
+              :src="bannerForm.imageUrl"
+              width="200"
+              height="120"
+              object-fit="cover"
+            />
+          </div>
         </n-form-item>
-        <n-form-item label="公司简介" path="crewDescription">
-          <n-input v-model:value="dramaForm.crewDescription" type="textarea" :rows="3" placeholder="请输入公司简介" />
+        <n-form-item label="描述" path="description">
+          <n-input v-model:value="bannerForm.description" type="textarea" :rows="3" placeholder="请输入描述" />
         </n-form-item>
-        <n-form-item label="电视剧简介" path="dramaDescription">
-          <n-input v-model:value="dramaForm.dramaDescription" type="textarea" :rows="4" placeholder="请输入电视剧简介" />
+        <n-form-item label="排序" path="sortOrder">
+          <n-input-number v-model:value="bannerForm.sortOrder" placeholder="请输入排序值" :min="0" style="width: 100%;" />
         </n-form-item>
-        <n-form-item label="演员名单" path="cast">
-          <n-input v-model:value="dramaForm.cast" type="textarea" :rows="3" placeholder="请输入演员名单，多个演员用逗号分隔" />
-        </n-form-item>
-        <n-form-item label="拍摄地" path="shootLocation">
-          <n-input v-model:value="dramaForm.shootLocation" placeholder="请输入拍摄地" />
-        </n-form-item>
-        <n-form-item label="协拍服务" path="service">
-          <n-input v-model:value="dramaForm.service" type="textarea" :rows="3" placeholder="请输入协拍服务描述" />
+        <n-form-item label="状态" path="status">
+          <n-switch v-model:value="statusSwitch" :checked-value="1" :unchecked-value="0">
+            <template #checked>启用</template>
+            <template #unchecked>禁用</template>
+          </n-switch>
         </n-form-item>
       </n-form>
       <template #action>
@@ -166,7 +181,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, h, onMounted, onUnmounted, computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   NCard,
@@ -174,17 +189,66 @@ import {
   NForm,
   NFormItem,
   NInput,
+  NInputNumber,
   NDataTable,
   NPopconfirm,
   NModal,
   NImage,
-
-  useMessage
+  NSpin,
+  NPagination,
+  NTag,
+  NSwitch,
+  NUpload,
+  useMessage,
+  useDialog
 } from 'naive-ui'
-import { getDramaPage, addDrama, updateDrama, deleteDrama, getDramaById } from '@/api'
+import request from '@/utils/request'
+// Banner相关API函数
+const getBannerPage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/banner/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
+  })
+}
+
+const getBannerById = (id) => {
+  return request({
+    url: `/banner/admin/${id}`,
+    method: 'get'
+  })
+}
+
+const createBanner = (data) => {
+  return request({
+    url: '/banner/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+const updateBanner = (id, data) => {
+  return request({
+    url: `/banner/admin/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+const deleteBanner = (id) => {
+  return request({
+    url: `/banner/admin/${id}`,
+    method: 'delete'
+  })
+}
 import dayjs from 'dayjs'
 
 const message = useMessage()
+const dialog = useDialog()
 
 const isMobile = ref(false)
 const loading = ref(false)
@@ -194,26 +258,32 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
 
-const dramaList = ref([])
+const bannerList = ref([])
 const dialogVisible = ref(false)
 const dialogLoading = ref(false)
-const dialogTitle = ref('新增电视剧')
+const dialogTitle = ref('新增Banner')
 const formRef = ref(null)
+const fileList = ref([])
 
 const searchForm = reactive({
   keyword: ''
 })
 
-const dramaForm = reactive({
+const bannerForm = reactive({
   id: null,
-  name: '',
-  filingNum: '',
-  prodCompany: '',
-  crewDescription: '',
-  dramaDescription: '',
-  cast: '',
-  shootLocation: '',
-  service: ''
+  title: '',
+  link: '',
+  imageUrl: '',
+  description: '',
+  sortOrder: 0,
+  status: 1
+})
+
+const statusSwitch = computed({
+  get: () => bannerForm.status === 1,
+  set: (val) => {
+    bannerForm.status = val ? 1 : 0
+  }
 })
 
 const pagination = reactive({
@@ -225,38 +295,57 @@ const pagination = reactive({
 })
 
 const formRules = {
-  name: [
-    { required: true, message: '请输入电视剧名称', trigger: 'blur' },
-    { min: 1, max: 100, message: '电视剧名称长度在 1 到 100 个字符', trigger: 'blur' }
+  title: [
+    { required: true, message: '请输入Banner标题', trigger: 'blur' },
+    { min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur' }
   ],
-  prodCompany: [
-    { required: true, message: '请输入出品公司', trigger: 'blur' },
-    { min: 1, max: 100, message: '出品公司长度在 1 到 100 个字符', trigger: 'blur' }
+  imageUrl: [
+    { required: true, message: '请上传图片', trigger: 'blur' }
   ]
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
-  { title: '剧名', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
-  { title: '备案号', key: 'filingNum', width: 180, ellipsis: { tooltip: true } },
-  { title: '出品公司', key: 'prodCompany', width: 150, ellipsis: { tooltip: true } },
-  { title: '剧组简介', key: 'crewDescription', width: 200, ellipsis: { tooltip: true } },
-  { title: '剧集简介', key: 'dramaDescription', width: 200, ellipsis: { tooltip: true } },
-  { title: '演员', key: 'cast', width: 150, ellipsis: { tooltip: true } },
-  { title: '拍摄地', key: 'shootLocation', width: 120 },
-  { title: '协拍服务', key: 'service', width: 150, ellipsis: { tooltip: true } },
-  { 
-    title: '封面图', 
-    key: 'cover', 
+  { title: 'ID', key: 'id', width: 80 },
+  {
+      title: '图片',
+      key: 'imageUrl',
+      width: 120,
+      render: (row) => {
+        // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
+        const thumbnailUrl = row.thumbUrl;
+        // 获取原图URL用于预览
+        const originalUrl = row.imageUrl || '';
+        
+        return h(NImage, {
+          width: 80,
+          height: 50,
+          src: thumbnailUrl || originalUrl, // 显示压缩后的图片
+          objectFit: 'cover',
+          previewDisabled: false, // 启用预览功能
+          showToolbar: false,
+          fallbackSrc: '/placeholder.jpg',
+          // 配置预览功能，点击时显示原图
+          srcset: [
+            {
+              src: originalUrl,
+              alt: 'Banner图片'
+            }
+          ]
+        })
+      }
+    },
+  { title: '标题', key: 'title', width: 200, ellipsis: { tooltip: true } },
+  { title: '链接', key: 'link', width: 200, ellipsis: { tooltip: true } },
+  { title: '排序', key: 'sortOrder', width: 80 },
+  {
+    title: '状态',
+    key: 'status',
     width: 100,
     render: (row) => {
-      if (!row.cover) return '-'
-      return h(NImage, {
-        width: 60,
-        height: 45,
-        src: row.cover,
-        objectFit: 'cover',
-        style: { borderRadius: '4px' }
+      return h(NTag, {
+        type: row.status === 1 ? 'success' : 'error'
+      }, {
+        default: () => row.status === 1 ? '启用' : '禁用'
       })
     }
   },
@@ -274,7 +363,7 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 150,
+    width: 180,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [
@@ -304,14 +393,14 @@ onUnmounted(() => {
 const loadData = async () => {
   try {
     loading.value = true
-    const res = await getDramaPage(pagination.page, pagination.pageSize, searchForm.keyword)
+    const res = await getBannerPage(pagination.page, pagination.pageSize, searchForm.keyword)
     if (res.code === 200) {
-      dramaList.value = res.data || []
-      pagination.itemCount = res.pagination?.totalItems || 0
+      bannerList.value = res.data || []
+      pagination.itemCount = res.total || 0
     }
   } catch (error) {
-    console.error('加载电视剧列表失败:', error)
-    message.error('加载电视剧列表失败')
+    console.error('加载Banner列表失败:', error)
+    message.error('加载Banner列表失败')
   } finally {
     loading.value = false
   }
@@ -340,43 +429,83 @@ const handlePageSizeChange = (pageSize) => {
 }
 
 const handleAdd = () => {
-  dialogTitle.value = '新增电视剧'
-  Object.assign(dramaForm, {
+  dialogTitle.value = '新增Banner'
+  Object.assign(bannerForm, {
     id: null,
-    name: '',
-    filingNum: '',
-    prodCompany: '',
-    crewDescription: '',
-    dramaDescription: '',
-    cast: '',
-    shootLocation: '',
-    service: ''
+    title: '',
+    link: '',
+    imageUrl: '',
+    description: '',
+    sortOrder: 0,
+    status: 1
   })
+  fileList.value = []
   dialogVisible.value = true
 }
 
 const handleEdit = async (row) => {
   try {
-    const res = await getDramaById(row.id)
+    const res = await getBannerById(row.id)
     if (res.code === 200 && res.data) {
-      dialogTitle.value = '编辑电视剧'
-      Object.assign(dramaForm, {
+      dialogTitle.value = '编辑Banner'
+      Object.assign(bannerForm, {
         id: res.data.id,
-        name: res.data.name || '',
-        filingNum: res.data.filingNum || '',
-        prodCompany: res.data.prodCompany || '',
-        crewDescription: res.data.crewDescription || '',
-        dramaDescription: res.data.dramaDescription || '',
-        cast: res.data.cast || '',
-        shootLocation: res.data.shootLocation || '',
-        service: res.data.service || ''
+        title: res.data.title || '',
+        link: res.data.link || '',
+        imageUrl: res.data.imageUrl || '',
+        description: res.data.description || '',
+        sortOrder: res.data.sortOrder || 0,
+        status: res.data.status || 1
       })
+      
+      // 设置文件列表
+      if (res.data.imageUrl) {
+        fileList.value = [{
+          id: '1',
+          name: 'banner.jpg',
+          status: 'finished',
+          url: res.data.imageUrl
+        }]
+      } else {
+        fileList.value = []
+      }
+      
       dialogVisible.value = true
     }
   } catch (error) {
-    console.error('获取电视剧详情失败:', error)
-    message.error('获取电视剧详情失败')
+    console.error('获取Banner详情失败:', error)
+    message.error('获取Banner详情失败')
   }
+}
+
+const handleFileListChange = (files) => {
+  fileList.value = files
+}
+
+const handleUploadFinish = ({ file, event }) => {
+  if (event?.target?.response) {
+    try {
+      const res = JSON.parse(event.target.response)
+      if (res.code === 200) {
+        bannerForm.imageUrl = res.data.url
+      } else {
+        message.error('上传失败：' + res.message)
+      }
+    } catch (error) {
+      message.error('上传响应解析失败')
+    }
+  }
+}
+
+const handleUpload = ({ file, onFinish, onError }) => {
+  const formData = new FormData()
+  formData.append('file', file.file)
+  
+  // 这里应该调用上传API，暂时模拟
+  setTimeout(() => {
+    bannerForm.imageUrl = URL.createObjectURL(file.file)
+    onFinish()
+  }, 1000)
 }
 
 const handleDialogSave = async () => {
@@ -390,25 +519,23 @@ const handleDialogSave = async () => {
   try {
     dialogLoading.value = true
     const data = {
-      name: dramaForm.name,
-      filingNum: dramaForm.filingNum,
-      prodCompany: dramaForm.prodCompany,
-      crewDescription: dramaForm.crewDescription,
-      dramaDescription: dramaForm.dramaDescription,
-      cast: dramaForm.cast,
-      shootLocation: dramaForm.shootLocation,
-      service: dramaForm.service
+      title: bannerForm.title,
+      link: bannerForm.link,
+      imageUrl: bannerForm.imageUrl,
+      description: bannerForm.description,
+      sortOrder: bannerForm.sortOrder,
+      status: bannerForm.status
     }
     
     let res
-    if (dramaForm.id) {
-      res = await updateDrama({ ...data, id: dramaForm.id })
+    if (bannerForm.id) {
+      res = await updateBanner(bannerForm.id, data)
     } else {
-      res = await addDrama(data)
+      res = await createBanner(data)
     }
     
     if (res.code === 200) {
-      message.success(dramaForm.id ? '更新成功' : '创建成功')
+      message.success(bannerForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
       loadData()
     }
@@ -422,7 +549,7 @@ const handleDialogSave = async () => {
 
 const handleDelete = async (id) => {
   try {
-    const res = await deleteDrama(id)
+    const res = await deleteBanner(id)
     if (res.code === 200) {
       message.success('删除成功')
       loadData()
@@ -435,7 +562,7 @@ const handleDelete = async (id) => {
 </script>
 
 <style scoped lang="scss">
-.drama-management {
+.banner-management {
   animation: fadeIn 0.3s ease;
 }
 
@@ -489,38 +616,44 @@ const handleDelete = async (id) => {
       align-items: flex-start;
       margin-bottom: 12px;
       
-      .drama-info {
-        flex: 1;
-        margin-right: 12px;
-        
-        .drama-name {
-          font-size: 16px;
-          font-weight: 600;
-          color: #1f2937;
-          margin: 0 0 4px 0;
+      .banner-info {
+          flex: 1;
+          margin-right: 12px;
+          
+          .banner-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0 0 4px 0;
+          }
+          
+          .banner-link {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0;
+            word-break: break-all;
+          }
         }
         
-        .drama-company {
-          font-size: 14px;
-          color: #6b7280;
-          margin: 0;
+        .banner-image {
+          flex-shrink: 0;
+          
+          .no-image {
+            width: 80px;
+            height: 60px;
+            background: #f3f4f6;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+          }
+          
+          // 针对图片添加点击放大功能
+          .n-image {
+            cursor: zoom-in;
+          }
         }
-      }
-      
-      .drama-cover {
-        flex-shrink: 0;
-        
-        .no-cover {
-          width: 80px;
-          height: 60px;
-          background: #f3f4f6;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #9ca3af;
-        }
-      }
     }
     
     .card-content {
@@ -540,13 +673,6 @@ const handleDelete = async (id) => {
           color: #6b7280;
           min-width: 60px;
           flex-shrink: 0;
-        }
-        
-        .cast-info {
-          color: #374151;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
         }
       }
     }
@@ -620,7 +746,8 @@ const handleDelete = async (id) => {
       }
       
       .n-input,
-      .n-select {
+      .n-select,
+      .n-input-number {
         width: 100%;
       }
     }

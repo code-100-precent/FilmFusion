@@ -7,11 +7,6 @@
 
     <!-- 内容区域 -->
     <scroll-view class="content" scroll-y @scrolltolower="loadMore" :refresher-enabled="true" :refresher-triggered="refreshing" @refresherrefresh="handleRefresh">
-      <!-- 页面标题 -->
-      <view class="page-title">
-        <text class="title-text">跟着影视游</text>
-      </view>
-
       <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
@@ -86,68 +81,50 @@ export default {
       loading: false,
       refreshing: false,
       hasMore: true,
-      currentPage: 1,
-      pageSize: 10,
-      totalPages: 0,
-      defaultCover: 'https://picsum.photos/400/200?random=default'
+      nextCursor: null, // 游标分页
+      defaultCover: 'https://via.placeholder.com/400x200?text=Tour+Route'
     }
   },
   onLoad() {
     this.loadData()
   },
   methods: {
-    async loadData() {
+    async loadData(reset = false) {
       if (this.loading) return
       
+      if (reset) {
+        this.routes = []
+        this.nextCursor = null
+        this.hasMore = true
+      }
+
       this.loading = true
       try {
-        console.log('开始加载旅游线路，参数:', {
-          currentPage: this.currentPage,
-          pageSize: this.pageSize,
-          keyword: this.keyword
+        const res = await getTourPage({
+          cursor: reset ? null : this.nextCursor,
+          size: 10,
+          keyword: this.keyword || undefined
         })
-        
-        // 模拟数据，用于开发测试和API调用失败时的备用
-        const mockData = [
-          {
-            id: 1,
-            name: '北京五日游',
-            description: '游览故宫、长城、颐和园等著名景点',
-            theme: '文化之旅',
-            cover: 'https://picsum.photos/400/200?random=1',
-            price: 1999,
-            duration: '5天4晚',
-            status: 1
-          },
-          {
-            id: 2,
-            name: '上海迪士尼乐园',
-            description: '畅玩上海迪士尼乐园，感受童话世界',
-            theme: '亲子游',
-            cover: 'https://picsum.photos/400/200?random=2',
-            price: 2599,
-            duration: '3天2晚',
-            status: 1
-          },
-          {
-            id: 3,
-            name: '张家界自然风光',
-            description: '欣赏张家界独特的喀斯特地貌',
-            theme: '自然探索',
-            cover: 'https://picsum.photos/400/200?random=3',
-            price: 2299,
-            duration: '4天3晚',
-            status: 1
-          },
-          {
-            id: 4,
-            name: '三亚阳光海岸',
-            description: '享受阳光沙滩，体验海岛度假',
-            theme: '海滩度假',
-            cover: 'https://picsum.photos/400/200?random=4',
-            price: 2899,
-            duration: '5天4晚',
-            status: 1
+
+        // 处理游标分页响应
+        if (res && res.records) {
+          const newRoutes = res.records.map(item => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            theme: item.theme,
+            features: item.features,
+            cover: item.cover,
+            transport: item.transport,
+            hotel: item.hotel,
+            food: item.food,
+            image: item.image
+          }))
+
+          if (reset) {
+            this.routes = newRoutes
+          } else {
+            this.routes = [...this.routes, ...newRoutes]
           }
         ]
         
@@ -158,58 +135,13 @@ export default {
             keyword: this.keyword || undefined
           })
 
-          console.log('API响应:', JSON.stringify(res))
-          
-          if (res.code === 200 && res.data && res.data.length > 0) {
-            const newRoutes = res.data.map(item => ({
-              id: item.id,
-              name: item.name,
-              description: item.description || '',
-              theme: item.theme,
-              features: item.features,
-              cover: item.cover || item.imageUrl || this.defaultCover,
-              transport: item.transport,
-              hotel: item.hotel,
-              food: item.food,
-              image: item.image,
-              price: item.price,
-              duration: item.duration,
-              status: item.status,
-              imageUrl: item.imageUrl
-            }))
-
-            console.log('解析后的数据:', newRoutes)
-            
-            if (this.currentPage === 1) {
-              this.routes = newRoutes
-            } else {
-              this.routes = [...this.routes, ...newRoutes]
-            }
-
-            // Update pagination info
-            if (res.pagination) {
-              this.totalPages = res.pagination.totalPages
-              this.hasMore = this.currentPage < this.totalPages
-            } else {
-              this.hasMore = newRoutes.length >= this.pageSize
-            }
-            
-            console.log('加载完成，当前数据量:', this.routes.length)
-          } else {
-            console.warn('API返回数据为空或错误，使用模拟数据')
-            // API返回空数据或错误，使用模拟数据
-            if (this.currentPage === 1) {
-              this.routes = mockData
-            }
-            this.hasMore = false
-          }
-        } catch (apiError) {
-          console.error('API调用失败，使用模拟数据:', apiError.message)
-          // API调用失败，使用模拟数据
-          if (this.currentPage === 1) {
-            this.routes = mockData
-          }
-          this.hasMore = false
+          this.nextCursor = res.nextCursor
+          this.hasMore = res.hasMore || false
+        } else {
+          uni.showToast({
+            title: res.message || '加载失败',
+            icon: 'none'
+          })
         }
       } catch (error) {
         console.error('加载线路失败:', error)
@@ -223,20 +155,15 @@ export default {
       }
     },
     handleSearch() {
-      this.currentPage = 1
-      this.routes = []
-      this.loadData()
+      this.loadData(true)
     },
     async handleRefresh() {
       this.refreshing = true
-      this.currentPage = 1
-      this.routes = []
-      await this.loadData()
+      await this.loadData(true)
       this.refreshing = false
     },
     loadMore() {
       if (!this.hasMore || this.loading) return
-      this.currentPage++
       this.loadData()
     },
     goToDetail(id) {

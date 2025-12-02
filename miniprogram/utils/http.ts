@@ -3,7 +3,7 @@
  * 需要配置 baseURL
  */
 // 根据环境配置API地址
-export const baseURL = process.env.NODE_ENV === 'development' 
+export const baseURL = process.env.NODE_ENV === 'development'
   ? 'http://10.120.4.241:8080/api'  // 开发环境
   : 'https://your-production-domain.com/api'  // 生产环境，请替换为实际域名
 
@@ -12,14 +12,14 @@ const requestInterceptor = {
   // 拦截前触发
   invoke(options: UniApp.RequestOptions) {
     console.log('请求拦截器触发:', options.url)
-    
+
     // 1. 非 http 开头需拼接地址
     if (!options.url.startsWith('http')) {
       options.url = baseURL + options.url
     }
-    
+
     console.log('最终请求URL:', options.url)
-    
+
     // 2. 请求超时, 默认 10s，但不覆盖已设置的值
     if (!options.timeout) {
       options.timeout = 10000
@@ -37,7 +37,7 @@ const requestInterceptor = {
         'Authorization': `Bearer ${token}`
       }
     }
-    
+
     console.log('请求头:', options.header)
   },
 }
@@ -85,13 +85,13 @@ export const http = <T>(options: UniApp.RequestOptions) => {
         url += (url.includes('?') ? '&' : '?') + params.join('&')
       }
     }
-    
+
     console.log('HTTP请求:', {
       url: url,
       method: options.method,
       data: options.data
     })
-    
+
     uni.request({
       ...options,
       url: url,
@@ -104,15 +104,18 @@ export const http = <T>(options: UniApp.RequestOptions) => {
           statusCode: res.statusCode,
           data: res.data
         })
-        
+
         // 状态码 2xx
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const responseData = res.data as Data<T>
           // 检查业务状态码
-          if (responseData.code === 200) {
+          // 兼容两种格式：
+          // 1. 标准格式: { code: 200, data: ... }
+          // 2. 直接返回数据格式(如游标分页): { records: ..., nextCursor: ... } (无code字段)
+          if (responseData.code === 200 || responseData.code === undefined) {
             resolve(responseData)
           } else {
-            // 业务错误
+            // 业务错误 (只有明确 code !== 200 时才视为错误)
             uni.showToast({
               icon: 'none',
               title: responseData.message || '请求失败',

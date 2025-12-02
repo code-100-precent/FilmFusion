@@ -3,10 +3,6 @@
     <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y>
-      <!-- 页面标题 -->
-      <view class="page-title">
-        <text class="title-text">{{ reportId ? '编辑报备' : '剧组报备' }}</text>
-      </view>
       <!-- 说明卡片 -->
       <view class="intro-card">
         <view class="intro-title">在线剧组报备</view>
@@ -178,7 +174,7 @@
           <view class="form-item">
             <text class="label required">影视拍摄许可证</text>
             <view class="upload-area" @click="uploadFile('permit')">
-              <view v-if="!form.files.permit" class="upload-placeholder">
+              <view v-if="!form.shootPermit" class="upload-placeholder">
                 <uni-icons type="upload" size="24" color="#6366f1"></uni-icons>
                 <text>点击上传</text>
               </view>
@@ -195,7 +191,7 @@
           <view class="form-item">
             <text class="label required">立项审批文件</text>
             <view class="upload-area" @click="uploadFile('approval')">
-              <view v-if="!form.files.approval" class="upload-placeholder">
+              <view v-if="!form.approvalFile" class="upload-placeholder">
                 <uni-icons type="upload" size="24" color="#6366f1"></uni-icons>
                 <text>点击上传</text>
               </view>
@@ -212,7 +208,7 @@
           <view class="form-item">
             <text class="label">协拍服务申请表</text>
             <view class="upload-area" @click="uploadFile('application')">
-              <view v-if="!form.files.application" class="upload-placeholder">
+              <view v-if="!form.shootApply" class="upload-placeholder">
                 <uni-icons type="upload" size="24" color="#6366f1"></uni-icons>
                 <text>点击上传</text>
               </view>
@@ -279,11 +275,13 @@ export default {
         contact: '',
         phoneNumber: '',
         crewPosition: '',
-        files: {
-          permit: '',
-          approval: '',
-          application: ''
-        }
+        // 使用后端期望的字段名
+        shootPermit: '',
+        thumbShootPermit: '',
+        approvalFile: '',
+        thumbApprovalFile: '',
+        shootApply: '',
+        thumbShootApply: ''
       }
     }
   },
@@ -305,8 +303,8 @@ export default {
         this.form.contact &&
         this.form.phoneNumber &&
         this.form.crewPosition &&
-        this.form.files.permit &&
-        this.form.files.approval
+        this.form.shootPermit &&
+        this.form.approvalFile
       )
     }
   },
@@ -355,11 +353,13 @@ export default {
             contact: reportData.contact || '',
             phoneNumber: reportData.phoneNumber || '',
             crewPosition: reportData.crewPosition || '',
-            files: reportData.files || {
-              permit: '',
-              approval: '',
-              application: ''
-            }
+            // 使用后端返回的字段名
+            shootPermit: reportData.shootPermit || '',
+            thumbShootPermit: reportData.thumbShootPermit || '',
+            approvalFile: reportData.approvalFile || '',
+            thumbApprovalFile: reportData.thumbApprovalFile || '',
+            shootApply: reportData.shootApply || '',
+            thumbShootApply: reportData.thumbShootApply || ''
           }
           
           // 设置选项索引
@@ -462,7 +462,17 @@ export default {
                 if (isSuccess) {
                 // 新的响应格式：data直接是文件名
                 const fileUrl = response.data
-                this.form.files[field] = fileUrl
+                // 根据field类型设置对应的后端字段
+                if (field === 'permit') {
+                  this.form.shootPermit = fileUrl
+                  this.form.thumbShootPermit = fileUrl
+                } else if (field === 'approval') {
+                  this.form.approvalFile = fileUrl
+                  this.form.thumbApprovalFile = fileUrl
+                } else if (field === 'application') {
+                  this.form.shootApply = fileUrl
+                  this.form.thumbShootApply = fileUrl
+                }
                 
                 console.log(`6. 文件上传成功，文件名:`, fileUrl)
                 console.log(`6.1 文件存储路径:`, fileUrl)
@@ -544,7 +554,17 @@ export default {
         content: '确定要移除该文件吗？',
         success: (res) => {
           if (res.confirm) {
-            this.form.files[field] = ''
+            // 根据field类型清空对应的后端字段
+            if (field === 'permit') {
+              this.form.shootPermit = ''
+              this.form.thumbShootPermit = ''
+            } else if (field === 'approval') {
+              this.form.approvalFile = ''
+              this.form.thumbApprovalFile = ''
+            } else if (field === 'application') {
+              this.form.shootApply = ''
+              this.form.thumbShootApply = ''
+            }
             uni.showToast({ 
               title: '文件已移除', 
               icon: 'success',
@@ -587,14 +607,14 @@ export default {
       }
 
       // 验证文件上传
-      if (!this.form.files.permit || !this.form.files.approval) {
+      if (!this.form.shootPermit || !this.form.approvalFile) {
         uni.showToast({ title: '请上传必要的文件材料', icon: 'none' })
         return
       }
 
       this.submitting = true
       try {
-        // 准备提交数据，调整文件字段命名以匹配后端API要求
+        // 准备提交数据，使用后端期望的字段名
       const reportData = {
         name: this.form.name,
         type: this.form.type,
@@ -610,16 +630,14 @@ export default {
         contact: this.form.contact,
         phoneNumber: this.form.phoneNumber,
         crewPosition: this.form.crewPosition,
-        status: this.reportId ? undefined : '未处理', // 新增报备设置为'未处理'，编辑时保持原状态
-        // 兼容两种可能的文件字段格式
-        files: {
-          permit: this.form.files.permit,
-          approval: this.form.files.approval,
-          application: this.form.files.application
-        },
-        permitFilePath: this.form.files.permit,
-        approvalFilePath: this.form.files.approval,
-        applicationFilePath: this.form.files.application
+        status: this.reportId ? undefined : 'PENDING', // 新增报备设置为'PENDING'，编辑时保持原状态
+        // 使用后端期望的字段名
+        shootPermit: this.form.shootPermit,
+        thumbShootPermit: this.form.thumbShootPermit,
+        approvalFile: this.form.approvalFile,
+        thumbApprovalFile: this.form.thumbApprovalFile,
+        shootApply: this.form.shootApply || '',
+        thumbShootApply: this.form.thumbShootApply || ''
       }
         
         console.log('提交数据:', reportData)
@@ -687,11 +705,13 @@ export default {
         contact: '',
         phoneNumber: '',
         crewPosition: '',
-        files: {
-          permit: '',
-          approval: '',
-          application: ''
-        }
+        // 使用后端期望的字段名
+        shootPermit: '',
+        thumbShootPermit: '',
+        approvalFile: '',
+        thumbApprovalFile: '',
+        shootApply: '',
+        thumbShootApply: ''
       }
       this.typeIndex = -1
       this.genreIndex = -1

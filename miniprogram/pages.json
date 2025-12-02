@@ -113,6 +113,13 @@
 			}
 		},
 		{
+			"path": "pages/hotel/detail",
+			"style": {
+				"navigationBarTitleText": "住宿详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/profile/reports",
 			"style": {
 				"navigationBarTitleText": "我的报备",

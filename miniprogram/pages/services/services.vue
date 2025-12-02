@@ -6,10 +6,6 @@
     <NavBar :show-back="false"></NavBar>
 
     <view class="content">
-      <!-- 页面标题 -->
-      <view class="page-title">
-        <text class="title-text">协拍服务</text>
-      </view>
       <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
@@ -134,9 +130,8 @@ export default {
         '其他服务'
       ],
       shoots: [],
-      current: 1,
-      size: 10,
-      total: 0,
+      shoots: [],
+      nextCursor: null, // 游标分页
       loading: false,
       refreshing: false,
       hasMore: true
@@ -150,32 +145,31 @@ export default {
       if (this.loading) return
 
       if (reset) {
-        this.current = 1
         this.shoots = []
+        this.nextCursor = null
         this.hasMore = true
       }
 
       this.loading = true
       try {
         const res = await getShootPage({
-          current: this.current,
-          size: this.size,
+          cursor: reset ? null : this.nextCursor,
+          size: 10,
           keyword: this.keyword || undefined,
           type: this.selectedCategory !== '全部' ? this.selectedCategory : undefined
         })
 
-        if (res.code === 200) {
-          // 后端返回格式: { code: 200, message: string, data: [], pagination: {...} }
-          const dataList = Array.isArray(res.data) ? res.data : []
-          const pagination = res.pagination || {}
+        // 处理游标分页响应
+        if (res && res.records) {
+          const dataList = Array.isArray(res.records) ? res.records : []
           
           if (reset) {
             this.shoots = dataList
           } else {
             this.shoots = [...this.shoots, ...dataList]
           }
-          this.total = pagination.totalItems || 0
-          this.hasMore = this.shoots.length < this.total
+          this.nextCursor = res.nextCursor
+          this.hasMore = res.hasMore || false
         }
       } catch (error) {
         console.error('加载服务失败:', error)
@@ -201,7 +195,6 @@ export default {
     },
     loadMore() {
       if (!this.hasMore || this.loading) return
-      this.current++
       this.loadShoots()
     },
     goToDetail(id) {

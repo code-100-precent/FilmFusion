@@ -86,12 +86,7 @@
               </view>
             </view>
             
-            <view class="info-group" v-if="selectedReport.description">
-              <text class="group-title">作品简介</text>
-              <text class="description">{{ selectedReport.description }}</text>
-            </view>
-            
-            <view class="info-group" v-if="selectedReport.startDate">
+            <view class="info-group">
               <text class="group-title">拍摄计划</text>
               <view class="info-item">
                 <text class="info-label">预计开始：</text>
@@ -103,15 +98,15 @@
               </view>
             </view>
             
-            <view class="info-group" v-if="selectedReport.contactName || selectedReport.contactPhone">
+            <view class="info-group">
               <text class="group-title">联系人信息</text>
-              <view class="info-item" v-if="selectedReport.contactName">
+              <view class="info-item">
                 <text class="info-label">联系人：</text>
-                <text class="info-value">{{ selectedReport.contactName }}</text>
+                <text class="info-value">{{ selectedReport.contact }}</text>
               </view>
-              <view class="info-item" v-if="selectedReport.contactPhone">
+              <view class="info-item">
                 <text class="info-label">联系电话：</text>
-                <text class="info-value">{{ selectedReport.contactPhone }}</text>
+                <text class="info-value">{{ selectedReport.phoneNumber }}</text>
               </view>
             </view>
             
@@ -124,10 +119,6 @@
               <view class="info-item" v-if="selectedReport.updatedAt">
                 <text class="info-label">更新时间：</text>
                 <text class="info-value">{{ formatDateTime(selectedReport.updatedAt) }}</text>
-              </view>
-              <view class="info-item" v-if="selectedReport.auditRemark">
-                <text class="info-label">审核意见：</text>
-                <text class="info-value">{{ selectedReport.auditRemark }}</text>
               </view>
             </view>
           </view>

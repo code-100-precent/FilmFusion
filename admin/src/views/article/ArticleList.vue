@@ -34,6 +34,7 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
+        :scroll-x="1500"
       />
     </n-card>
     
@@ -47,6 +48,18 @@
         </n-form-item>
         <n-form-item label="文章内容" path="content">
           <n-input v-model:value="articleForm.content" type="textarea" :rows="10" placeholder="请输入文章内容" />
+        </n-form-item>
+        <n-form-item label="封面图片" path="cover">
+          <n-input v-model:value="articleForm.cover" placeholder="请输入封面图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略封面" path="thumbCover">
+          <n-input v-model:value="articleForm.thumbCover" placeholder="请输入缩略封面URL" />
+        </n-form-item>
+        <n-form-item label="详情图片" path="image">
+          <n-input v-model:value="articleForm.image" placeholder="请输入详情图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略详情图" path="thumbImage">
+          <n-input v-model:value="articleForm.thumbImage" placeholder="请输入缩略详情图URL" />
         </n-form-item>
       </n-form>
       <template #action>
@@ -71,7 +84,8 @@ import {
   NModal,
   NDatePicker,
   useMessage,
-  useDialog
+  useDialog,
+  NImage
 } from 'naive-ui'
 import { getArticlePage, addArticle, updateArticle, deleteArticle, getArticleById } from '@/api'
 import dayjs from 'dayjs'
@@ -94,7 +108,11 @@ const articleForm = reactive({
   id: null,
   title: '',
   issueUnit: '',
-  content: ''
+  content: '',
+  cover: '',
+  image: '',
+  thumbCover: '',
+  thumbImage: ''
 })
 
 const pagination = reactive({
@@ -112,9 +130,25 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '文章标题', key: 'title', ellipsis: { tooltip: true } },
-  { title: '发布单位', key: 'issueUnit', width: 150 },
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '文章标题', key: 'title', width: 200, ellipsis: { tooltip: true }, fixed: 'left' },
+  {
+    title: '封面',
+    key: 'cover',
+    width: 100,
+    render: (row) => {
+      if (!row.cover) return '-'
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.cover,
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
+    }
+  },
+  { title: '发布单位', key: 'issueUnit', width: 150, ellipsis: { tooltip: true } },
+  { title: '文章内容', key: 'content', width: 300, ellipsis: { tooltip: true } },
   {
     title: '发布时间',
     key: 'issueTime',
@@ -129,7 +163,7 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 150,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [
@@ -194,7 +228,11 @@ const handleAdd = () => {
     id: null,
     title: '',
     issueUnit: '',
-    content: ''
+    content: '',
+    cover: '',
+    image: '',
+    thumbCover: '',
+    thumbImage: ''
   })
   dialogVisible.value = true
 }
@@ -208,7 +246,11 @@ const handleEdit = async (row) => {
         id: res.data.id,
         title: res.data.title,
         issueUnit: res.data.issueUnit,
-        content: res.data.content
+        content: res.data.content,
+        cover: res.data.cover,
+        image: res.data.image,
+        thumbCover: res.data.thumbCover,
+        thumbImage: res.data.thumbImage
       })
       dialogVisible.value = true
     }
@@ -230,7 +272,11 @@ const handleDialogSave = async () => {
     const data = {
       title: articleForm.title,
       issueUnit: articleForm.issueUnit,
-      content: articleForm.content
+      content: articleForm.content,
+      cover: articleForm.cover,
+      image: articleForm.image,
+      thumbCover: articleForm.thumbCover,
+      thumbImage: articleForm.thumbImage
     }
     
     let res

@@ -36,7 +36,7 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
-        :scroll-x="1400"
+        :scroll-x="1800"
       />
       
       <!-- 移动端卡片列表 -->
@@ -199,8 +199,6 @@ import {
   NPopconfirm,
   NModal,
   NImage,
-  NSpin,
-  NPagination,
   useMessage
 } from 'naive-ui'
 import { getServicePage, addService, updateService, deleteService, getServiceById } from '@/api'
@@ -260,61 +258,41 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  {
-    title: '封面',
-    key: 'cover',
-    width: 100,
-    render: (row) => {
-      // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
-      const imgUrl = row.thumbUrl || row.cover;
-      // 获取原图URL用于预览
-      const originalUrl = row.cover || imgUrl;
-      
-      return h(NImage, {
-        width: 60,
-        height: 45,
-        src: imgUrl, // 显示压缩后的图片
-        objectFit: 'cover',
-        previewDisabled: false, // 启用预览功能
-        // 配置预览功能，点击时显示原图
-        srcset: [
-          {
-            src: originalUrl, // 预览时显示未压缩的原图
-            alt: '服务封面图片'
-          }
-        ],
-        fallbackSrc: '/placeholder.jpg'
-      })
-    }
-  },
-  { title: '服务名称', key: 'name', width: 180, ellipsis: { tooltip: true } },
-  {
-    title: '价格',
-    key: 'price',
-    width: 100,
-    render: (row) => {
-      return row.price ? '¥' + row.price : '-'
-    }
-  },
-  { title: '服务地址', key: 'address', width: 180, ellipsis: { tooltip: true } },
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '服务名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+  { title: '服务描述', key: 'description', width: 250, ellipsis: { tooltip: true } },
+  { title: '价格', key: 'price', width: 120, render: (row) => `¥${row.price || 0}` },
+  { title: '服务地址', key: 'address', width: 200, ellipsis: { tooltip: true } },
+  { title: '联系电话', key: 'phone', width: 130 },
+  { title: '联系人', key: 'contactName', width: 100 },
   {
     title: '状态',
     key: 'status',
     width: 100,
     render: (row) => {
-      return h('span', {
-        class: row.status ? 'status-available' : 'status-unavailable'
-      }, row.status ? '上线' : '下线')
+      const isActive = row.status === true || row.status === 1
+      return h(NTag, { 
+        type: isActive ? 'success' : 'error', 
+        size: 'small' 
+      }, { 
+        default: () => isActive ? '可用' : '不可用' 
+      })
     }
   },
-  { title: '联系人', key: 'contactName', width: 120 },
-  { title: '联系电话', key: 'phone', width: 130 },
-  {
-    title: '服务简介',
-    key: 'description',
-    width: 200,
-    ellipsis: { tooltip: true }
+  { 
+    title: '封面图', 
+    key: 'cover', 
+    width: 100,
+    render: (row) => {
+      if (!row.cover) return '-'
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.cover,
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
+    }
   },
   {
     title: '创建时间',
@@ -330,7 +308,7 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 150,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [
