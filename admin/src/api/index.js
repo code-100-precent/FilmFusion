@@ -808,7 +808,7 @@ export const deletePolicy = (id) => {
  */
 export const getTourRoutePage = (current = 1, size = 10, keyword = '') => {
   return request({
-    url: '/tourroute/admin/page',
+    url: '/tour/admin/page',
     method: 'get',
     params: {
       current,
@@ -823,7 +823,7 @@ export const getTourRoutePage = (current = 1, size = 10, keyword = '') => {
  */
 export const getTourRouteById = (id) => {
   return request({
-    url: `/tourroute/${id}`,
+    url: `/tour/${id}`,
     method: 'get'
   })
 }
@@ -833,7 +833,7 @@ export const getTourRouteById = (id) => {
  */
 export const addTourRoute = (data) => {
   return request({
-    url: '/tourroute/admin/create',
+    url: '/tour/admin/create',
     method: 'post',
     data
   })
@@ -844,7 +844,7 @@ export const addTourRoute = (data) => {
  */
 export const updateTourRoute = (id, data) => {
   return request({
-    url: `/tourroute/admin/update/${id}`,
+    url: `/tour/admin/update/${id}`,
     method: 'put',
     data
   })
@@ -855,7 +855,7 @@ export const updateTourRoute = (id, data) => {
  */
 export const deleteTourRoute = (id) => {
   return request({
-    url: `/tourroute/admin/delete/${id}`,
+    url: `/tour/admin/delete/${id}`,
     method: 'delete'
   })
 }

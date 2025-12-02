@@ -460,8 +460,13 @@ export default {
                 const isSuccess = response.code === 200 || response.code === 0
                 
                 if (isSuccess) {
-                // 新的响应格式：data直接是文件名
-                const fileUrl = response.data
+                // 确保文件URL是字符串格式
+                let fileUrl = response.data
+                if (typeof fileUrl === 'object') {
+                  fileUrl = fileUrl.url || fileUrl.filename || fileUrl.path || JSON.stringify(fileUrl)
+                }
+                fileUrl = String(fileUrl)
+                
                 // 根据field类型设置对应的后端字段
                 if (field === 'permit') {
                   this.form.shootPermit = fileUrl
@@ -518,7 +523,12 @@ export default {
                 duration: 3000
               })
             } finally {
-              uni.hideLoading()
+              // 安全地隐藏loading，避免"toast can't be found"错误
+              try {
+                uni.hideLoading()
+              } catch (e) {
+                console.warn('隐藏loading时出错:', e)
+              }
             }
           } else {
             console.error('3. 文件路径未找到，无法上传')
@@ -614,13 +624,13 @@ export default {
 
       this.submitting = true
       try {
-        // 准备提交数据，使用后端期望的字段名
+        // 准备提交数据，确保数据类型与后端匹配
       const reportData = {
         name: this.form.name,
         type: this.form.type,
         genre: this.form.genre,
-        episodes: this.form.episodes,
-        investAmount: this.form.investAmount,
+        episodes: parseInt(this.form.episodes) || 0,
+        investAmount: parseFloat(this.form.investAmount) || 0,
         mainCreators: this.form.mainCreators,
         leadProducer: this.form.leadProducer,
         producerUnit: this.form.producerUnit,
@@ -631,13 +641,13 @@ export default {
         phoneNumber: this.form.phoneNumber,
         crewPosition: this.form.crewPosition,
         status: this.reportId ? undefined : 'PENDING', // 新增报备设置为'PENDING'，编辑时保持原状态
-        // 使用后端期望的字段名
-        shootPermit: this.form.shootPermit,
-        thumbShootPermit: this.form.thumbShootPermit,
-        approvalFile: this.form.approvalFile,
-        thumbApprovalFile: this.form.thumbApprovalFile,
-        shootApply: this.form.shootApply || '',
-        thumbShootApply: this.form.thumbShootApply || ''
+        // 确保文件字段都是字符串类型
+        shootPermit: this.ensureString(this.form.shootPermit),
+        thumbShootPermit: this.ensureString(this.form.thumbShootPermit),
+        approvalFile: this.ensureString(this.form.approvalFile),
+        thumbApprovalFile: this.ensureString(this.form.thumbApprovalFile),
+        shootApply: this.ensureString(this.form.shootApply),
+        thumbShootApply: this.ensureString(this.form.thumbShootApply)
       }
         
         console.log('提交数据:', reportData)
@@ -688,6 +698,19 @@ export default {
       } finally {
         this.submitting = false
       }
+    },
+    // 确保值为字符串类型
+    ensureString(value) {
+      if (value === null || value === undefined) {
+        return ''
+      }
+      if (typeof value === 'string') {
+        return value
+      }
+      if (typeof value === 'object') {
+        return value.url || value.filename || value.path || JSON.stringify(value)
+      }
+      return String(value)
     },
     resetForm() {
       this.form = {

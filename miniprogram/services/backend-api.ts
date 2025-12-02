@@ -61,14 +61,14 @@ export const getDramaById = (id: number) => {
  * 获取旅游线路列表（分页）
  */
 export const getTourPage = async (params: {
-    current?: number
+    cursor?: string
     size?: number
     keyword?: string
 }) => {
     try {
-        console.log('调用getTourPage API，URL: /tourroute/admin/page, 参数:', params)
-        const result = await http<PageResponse<any>>({
-            url: '/tourroute/admin/page',
+        console.log('调用getTourPage API，URL: /tour/page, 参数:', params)
+        const result = await http<any>({
+            url: '/tour/page',
             method: 'GET',
             data: params
         })
