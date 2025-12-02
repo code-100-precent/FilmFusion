@@ -11,9 +11,7 @@
         <result column="issue_unit" property="issueUnit" />
         <result column="issue_time" property="issueTime" />
         <result column="content" property="content" />
-        <result column="cover" property="cover" />
         <result column="image" property="image" />
-        <result column="thumb_cover" property="thumbCover" />
         <result column="thumb_image" property="thumbImage" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
@@ -27,9 +25,7 @@
             `issue_unit`,
             `issue_time`,
             `content`,
-            `cover`,
             `image`,
-            `thumb_cover`,
             `thumb_image`,
             `created_at`,
             `updated_at`,

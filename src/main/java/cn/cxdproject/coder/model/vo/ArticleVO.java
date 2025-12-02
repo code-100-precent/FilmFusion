@@ -52,11 +52,7 @@ public class ArticleVO {
      */
     private Long userId;
 
-    private String cover;
-
     private String image;
-
-    private String thumbCover;
 
     private String thumbImage;
 

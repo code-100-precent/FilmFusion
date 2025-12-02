@@ -55,22 +55,11 @@ public class Policy extends BaseEntity implements Serializable {
     private String content;
 
     /**
-    * 封面
-    */
-    @TableField("cover")
-    private String cover;
-
-    /**
     * 图片
     */
     @TableField("image")
     private String image;
 
-    /**
-    * 压缩封面
-    */
-    @TableField("thumb_cover")
-    private String thumbCover;
 
     /**
     * 压缩图片

@@ -50,22 +50,10 @@ public class PolicyVO {
     private String content;
 
     /**
-     * 封面
-     */
-
-    private String cover;
-
-    /**
      * 图片
      */
 
     private String image;
-
-    /**
-     * 压缩封面
-     */
-
-    private String thumbCover;
 
     /**
      * 压缩图片

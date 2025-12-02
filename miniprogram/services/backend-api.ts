@@ -60,16 +60,24 @@ export const getDramaById = (id: number) => {
 /**
  * 获取旅游线路列表（分页）
  */
-export const getTourPage = (params: {
+export const getTourPage = async (params: {
     current?: number
     size?: number
     keyword?: string
 }) => {
-    return http<PageResponse<any>>({
-        url: '/tour/page',
-        method: 'GET',
-        data: params
-    })
+    try {
+        console.log('调用getTourPage API，URL: /tourroute/admin/page, 参数:', params)
+        const result = await http<PageResponse<any>>({
+            url: '/tourroute/admin/page',
+            method: 'GET',
+            data: params
+        })
+        console.log('getTourPage API调用成功，结果:', result)
+        return result
+    } catch (error) {
+        console.error('getTourPage API调用失败:', error)
+        throw error
+    }
 }
 
 /**

@@ -46,11 +46,6 @@ public class HotelVO {
     private String managerPhone;
 
     /**
-     * 封面
-     */
-    private String cover;
-
-    /**
      * 图片
      */
     private String image;
@@ -65,8 +60,6 @@ public class HotelVO {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
-
-    private String thumbCover;
 
     private String thumbImage;
 

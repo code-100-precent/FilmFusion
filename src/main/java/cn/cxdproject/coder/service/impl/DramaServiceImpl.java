@@ -53,9 +53,11 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
     public DramaVO createDramaByAdmin(Long userId, CreateDramaDTO createDTO) {
-        if(createDTO.getCover()==null){
-            createDTO.setCover(Constants.DEFAULT_COVER);
+        if (createDTO.getImage() == null) {
+            createDTO.setImage(Constants.DEFAULT_COVER);
+            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
         }
+
         Drama drama = Drama.builder()
                 .name(createDTO.getName())
                 .filingNum(createDTO.getFilingNum())
@@ -69,8 +71,6 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .serviceId(createDTO.getServiceId())
                 .userId(userId)
                 .image(createDTO.getImage())
-                .cover(createDTO.getCover())
-                .thumbCover(createDTO.getThumbCover())
                 .thumbImage(createDTO.getThumbImage())
                 .build();
 
@@ -134,9 +134,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         if (updateDTO.getLocationId() != null) drama.setLocationId(updateDTO.getLocationId());
         if (updateDTO.getService() != null) drama.setService(updateDTO.getService());
         if (updateDTO.getServiceId() != null) drama.setServiceId(updateDTO.getServiceId());
-        if(updateDTO.getCover() != null) drama.setCover(updateDTO.getCover());
         if(updateDTO.getImage() != null) drama.setImage(updateDTO.getImage());
-        if(updateDTO.getThumbCover() != null) drama.setThumbCover(updateDTO.getThumbCover());
         if(updateDTO.getThumbImage() != null) drama.setThumbImage(updateDTO.getThumbImage());
 
         drama.setUpdatedAt(LocalDateTime.now());
@@ -180,11 +178,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .service(drama.getService())
                 .serviceId(drama.getServiceId())
                 .userId(drama.getUserId())
-                .cover(drama.getCover())
                 .createdAt(drama.getCreatedAt())
                 .updatedAt(drama.getUpdatedAt())
                 .image(drama.getImage())
-                .thumbCover(drama.getThumbCover())
                 .thumbImage(drama.getThumbImage())
                 .build();
 
@@ -220,8 +216,6 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 return Collections.emptyList();
             }
 
-            // 直接取前 N 条（N = min(size, 缓存长度)）
-            // 注意：这里忽略 lastId 和 keyword，因为 fallback 只提供静态兜底数据
             int take = Math.min(size, array.length);
             return new ArrayList<>(Arrays.asList(array).subList(0, take));
 

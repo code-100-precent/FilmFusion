@@ -171,13 +171,30 @@ onMounted(() => {
 const loadData = async () => {
   try {
     loading.value = true
+    
+    console.log('开始加载旅游线路数据，参数:', {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      keyword: searchForm.keyword
+    })
+    
+    // 直接调用后端API获取真实数据
     const res = await getTourRoutePage(pagination.page, pagination.pageSize, searchForm.keyword)
+    console.log('后端API响应数据:', JSON.stringify(res))
+    
     if (res.code === 200) {
-      tourRouteList.value = res.data || []
-      pagination.itemCount = res.pagination?.totalItems || 0
+      tourRouteList.value = res.data?.records || res.data || []
+      pagination.itemCount = res.data?.total || res.total || 0
+      pagination.pageCount = res.data?.pages || 1
+      console.log('数据加载成功，获取到', tourRouteList.value.length, '条记录')
+    } else {
+      console.error('API返回非成功状态:', res.code, res.message)
+      message.error(res.message || '加载失败')
     }
   } catch (error) {
     console.error('加载线路列表失败:', error)
+    console.error('错误详情:', error.message, error.response)
+    message.error('加载线路列表失败：' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -228,9 +245,15 @@ const handleEdit = async (row) => {
       dialogTitle.value = '编辑线路'
       Object.assign(tourRouteForm, res.data)
       dialogVisible.value = true
+    } else {
+      // 处理业务逻辑错误
+      console.error('获取线路详情失败: 业务错误', res.code, res.message)
+      message.error(res.message || '获取详情失败')
     }
   } catch (error) {
     console.error('获取线路详情失败:', error)
+    console.error('错误详情:', error.message)
+    message.error('获取线路详情失败：' + (error.message || '未知错误'))
   }
 }
 

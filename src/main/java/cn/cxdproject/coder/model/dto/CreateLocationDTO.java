@@ -45,11 +45,7 @@ public class CreateLocationDTO {
     @NotNull(message = "价格不能为空")
     private BigDecimal price;
 
-    private String cover;
-
     private String image;
-
-    private String thumbCover;
 
     private String thumbImage;
 

@@ -3,13 +3,14 @@
     <n-card class="management-card">
       <div class="search-header">
         <n-form :model="searchForm" inline class="search-form">
-          <n-form-item label="关键词">
-            <n-input
-              v-model:value="searchForm.keyword"
-              placeholder="请输入关键词"
-              clearable
-              @keyup.enter="handleSearch"
-            />
+          <n-form-item label="反馈内容">
+            <n-input v-model:value="searchForm.keyword" placeholder="请输入反馈内容关键词" clearable @keyup.enter="handleSearch" />
+          </n-form-item>
+          <n-form-item label="状态">
+            <n-select v-model:value="searchForm.status" :options="statusOptions" placeholder="请选择状态" clearable />
+          </n-form-item>
+          <n-form-item label="类型">
+            <n-select v-model:value="searchForm.type" :options="typeOptions" placeholder="请选择类型" clearable />
           </n-form-item>
           <n-form-item>
             <n-button type="primary" @click="handleSearch">
@@ -19,17 +20,13 @@
               搜索
             </n-button>
             <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
-            <n-button @click="handleRefresh" style="margin-left: 12px">
-              <template #icon>
-                <Icon icon="mdi:refresh" />
-              </template>
-              刷新
-            </n-button>
           </n-form-item>
         </n-form>
       </div>
       
+      <!-- 桌面端表格 -->
       <n-data-table
+        v-if="!isMobile"
         :columns="columns"
         :data="feedbackList"
         :loading="loading"
@@ -37,32 +34,114 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
+        :scroll-x="1200"
       />
+      
+      <!-- 移动端卡片列表 -->
+      <div v-else class="mobile-list">
+        <n-spin :show="loading">
+          <div v-if="feedbackList.length === 0 && !loading" class="empty-state">
+            <Icon icon="mdi:message-text-outline" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
+            <p style="color: #9ca3af;">暂无数据</p>
+          </div>
+          <div v-else class="card-list">
+            <n-card
+              v-for="feedback in feedbackList"
+              :key="feedback.id"
+              class="mobile-card"
+              hoverable
+            >
+              <div class="card-header">
+                <div class="feedback-info">
+                  <div class="feedback-meta">
+                    <n-tag :type="getTypeTagType(feedback.type)" size="small">
+                      {{ getTypeLabel(feedback.type) }}
+                    </n-tag>
+                    <n-tag :type="getStatusTagType(feedback.status)" size="small">
+                      {{ getStatusLabel(feedback.status) }}
+                    </n-tag>
+                  </div>
+                  <div class="feedback-time">
+                    {{ formatDate(feedback.createdAt) }}
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="content-item">
+                  <span class="label">反馈内容：</span>
+                  <p class="feedback-content">{{ feedback.content }}</p>
+                </div>
+                <div class="info-item">
+                  <span class="label">用户ID：</span>
+                  <span>{{ feedback.userId || '-' }}</span>
+                </div>
+              </div>
+              <div class="card-actions">
+                <n-button 
+                  size="small" 
+                  @click="handleUpdateStatus(feedback)" 
+                  block 
+                  style="margin-bottom: 8px"
+                  :type="feedback.status === 'RESOLVED' ? 'warning' : 'success'"
+                >
+                  {{ feedback.status === 'RESOLVED' ? '重新处理' : '标记为已解决' }}
+                </n-button>
+                <n-popconfirm @positive-click="handleDelete(feedback.id)">
+                  <template #trigger>
+                    <n-button size="small" type="error" quaternary block>
+                      删除
+                    </n-button>
+                  </template>
+                  确定要删除这个反馈吗？
+                </n-popconfirm>
+              </div>
+            </n-card>
+          </div>
+          
+          <!-- 移动端分页 -->
+          <div class="mobile-pagination">
+            <n-pagination
+              :page="pagination.page"
+              :page-size="pagination.pageSize"
+              :item-count="pagination.itemCount"
+              :page-sizes="[10, 20, 50]"
+              show-size-picker
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+            />
+          </div>
+        </n-spin>
+      </div>
     </n-card>
-    
-    <!-- 处理反馈对话框 -->
-    <n-modal v-model:show="dialogVisible" preset="dialog" title="处理反馈" :mask-closable="false" style="width: 90%; max-width: 600px">
-      <n-form label-placement="left" label-width="100px">
-        <n-form-item label="反馈类型">
-          <n-input :value="currentFeedback?.type" disabled />
+
+    <!-- 状态更新对话框 -->
+    <n-modal 
+      v-model:show="statusDialogVisible" 
+      preset="dialog" 
+      title="更新反馈状态" 
+      style="width: 90%; max-width: 500px"
+      :mask-closable="false"
+    >
+      <n-form ref="statusFormRef" :model="statusForm" :rules="statusFormRules" label-placement="left" label-width="80">
+        <n-form-item label="当前状态">
+          <n-tag :type="getStatusTagType(currentFeedback?.status)" size="small">
+            {{ getStatusLabel(currentFeedback?.status) }}
+          </n-tag>
         </n-form-item>
-        <n-form-item label="反馈内容">
-          <n-input :value="currentFeedback?.content" type="textarea" :rows="5" disabled />
-        </n-form-item>
-        <n-form-item label="状态">
-          <n-select v-model:value="feedbackForm.status" :options="statusOptions" placeholder="请选择状态" />
+        <n-form-item label="新状态" path="status">
+          <n-select v-model:value="statusForm.status" :options="statusOptionsForUpdate" placeholder="请选择新状态" />
         </n-form-item>
       </n-form>
       <template #action>
-        <n-button @click="dialogVisible = false">取消</n-button>
-        <n-button type="primary" @click="handleSaveStatus" :loading="dialogLoading">保存</n-button>
+        <n-button @click="statusDialogVisible = false">取消</n-button>
+        <n-button type="primary" @click="handleStatusSave" :loading="statusLoading">确定</n-button>
       </template>
     </n-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted } from 'vue'
+import { ref, reactive, h, onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   NCard,
@@ -70,99 +149,114 @@ import {
   NForm,
   NFormItem,
   NInput,
-  NDataTable,
+  NSelect,
   NTag,
+  NDataTable,
   NPopconfirm,
   NModal,
-  NSelect,
-  useMessage,
-  useDialog
+  NSpin,
+  NPagination,
+  useMessage
 } from 'naive-ui'
-import { getFeedbackPage, deleteFeedback, updateFeedbackStatus, getFeedbackById } from '@/api'
+import { getFeedbackPage, updateFeedbackStatus, deleteFeedback, getFeedbackById } from '@/api'
 import dayjs from 'dayjs'
 
 const message = useMessage()
-const dialog = useDialog()
 
+const isMobile = ref(false)
 const loading = ref(false)
+
+// 检测移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
 const feedbackList = ref([])
-const dialogVisible = ref(false)
-const dialogLoading = ref(false)
+const statusDialogVisible = ref(false)
+const statusLoading = ref(false)
 const currentFeedback = ref(null)
-const feedbackForm = reactive({
-  id: null,
+const formRef = ref(null)
+const statusFormRef = ref(null)
+
+const searchForm = reactive({
+  keyword: '',
   status: '',
   type: ''
 })
-const searchForm = reactive({
-  keyword: ''
-})
 
-const statusOptions = [
-  { label: '待处理', value: 'PENDING' },
-  { label: '处理中', value: 'PROCESSING' },
-  { label: '已解决', value: 'RESOLVED' },
-  { label: '已拒绝', value: 'REJECTED' }
-]
+const statusForm = reactive({
+  status: ''
+})
 
 const pagination = reactive({
   page: 1,
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  onChange: (page) => {
-    pagination.page = page
-    loadData()
-  },
-  onUpdatePageSize: (pageSize) => {
-    pagination.pageSize = pageSize
-    pagination.page = 1
-    loadData()
-  }
+  pageSizes: [10, 20, 50, 100]
 })
 
+const statusOptions = [
+  { label: '待处理', value: 'PENDING' },
+  { label: '处理中', value: 'PROCESSING' },
+  { label: '已解决', value: 'RESOLVED' }
+]
+
+const statusOptionsForUpdate = [
+  { label: '待处理', value: 'PENDING' },
+  { label: '处理中', value: 'PROCESSING' },
+  { label: '已解决', value: 'RESOLVED' }
+]
+
+const typeOptions = [
+  { label: '建议', value: 'SUGGESTION' },
+  { label: '投诉', value: 'COMPLAINT' },
+  { label: '咨询', value: 'INQUIRY' },
+  { label: '其他', value: 'OTHER' }
+]
+
+const statusFormRules = {
+  status: [
+    { required: true, message: '请选择状态', trigger: 'change' }
+  ]
+}
+
 const columns = [
-  {
-    title: 'ID',
-    key: 'id',
-    width: 80
-  },
+  { title: 'ID', key: 'id', width: 80 },
+  { title: '用户ID', key: 'userId', width: 100 },
   {
     title: '反馈类型',
     key: 'type',
     width: 120,
     render: (row) => {
-      const typeMap = {
-        'SUGGESTION': { label: '建议', type: 'info' },
-        'BUG': { label: 'Bug', type: 'error' },
-        'FEATURE': { label: '功能', type: 'success' },
-        'OTHER': { label: '其他', type: 'default' }
-      }
-      const typeInfo = typeMap[row.type] || { label: row.type, type: 'default' }
-      return h(NTag, { type: typeInfo.type, size: 'small' }, { default: () => typeInfo.label })
-    }
-  },
-  {
-    title: '状态',
-    key: 'status',
-    width: 100,
-    render: (row) => {
-      const statusMap = {
-        'PENDING': { label: '待处理', type: 'warning' },
-        'PROCESSING': { label: '处理中', type: 'info' },
-        'RESOLVED': { label: '已解决', type: 'success' },
-        'REJECTED': { label: '已拒绝', type: 'error' }
-      }
-      const statusInfo = statusMap[row.status] || { label: row.status, type: 'default' }
-      return h(NTag, { type: statusInfo.type, size: 'small' }, { default: () => statusInfo.label })
+      return h(NTag, { 
+        type: getTypeTagType(row.type), 
+        size: 'small' 
+      }, { 
+        default: () => getTypeLabel(row.type) 
+      })
     }
   },
   {
     title: '反馈内容',
     key: 'content',
-    ellipsis: {
-      tooltip: true
+    width: 300,
+    ellipsis: { 
+      tooltip: true,
+      line: 2
+    }
+  },
+  {
+    title: '状态',
+    key: 'status',
+    width: 120,
+    render: (row) => {
+      return h(NTag, { 
+        type: getStatusTagType(row.status), 
+        size: 'small' 
+      }, { 
+        default: () => getStatusLabel(row.status) 
+      })
     }
   },
   {
@@ -170,16 +264,10 @@ const columns = [
     key: 'createdAt',
     width: 180,
     render: (row) => {
-      if (!row.createdAt) return '-'
-      // 处理数组格式的日期 [2024, 12, 15, 10, 0, 0]
       if (Array.isArray(row.createdAt)) {
-        if (row.createdAt.length >= 6) {
-          const dateStr = `${row.createdAt[0]}-${String(row.createdAt[1]).padStart(2, '0')}-${String(row.createdAt[2]).padStart(2, '0')} ${String(row.createdAt[3]).padStart(2, '0')}:${String(row.createdAt[4]).padStart(2, '0')}:${String(row.createdAt[5]).padStart(2, '0')}`
-          return dayjs(dateStr).format('YYYY-MM-DD HH:mm:ss')
-        }
-        return '-'
+        return dayjs(row.createdAt[0] + '-' + String(row.createdAt[1]).padStart(2, '0') + '-' + String(row.createdAt[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
       }
-      return dayjs(row.createdAt).format('YYYY-MM-DD HH:mm:ss')
+      return row.createdAt ? dayjs(row.createdAt).format('YYYY-MM-DD HH:mm:ss') : '-'
     }
   },
   {
@@ -188,17 +276,17 @@ const columns = [
     width: 200,
     fixed: 'right',
     render: (row) => {
-      return h('div', { style: 'display: flex; gap: 8px;' }, [
-        h(NButton, {
-          size: 'small',
-          type: 'info',
-          onClick: () => handleProcess(row)
-        }, { default: () => '处理' }),
+      return h('div', { style: 'display: flex; gap: 8px; flex-wrap: wrap;' }, [
+        h(NButton, { 
+          size: 'small', 
+          type: row.status === 'RESOLVED' ? 'warning' : 'success',
+          onClick: () => handleUpdateStatus(row) 
+        }, { 
+          default: () => row.status === 'RESOLVED' ? '重新处理' : '标记解决' 
+        }),
         h(
           NPopconfirm,
-          {
-            onPositiveClick: () => handleDelete(row.id)
-          },
+          { onPositiveClick: () => handleDelete(row.id) },
           {
             trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
           }
@@ -209,24 +297,72 @@ const columns = [
 ]
 
 onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   loadData()
 })
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
+const formatDate = (date) => {
+  if (!date) return '-'
+  if (Array.isArray(date)) {
+    return dayjs(date[0] + '-' + String(date[1]).padStart(2, '0') + '-' + String(date[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
+  }
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+}
+
+const getTypeLabel = (type) => {
+  const typeMap = {
+    'SUGGESTION': '建议',
+    'COMPLAINT': '投诉',
+    'INQUIRY': '咨询',
+    'OTHER': '其他'
+  }
+  return typeMap[type] || type
+}
+
+const getTypeTagType = (type) => {
+  const typeMap = {
+    'SUGGESTION': 'info',
+    'COMPLAINT': 'error',
+    'INQUIRY': 'warning',
+    'OTHER': 'default'
+  }
+  return typeMap[type] || 'default'
+}
+
+const getStatusLabel = (status) => {
+  const statusMap = {
+    'PENDING': '待处理',
+    'PROCESSING': '处理中',
+    'RESOLVED': '已解决'
+  }
+  return statusMap[status] || status
+}
+
+const getStatusTagType = (status) => {
+  const statusMap = {
+    'PENDING': 'warning',
+    'PROCESSING': 'info',
+    'RESOLVED': 'success'
+  }
+  return statusMap[status] || 'default'
+}
 
 const loadData = async () => {
   try {
     loading.value = true
-    const res = await getFeedbackPage(
-      pagination.page,
-      pagination.pageSize,
-      searchForm.keyword
-    )
-    
+    const res = await getFeedbackPage(pagination.page, pagination.pageSize, searchForm.keyword)
     if (res.code === 200) {
       feedbackList.value = res.data || []
       pagination.itemCount = res.pagination?.totalItems || 0
     }
   } catch (error) {
     console.error('加载反馈列表失败:', error)
+    message.error('加载反馈列表失败')
   } finally {
     loading.value = false
   }
@@ -239,11 +375,9 @@ const handleSearch = () => {
 
 const handleReset = () => {
   searchForm.keyword = ''
+  searchForm.status = ''
+  searchForm.type = ''
   pagination.page = 1
-  loadData()
-}
-
-const handleRefresh = () => {
   loadData()
 }
 
@@ -258,41 +392,34 @@ const handlePageSizeChange = (pageSize) => {
   loadData()
 }
 
-const handleProcess = async (row) => {
-  try {
-    const res = await getFeedbackById(row.id)
-    if (res.code === 200 && res.data) {
-      currentFeedback.value = res.data
-      feedbackForm.id = res.data.id
-      feedbackForm.status = res.data.status
-      feedbackForm.type = res.data.type
-      dialogVisible.value = true
-    }
-  } catch (error) {
-    console.error('获取反馈详情失败:', error)
-    message.error('获取反馈详情失败')
-  }
+const handleUpdateStatus = (feedback) => {
+  currentFeedback.value = feedback
+  statusForm.status = feedback.status === 'RESOLVED' ? 'PROCESSING' : 'RESOLVED'
+  statusDialogVisible.value = true
 }
 
-const handleSaveStatus = async () => {
-  if (!feedbackForm.status) {
-    message.warning('请选择状态')
+const handleStatusSave = async () => {
+  if (!statusFormRef.value) return
+  try {
+    await statusFormRef.value.validate()
+  } catch (error) {
     return
   }
   
   try {
-    dialogLoading.value = true
-    const res = await updateFeedbackStatus(feedbackForm.id, feedbackForm.status)
+    statusLoading.value = true
+    const res = await updateFeedbackStatus(currentFeedback.value.id, statusForm.status)
+    
     if (res.code === 200) {
-      message.success('更新成功')
-      dialogVisible.value = false
+      message.success('状态更新成功')
+      statusDialogVisible.value = false
       loadData()
     }
   } catch (error) {
-    console.error('更新失败:', error)
-    message.error('更新失败')
+    console.error('更新状态失败:', error)
+    message.error('更新状态失败')
   } finally {
-    dialogLoading.value = false
+    statusLoading.value = false
   }
 }
 
@@ -305,6 +432,7 @@ const handleDelete = async (id) => {
     }
   } catch (error) {
     console.error('删除失败:', error)
+    message.error('删除失败')
   }
 }
 </script>
@@ -334,27 +462,106 @@ const handleDelete = async (id) => {
   min-width: 300px;
 }
 
-.action-buttons {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
+// 移动端卡片列表
+.mobile-list {
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  
+  .card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .mobile-card {
+    :deep(.n-card__content) {
+      padding: 16px;
+    }
+    
+    .card-header {
+      margin-bottom: 12px;
+      
+      .feedback-info {
+        .feedback-meta {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+        
+        .feedback-time {
+          font-size: 12px;
+          color: #9ca3af;
+        }
+      }
+    }
+    
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      
+      .content-item {
+        .feedback-content {
+          margin: 8px 0 0 0;
+          color: #374151;
+          line-height: 1.5;
+        }
+      }
+      
+      .info-item {
+        display: flex;
+        font-size: 13px;
+        
+        .label {
+          color: #6b7280;
+          min-width: 60px;
+          flex-shrink: 0;
+        }
+      }
+    }
+    
+    .card-actions {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+  }
+  
+  .mobile-pagination {
+    margin-top: 16px;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 8px;
+    
+    :deep(.n-pagination) {
+      justify-content: center;
+    }
+  }
 }
 
 // 移动端适配
 @media (max-width: 768px) {
   .search-header {
     flex-direction: column;
+    gap: 12px;
     
     .search-form {
       width: 100%;
       min-width: auto;
-    }
-    
-    .action-buttons {
-      width: 100%;
       
-      button {
-        flex: 1;
+      :deep(.n-form-item) {
+        margin-bottom: 12px;
+        
+        .n-form-item-label {
+          width: auto !important;
+          margin-bottom: 4px;
+        }
       }
     }
   }
@@ -365,15 +572,35 @@ const handleDelete = async (id) => {
     }
   }
   
-  :deep(.n-data-table) {
-    .n-data-table-wrapper {
-      overflow-x: auto;
+  // 移动端表单优化
+  :deep(.n-modal) {
+    .n-dialog {
+      margin: 20px auto;
+    }
+    
+    .n-form-item {
+      margin-bottom: 16px;
+      
+      .n-form-item-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      
+      .n-input,
+      .n-select {
+        width: 100%;
+      }
+    }
+    
+    .n-dialog__action {
+      padding: 12px 16px;
+      
+      .n-button {
+        flex: 1;
+        margin: 0 4px;
+      }
     }
   }
-}
-
-.action-bar {
-  margin-bottom: 16px;
 }
 
 @keyframes fadeIn {
@@ -387,4 +614,3 @@ const handleDelete = async (id) => {
   }
 }
 </style>
-

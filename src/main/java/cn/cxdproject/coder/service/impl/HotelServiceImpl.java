@@ -56,8 +56,9 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
     public HotelVO createHotelByAdmin(Long userId, CreateHotelDTO createDTO) {
-        if(createDTO.getCover()==null){
-            createDTO.setCover(Constants.DEFAULT_COVER);
+        if (createDTO.getImage() == null) {
+            createDTO.setImage(Constants.DEFAULT_COVER);
+            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
         }
         Hotel hotel = Hotel.builder()
                 .name(createDTO.getName())
@@ -65,10 +66,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .address(createDTO.getAddress())
                 .managerName(createDTO.getManagerName())
                 .managerPhone(createDTO.getManagerPhone())
-                .cover(createDTO.getCover())
                 .image(createDTO.getImage())
                 .userId(userId)
-                .thumbCover(createDTO.getThumbCover())
                 .thumbImage(createDTO.getThumbImage())
                 .latitude(createDTO.getLatitude())
                 .longitude(createDTO.getLongitude())
@@ -130,9 +129,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         if (updateDTO.getAddress() != null) hotel.setAddress(updateDTO.getAddress());
         if (updateDTO.getManagerName() != null) hotel.setManagerName(updateDTO.getManagerName());
         if (updateDTO.getManagerPhone() != null) hotel.setManagerPhone(updateDTO.getManagerPhone());
-        if (updateDTO.getCover() != null) hotel.setCover(updateDTO.getCover());
         if (updateDTO.getImage() != null) hotel.setImage(updateDTO.getImage());
-        if (updateDTO.getThumbCover() != null) hotel.setThumbCover(updateDTO.getThumbCover());
         if (updateDTO.getThumbImage() != null) hotel.setThumbImage(updateDTO.getThumbImage());
         if (updateDTO.getLongitude() != null) hotel.setLongitude(updateDTO.getLongitude());
         if (updateDTO.getLatitude() != null) hotel.setLatitude(updateDTO.getLatitude());
@@ -175,11 +172,9 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .managerPhone(hotel.getManagerPhone())
                 .address(hotel.getAddress())
                 .image(hotel.getImage())
-                .cover(hotel.getCover())
                 .updatedAt(hotel.getUpdatedAt())
                 .createdAt(hotel.getCreatedAt())
                 .userId(hotel.getUserId())
-                .thumbCover(hotel.getThumbCover())
                 .thumbImage(hotel.getThumbImage())
                 .longitude(hotel.getLongitude())
                 .latitude(hotel.getLatitude())
@@ -216,8 +211,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 return Collections.emptyList();
             }
 
-            // 直接取前 N 条（N = min(size, 缓存长度)）
-            // 注意：这里忽略 lastId 和 keyword，因为 fallback 只提供静态兜底数据
+
             int take = Math.min(size, array.length);
             return new ArrayList<>(Arrays.asList(array).subList(0, take));
 

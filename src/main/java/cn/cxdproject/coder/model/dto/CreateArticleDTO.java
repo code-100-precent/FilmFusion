@@ -25,7 +25,6 @@ public class CreateArticleDTO {
     @NotBlank(message = "发布单位不能为空")
     private String issueUnit;
 
-    private String thumbCover;
 
     private String thumbImage;
     
@@ -34,8 +33,6 @@ public class CreateArticleDTO {
      */
     @NotBlank(message = "文章内容不能为空")
     private String content;
-
-    private String cover;
 
     private String image;
 }

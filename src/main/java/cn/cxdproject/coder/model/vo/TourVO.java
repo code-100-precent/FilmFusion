@@ -26,8 +26,6 @@ public class TourVO {
 
     private String features;
 
-    private String cover;
-
     private String transport;
 
     private String hotel;
@@ -41,8 +39,6 @@ public class TourVO {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
-
-    private String thumbCover;
 
     private String thumbImage;
 

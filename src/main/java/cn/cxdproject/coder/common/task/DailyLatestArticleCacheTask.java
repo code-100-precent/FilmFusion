@@ -70,11 +70,9 @@ public class DailyLatestArticleCacheTask {
                 .issueTime(article.getIssueTime())
                 .content(article.getContent())
                 .userId(article.getUserId())
-                .cover(article.getCover())
                 .createdAt(article.getCreatedAt())
                 .updatedAt(article.getUpdatedAt())
                 .image(article.getImage())
-                .thumbCover(article.getThumbCover())
                 .thumbImage(article.getThumbImage())
                 .build();
     }

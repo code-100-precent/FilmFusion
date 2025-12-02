@@ -39,17 +39,9 @@ public class CreateHotelDTO {
     private String managerPhone;
 
     /**
-     * 封面
-     */
-    @NotBlank
-    private String cover;
-
-    /**
      * 图片
      */
     private String image;
-
-    private String thumbCover;
 
     private String thumbImage;
 

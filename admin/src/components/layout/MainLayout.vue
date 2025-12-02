@@ -177,6 +177,31 @@ const menuOptions = [
     icon: 'mdi:message-text-outline'
   },
   {
+    label: 'Banner管理',
+    key: '/banner',
+    icon: 'mdi:image-outline'
+  },
+  {
+    label: '住宿管理',
+    key: '/hotel',
+    icon: 'mdi:home-outline'
+  },
+  {
+    label: '旅游管理',
+    key: '/tour',
+    icon: 'mdi:map-outline'
+  },
+  {
+    label: '旅游线路管理',
+    key: '/tourroute',
+    icon: 'mdi:guide'
+  },
+  {
+    label: '政策管理',
+    key: '/policy',
+    icon: 'mdi:file-document-multiple-outline'
+  },
+  {
     label: '个人中心',
     key: '/profile',
     icon: 'mdi:account-circle-outline'

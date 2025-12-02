@@ -55,8 +55,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
     public ShootVO createShootByAdmin(Long userId, CreateShootDTO createDTO) {
-        if(createDTO.getCover()==null){
-            createDTO.setCover(Constants.DEFAULT_COVER);
+        if (createDTO.getImage() == null) {
+            createDTO.setImage(Constants.DEFAULT_COVER);
+            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
         }
 
         Shoot shoot = Shoot.builder()
@@ -68,9 +69,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .phone(createDTO.getPhone())
                 .contactName(createDTO.getContactName())
                 .userId(userId)
-                .cover(createDTO.getCover())
                 .image(createDTO.getImage())
-                .thumbCover(createDTO.getThumbCover())
                 .thumbImage(createDTO.getThumbImage())
                 .build();
 
@@ -131,9 +130,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (updateDTO.getAddress() != null) shoot.setAddress(updateDTO.getAddress());
         if (updateDTO.getPhone() != null) shoot.setPhone(updateDTO.getPhone());
         if (updateDTO.getContactName() != null) shoot.setContactName(updateDTO.getContactName());
-        if (updateDTO.getCover() != null) shoot.setCover(updateDTO.getCover());
         if (updateDTO.getImage() != null) shoot.setImage(updateDTO.getImage());
-        if (updateDTO.getThumbCover() != null) shoot.setThumbCover(updateDTO.getThumbCover());
         if (updateDTO.getThumbImage() != null) shoot.setThumbImage(updateDTO.getThumbImage());
 
         shoot.setUpdatedAt(LocalDateTime.now());
@@ -176,11 +173,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .phone(shoot.getPhone())
                 .contactName(shoot.getContactName())
                 .userId(shoot.getUserId())
-                .cover(shoot.getCover())
                 .createdAt(shoot.getCreatedAt())
                 .updatedAt(shoot.getUpdatedAt())
                 .image(shoot.getImage())
-                .thumbCover(shoot.getThumbCover())
                 .thumbImage(shoot.getThumbImage())
                 .build();
     }
@@ -215,8 +210,6 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 return Collections.emptyList();
             }
 
-            // 直接取前 N 条（N = min(size, 缓存长度)）
-            // 注意：这里忽略 lastId 和 keyword，因为 fallback 只提供静态兜底数据
             int take = Math.min(size, array.length);
             return new ArrayList<>(Arrays.asList(array).subList(0, take));
 

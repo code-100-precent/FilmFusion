@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { resolve } from 'path' // 👈 添加这一行
 
 export default defineConfig({
   plugins: [vue()],
@@ -10,13 +10,13 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
+    port: 5173,
+    host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://1.14.99.158:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true
       }
     }
   }
 })
-

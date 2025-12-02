@@ -14,9 +14,7 @@
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
-        <result column="cover" property="cover" />
-        <result column="image" property="cover" />
-        <result column="thumb_cover" property="thumbCover"/>
+        <result column="image" property="image" />
         <result column="thumb_image" property="thumbImage"/>
     </resultMap>
 
@@ -28,11 +26,9 @@
             `content`,
             `user_id`,
             `deleted`,
-            'cover',
             `created_at`,
             `updated_at`,
             'image',
-            'thumb_cover',
             'thumb_image'
     </sql>
 

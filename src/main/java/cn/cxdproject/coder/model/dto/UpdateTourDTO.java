@@ -31,11 +31,6 @@ public class UpdateTourDTO {
     @NotBlank
     private String features;
 
-    /**
-     * 封面
-     */
-    @NotBlank
-    private String cover;
 
     /**
      * 交通方式
@@ -59,8 +54,6 @@ public class UpdateTourDTO {
      * images
      */
     private String image;
-
-    private String thumbCover;
 
     private String thumbImage;
 

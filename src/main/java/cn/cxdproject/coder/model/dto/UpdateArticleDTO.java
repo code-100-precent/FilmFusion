@@ -25,11 +25,7 @@ public class UpdateArticleDTO {
      */
     private String content;
 
-    private String cover;
-
     private String image;
-
-    private String thumbCover;
 
     private String thumbImage;
 }

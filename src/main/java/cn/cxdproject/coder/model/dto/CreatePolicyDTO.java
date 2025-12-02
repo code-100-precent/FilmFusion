@@ -35,23 +35,12 @@ public class CreatePolicyDTO {
     @NotBlank
     private String content;
 
-    /**
-     * 封面
-     */
-    @NotBlank
-    private String cover;
 
     /**
      * 图片
      */
 
     private String image;
-
-    /**
-     * 压缩封面
-     */
-    @NotBlank
-    private String thumbCover;
 
     /**
      * 压缩图片

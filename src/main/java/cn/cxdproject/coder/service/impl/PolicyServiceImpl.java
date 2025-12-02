@@ -49,8 +49,9 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
 
     @Override
     public PolicyVO createPolicyByAdmin(CreatePolicyDTO createDTO) {
-        if (createDTO.getCover() == null) {
-            createDTO.setCover(Constants.DEFAULT_COVER);
+        if (createDTO.getImage() == null) {
+            createDTO.setImage(Constants.DEFAULT_COVER);
+            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
         }
 
         Policy policy = Policy.builder()
@@ -60,8 +61,6 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .issueTime(createDTO.getIssueTime())
                 .issueUnit(createDTO.getIssueUnit())
                 .image(createDTO.getImage())
-                .cover(createDTO.getCover())
-                .thumbCover(createDTO.getThumbCover())
                 .thumbImage(createDTO.getThumbImage())
                 .build();
 
@@ -120,9 +119,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         if (updateDTO.getIssueUnit() != null) policy.setIssueUnit(updateDTO.getIssueUnit());
         if (updateDTO.getIssueTime() != null) policy.setIssueTime(updateDTO.getIssueTime());
         if (updateDTO.getContent() != null) policy.setContent(updateDTO.getContent());
-        if (updateDTO.getCover() != null) policy.setCover(updateDTO.getCover());
         if (updateDTO.getImage() != null) policy.setImage(updateDTO.getImage());
-        if (updateDTO.getThumbCover() != null) policy.setThumbCover(updateDTO.getThumbCover());
         if (updateDTO.getThumbImage() != null) policy.setThumbImage(updateDTO.getThumbImage());
 
         cache.asMap().put(CaffeineConstants.POLICY + policyId, policy);
@@ -161,9 +158,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .issueUnit(policy.getIssueUnit())
                 .issueTime(policy.getIssueTime())
                 .content(policy.getContent())
-                .cover(policy.getCover())
                 .image(policy.getImage())
-                .thumbCover(policy.getThumbCover())
                 .thumbImage(policy.getThumbImage())
                 .createdAt(policy.getCreatedAt())
                 .updatedAt(policy.getUpdatedAt())
@@ -200,8 +195,6 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 return Collections.emptyList();
             }
 
-            // 直接取前 N 条（N = min(size, 缓存长度)）
-            // 注意：这里忽略 lastId 和 keyword，因为 fallback 只提供静态兜底数据
             int take = Math.min(size, array.length);
             return new ArrayList<>(Arrays.asList(array).subList(0, take));
 

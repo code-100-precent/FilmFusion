@@ -80,8 +80,6 @@ public class DramaVO {
      */
     private Long userId;
 
-    private String cover;
-
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 
@@ -89,8 +87,6 @@ public class DramaVO {
     private LocalDateTime updatedAt;
 
     private String image;
-
-    private String thumbCover;
 
     private String thumbImage;
 

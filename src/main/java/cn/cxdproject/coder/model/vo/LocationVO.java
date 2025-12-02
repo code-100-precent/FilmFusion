@@ -33,13 +33,11 @@ public class LocationVO {
     private String address;
     private BigDecimal price;
     private Long userId;
-    private String cover;
     private String image;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
-    private String thumbCover;
     private String thumbImage;
     private String longitude;
     private String latitude;

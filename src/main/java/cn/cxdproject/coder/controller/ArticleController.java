@@ -78,7 +78,6 @@ public class ArticleController {
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {
-            // 升序：最后一条是最大的 id
             nextCursor = String.valueOf(list.get(list.size() - 1).getId());
         }
 
@@ -130,7 +129,6 @@ public class ArticleController {
      */
     @DeleteMapping("/admin/delete/{id}")
     public ApiResponse<Void> deleteArticleByAdmin(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
-        // 权限检查在拦截器中完成
         articleService.deleteArticleByAdmin(id);
         return ApiResponse.success();
     }

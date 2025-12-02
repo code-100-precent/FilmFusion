@@ -29,13 +29,11 @@ public class ShootVO {
     private String phone;
     private String contactName;
     private Long userId;
-    private String cover;
     private String image;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
-    private String thumbCover;
     private String thumbImage;
 
 
