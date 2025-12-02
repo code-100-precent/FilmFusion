@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
 import java.io.Serial;
+import java.io.Serializable;
 
 @Data
 @Builder
@@ -13,7 +14,7 @@ import java.io.Serial;
 @NoArgsConstructor
 @TableName("fi_hotel")
 @EqualsAndHashCode(callSuper = true)
-public class Hotel extends BaseEntity {
+public class Hotel extends BaseEntity implements Serializable, Cloneable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -57,12 +58,6 @@ public class Hotel extends BaseEntity {
     private String managerPhone;
 
     /**
-     * 封面
-     */
-    @TableField("cover")
-    private String cover;
-
-    /**
      * 图片
      */
     @TableField("image")
@@ -70,9 +65,6 @@ public class Hotel extends BaseEntity {
 
     @TableField("user_id")
     private Long userId;
-
-    @TableField("thumb_cover")
-    private String thumbCover;
 
     @TableField("thumb_image")
     private String thumbImage;

@@ -75,11 +75,9 @@ public class DailyLatesShootCacheTask {
                 .phone(shoot.getPhone())
                 .contactName(shoot.getContactName())
                 .userId(shoot.getUserId())
-                .cover(shoot.getCover())
                 .createdAt(shoot.getCreatedAt())
                 .updatedAt(shoot.getUpdatedAt())
                 .image(shoot.getImage())
-                .thumbCover(shoot.getThumbCover())
                 .thumbImage(shoot.getThumbImage())
                 .build();
     }

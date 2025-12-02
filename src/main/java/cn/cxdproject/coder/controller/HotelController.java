@@ -67,7 +67,6 @@ public class HotelController {
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {
-            // 升序：最后一条是最大的 id
             nextCursor = String.valueOf(list.get(list.size() - 1).getId());
         }
 

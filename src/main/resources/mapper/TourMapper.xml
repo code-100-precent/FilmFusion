@@ -10,7 +10,6 @@
         <result column="description" property="description" />
         <result column="theme" property="theme" />
         <result column="features" property="features" />
-        <result column="cover" property="cover" />
         <result column="transport" property="transport" />
         <result column="hotel" property="hotel" />
         <result column="food" property="food" />
@@ -18,7 +17,6 @@
         <result column="updated_at" property="updatedAt" />
         <result column="deleted" property="deleted" />
         <result column="image" property="image" />
-        <result column="thumb_cover" property="thumbCover"/>
         <result column="thumb_image" property="thumbImage"/>
         <result column="longitude" property="longitude"/>
         <result column="latitude" property="latitude"/>
@@ -32,7 +30,6 @@
             `description`,
             `theme`,
             `features`,
-            `cover`,
             `transport`,
             `hotel`,
             `food`,
@@ -40,7 +37,6 @@
             `updated_at`,
             `deleted`,
             `image`,
-            'thumb_cover',
             'thumb_image',
             'longitude',
             'latitude',

@@ -43,11 +43,7 @@ public class CreateDramaDTO {
     @NotNull(message = "协拍服务ID不能为空")
     private Long serviceId;
 
-    private String cover;
-
     private String image;
-
-    private String thumbCover;
 
     private String thumbImage;
 }

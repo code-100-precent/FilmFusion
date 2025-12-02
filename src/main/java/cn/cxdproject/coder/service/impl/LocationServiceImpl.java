@@ -55,8 +55,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     @Override
     @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
     public LocationVO createLocationByAdmin(Long userId, CreateLocationDTO createDTO) {
-        if(createDTO.getCover()==null){
-            createDTO.setCover(Constants.DEFAULT_COVER);
+        if (createDTO.getImage() == null) {
+            createDTO.setImage(Constants.DEFAULT_COVER);
+            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
         }
 
         Location location = Location.builder()
@@ -72,8 +73,6 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .price(createDTO.getPrice())
                 .userId(userId)
                 .image(createDTO.getImage())
-                .cover(createDTO.getCover())
-                .thumbCover(createDTO.getThumbCover())
                 .thumbImage(createDTO.getThumbImage())
                 .longitude(createDTO.getLongitude())
                 .latitude(createDTO.getLatitude())
@@ -140,9 +139,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         if (updateDTO.getGovPrincipalPhone() != null) location.setGovPrincipalPhone(updateDTO.getGovPrincipalPhone());
         if (updateDTO.getAddress() != null) location.setAddress(updateDTO.getAddress());
         if (updateDTO.getPrice() != null) location.setPrice(updateDTO.getPrice());
-        if(updateDTO.getCover() != null) location.setCover(updateDTO.getCover());
         if(updateDTO.getImage() != null) location.setImage(updateDTO.getImage());
-        if(updateDTO.getThumbCover() != null) location.setThumbCover(updateDTO.getThumbCover());
         if(updateDTO.getThumbImage() != null) location.setThumbImage(updateDTO.getThumbImage());
         if(updateDTO.getLongitude() != null) location.setLongitude(updateDTO.getLongitude());
         if(updateDTO.getLatitude() != null) location.setLatitude(updateDTO.getLatitude());
@@ -190,11 +187,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                .address(location.getAddress())
                .price(location.getPrice())
                .userId(location.getUserId())
-               .cover(location.getCover())
                .createdAt(location.getCreatedAt())
                .updatedAt(location.getUpdatedAt())
                .image(location.getImage())
-               .thumbCover(location.getThumbCover())
                .thumbImage(location.getThumbImage())
                .longitude(location.getLongitude())
                .latitude(location.getLatitude())
@@ -231,8 +226,6 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 return Collections.emptyList();
             }
 
-            // 直接取前 N 条（N = min(size, 缓存长度)）
-            // 注意：这里忽略 lastId 和 keyword，因为 fallback 只提供静态兜底数据
             int take = Math.min(size, array.length);
             return new ArrayList<>(Arrays.asList(array).subList(0, take));
 

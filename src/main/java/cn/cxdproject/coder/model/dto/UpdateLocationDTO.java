@@ -23,9 +23,7 @@ public class UpdateLocationDTO {
     private String govPrincipalName;
     private String address;
     private BigDecimal price;
-    private String cover;
     private String image;
-    private String thumbCover;
     private String thumbImage;
     private String longitude;
     private String latitude;

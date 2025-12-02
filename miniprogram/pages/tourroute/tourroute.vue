@@ -126,6 +126,14 @@ export default {
           } else {
             this.routes = [...this.routes, ...newRoutes]
           }
+        ]
+        
+        try {
+          const res = await getTourPage({
+            current: this.currentPage,
+            size: this.pageSize,
+            keyword: this.keyword || undefined
+          })
 
           this.nextCursor = res.nextCursor
           this.hasMore = res.hasMore || false
@@ -137,6 +145,7 @@ export default {
         }
       } catch (error) {
         console.error('加载线路失败:', error)
+        console.error('错误详情:', error.message, error.response)
         uni.showToast({
           title: '加载失败，请稍后重试',
           icon: 'none'

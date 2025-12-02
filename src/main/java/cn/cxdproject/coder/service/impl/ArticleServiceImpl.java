@@ -88,7 +88,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         Map<Long, Article> articleMap = articles.stream()
                 .collect(Collectors.toMap(Article::getId, a -> a));
 
-
         return ids.stream()
                 .map(articleMap::get)
                 .filter(Objects::nonNull)
@@ -104,8 +103,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (currentUser == null) {
             throw new BusinessException(UNAUTHORIZED.code(), "未登录");
         }
-        if (createDTO.getCover() == null) {
-            createDTO.setCover(Constants.DEFAULT_COVER);
+        if (createDTO.getImage() == null) {
+            createDTO.setImage(Constants.DEFAULT_COVER);
+            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
         }
         // 创建文章
         Article article = Article.builder()
@@ -114,9 +114,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .content(createDTO.getContent())
                 .issueTime(LocalDateTime.now())
                 .userId(currentUser.getId())
-                .cover(createDTO.getCover())
                 .image(createDTO.getImage())
-                .thumbCover(createDTO.getThumbCover())
                 .thumbImage(createDTO.getThumbImage())
                 .build();
 
@@ -136,8 +134,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (updateDTO.getTitle() != null) article.setTitle(updateDTO.getTitle());
         if (updateDTO.getIssueUnit() != null) article.setIssueUnit(updateDTO.getIssueUnit());
         if (updateDTO.getContent() != null) article.setContent(updateDTO.getContent());
-        if (updateDTO.getCover() != null) article.setCover(updateDTO.getCover());
-        if (updateDTO.getThumbCover() != null) article.setThumbCover(updateDTO.getThumbCover());
         if (updateDTO.getThumbImage() != null) article.setThumbImage(updateDTO.getThumbImage());
 
 
@@ -178,11 +174,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .issueTime(article.getIssueTime())
                 .content(article.getContent())
                 .userId(article.getUserId())
-                .cover(article.getCover())
                 .createdAt(article.getCreatedAt())
                 .updatedAt(article.getUpdatedAt())
                 .image(article.getImage())
-                .thumbCover(article.getThumbCover())
                 .thumbImage(article.getThumbImage())
                 .build();
     }
@@ -217,8 +211,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 return Collections.emptyList();
             }
 
-            // 直接取前 N 条（N = min(size, 缓存长度)）
-            // 注意：这里忽略 lastId 和 keyword，因为 fallback 只提供静态兜底数据
             int take = Math.min(size, array.length);
             return new ArrayList<>(Arrays.asList(array).subList(0, take));
 

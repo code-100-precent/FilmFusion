@@ -35,12 +35,6 @@ public class CreateTourDTO {
     private String features;
 
     /**
-     * 封面
-     */
-    @NotBlank
-    private String cover;
-
-    /**
      * 交通方式
      */
    @NotBlank
@@ -62,8 +56,6 @@ public class CreateTourDTO {
      * images
      */
     private String image;
-
-    private String thumbCover;
 
     private String thumbImage;
 

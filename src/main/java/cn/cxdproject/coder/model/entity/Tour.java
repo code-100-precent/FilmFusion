@@ -54,12 +54,6 @@ public class Tour extends BaseEntity implements Serializable {
     private String features;
 
     /**
-    * 封面
-    */
-    @TableField("cover")
-    private String cover;
-
-    /**
     * 交通方式
     */
     @TableField("transport")
@@ -82,9 +76,6 @@ public class Tour extends BaseEntity implements Serializable {
     */
     @TableField("image")
     private String image;
-
-    @TableField("thumb_cover")
-    private String thumbCover;
 
     @TableField("thumb_image")
     private String thumbImage;

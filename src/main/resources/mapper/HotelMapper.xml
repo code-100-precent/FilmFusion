@@ -11,12 +11,10 @@
         <result column="address" property="address" />
         <result column="manager_name" property="managerName" />
         <result column="manager_phone" property="managerPhone" />
-        <result column="cover" property="cover" />
         <result column="image" property="image" />
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
-        <result column="thumb_cover" property="thumbCover"/>
         <result column="thumb_image" property="thumbImage"/>
         <result column="longitude" property="longitude"/>
         <result column="latitude" property="latitude"/>
@@ -29,12 +27,10 @@
             `address`,
             `manager_name`,
             `manager_phone`,
-            `cover`,
             `image`
             `deleted`,
             `created_at`,
             `updated_at`,
-            'thumb_cover',
             'thumb_image',
             'longitude',
             'latitude'

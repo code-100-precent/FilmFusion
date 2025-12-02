@@ -38,32 +38,29 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     private final TourMapper tourMapper;
     private final Cache<String, Object> cache;
     private final RedisUtils redisUtils;
-    private final cn.cxdproject.coder.mapper.DramaMapper dramaMapper;
 
-    public TourServiceImpl(TourMapper tourMapper, Cache<String, Object> cache, RedisUtils redisUtils, cn.cxdproject.coder.mapper.DramaMapper dramaMapper) {
+    public TourServiceImpl(TourMapper tourMapper, Cache<String, Object> cache, RedisUtils redisUtils) {
         this.tourMapper = tourMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
-        this.dramaMapper = dramaMapper;
     }
 
     @Override
     public TourVO createTourByAdmin(CreateTourDTO createDTO) {
-        if(createDTO.getCover()==null){
-            createDTO.setCover(Constants.DEFAULT_COVER);
+        if (createDTO.getImage() == null) {
+            createDTO.setImage(Constants.DEFAULT_COVER);
+            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
         }
 
         Tour tour = Tour.builder()
                 .name(createDTO.getName())
                 .description(createDTO.getDescription())
                 .theme(createDTO.getTheme())
-                .cover(createDTO.getCover())
                 .food(createDTO.getFood())
                 .hotel(createDTO.getHotel())
                 .features(createDTO.getFeatures())
                 .transport(createDTO.getFeatures())
                 .image(createDTO.getImage())
-                .thumbCover(createDTO.getThumbCover())
                 .thumbImage(createDTO.getThumbImage())
                 .latitude(createDTO.getLatitude())
                 .longitude(createDTO.getLongitude())
@@ -127,12 +124,10 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         if (updateDTO.getDescription() != null) tour.setDescription(updateDTO.getDescription());
         if (updateDTO.getTheme() != null) tour.setTheme(updateDTO.getTheme());
         if (updateDTO.getFeatures() != null) tour.setFeatures(updateDTO.getFeatures());
-        if (updateDTO.getCover() != null) tour.setCover(updateDTO.getCover());
         if (updateDTO.getTransport() != null) tour.setTransport(updateDTO.getTransport());
         if (updateDTO.getHotel() != null) tour.setHotel(updateDTO.getHotel());
         if (updateDTO.getFood() != null) tour.setFood(updateDTO.getFood());
         if (updateDTO.getImage() != null) tour.setImage(updateDTO.getImage());
-        if (updateDTO.getThumbCover() != null) tour.setThumbCover(updateDTO.getThumbCover());
         if (updateDTO.getThumbImage() != null) tour.setThumbImage(updateDTO.getThumbImage());
         if (updateDTO.getLongitude() != null) tour.setLongitude(updateDTO.getLongitude());
         if (updateDTO.getLatitude() != null) tour.setLatitude(updateDTO.getLatitude());
@@ -173,45 +168,18 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
             return null;
         }
 
-        // 处理影视IP名称拼接
-        String ipWorks = "";
-        if (tour.getDramaId() != null && !tour.getDramaId().isEmpty()) {
-            try {
-                String[] ids = tour.getDramaId().split(",");
-                List<Long> dramaIds = new ArrayList<>();
-                for (String id : ids) {
-                    if (!id.trim().isEmpty()) {
-                        dramaIds.add(Long.parseLong(id.trim()));
-                    }
-                }
-                
-                if (!dramaIds.isEmpty()) {
-                    List<Drama> dramas = dramaMapper.selectBatchIds(dramaIds);
-                    if (dramas != null && !dramas.isEmpty()) {
-                        ipWorks = dramas.stream()
-                                .map(d -> "《" + d.getName() + "》")
-                                .collect(Collectors.joining(""));
-                    }
-                }
-            } catch (Exception e) {
-                log.error("Failed to load drama info for tour: " + tour.getId(), e);
-            }
-        }
-
         return TourVO.builder()
                 .id(tour.getId())
                 .name(tour.getName())
                 .description(tour.getDescription())
                 .theme(tour.getTheme())
                 .features(tour.getFeatures())
-                .cover(tour.getCover())
                 .transport(tour.getTransport())
                 .hotel(tour.getHotel())
                 .food(tour.getFood())
                 .image(tour.getImage())
                 .createdAt(tour.getCreatedAt())
                 .updatedAt(tour.getUpdatedAt())
-                .thumbCover(tour.getThumbCover())
                 .thumbImage(tour.getThumbImage())
                 .longitude(tour.getLongitude())
                 .latitude(tour.getLatitude())

@@ -1,11 +1,11 @@
 # 应用信息配置
 code100:
   # 基础信息
-  name: Code100
+  name: Yaan
   version: @project.version@  # Maven属性注入
   build-time: "2025-04-27 20:15:23"
   copyright:
-    owner: Code100 Team
+    owner: Yaan
     since-year: 2025
     license: MIT
 
