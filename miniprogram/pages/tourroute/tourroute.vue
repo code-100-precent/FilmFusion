@@ -126,15 +126,7 @@ export default {
           } else {
             this.routes = [...this.routes, ...newRoutes]
           }
-        ]
-        
-        try {
-          const res = await getTourPage({
-            current: this.currentPage,
-            size: this.pageSize,
-            keyword: this.keyword || undefined
-          })
-
+          
           this.nextCursor = res.nextCursor
           this.hasMore = res.hasMore || false
         } else {

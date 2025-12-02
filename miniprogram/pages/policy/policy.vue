@@ -134,8 +134,9 @@ export default {
           type: this.selectedType === '全部' ? undefined : this.selectedType
         })
 
-        if (res.code === 200 && res.data) {
-          const newPolicies = res.data.map(item => ({
+        // 处理游标分页响应格式
+        if (res && res.records) {
+          const newPolicies = res.records.map(item => ({
             id: item.id,
             title: item.title,
             type: item.type,
@@ -150,16 +151,12 @@ export default {
             this.policies = [...this.policies, ...newPolicies]
           }
 
-          // 更新分页信息
-          if (res.pagination) {
-            this.totalPages = res.pagination.totalPages
-            this.hasMore = this.currentPage < this.totalPages
-          } else {
-            this.hasMore = newPolicies.length >= this.pageSize
-          }
+          // 更新游标分页信息
+          this.hasMore = res.hasMore || false
         } else {
+          console.error('政策数据格式错误:', res)
           uni.showToast({
-            title: res.message || '加载失败',
+            title: '数据格式错误',
             icon: 'none'
           })
         }
