@@ -74,15 +74,15 @@ public class ServiceLogAspect {
         logEntity.setTimestamp(LocalDateTime.now());
         logEntity.setDeleted(false);
 
-        // ===== 1. 操作类型 =====
+        //  1. 操作类型
         LogType logType = loggable.type();
         logEntity.setType(logType.getCode());
 
-        // ===== 2. 操作描述：仅用注解 value（支持 SpEL）或枚举默认描述，绝不拼接目标信息 =====
+        //  2. 操作描述
         String desc = resolveSpel(loggable.value(), method, joinPoint.getArgs());
         logEntity.setDescription(StringUtils.hasText(desc) ? desc : logType.getDescription());
 
-        // ===== 3. 操作人信息 =====
+        //  3. 操作人信息
         User currentUser = AuthContext.getCurrentUser();
 
         if (currentUser == null){
@@ -110,14 +110,20 @@ public class ServiceLogAspect {
             result = joinPoint.proceed();
             logEntity.setSuccess(true);
 
-            // 避免记录大数据量结果（如分页列表、文件流等）
-            if (result != null && !isLargeResult(result)) {
+            // 避免记录大数据量结果
+            if (result == null) {
+                logEntity.setResult("null");
+            } else if (isLargeResult(result)) {
+                // 是大结果
+                logEntity.setResult("数据量过大，暂不记录");
+            } else {
+                // 小结果
                 logEntity.setResult(safeToJson(result));
             }
         } catch (Exception ex) {
             logEntity.setSuccess(false);
             logEntity.setResult("{\"error\": \"" + escapeJson(ex.getMessage()) + "\"}");
-            throw ex; // 重新抛出异常，不影响业务异常传播
+            throw ex;
         }
 
         // ===== 6. 异步保存日志 =====
@@ -126,20 +132,16 @@ public class ServiceLogAspect {
         return result;
     }
 
-    /**
-     * 解析 SpEL 表达式（如 "#{#user.nickname}"）
-     */
     private String resolveSpel(String expression, Method method, Object[] args) {
         if (!StringUtils.hasText(expression) || !expression.contains("#{")) {
             return expression;
         }
 
         try {
-            // 使用 Spring 的 MethodBasedEvaluationContext —— 自动支持 #arg0, #p0, #paramName
+            // 使用 Spring 的 MethodBasedEvaluationContext
             EvaluationContext context = new MethodBasedEvaluationContext(null, method, args,
                     new LocalVariableTableParameterNameDiscoverer());
 
-            // 必须用 TemplateParserContext 才能解析 "xxx #{...} xxx"
             ExpressionParser parser = new SpelExpressionParser();
             return parser.parseExpression(expression, new TemplateParserContext())
                     .getValue(context, String.class);

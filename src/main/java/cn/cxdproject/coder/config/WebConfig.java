@@ -93,9 +93,10 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 // 政策模块管理员接口
                 .addPathPatterns("/api/policy/admin/**")
                 //banner模块接口
-                . addPathPatterns("/api/banner/**");
-        registry.addInterceptor(registrationInterceptor)
-                .addPathPatterns("/api/admin/register/email");
+                .addPathPatterns("/api/banner/**")
+                //操作日志相关接口
+                .addPathPatterns("/api/operationlog/admin/**");
+        registry.addInterceptor(registrationInterceptor);
     }
 
     @Bean
