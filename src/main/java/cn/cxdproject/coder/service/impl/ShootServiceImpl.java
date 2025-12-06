@@ -1,6 +1,8 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.anno.Loggable;
 import cn.cxdproject.coder.common.constants.*;
+import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateShootDTO;
@@ -53,7 +55,10 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.SHOOT_CREATE,
+            value = "Create shoot"
+    )
     public ShootVO createShootByAdmin(Long userId, CreateShootDTO createDTO) {
         if (createDTO.getImage() == null) {
             createDTO.setImage(Constants.DEFAULT_COVER);
@@ -80,6 +85,10 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     @CircuitBreaker(name = "shootGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.SHOOT_GET,
+            value = "Get shoot by ID: #{#shootId}"
+    )
     public ShootVO getShootById(Long shootId) {
         Object store = cache.asMap().get(CaffeineConstants.SHOOT + shootId);
         if (store != null) {
@@ -89,7 +98,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
             if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
                 throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
-            cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
+            cache.put(CaffeineConstants.SHOOT + shootId, shoot);
             return toShootVO(shoot);
         }
     }
@@ -97,6 +106,10 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.SHOOT_USER_GET_PAGE,
+            value = "User get shoot"
+    )
     public List<ShootVO> getShootPage(Long lastId, int size, String keyword) {
         List<Long> ids = shootMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -117,30 +130,40 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     @Override
     @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.SHOOT_UPDATE,
+            value = "Update shoot ID: #{#shootId}"
+    )
     public ShootVO updateShootByAdmin(Long shootId, UpdateShootDTO updateDTO) {
-        Shoot shoot = this.getById(shootId);
-        if (shoot == null || Boolean.TRUE.equals(shoot.getDeleted())) {
+        // 1. 校验是否存在且未被删除
+        Shoot existing = this.getById(shootId);
+        if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
             throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
-        if (updateDTO.getName() != null) shoot.setName(updateDTO.getName());
-        if (updateDTO.getDescription() != null) shoot.setDescription(updateDTO.getDescription());
-        if (updateDTO.getPrice() != null) shoot.setPrice(updateDTO.getPrice());
-        if (updateDTO.getStatus() != null) shoot.setStatus(updateDTO.getStatus());
-        if (updateDTO.getAddress() != null) shoot.setAddress(updateDTO.getAddress());
-        if (updateDTO.getPhone() != null) shoot.setPhone(updateDTO.getPhone());
-        if (updateDTO.getContactName() != null) shoot.setContactName(updateDTO.getContactName());
-        if (updateDTO.getImage() != null) shoot.setImage(updateDTO.getImage());
-        if (updateDTO.getThumbImage() != null) shoot.setThumbImage(updateDTO.getThumbImage());
+        // 3. 执行动态更新
+        int updatedRows = shootMapper.updateShoot(shootId, updateDTO);
 
-        shoot.setUpdatedAt(LocalDateTime.now());
-        cache.asMap().put(CaffeineConstants.SHOOT + shootId, shoot);
-        this.updateById(shoot);
-        return toShootVO(shoot);
+        // 4. 若无记录被更新（可能已被删除）
+        if (updatedRows == 0) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
+
+        // 5. 重新加载最新数据（保证缓存和返回的是最新状态）
+        Shoot updatedShoot = this.getById(shootId);
+
+        // 6. 更新缓存
+        cache.put(CaffeineConstants.SHOOT + shootId, updatedShoot);
+
+        // 7. 返回 VO
+        return toShootVO(updatedShoot);
     }
 
     @Override
-    @Bulkhead(name = "delete", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.SHOOT_DELETE,
+            value = "Delete shoot by ID: #{#shootId}"
+    )
     public void deleteShootByAdmin(Long shootId) {
         boolean updated = shootMapper.update(null,
                 Wrappers.<Shoot>lambdaUpdate()
@@ -182,21 +205,24 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     @Override
     public ShootVO getByIdFallback(Long id,Throwable e) {
-        Object store;
-        store = cache.getIfPresent(CaffeineConstants.SHOOT + id);
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
+
+        Object store = cache.getIfPresent(CaffeineConstants.SHOOT + id);
         if (store != null) {
             return toShootVO((Shoot) store);
-        }
-        store = redisUtils.get(RedisKeyConstants.SHOOT+id);
-        if (store != null) {
-            Shoot shoot = JsonUtils.fromJson((String) store, Shoot.class);
-            return toShootVO(shoot);
         }
         return null;
     }
 
     @Override
     public List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
@@ -220,6 +246,10 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
+    @Loggable(
+            type = LogType.SHOOT_ADMIN_GET_PAGE,
+            value = "Admin get shoot Page"
+    )
     public Page<ShootVO> getShootPageAdmin(Page<Shoot> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

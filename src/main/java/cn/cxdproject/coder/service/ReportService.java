@@ -1,7 +1,8 @@
 package cn.cxdproject.coder.service;
 
 import cn.cxdproject.coder.model.dto.CreateReportDTO;
-import cn.cxdproject.coder.model.dto.UpdateReportDTO;
+import cn.cxdproject.coder.model.dto.UpdateReportAdminDTO;
+import cn.cxdproject.coder.model.dto.UpdateReportUserDTO;
 import cn.cxdproject.coder.model.entity.Report;
 import cn.cxdproject.coder.model.vo.ReportVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,11 +15,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface ReportService extends IService<Report> {
     
     ReportVO createReport(Long userId, CreateReportDTO createDTO);
-    ReportVO updateReport(Long userId, Long reportId, UpdateReportDTO updateDTO);
+    ReportVO updateReport(Long userId, Long reportId, UpdateReportUserDTO updateDTO);
     void deleteReport(Long userId, Long reportId);
     ReportVO getReportById(Long reportId,Long userId);
     Page<ReportVO> getMyReportPage(Long userId, Page<Report> page);
-    ReportVO updateReportByAdmin(Long reportId, UpdateReportDTO updateDTO);
+    ReportVO updateReportByAdmin(Long reportId, UpdateReportAdminDTO updateDTO);
     Page<ReportVO> getReportPageByAdmin(Page<Report> page, String keyword);
     ReportVO getReportByIdByAdmin(Long reportId);
     ReportVO toReportVO(Report report);

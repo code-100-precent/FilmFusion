@@ -83,4 +83,38 @@
             LIMIT 10
     </select>
 
+    <update id="updateShoot">
+        UPDATE fi_shoots
+        <set>
+            <if test="dto.name != null and dto.name != ''">
+                name = #{dto.name},
+            </if>
+            <if test="dto.description != null and dto.description != ''">
+                description = #{dto.description},
+            </if>
+            <if test="dto.price != null and dto.price != ''">
+                price = #{dto.price},
+            </if>
+            <if test="dto.status != null and dto.status != ''">
+                status = #{dto.status},
+            </if>
+            <if test="dto.address != null and dto.address != ''">
+                address = #{dto.address},
+            </if>
+            <if test="dto.phone != null and dto.phone != ''">
+                phone = #{dto.phone},
+            </if>
+            <if test="dto.contactName != null and dto.contactName != ''">
+                contact_name = #{dto.contactName},
+            </if>
+            <if test="dto.image != null and dto.image != ''">
+                image = #{dto.image},
+            </if>
+            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+                thumb_image = #{dto.thumbImage},
+            </if>
+        </set>
+        WHERE id = #{id}
+        AND deleted = false
+    </update>
 </mapper>

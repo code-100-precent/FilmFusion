@@ -77,7 +77,6 @@ public class PolicyController {
         return new CursorPageResponseVO<>(list, nextCursor);
     }
 
-    // ==================== 普通用户接口 ====================
 
     // ==================== 管理员接口 ====================
 
@@ -95,6 +94,7 @@ public class PolicyController {
         return ApiResponse.success(policyVO);
     }
 
+    //管理员分页查询
     @GetMapping("/admin/page")
     public PageResponse<PolicyVO> getPolicyPageAdmin(
             @RequestParam(defaultValue = "1") Integer current,

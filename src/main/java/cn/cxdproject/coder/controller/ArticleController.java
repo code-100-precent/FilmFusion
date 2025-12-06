@@ -95,6 +95,7 @@ public class ArticleController {
         return ApiResponse.success(articleVO);
     }
 
+    //管理员文章分页
     @GetMapping("/admin/page")
     public PageResponse<ArticleVO> getArticlePageAdmin(
             @RequestParam(defaultValue = "1") Integer current,
@@ -102,7 +103,7 @@ public class ArticleController {
             @RequestParam(required = false) String keyword) {
 
         Page<Article> page = new Page<>(current, size);
-        Page<ArticleVO> articlePage = articleService.getArticlePagAdmine(page, keyword);
+        Page<ArticleVO> articlePage = articleService.getArticlePagAdmin(page, keyword);
 
         return PageResponse.of(
                 (int) articlePage.getCurrent(),

@@ -70,5 +70,5 @@ public interface ArticleService extends IService<Article> {
 
     List<ArticleVO> getPageFallback(Long lastId, int size, String keyword, Throwable e);
 
-    Page<ArticleVO> getArticlePagAdmine(Page<Article> page, String keyword);
+    Page<ArticleVO> getArticlePagAdmin(Page<Article> page, String keyword);
 }

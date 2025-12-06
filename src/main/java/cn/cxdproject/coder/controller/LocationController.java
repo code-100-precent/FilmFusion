@@ -81,7 +81,6 @@ public class LocationController {
 
         return new CursorPageResponseVO<>(list, nextCursor);
     }
-    // ==================== 普通用户接口 ====================
 
     // ==================== 管理员接口 ====================
 
@@ -99,6 +98,7 @@ public class LocationController {
         return ApiResponse.success(locationVO);
     }
 
+    //管理员分页
     @GetMapping("/admin/page")
     public PageResponse<LocationVO> getLocationPageAdmin(
             @RequestParam(defaultValue = "1") Integer current,

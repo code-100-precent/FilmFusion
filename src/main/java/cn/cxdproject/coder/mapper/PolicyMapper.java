@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.dto.UpdatePolicyDTO;
 import cn.cxdproject.coder.model.entity.Banner;
 import cn.cxdproject.coder.model.entity.Location;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -25,7 +26,11 @@ public interface PolicyMapper extends BaseMapper<Policy> {
             @Param("size") long size
     );
 
-
     List<Policy> selectLatest10();
+
+    int updatePolicy(
+            @Param("id") Long id,
+            @Param("dto") UpdatePolicyDTO dto
+    );
 
 }

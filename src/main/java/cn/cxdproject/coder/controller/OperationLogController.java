@@ -1,6 +1,12 @@
 package cn.cxdproject.coder.controller;
 
+import cn.cxdproject.coder.common.PageResponse;
+import cn.cxdproject.coder.common.anno.PublicAccess;
+import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
+import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.OperationLog;
+import cn.cxdproject.coder.model.vo.ArticleVO;
+import cn.cxdproject.coder.model.vo.OperationLogVO;
 import cn.cxdproject.coder.service.OperationLogService;
 import cn.cxdproject.coder.common.ApiResponse;
 import cn.cxdproject.coder.common.PageRequest;
@@ -8,6 +14,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -24,74 +32,41 @@ public class OperationLogController {
         this.operationLogService = operationLogService;
     }
 
-    /**
-     * 新增 OperationLog 记录
-     * @param entity 实体对象
-     * @return 是否新增成功
-     */
-    @PostMapping
-    public ApiResponse<Boolean> add(@RequestBody OperationLog entity) {
-        return ApiResponse.success(operationLogService.save(entity));
+    //分页获取操作信息
+    @GetMapping("/admin/page")
+    public PageResponse<OperationLogVO> getOperationPageAdmin(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+
+        Page<OperationLog> page = new Page<>(current, size);
+        Page<OperationLogVO> operationPage = operationLogService.getOperationPage(page, keyword);
+
+        return PageResponse.of(
+                (int) operationPage.getCurrent(),
+                (int) operationPage.getSize(),
+                operationPage.getTotal(),
+                operationPage.getRecords()
+        );
     }
 
-    /**
-     * 更新 OperationLog 记录
-     * @param entity 实体对象（必须包含主键 ID）
-     * @return 是否更新成功
-     */
-    @PutMapping
-    public ApiResponse<Boolean> update(@RequestBody OperationLog entity) {
-        return ApiResponse.success(operationLogService.updateById(entity));
+    //根据id获取操作信息
+    @GetMapping("/admin/{id}")
+    @PublicAccess
+    public ApiResponse<OperationLogVO> getOperationById(@PathVariable @NotNull(message = "记录ID不能为空") Long id) {
+       OperationLogVO operationLogVO = operationLogService.getOperationById(id);
+        return ApiResponse.success(operationLogVO);
     }
 
-    /**
-     * 删除指定 ID 的 OperationLog 记录
-     * @param id 主键 ID
-     * @return 是否删除成功
-     */
-    @DeleteMapping("/{id}")
-    public ApiResponse<Boolean> delete(@PathVariable("id") Integer id) {
-        return ApiResponse.success(operationLogService.removeById(id));
-    }
 
     /**
-     * 根据 ID 获取 OperationLog 详情
-     * @param id 主键 ID
-     * @return 匹配的实体对象
+     * 管理员删除文章
      */
-    @GetMapping("/{id}")
-    public ApiResponse<OperationLog> getById(@PathVariable("id") Integer id) {
-        return ApiResponse.success(operationLogService.getById(id));
+    @DeleteMapping("/admin/delete/{id}")
+    public ApiResponse<Void> deleteOperation(@PathVariable @NotNull(message = "记录ID不能为空") Long id) {
+        operationLogService.deleteArticle(id);
+        return ApiResponse.success();
     }
 
-    /**
-     * 获取所有 OperationLog 列表（不分页）
-     * @return 实体列表
-     */
-    @GetMapping
-    public ApiResponse<List<OperationLog>> list() {
-        return ApiResponse.success(operationLogService.list());
-    }
 
-    /**
-     * 分页查询 OperationLog 列表
-     * 支持关键字模糊搜索与排序
-     * @param pageRequest 分页与筛选请求参数
-     * @return 分页结果
-     */
-    @PostMapping("/page")
-    public ApiResponse<Page<OperationLog>> getPage(@RequestBody PageRequest pageRequest) {
-        Page<OperationLog> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
-        QueryWrapper<OperationLog> wrapper = new QueryWrapper<>();
-
-        if (pageRequest.getKeyword() != null && !pageRequest.getKeyword().isEmpty()) {
-            wrapper.like("name", pageRequest.getKeyword()); // 可自定义字段
-        }
-
-        if (pageRequest.getSortBy() != null && !pageRequest.getSortBy().isEmpty()) {
-            wrapper.orderBy(true, "asc".equalsIgnoreCase(pageRequest.getSortOrder()), pageRequest.getSortBy());
-        }
-
-        return ApiResponse.success(operationLogService.page(page, wrapper));
-    }
 }

@@ -1,6 +1,9 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.anno.Loggable;
 import cn.cxdproject.coder.common.constants.*;
+import cn.cxdproject.coder.common.enums.LogType;
+import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.mapper.LocationMapper;
 import cn.cxdproject.coder.model.dto.CreatePolicyDTO;
@@ -48,6 +51,10 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     }
 
     @Override
+    @Loggable(
+            type = LogType.POLICY_CREATE,
+            value = "Create policy"
+    )
     public PolicyVO createPolicyByAdmin(CreatePolicyDTO createDTO) {
         if (createDTO.getImage() == null) {
             createDTO.setImage(Constants.DEFAULT_COVER);
@@ -71,6 +78,10 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @Override
     @CircuitBreaker(name = "policyGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.POLICY_GET,
+            value = "Get policy by ID: #{#policyId}"
+    )
     public PolicyVO getPolicyById(Long policyId) {
         Object store = cache.asMap().get(CaffeineConstants.POLICY + policyId);
         if (store != null) {
@@ -88,6 +99,10 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @Override
     @CircuitBreaker(name = "policyGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.POLICY_USER_GET_PAGE,
+            value = "User get policy"
+    )
     public List<PolicyVO> getPolicyPage(Long lastId, int size, String keyword) {
         List<Long> ids = policyMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -107,28 +122,40 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     }
 
     @Override
-    @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.POLICY_UPDATE,
+            value = "Update policy ID: #{#policyId}"
+    )
     public PolicyVO updatePolicyByAdmin(Long policyId, UpdatePolicyDTO updateDTO) {
-        Policy policy = this.getById(policyId);
-        if (policy == null || Boolean.TRUE.equals(policy.getDeleted())) {
+        // 1. 校验是否存在且未被删除
+        Policy existing = this.getById(policyId);
+        if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
             throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
-        if (updateDTO.getTitle() != null) policy.setTitle(updateDTO.getTitle());
-        if (updateDTO.getType() != null) policy.setType(updateDTO.getType());
-        if (updateDTO.getIssueUnit() != null) policy.setIssueUnit(updateDTO.getIssueUnit());
-        if (updateDTO.getIssueTime() != null) policy.setIssueTime(updateDTO.getIssueTime());
-        if (updateDTO.getContent() != null) policy.setContent(updateDTO.getContent());
-        if (updateDTO.getImage() != null) policy.setImage(updateDTO.getImage());
-        if (updateDTO.getThumbImage() != null) policy.setThumbImage(updateDTO.getThumbImage());
+        // 2. 执行动态更新
+        int updatedRows = policyMapper.updatePolicy(policyId, updateDTO);
 
-        cache.asMap().put(CaffeineConstants.POLICY + policyId, policy);
-        this.updateById(policy);
-        return toPolicyVO(policy);
+        // 3. 若无记录被更新（可能已被删除或并发修改）
+        if (updatedRows == 0) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
+
+        // 4. 重新加载最新数据（保证一致性）
+        Policy updatedPolicy = this.getById(policyId);
+
+        // 5. 更新缓存（注意：缓存的是对象，不是 ID）
+        cache.put(CaffeineConstants.POLICY + policyId, updatedPolicy);
+
+        // 6. 返回 VO
+        return toPolicyVO(updatedPolicy);
     }
 
     @Override
-    @Bulkhead(name = "delete", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.POLICY_DELETE,
+            value = "Delete policy by ID: #{#policyId}"
+    )
     public void deletePolicyByAdmin(Long policyId) {
         boolean updated = policyMapper.update(null,
                 Wrappers.<Policy>lambdaUpdate()
@@ -167,21 +194,24 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
 
     @Override
     public PolicyVO getByIdFallback(Long id, Throwable e) {
-        Object store;
-        store = cache.getIfPresent(CaffeineConstants.POLICY + id);
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
+
+        Object store = cache.getIfPresent(CaffeineConstants.POLICY + id);
         if (store != null) {
             return toPolicyVO((Policy) store);
-        }
-        store = redisUtils.get(RedisKeyConstants.POLICY + id);
-        if (store != null) {
-            Policy policy = JsonUtils.fromJson((String) store, Policy.class);
-            return toPolicyVO(policy);
         }
         return null;
     }
 
     @Override
     public List<PolicyVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
@@ -205,6 +235,10 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     }
 
     @Override
+    @Loggable(
+            type = LogType.POLICY_ADMIN_GET_PAGE,
+            value = "Admin get policy Page"
+    )
     public Page<PolicyVO> getPolicyPageAdmin(Page<Policy> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

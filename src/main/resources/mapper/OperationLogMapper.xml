@@ -34,4 +34,15 @@
             `updated_at`
     </sql>
 
+    <select id="getPage" resultType="cn.cxdproject.coder.model.entity.OperationLog">
+        SELECT *
+        FROM fi_operation_logs
+        WHERE deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND type LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY timestamp DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
 </mapper>

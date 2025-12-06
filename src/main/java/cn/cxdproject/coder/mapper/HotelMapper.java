@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.dto.UpdateHotelDTO;
 import cn.cxdproject.coder.model.entity.Banner;
 import cn.cxdproject.coder.model.entity.Hotel;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -21,4 +22,8 @@ public interface HotelMapper extends BaseMapper<Hotel> {
     );
 
     List<Hotel> selectLatest10();
+
+    int updateHotel(@Param("id") Long id,
+                    @Param("dto") UpdateHotelDTO dto
+    );
 }

@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.dto.UpdateShootDTO;
 import cn.cxdproject.coder.model.entity.Banner;
 import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
@@ -27,7 +28,11 @@ public interface ShootMapper extends BaseMapper<Shoot> {
             @Param("size") long size
     );
 
-
     List<Shoot> selectLatest10();
+
+    int updateShoot(
+            @Param("id") Long id,
+            @Param("dto") UpdateShootDTO dto
+    );
 
 }

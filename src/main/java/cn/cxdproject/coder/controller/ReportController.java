@@ -2,10 +2,10 @@ package cn.cxdproject.coder.controller;
 
 import cn.cxdproject.coder.common.ApiResponse;
 import cn.cxdproject.coder.common.PageResponse;
-import cn.cxdproject.coder.common.anno.PublicAccess;
 import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.model.dto.CreateReportDTO;
-import cn.cxdproject.coder.model.dto.UpdateReportDTO;
+import cn.cxdproject.coder.model.dto.UpdateReportAdminDTO;
+import cn.cxdproject.coder.model.dto.UpdateReportUserDTO;
 import cn.cxdproject.coder.model.entity.Report;
 import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.ReportVO;
@@ -69,7 +69,7 @@ public class ReportController {
     @PutMapping("/update/{id}")
     public ApiResponse<ReportVO> updateReport(
             @PathVariable @NotNull(message = "ID不能为空") Long id,
-            @Valid @RequestBody UpdateReportDTO updateDTO) {
+            @Valid @RequestBody UpdateReportUserDTO updateDTO) {
         User currentUser = AuthContext.getCurrentUser();
         if (currentUser == null) {
             return ApiResponse.error(401, "未登录");
@@ -128,7 +128,7 @@ public class ReportController {
     @PutMapping("/admin/update/{id}")
     public ApiResponse<ReportVO> updateReportByAdmin(
             @PathVariable @NotNull(message = "ID不能为空") Long id,
-            @Valid @RequestBody UpdateReportDTO updateDTO) {
+            @Valid @RequestBody UpdateReportAdminDTO updateDTO) {
         ReportVO reportVO = reportService.updateReportByAdmin(id, updateDTO);
         return ApiResponse.success(reportVO);
     }

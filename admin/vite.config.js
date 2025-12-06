@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path' // 👈 添加这一行
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
@@ -30,6 +30,14 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true
       }
+    }
+  },
+  test: {
+    environment: 'jsdom',
+    include: ['src/**/*.spec.js', 'src/**/*.test.js'],
+    setupFiles: ['src/setupTests.js'],
+    coverage: {
+      reporter: ['text', 'json', 'html']
     }
   }
 })

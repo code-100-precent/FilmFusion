@@ -125,21 +125,6 @@ resilience4j:
         max-wait-duration: 100ms
 
     instances:
-      add:
-        base-config: default
-        max-concurrent-calls: 10
-        max-wait-duration: 100ms   # 写操作可以稍微等一下
-
-      delete:
-        base-config: default
-        max-concurrent-calls: 20
-        max-wait-duration: 50ms
-
-      update:
-        base-config: default
-        max-concurrent-calls: 20
-        max-wait-duration: 50ms
-
       get:
         base-config: default
         max-concurrent-calls: 50
