@@ -36,7 +36,7 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
-        :scroll-x="1400"
+
       />
       
       <!-- 移动端卡片列表 -->
@@ -178,8 +178,7 @@ import {
   NPopconfirm,
   NModal,
   NImage,
-  NSpin,
-  NPagination,
+
   useMessage
 } from 'naive-ui'
 import { getDramaPage, addDrama, updateDrama, deleteDrama, getDramaById } from '@/api'
@@ -237,44 +236,29 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  {
-      title: '封面',
-      key: 'cover',
-      width: 100,
-      render: (row) => {
-        // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
-        const thumbnailUrl = row.thumbUrl;
-        // 获取原图URL用于预览
-        const originalUrl = row.cover || '';
-        
-        return h(NImage, {
-          width: 60,
-          height: 45,
-          src: thumbnailUrl || originalUrl, // 显示压缩后的图片
-          objectFit: 'cover',
-          previewDisabled: false, // 启用预览功能
-          showToolbar: false,
-          // 配置预览功能，点击时显示原图
-          srcset: [
-            {
-              src: originalUrl,
-              alt: '电视剧封面'
-            }
-          ],
-          fallbackSrc: '/placeholder.jpg'
-        })
-      }
-    },
-  { title: '电视剧名称', key: 'name', width: 200, ellipsis: { tooltip: true } },
-  { title: '备案号', key: 'filingNum', width: 150 },
-  { title: '出品公司', key: 'prodCompany', width: 180, ellipsis: { tooltip: true } },
-  { title: '拍摄地', key: 'shootLocation', width: 150, ellipsis: { tooltip: true } },
-  {
-    title: '演员名单',
-    key: 'cast',
-    width: 200,
-    ellipsis: { tooltip: true }
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '剧名', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+  { title: '备案号', key: 'filingNum', width: 180, ellipsis: { tooltip: true } },
+  { title: '出品公司', key: 'prodCompany', width: 150, ellipsis: { tooltip: true } },
+  { title: '剧组简介', key: 'crewDescription', width: 200, ellipsis: { tooltip: true } },
+  { title: '剧集简介', key: 'dramaDescription', width: 200, ellipsis: { tooltip: true } },
+  { title: '演员', key: 'cast', width: 150, ellipsis: { tooltip: true } },
+  { title: '拍摄地', key: 'shootLocation', width: 120 },
+  { title: '协拍服务', key: 'service', width: 150, ellipsis: { tooltip: true } },
+  { 
+    title: '封面图', 
+    key: 'cover', 
+    width: 100,
+    render: (row) => {
+      if (!row.cover) return '-'
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.cover,
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
+    }
   },
   {
     title: '创建时间',
@@ -290,7 +274,7 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 150,
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [

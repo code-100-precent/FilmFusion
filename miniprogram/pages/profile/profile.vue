@@ -6,11 +6,6 @@
     <NavBar :show-back="false"></NavBar>
 
     <scroll-view class="content" scroll-y>
-      <!-- 页面标题 -->
-      <view class="page-title">
-        <text class="title-text">个人中心</text>
-      </view>
-      
       <!-- 用户信息卡片 -->
       <view class="user-card">
         <view v-if="isLoggedIn" class="user-info">

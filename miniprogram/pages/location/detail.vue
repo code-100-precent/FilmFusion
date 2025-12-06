@@ -1,6 +1,6 @@
 <template>
   <view class="location-detail-page">
-    <NavBar title="场地详情" :show-back="true"></NavBar>
+    <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y v-if="!loading && location">
       <!-- 场地基本信息 -->

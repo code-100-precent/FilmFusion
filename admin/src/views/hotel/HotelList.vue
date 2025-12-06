@@ -171,92 +171,166 @@
         <n-form-item label="描述" path="description">
           <n-input v-model:value="hotelForm.description" type="textarea" :rows="4" placeholder="请输入酒店描述" />
         </n-form-item>
-        <n-form-item label="封面图片" path="cover">
+        <!-- 封面图片上传 -->
+        <n-form-item label="封面图片(cover)" path="cover">
           <n-upload
-            :max="1"
-            :default-file-list="fileList"
-            @update:file-list="handleFileListChange"
-            @finish="handleUploadFinish"
+            :multiple="false"
+            :file-list-style="{ maxHeight: '180px' }"
+            action="/api/upload"
+            :on-finish="handleCoverUpload"
+            :show-upload-list="{ fileIcon: false }"
+            :default-upload="true"
             :custom-request="handleUpload"
           >
-            <n-button>上传封面图片</n-button>
-          </n-upload>
-          <div v-if="hotelForm.imageUrl" style="margin-top: 12px;">
-            <n-image
-              :src="hotelForm.imageUrl"
-              width="200"
-              height="120"
-              object-fit="cover"
-              fallback-src="/placeholder.jpg"
-            />
-          </div>
-        </n-form-item>
-        
-        <!-- 添加正文图片上传组件 -->
-        <n-form-item label="正文图片" path="images">
-          <n-upload
-            :max="9"
-            :default-file-list="contentFileList"
-            @update:file-list="handleContentFileListChange"
-            @finish="handleContentUploadFinish"
-            :custom-request="handleContentUpload"
-          >
-            <n-button>上传正文图片（最多9张）</n-button>
-          </n-upload>
-          <div v-if="contentFileList.length > 0" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
-            <div v-for="(file, index) in contentFileList" :key="index" style="position: relative;">
-              <n-image
-                :src="file.url || file.thumbnailUrl"
-                width="100"
-                height="80"
-                object-fit="cover"
-                fallback-src="/placeholder.jpg"
-              />
-              <n-button 
-                size="tiny" 
-                type="error" 
-                quaternary 
-                circle 
-                style="position: absolute; top: -8px; right: -8px;"
-                @click="contentFileList.splice(index, 1)"
-              >
-                <template #icon>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </template>
-              </n-button>
+            <div v-if="!hotelForm.cover && !hotelForm.imageUrl" class="upload-trigger">
+              <Icon icon="mdi:upload" />
+              <span>点击上传封面</span>
             </div>
-          </div>
-        </n-form-item>
-        
-        <!-- 添加thumb_image图片显示区域 -->
-        <n-form-item label="缩略图（thumb_image）">
-          <div v-if="thumbImageList.length > 0" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
-            <div v-for="(file, index) in thumbImageList" :key="index" style="position: relative;">
+            <div v-else class="image-preview">
               <n-image
-                :src="file.url"
-                width="100"
-                height="80"
-                object-fit="cover"
-                fallback-src="/placeholder.jpg"
+                style="max-height: 120px;"
+                :src="hotelForm.cover || hotelForm.imageUrl"
                 :preview-disabled="false"
               />
+              <n-button type="error" text @click.stop="clearCover">
+                <Icon icon="mdi:delete-outline" />
+                删除
+              </n-button>
+            </div>
+          </n-upload>
+          <n-input v-model:value="hotelForm.cover" placeholder="也可直接输入封面URL" style="margin-top: 8px;" />
+        </n-form-item>
+        
+        <!-- 缩略封面上传 -->
+        <n-form-item label="缩略封面(thumb_cover)" path="thumb_cover">
+          <n-upload
+            :multiple="false"
+            :file-list-style="{ maxHeight: '180px' }"
+            action="/api/upload"
+            :on-finish="handleThumbCoverUpload"
+            :show-upload-list="{ fileIcon: false }"
+            :default-upload="true"
+            :custom-request="handleUpload"
+          >
+            <div v-if="!hotelForm.thumb_cover" class="upload-trigger">
+              <Icon icon="mdi:upload" />
+              <span>点击上传缩略封面</span>
+            </div>
+            <div v-else class="image-preview">
+              <n-image
+                style="max-height: 120px;"
+                :src="hotelForm.thumb_cover"
+                :preview-disabled="false"
+              />
+              <n-button type="error" text @click.stop="clearThumbCover">
+                <Icon icon="mdi:delete-outline" />
+                删除
+              </n-button>
+            </div>
+          </n-upload>
+          <n-input v-model:value="hotelForm.thumb_cover" placeholder="也可直接输入缩略封面URL" style="margin-top: 8px;" />
+        </n-form-item>
+        
+        <!-- 正文图片上传 -->
+        <n-form-item label="正文图片(image)" path="image">
+          <n-upload
+            multiple
+            :max="9"
+            :file-list-style="{ maxHeight: '180px' }"
+            action="/api/upload"
+            :on-finish="handleContentUpload"
+            :show-upload-list="{ fileIcon: false }"
+            :default-upload="true"
+            :custom-request="handleContentUpload"
+          >
+            <div class="upload-trigger">
+              <Icon icon="mdi:upload" />
+              <span>点击上传正文图片（最多9张）</span>
+            </div>
+          </n-upload>
+          <div v-if="contentFileList.length > 0" class="images-preview" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
+            <div
+              v-for="(file, index) in contentFileList"
+              :key="index"
+              class="image-item"
+              style="position: relative;"
+            >
+              <n-image 
+                :src="file.url || file.thumbnailUrl" 
+                width="100" 
+                height="80" 
+                object-fit="cover"
+                :preview-disabled="false" 
+              />
               <n-button 
                 size="tiny" 
                 type="error" 
                 quaternary 
                 circle 
+                @click.stop="removeContentImage(index)"
                 style="position: absolute; top: -8px; right: -8px;"
-                @click="thumbImageList.splice(index, 1)"
               >
-                <template #icon>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </template>
+                <Icon icon="mdi:delete-outline" />
               </n-button>
             </div>
           </div>
-          <div v-else style="margin-top: 12px; color: #9ca3af;">
-            暂无缩略图
+          <n-input 
+            v-model:value="hotelForm.image" 
+            type="textarea" 
+            placeholder="请输入正文图片URL，多张用逗号分隔" 
+            style="margin-top: 8px;"
+          />
+        </n-form-item>
+        
+        <!-- 缩略详情图上传 -->
+        <n-form-item label="缩略详情图(thumb_image)" path="thumb_image">
+          <n-upload
+            multiple
+            :max="9"
+            :file-list-style="{ maxHeight: '180px' }"
+            action="/api/upload"
+            :on-finish="handleThumbImageUpload"
+            :show-upload-list="{ fileIcon: false }"
+            :default-upload="true"
+            :custom-request="handleUpload"
+          >
+            <div class="upload-trigger">
+              <Icon icon="mdi:upload" />
+              <span>点击上传缩略详情图（最多9张）</span>
+            </div>
+          </n-upload>
+          <div v-if="thumbImageList.length > 0" class="images-preview" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
+            <div
+              v-for="(file, index) in thumbImageList"
+              :key="index"
+              class="image-item"
+              style="position: relative;"
+            >
+              <n-image 
+                :src="file.url" 
+                width="100" 
+                height="80" 
+                object-fit="cover"
+                :preview-disabled="false" 
+              />
+              <n-button 
+                size="tiny" 
+                type="error" 
+                quaternary 
+                circle 
+                @click.stop="removeThumbImage(index)"
+                style="position: absolute; top: -8px; right: -8px;"
+              >
+                <Icon icon="mdi:delete-outline" />
+              </n-button>
+            </div>
           </div>
+          <n-input 
+            v-model:value="hotelForm.thumb_image" 
+            type="textarea" 
+            placeholder="请输入缩略详情图URL，多张用逗号分隔" 
+            style="margin-top: 8px;"
+          />
         </n-form-item>
 
       </n-form>
@@ -287,7 +361,49 @@ import {
   NUpload,
   useMessage
 } from 'naive-ui'
-import { getHotelPage, createHotel, updateHotel, deleteHotel, getHotelById } from '@/api'
+import request from '@/utils/request'
+// 酒店相关API函数
+const getHotelPage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/hotel/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
+  })
+}
+
+const getHotelById = (id) => {
+  return request({
+    url: `/hotel/admin/${id}`,
+    method: 'get'
+  })
+}
+
+const createHotel = (data) => {
+  return request({
+    url: '/hotel/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+const updateHotel = (id, data) => {
+  return request({
+    url: `/hotel/admin/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+const deleteHotel = (id) => {
+  return request({
+    url: `/hotel/admin/${id}`,
+    method: 'delete'
+  })
+}
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -363,112 +479,6 @@ const formRules = {
   ],
   latitude: [
     { required: true, message: '请输入纬度', trigger: 'blur' }
-  ]
-}
-
-
-
-const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  {
-      title: '封面图片',
-      key: 'imageUrl',
-      width: 100,
-      render: (row) => {
-        // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
-        const imgUrl = row.thumbUrl || row.imageUrl;
-        // 获取原图URL用于预览
-        const originalUrl = row.imageUrl || imgUrl;
-        
-        return h(NImage, {
-          width: 60,
-          height: 45,
-          src: imgUrl, // 显示压缩后的图片
-          objectFit: 'cover',
-          previewDisabled: false, // 启用预览功能
-          fallbackSrc: '/placeholder.jpg',
-          // 配置预览功能，点击时显示原图
-          srcset: [
-            {
-              src: originalUrl, // 预览时显示未压缩的原图
-              alt: '酒店封面图片'
-            }]
-          })
-      }
-    },
-    {
-      title: '正文图片',
-      key: 'contentImages',
-      width: 150,
-      render: (row) => {
-        if (!row.contentImages || row.contentImages.length === 0) {
-          return '-'  
-        }
-        return h('div', { style: 'display: flex; gap: 4px;' },
-          row.contentImages.slice(0, 3).map((img, index) => {
-            // 检查是否有对应的缩略图URL数组
-            const imgUrl = (row.contentThumbUrls && row.contentThumbUrls[index]) || img;
-            // 获取原图URL用于预览
-            const originalUrl = img; // 假设contentImages中存储的是原图URL
-            
-            return h(NImage, {
-              width: 40,
-              height: 30,
-              src: imgUrl, // 显示压缩后的图片
-              objectFit: 'cover',
-              previewDisabled: false, // 启用预览功能
-              fallbackSrc: '/placeholder.jpg',
-              style: { borderRadius: '2px' },
-              // 配置预览功能，点击时显示原图
-              srcset: [
-                {
-                  src: originalUrl, // 预览时显示未压缩的原图
-                  alt: `正文图片${index + 1}`
-                }
-              ]
-            })
-          })
-        )
-      }
-    },
-  { title: '酒店名称', key: 'name', width: 200, ellipsis: { tooltip: true } },
-  { title: '地址', key: 'address', width: 250, ellipsis: { tooltip: true } },
-  { title: '负责人', key: 'manager_name', width: 100 },
-  { title: '负责人电话', key: 'manager_phone', width: 120 },
-  {
-    title: '创建时间',
-    key: 'created_at',
-    width: 180,
-    render: (row) => {
-      if (Array.isArray(row.created_at)) {
-        return dayjs(row.created_at[0] + '-' + String(row.created_at[1]).padStart(2, '0') + '-' + String(row.created_at[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
-      }
-      return row.created_at ? dayjs(row.created_at).format('YYYY-MM-DD HH:mm:ss') : '-'  
-    }
-  },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 180,
-    fixed: 'right',
-    render: (row) => {
-      return h('div', { style: 'display: flex; gap: 8px;' }, [
-        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
-        h(
-          NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
-        )
-      ])
-    }
-  }
-]
-
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
   loadData()
 })
 
@@ -584,12 +594,19 @@ const handleEdit = async (row) => {
       manager_phone: hotel.manager_phone || hotel.managerPhone || ''
     })
     
+    // 确保cover和imageUrl字段正确映射
+    if (hotel.imageUrl && !hotelForm.cover) {
+      hotelForm.cover = hotel.imageUrl
+    } else if (hotelForm.cover && !hotel.imageUrl) {
+      hotelForm.imageUrl = hotelForm.cover
+    }
+    
     // 设置封面图片
-    if (hotel.cover || hotel.imageUrl || hotel.image) {
-      hotelForm.imageUrl = hotel.cover || hotel.imageUrl || hotel.image
+    if (hotelForm.cover || hotelForm.imageUrl) {
+      const coverUrl = hotelForm.cover || hotelForm.imageUrl
       fileList.value = [{
-        url: hotelForm.imageUrl,
-        thumbnailUrl: hotelForm.imageUrl,
+        url: coverUrl,
+        thumbnailUrl: coverUrl,
         name: '封面图片'
       }]
     } else {
@@ -636,6 +653,7 @@ const handleUploadFinish = ({ file, event }) => {
       const res = JSON.parse(event.target.response)
       if (res.code === 200) {
         hotelForm.imageUrl = res.data.url
+        hotelForm.cover = res.data.url // 同步更新cover字段
       } else {
         message.error('上传失败：' + res.message)
       }
@@ -661,7 +679,51 @@ const handleContentFileListChange = (fileList) => {
 }
 
 const handleContentUploadFinish = () => {
+  // 上传成功后更新image字段
+  updateImageField()
   message.success('正文图片上传成功')
+}
+
+// 更新image字段为逗号分隔的URL字符串
+const updateImageField = () => {
+  const imageUrls = contentFileList.value
+    .filter(file => file.url)
+    .map(file => file.url)
+    .join(',')
+  hotelForm.image = imageUrls
+}
+
+// 更新thumb_image字段为逗号分隔的URL字符串
+const updateThumbImageField = () => {
+  const thumbImageUrls = thumbImageList.value
+    .filter(file => file.url)
+    .map(file => file.url)
+    .join(',')
+  hotelForm.thumb_image = thumbImageUrls
+}
+
+// 清除封面图片
+const clearCover = () => {
+  hotelForm.cover = ''
+  hotelForm.imageUrl = ''
+  fileList.value = []
+}
+
+// 清除缩略封面
+const clearThumbCover = () => {
+  hotelForm.thumb_cover = ''
+}
+
+// 移除正文图片
+const removeContentImage = (index) => {
+  contentFileList.value.splice(index, 1)
+  updateImageField()
+}
+
+// 移除缩略详情图
+const removeThumbImage = (index) => {
+  thumbImageList.value.splice(index, 1)
+  updateThumbImageField()
 }
 
 const handleContentUpload = ({ file, onFinish, onError }) => {
@@ -699,6 +761,13 @@ const handleDialogSave = async () => {
       .map(file => file.url)
       .join(',') // 使用逗号分隔多张图片URL
     
+    // 确保cover和imageUrl保持同步
+    if (hotelForm.cover) {
+      hotelForm.imageUrl = hotelForm.cover
+    } else if (hotelForm.imageUrl) {
+      hotelForm.cover = hotelForm.imageUrl
+    }
+    
     const data = {
       name: hotelForm.name,
       address: hotelForm.address,
@@ -707,7 +776,7 @@ const handleDialogSave = async () => {
       description: hotelForm.description,
       // 严格按照SQL字段结构使用图片字段
       cover: hotelForm.cover || hotelForm.imageUrl || '',
-      image: hotelForm.image || contentImageUrls || '',
+      image: contentImageUrls || hotelForm.image || '',
       thumb_cover: hotelForm.thumb_cover || '',
       thumb_image: thumbImageUrls || hotelForm.thumb_image || '',
       longitude: hotelForm.longitude || '',
@@ -769,6 +838,7 @@ const resetForm = () => {
   // 清空文件列表
   fileList.value = []
   contentFileList.value = []
+  thumbImageList.value = []
   
   // 重置表单验证
   if (formRef.value) {

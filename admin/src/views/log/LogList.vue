@@ -32,9 +32,9 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, h } from 'vue'
 import { getLogPage } from '@/api'
-import { NButton, NCard, NDataTable, NForm, NFormItem, NInput } from 'naive-ui'
+import { NButton, NCard, NDataTable, NForm, NFormItem, NInput, NSpace } from 'naive-ui'
 import { Icon } from '@/components'
 
 export default {
@@ -63,7 +63,7 @@ export default {
       showSizePicker: true,
       pageSizes: [10, 20, 50, 100],
       showQuickJumper: true,
-      showTotal: (total, range) => `共 ${total} 条数据，当前 ${range[0]}-${range[1]}`
+      showTotal: (total, range) => `共 ${total} 条数据,当前 ${range[0]}-${range[1]}`
     })
     
     const columns = [
@@ -108,16 +108,20 @@ export default {
         key: 'actions',
         width: 150,
         render(row) {
-          return (
-            <n-space>
-              <n-button size="small" type="primary" @click={() => handleEdit(row)}>
-                编辑
-              </n-button>
-              <n-button size="small" type="error" @click={() => handleDelete(row.id)}>
-                删除
-              </n-button>
-            </n-space>
-          )
+          return h(NSpace, null, {
+            default: () => [
+              h(NButton, {
+                size: 'small',
+                type: 'primary',
+                onClick: () => handleEdit(row)
+              }, { default: () => '编辑' }),
+              h(NButton, {
+                size: 'small',
+                type: 'error',
+                onClick: () => handleDelete(row.id)
+              }, { default: () => '删除' })
+            ]
+          })
         }
       }
     ]

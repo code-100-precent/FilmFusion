@@ -202,7 +202,49 @@ import {
   useMessage,
   useDialog
 } from 'naive-ui'
-import { getBannerPage, createBanner, updateBanner, deleteBanner, getBannerById } from '@/api'
+import request from '@/utils/request'
+// Banner相关API函数
+const getBannerPage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/banner/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
+  })
+}
+
+const getBannerById = (id) => {
+  return request({
+    url: `/banner/admin/${id}`,
+    method: 'get'
+  })
+}
+
+const createBanner = (data) => {
+  return request({
+    url: '/banner/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+const updateBanner = (id, data) => {
+  return request({
+    url: `/banner/admin/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+const deleteBanner = (id) => {
+  return request({
+    url: `/banner/admin/${id}`,
+    method: 'delete'
+  })
+}
 import dayjs from 'dayjs'
 
 const message = useMessage()
