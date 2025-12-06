@@ -1,5 +1,7 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.anno.Loggable;
+import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.common.storage.LocalStorageService;
 import cn.cxdproject.coder.common.storage.MinioStorageService;
 import cn.cxdproject.coder.model.vo.FileVO;
@@ -20,6 +22,10 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
+    @Loggable(
+            type = LogType.FILE_UPLOAD,
+            value = "upload file"
+    )
     public FileVO imageUpload(MultipartFile file) {
         FileVO fileVO = minioStorageService.upload(file);
         return fileVO;

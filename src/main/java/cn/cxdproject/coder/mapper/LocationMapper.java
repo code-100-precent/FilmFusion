@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
 import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Banner;
 import cn.cxdproject.coder.model.entity.Drama;
@@ -27,8 +28,10 @@ public interface LocationMapper extends BaseMapper<Location> {
             @Param("size") long size
     );
 
-
-
-
     List<Location> selectLatest10();
+
+    int updateLocation(
+            @Param("id") Long id,
+            @Param("dto") UpdateLocationDTO dto
+    );
 }

@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.dto.UpdateReportUserDTO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import cn.cxdproject.coder.model.entity.Report;
 import org.apache.ibatis.annotations.Mapper;
@@ -24,6 +25,16 @@ public interface ReportMapper extends BaseMapper<Report> {
                 @Param("keyword") String keyword,
                 @Param("offset") long offset,
                 @Param("size") long size
+        );
+
+        int updateReportByUser(
+                @Param("id") Long id,
+                @Param("dto") UpdateReportUserDTO dto
+        );
+
+        int updateReportByAdmin(
+                @Param("id") Long id,
+                @Param("status") String status
         );
 
 

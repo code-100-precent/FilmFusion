@@ -73,21 +73,7 @@ public class HotelController {
         return new CursorPageResponseVO<>(list, nextCursor);
     }
 
-    // ==================== 管理员接口 ====================
-
-    /**
-     * 管理员创建旅店信息
-     */
-    @PostMapping("/admin/create")
-    public ApiResponse<HotelVO> createHotelByAdmin(@Valid @RequestBody CreateHotelDTO createDTO) {
-        User currentUser = AuthContext.getCurrentUser();
-        if (currentUser == null) {
-            return ApiResponse.error(401, "未登录");
-        }
-        HotelVO hotelVO = hotelService.createHotelByAdmin(currentUser.getId(),createDTO);
-        return ApiResponse.success(hotelVO);
-    }
-
+    //用户分页查询（游标分页）
     @GetMapping("/admin/page")
     public PageResponse<HotelVO> getHotelPageAdmin(
             @RequestParam(defaultValue = "1") Integer current,
@@ -104,6 +90,23 @@ public class HotelController {
                 hotelPage.getRecords()
         );
     }
+
+
+    // ==================== 管理员接口 ====================
+
+    /**
+     * 管理员创建旅店信息
+     */
+    @PostMapping("/admin/create")
+    public ApiResponse<HotelVO> createHotelByAdmin(@Valid @RequestBody CreateHotelDTO createDTO) {
+        User currentUser = AuthContext.getCurrentUser();
+        if (currentUser == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        HotelVO hotelVO = hotelService.createHotelByAdmin(currentUser.getId(),createDTO);
+        return ApiResponse.success(hotelVO);
+    }
+
 
     /**
      * 管理员更新旅店

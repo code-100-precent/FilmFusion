@@ -89,4 +89,48 @@
             LIMIT 10
     </select>
 
+    <update id="updateDrama">
+        UPDATE fi_dramas
+        <set>
+            <if test="dto.name != null and dto.name != ''">
+                name = #{dto.name},
+            </if>
+            <if test="dto.filingNum != null and dto.filingNum != ''">
+                filing_num = #{dto.filingNum},
+            </if>
+            <if test="dto.prodCompany != null and dto.prodCompany != ''">
+                prod_company = #{dto.prodCompany},
+            </if>
+            <if test="dto.crewDescription != null and dto.crewDescription != ''">
+                crew_description = #{dto.crewDescription},
+            </if>
+            <if test="dto.dramaDescription != null and dto.dramaDescription != ''">
+                drama_description = #{dto.dramaDescription},
+            </if>
+            <if test="dto.cast != null and dto.cast != ''">
+                cast = #{dto.cast},
+            </if>
+            <if test="dto.shootLocation != null and dto.shootLocation != ''">
+                shoot_location = #{dto.shootLocation},
+            </if>
+            <if test="dto.service != null and dto.service != ''">
+                service = #{dto.service},
+            </if>
+            <if test="dto.image != null and dto.image != ''">
+                image = #{dto.image},
+            </if>
+            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+                thumb_image = #{dto.thumbImage},
+            </if>
+            <if test="dto.locationId != null and dto.locationId != '' ">
+                location_id = #{dto.locationId},
+            </if>
+            <if test="dto.serviceId != null and dto.serviceId != ''">
+                service_id = #{dto.serviceId},
+            </if>
+        </set>
+        WHERE id = #{dramaId}
+        AND deleted = false
+    </update>
+
 </mapper>

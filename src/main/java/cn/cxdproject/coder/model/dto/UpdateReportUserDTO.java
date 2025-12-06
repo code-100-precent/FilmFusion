@@ -11,7 +11,7 @@ import java.time.LocalDate;
  * @author heathcetide
  */
 @Data
-public class UpdateReportDTO {
+public class UpdateReportUserDTO {
     
     private String name;
     private String type;
@@ -27,7 +27,6 @@ public class UpdateReportDTO {
     private String contact;
     private String phoneNumber;
     private String crewPosition;
-    private String status;
     private String shootPermit;
     private String thumbShootPermit;
     private String approvalFile;

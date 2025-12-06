@@ -85,7 +85,6 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
                 .status(true)
                 .build();
 
-        // 保存文章
         this.save(banner);
         return toBannerVO(banner);
     }

@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
 import cn.cxdproject.coder.model.entity.Banner;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import cn.cxdproject.coder.model.entity.Article;
@@ -29,5 +30,10 @@ public interface ArticleMapper extends BaseMapper<Article> {
     );
 
     List<Article> selectLatest10();
+
+    int updateArticle(
+            @Param("articleId") Long articleId,
+            @Param("dto") UpdateArticleDTO updateArticleDTO
+    );
 
 }

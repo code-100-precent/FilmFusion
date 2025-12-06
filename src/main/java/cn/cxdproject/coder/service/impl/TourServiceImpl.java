@@ -1,6 +1,9 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.anno.Loggable;
 import cn.cxdproject.coder.common.constants.*;
+import cn.cxdproject.coder.common.enums.LogType;
+import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateTourDTO;
 import cn.cxdproject.coder.model.dto.UpdateTourDTO;
@@ -46,6 +49,10 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     }
 
     @Override
+    @Loggable(
+            type = LogType.TOUR_CREATE,
+            value = "Create tour"
+    )
     public TourVO createTourByAdmin(CreateTourDTO createDTO) {
         if (createDTO.getImage() == null) {
             createDTO.setImage(Constants.DEFAULT_COVER);
@@ -76,6 +83,10 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     @CircuitBreaker(name = "tourGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.TOUR_GET,
+            value = "Get tour by ID: #{#tourId}"
+    )
     public TourVO getTourById(Long tourId) {
         Object store = cache.asMap().get(CaffeineConstants.TOUR + tourId);
         if (store != null) {
@@ -85,7 +96,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
             if (tour == null || Boolean.TRUE.equals(tour.getDeleted())) {
                 throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
-            cache.asMap().put(CaffeineConstants.TOUR + tourId, tour);
+            cache.put(CaffeineConstants.TOUR + tourId, tour);
             return toTourVO(tour);
         }
     }
@@ -93,6 +104,10 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     @CircuitBreaker(name = "tourGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.TOUR_USER_GET_PAGE,
+            value = "User get tour"
+    )
     public List<TourVO> getTourPage(Long lastId, int size, String keyword) {
         List<Long> ids = tourMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -113,37 +128,40 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
 
 
     @Override
-    @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.TOUR_UPDATE,
+            value = "Update tour ID: #{#tourId}"
+    )
     public TourVO updateTourByAdmin(Long tourId, UpdateTourDTO updateDTO) {
-        Tour tour = this.getById(tourId);
-        if (tour == null || Boolean.TRUE.equals(tour.getDeleted())) {
+        // 1. 校验是否存在且未被删除
+        Tour existing = this.getById(tourId);
+        if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
             throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
-        if (updateDTO.getName() != null) tour.setName(updateDTO.getName());
-        if (updateDTO.getDescription() != null) tour.setDescription(updateDTO.getDescription());
-        if (updateDTO.getTheme() != null) tour.setTheme(updateDTO.getTheme());
-        if (updateDTO.getFeatures() != null) tour.setFeatures(updateDTO.getFeatures());
-        if (updateDTO.getTransport() != null) tour.setTransport(updateDTO.getTransport());
-        if (updateDTO.getHotel() != null) tour.setHotel(updateDTO.getHotel());
-        if (updateDTO.getFood() != null) tour.setFood(updateDTO.getFood());
-        if (updateDTO.getImage() != null) tour.setImage(updateDTO.getImage());
-        if (updateDTO.getThumbImage() != null) tour.setThumbImage(updateDTO.getThumbImage());
-        if (updateDTO.getLongitude() != null) tour.setLongitude(updateDTO.getLongitude());
-        if (updateDTO.getLatitude() != null) tour.setLatitude(updateDTO.getLatitude());
-        if (updateDTO.getLocationId() != null) tour.setLocationId(updateDTO.getLocationId());
-        if (updateDTO.getDramaId() != null) tour.setDramaId(updateDTO.getDramaId());
+        // 3. 执行动态更新
+        int updatedRows = tourMapper.updateTour(tourId, updateDTO);
 
+        // 4. 若无记录被更新（可能已被删除或并发修改）
+        if (updatedRows == 0) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
 
+        // 5. 重新加载最新数据（保证一致性）
+        Tour updatedTour = this.getById(tourId);
 
-        tour.setUpdatedAt(LocalDateTime.now());
-        cache.asMap().put(CaffeineConstants.TOUR + tourId, tour);
-        this.updateById(tour);
-        return toTourVO(tour);
+        // 6. 更新缓存（注意：缓存的是对象，不是旧引用）
+        cache.put(CaffeineConstants.TOUR + tourId, updatedTour);
+
+        // 7. 返回 VO
+        return toTourVO(updatedTour);
     }
 
     @Override
-    @Bulkhead(name = "delete", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.TOUR_DELETE,
+            value = "Delete tour by ID: #{#tourId}"
+    )
     public void deleteTourByAdmin(Long tourId) {
         boolean updated = tourMapper.update(null,
                 Wrappers.<Tour>lambdaUpdate()
@@ -190,21 +208,24 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
 
     @Override
     public TourVO getByIdFallback(Long id,Throwable e) {
-        Object store;
-        store = cache.getIfPresent(CaffeineConstants.TOUR + id);
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
+
+        Object store = cache.getIfPresent(CaffeineConstants.TOUR + id);
         if (store != null) {
             return toTourVO((Tour) store);
-        }
-        store = redisUtils.get(RedisKeyConstants.TOUR+id);
-        if (store != null) {
-            Tour tour = JsonUtils.fromJson((String) store, Tour.class);
-            return toTourVO(tour);
         }
         return null;
     }
 
     @Override
     public List<TourVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
 
         try {
 
@@ -228,6 +249,10 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     }
 
     @Override
+    @Loggable(
+            type = LogType.TOUR_ADMIN_GET_PAGE,
+            value = "Admin get tour Page"
+    )
     public Page<TourVO> getTourPageAdmin(Page<Tour> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

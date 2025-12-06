@@ -54,6 +54,7 @@
                 AND (
                 name LIKE CONCAT('%', #{keyword}, '%')
                 OR description LIKE CONCAT('%', #{keyword}, '%')
+                OR theme LIKE CONCAT('%', #{keyword}, '%')
                 )
             </if>
 
@@ -74,7 +75,11 @@
         FROM fi_tours
         WHERE deleted = 0
         <if test="keyword != null and keyword != ''">
-            AND title LIKE CONCAT('%', #{keyword}, '%')
+            AND (
+            name LIKE CONCAT('%', #{keyword}, '%')
+            OR description LIKE CONCAT('%', #{keyword}, '%')
+            OR theme LIKE CONCAT('%', #{keyword}, '%')
+            )
         </if>
         ORDER BY created_at DESC
         LIMIT #{offset}, #{size}
@@ -88,5 +93,52 @@
         ORDER BY created_at DESC
             LIMIT 10
     </select>
+
+    <update id="updateTour">
+        UPDATE fi_tour
+        <set>
+            <if test="dto.name != null and dto.name != ''">
+                name = #{dto.name},
+            </if>
+            <if test="dto.description != null and dto.description != ''">
+                description = #{dto.description},
+            </if>
+            <if test="dto.theme != null and dto.theme != ''">
+                theme = #{dto.theme},
+            </if>
+            <if test="dto.features != null and dto.features != ''">
+                features = #{dto.features},
+            </if>
+            <if test="dto.transport != null and dto.transport != ''">
+                transport = #{dto.transport},
+            </if>
+            <if test="dto.hotel != null and dto.hotel != ''">
+                hotel = #{dto.hotel},
+            </if>
+            <if test="dto.food != null and dto.food != ''">
+                food = #{dto.food},
+            </if>
+            <if test="dto.image != null and dto.image != ''">
+                image = #{dto.image},
+            </if>
+            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+                thumb_image = #{dto.thumbImage},
+            </if>
+            <if test="dto.longitude != null and dto.longitude != ''">
+                longitude = #{dto.longitude},
+            </if>
+            <if test="dto.latitude != null and dto.latitude != ''">
+                latitude = #{dto.latitude},
+            </if>
+            <if test="dto.locationId != null and dto.locationId != ''">
+                location_id = #{dto.locationId},
+            </if>
+            <if test="dto.dramaId != null and dto.dramaId != ''">
+                drama_id = #{dto.dramaId},
+            </if>
+        </set>
+        WHERE id = #{id}
+        AND deleted = false
+    </update>
 
 </mapper>

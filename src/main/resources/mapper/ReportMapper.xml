@@ -84,13 +84,92 @@
         FROM fi_reports
         WHERE deleted = 0
         <if test="keyword != null and keyword != ''">
-            AND name LIKE CONCAT('%', #{keyword}, '%')
+            AND (
+            name LIKE CONCAT('%', #{keyword}, '%')
+            OR type LIKE CONCAT('%', #{keyword}, '%')
+            )
         </if>
         ORDER BY created_at DESC
         LIMIT #{offset}, #{size}
         )
         ORDER BY created_at DESC
     </select>
+
+    <update id="updateReportByUser">
+        UPDATE fi_reports
+        <set>
+            <if test="dto.name != null and dto.name != ''">
+                name = #{dto.name},
+            </if>
+            <if test="dto.type != null and dto.type != ''">
+                type = #{dto.type},
+            </if>
+            <if test="dto.genre != null and dto.genre != ''">
+                genre = #{dto.genre},
+            </if>
+            <if test="dto.episodes != null and dto.episodes != ''">
+                episodes = #{dto.episodes},
+            </if>
+            <if test="dto.investAmount != null and dto.investAmount != ''">
+                invest_amount = #{dto.investAmount},
+            </if>
+            <if test="dto.mainCreators != null and dto.mainCreators != ''">
+                main_creators = #{dto.mainCreators},
+            </if>
+            <if test="dto.leadProducer != null and dto.leadProducer != ''">
+                lead_producer = #{dto.leadProducer},
+            </if>
+            <if test="dto.producerUnit != null and dto.producerUnit != ''">
+                producer_unit = #{dto.producerUnit},
+            </if>
+            <if test="dto.startDate != null and dto.startDate != ''">
+                start_date = #{dto.startDate},
+            </if>
+            <if test="dto.endDate != null and dto.endDate != ''">
+                end_date = #{dto.endDate},
+            </if>
+            <if test="dto.crewScale != null and dto.crewScale != ''">
+                crew_scale = #{dto.crewScale},
+            </if>
+            <if test="dto.contact != null and dto.contact != ''">
+                contact = #{dto.contact},
+            </if>
+            <if test="dto.phoneNumber != null and dto.phoneNumber != ''">
+                phone_number = #{dto.phoneNumber},
+            </if>
+            <if test="dto.crewPosition != null and dto.crewPosition != ''">
+                crew_position = #{dto.crewPosition},
+            </if>
+            <if test="dto.shootPermit != null and dto.shootPermit != ''">
+                shoot_permit = #{dto.shootPermit},
+            </if>
+            <if test="dto.thumbShootPermit != null and dto.thumbShootPermit != ''">
+                thumb_shoot_permit = #{dto.thumbShootPermit},
+            </if>
+            <if test="dto.approvalFile != null and dto.approvalFile != ''">
+                approval_file = #{dto.approvalFile},
+            </if>
+            <if test="dto.thumbApprovalFile != null and dto.thumbApprovalFile != ''">
+                thumb_approval_file = #{dto.thumbApprovalFile},
+            </if>
+            <if test="dto.shootApply != null and dto.shootApply != ''">
+                shoot_apply = #{dto.shootApply},
+            </if>
+            <if test="dto.thumbShootApply != null and dto.thumbShootApply != ''">
+                thumb_shoot_apply = #{dto.thumbShootApply},
+            </if>
+        </set>
+        WHERE id = #{id}
+        AND deleted = false
+    </update>
+
+    <update id="updateReportByAdmin">
+        UPDATE fi_reports
+        SET
+            status = #{status}
+        WHERE id = #{id}
+          AND deleted = false
+    </update>
 
 
 </mapper>

@@ -76,5 +76,34 @@
             LIMIT 10
     </select>
 
+    <update id="updatePolicy">
+        UPDATE fi_policy
+        <set>
+            <if test="dto.title != null and dto.title != ''">
+                title = #{dto.title},
+            </if>
+            <if test="dto.type != null and dto.type != ''">
+                type = #{dto.type},
+            </if>
+            <if test="dto.issueUnit != null and dto.issueUnit != ''">
+                issue_unit = #{dto.issueUnit},
+            </if>
+            <if test="dto.issueTime != null and dto.issueTime != ''">
+                issue_time = #{dto.issueTime},
+            </if>
+            <if test="dto.content != null and dto.content != ''">
+                content = #{dto.content},
+            </if>
+            <if test="dto.image != null and dto.image != ''">
+                image = #{dto.image},
+            </if>
+            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+                thumb_image = #{dto.thumbImage},
+            </if>
+        </set>
+        WHERE id = #{id}
+        AND deleted = false
+    </update>
+
 
 </mapper>

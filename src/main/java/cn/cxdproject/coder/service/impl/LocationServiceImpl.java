@@ -1,6 +1,8 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.anno.Loggable;
 import cn.cxdproject.coder.common.constants.*;
+import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateLocationDTO;
@@ -53,7 +55,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
-    @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.LOCATION_CREATE,
+            value = "Create location"
+    )
     public LocationVO createLocationByAdmin(Long userId, CreateLocationDTO createDTO) {
         if (createDTO.getImage() == null) {
             createDTO.setImage(Constants.DEFAULT_COVER);
@@ -85,6 +90,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     @Override
     @CircuitBreaker(name = "locationGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.LOCATION_GET,
+            value = "Get location by ID: #{#locationId}"
+    )
     public LocationVO getLocationById(Long locationId) {
         Object store = cache.asMap().get(CaffeineConstants.LOCATION + locationId);
         if (store != null) {
@@ -94,7 +103,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
             if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
                 throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
-            cache.asMap().put(CaffeineConstants.LOCATION + locationId, location);
+            cache.put(CaffeineConstants.LOCATION + locationId, location);
             return toLocationVO(location);
         }
     }
@@ -102,6 +111,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     @Override
     @CircuitBreaker(name = "locationGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.LOCATION_USER_GET_PAGE,
+            value = "User get location"
+    )
     public List<LocationVO> getLocationPage(Long lastId, int size, String keyword) {
         List<Long> ids = locationMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -122,35 +135,40 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
 
 
     @Override
-    @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.LOCATION_UPDATE,
+            value = "Update location ID: #{#locationId}"
+    )
     public LocationVO updateLocationByAdmin(Long locationId, UpdateLocationDTO updateDTO) {
-        Location location = this.getById(locationId);
-        if (location == null || Boolean.TRUE.equals(location.getDeleted())) {
+        // 1. 校验是否存在且未删除
+        Location existing = this.getById(locationId);
+        if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
             throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
-        if (updateDTO.getName() != null) location.setName(updateDTO.getName());
-        if (updateDTO.getType() != null) location.setType(updateDTO.getType());
-        if (updateDTO.getStatus() != null) location.setStatus(updateDTO.getStatus());
-        if (updateDTO.getLocationDescription() != null) location.setLocationDescription(updateDTO.getLocationDescription());
-        if (updateDTO.getLocationPrincipalName() != null) location.setLocationPrincipalName(updateDTO.getLocationPrincipalName());
-        if (updateDTO.getLocationPrincipalPhone() != null) location.setLocationPrincipalPhone(updateDTO.getLocationPrincipalPhone());
-        if (updateDTO.getGovPrincipalName() != null) location.setGovPrincipalName(updateDTO.getGovPrincipalName());
-        if (updateDTO.getGovPrincipalPhone() != null) location.setGovPrincipalPhone(updateDTO.getGovPrincipalPhone());
-        if (updateDTO.getAddress() != null) location.setAddress(updateDTO.getAddress());
-        if (updateDTO.getPrice() != null) location.setPrice(updateDTO.getPrice());
-        if(updateDTO.getImage() != null) location.setImage(updateDTO.getImage());
-        if(updateDTO.getThumbImage() != null) location.setThumbImage(updateDTO.getThumbImage());
-        if(updateDTO.getLongitude() != null) location.setLongitude(updateDTO.getLongitude());
-        if(updateDTO.getLatitude() != null) location.setLatitude(updateDTO.getLatitude());
+        // 2. 执行动态更新
+        int updatedRows = locationMapper.updateLocation(locationId, updateDTO);
 
-        cache.asMap().put(CaffeineConstants.LOCATION + locationId, location);
-        this.updateById(location);
-        return toLocationVO(location);
+        // 3. 若无记录被更新（可能已被删除）
+        if (updatedRows == 0) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
+
+        // 4. 重新加载最新数据（保证缓存和返回的是最新状态）
+        Location updatedLocation = this.getById(locationId);
+
+        // 5. 更新缓存
+        cache.put(CaffeineConstants.LOCATION + locationId, updatedLocation);
+
+        // 6. 返回 VO
+        return toLocationVO(updatedLocation);
     }
 
     @Override
-    @Bulkhead(name = "delete", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.LOCATION_DELETE,
+            value = "Delete location by ID: #{#locationId}"
+    )
     public void deleteLocationByAdmin(Long locationId) {
         boolean updated = locationMapper.update(null,
                 Wrappers.<Location>lambdaUpdate()
@@ -198,21 +216,24 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
 
     @Override
     public LocationVO getByIdFallback(Long id,Throwable e) {
-        Object store;
-        store = cache.getIfPresent(CaffeineConstants.LOCATION + id);
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
+
+        Object store = cache.getIfPresent(CaffeineConstants.LOCATION + id);
         if (store != null) {
             return toLocationVO((Location) store);
-        }
-        store = redisUtils.get(RedisKeyConstants.LOCATION+id);
-        if (store != null) {
-            Location location = JsonUtils.fromJson((String) store, Location.class);
-            return toLocationVO(location);
         }
         return null;
     }
 
     @Override
     public List<LocationVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
@@ -236,6 +257,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
+    @Loggable(
+            type = LogType.LOCATION_ADMIN_GET_PAGE,
+            value = "Admin get location Page"
+    )
     public Page<LocationVO> getLocationPageAdmin(Page<Location> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

@@ -1,17 +1,19 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.anno.Loggable;
 import cn.cxdproject.coder.common.constants.CaffeineConstants;
 import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.common.context.AuthContext;
+import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateReportDTO;
-import cn.cxdproject.coder.model.dto.UpdateReportDTO;
+import cn.cxdproject.coder.model.dto.UpdateReportAdminDTO;
+import cn.cxdproject.coder.model.dto.UpdateReportUserDTO;
 import cn.cxdproject.coder.model.entity.Report;
 import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.ReportVO;
 import cn.cxdproject.coder.mapper.ReportMapper;
-import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.service.ReportService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
+
 
 /**
  * Report 服务实现类
@@ -46,6 +49,10 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
     @Override
+    @Loggable(
+            type = LogType.REPORT_USER_CREATE,
+            value = "User submit report application"
+    )
     public ReportVO createReport(Long userId, CreateReportDTO createDTO) {
 
         Report report = Report.builder()
@@ -78,43 +85,34 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
     @Override
-    public ReportVO updateReport(Long userId, Long reportId, UpdateReportDTO updateDTO) {
+    @Loggable(
+            type = LogType.REPORT_USER_UPDATE,
+            value = "User update report application ID: #{#reportId}"
+    )
+    public ReportVO updateReport(Long userId, Long reportId, UpdateReportUserDTO updateDTO) {
         Report report = this.getById(reportId);
         if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
             throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
-
         if (!report.getUserId().equals(userId)) {
             throw new BusinessException(FORBIDDEN.code(), ResponseConstants.NO_PERMISSION);
         }
 
-        if (updateDTO.getName() != null) report.setName(updateDTO.getName());
-        if (updateDTO.getType() != null) report.setType(updateDTO.getType());
-        if (updateDTO.getGenre() != null) report.setGenre(updateDTO.getGenre());
-        if (updateDTO.getEpisodes() != null) report.setEpisodes(updateDTO.getEpisodes());
-        if (updateDTO.getInvestAmount() != null) report.setInvestAmount(updateDTO.getInvestAmount());
-        if (updateDTO.getMainCreators() != null) report.setMainCreators(updateDTO.getMainCreators());
-        if (updateDTO.getLeadProducer() != null) report.setLeadProducer(updateDTO.getLeadProducer());
-        if (updateDTO.getProducerUnit() != null) report.setProducerUnit(updateDTO.getProducerUnit());
-        if (updateDTO.getStartDate() != null) report.setStartDate(updateDTO.getStartDate());
-        if (updateDTO.getEndDate() != null) report.setEndDate(updateDTO.getEndDate());
-        if (updateDTO.getCrewScale() != null) report.setCrewScale(updateDTO.getCrewScale());
-        if (updateDTO.getContact() != null) report.setContact(updateDTO.getContact());
-        if (updateDTO.getPhoneNumber() != null) report.setPhoneNumber(updateDTO.getPhoneNumber());
-        if (updateDTO.getCrewPosition() != null) report.setCrewPosition(updateDTO.getCrewPosition());
-        if (updateDTO.getShootPermit() != null) report.setShootPermit(updateDTO.getShootPermit());
-        if (updateDTO.getThumbShootPermit() != null) report.setThumbShootPermit(updateDTO.getThumbShootPermit());
-        if (updateDTO.getApprovalFile() != null) report.setApprovalFile(updateDTO.getApprovalFile());
-        if (updateDTO.getThumbApprovalFile() != null) report.setThumbApprovalFile(updateDTO.getThumbApprovalFile());
-        if (updateDTO.getShootApply() != null) report.setShootApply(updateDTO.getShootApply());
-        if (updateDTO.getThumbShootApply() != null) report.setThumbShootApply(updateDTO.getThumbShootApply());
-        if (updateDTO.getStatus() != null) throw new BusinessException(FORBIDDEN.code(), "无权修改申请状态");;
+        int rows = reportMapper.updateReportByUser(reportId, updateDTO);
+        if (rows == 0) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
 
-        this.updateById(report);
-        return toReportVO(report);
+        Report updated = this.getById(reportId);
+        cache.asMap().put(CaffeineConstants.REPORT + reportId, updated);
+        return toReportVO(updated);
     }
 
     @Override
+    @Loggable(
+            type = LogType.REPORT_USER_DELETE,
+            value = "User cancel report application ID: #{#reportId}"
+    )
     public void deleteReport(Long userId, Long reportId) {
         boolean updated = reportMapper.update(null,
                 Wrappers.<Report>lambdaUpdate()
@@ -136,6 +134,10 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
     @Override
+    @Loggable(
+            type = LogType.REPORT_USER_GET,
+            value = "User get own report application by ID: #{#reportId}"
+    )
     public ReportVO getReportById(Long reportId,Long userId) {
         Object store = cache.asMap().get(CaffeineConstants.REPORT + reportId);
         Report report;
@@ -157,6 +159,10 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
 
 
     @Override
+    @Loggable(
+            type = LogType.REPORT_USER_GET_PAGE,
+            value = "User get all own report applications"
+    )
     public Page<ReportVO> getMyReportPage(Long userId, Page<Report> page) {
         long current = page.getCurrent();
         long size = page.getSize();
@@ -178,23 +184,36 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
 
 
     @Override
-    public ReportVO updateReportByAdmin(Long reportId, UpdateReportDTO updateDTO) {
-        User currentUser = AuthContext.getCurrentUser();
+    @Loggable(
+            type = LogType.REPORT_ADMIN_UPDATE,
+            value = "Admin process report application ID: #{#reportId}"
+    )
+    public ReportVO updateReportByAdmin(Long reportId, UpdateReportAdminDTO updateDTO) {
+        if (updateDTO.getStatus() == null || updateDTO.getStatus().trim().isEmpty()) {
+            throw new BusinessException(MISSING_PARAMETER.code(),"审核状态不能为空");
+        }
+
         Report report = this.getById(reportId);
         if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
             throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
-        if (updateDTO.getStatus() != null) report.setStatus(updateDTO.getStatus());
+        int rows = reportMapper.updateReportByAdmin(reportId, updateDTO.getStatus());
+        if (rows == 0) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
 
-        report.setUpdatedAt(LocalDateTime.now());
-        cache.asMap().put(CaffeineConstants.REPORT + reportId, report);
-        this.updateById(report);
-        return toReportVO(report);
+        Report updated = this.getById(reportId);
+        cache.asMap().put(CaffeineConstants.REPORT + reportId, updated);
+        return toReportVO(updated);
     }
 
 
     @Override
+    @Loggable(
+            type = LogType.REPORT_ADMIN_GET_PAGE,
+            value = "Admin get paginated report applications"
+    )
     public Page<ReportVO> getReportPageByAdmin(Page<Report> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();
@@ -221,6 +240,10 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
     @Override
+    @Loggable(
+            type = LogType.REPORT_ADMIN_GET,
+            value = "Admin get report application by ID: #{#reportId}"
+    )
     public ReportVO getReportByIdByAdmin(Long reportId) {
         Object store = cache.asMap().get(CaffeineConstants.REPORT + reportId);
         if (store != null) {

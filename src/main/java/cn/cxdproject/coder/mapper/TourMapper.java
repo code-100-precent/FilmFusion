@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.dto.UpdateTourDTO;
 import cn.cxdproject.coder.model.entity.Banner;
 import cn.cxdproject.coder.model.entity.Shoot;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -27,5 +28,10 @@ public interface TourMapper extends BaseMapper<Tour> {
     );
 
     List<Tour> selectLatest10();
+
+    int updateTour(
+            @Param("id") Long id,
+            @Param("dto") UpdateTourDTO dto
+    );
 
 }

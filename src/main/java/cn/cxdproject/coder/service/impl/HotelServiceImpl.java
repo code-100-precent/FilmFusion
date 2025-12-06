@@ -1,6 +1,9 @@
 package cn.cxdproject.coder.service.impl;
 
+import cn.cxdproject.coder.common.anno.Loggable;
 import cn.cxdproject.coder.common.constants.*;
+import cn.cxdproject.coder.common.enums.LogType;
+import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.mapper.HotelMapper;
 import cn.cxdproject.coder.mapper.LocationMapper;
@@ -54,7 +57,10 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
 
 
     @Override
-    @Bulkhead(name = "add", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.HOTEL_CREATE,
+            value = "Create hotel"
+    )
     public HotelVO createHotelByAdmin(Long userId, CreateHotelDTO createDTO) {
         if (createDTO.getImage() == null) {
             createDTO.setImage(Constants.DEFAULT_COVER);
@@ -80,6 +86,10 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     @CircuitBreaker(name = "hotelGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.HOTEL_GET,
+            value = "Get hotel by ID: #{#hotelId}"
+    )
     public HotelVO getHotelById(Long hotelId) {
         Object store = cache.asMap().get(CaffeineConstants.HOTEL + hotelId);
         if (store != null) {
@@ -89,7 +99,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
             if (hotel == null || Boolean.TRUE.equals(hotel.getDeleted())) {
                 throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
-            cache.asMap().put(CaffeineConstants.HOTEL + hotelId, hotel);
+            cache.put(CaffeineConstants.HOTEL + hotelId, hotel);
             return toHotelVO(hotel);
         }
     }
@@ -97,6 +107,10 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     @CircuitBreaker(name = "hotelGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.ARTICLE_USER_GET_PAGE,
+            value = "User get hotel"
+    )
     public List<HotelVO> getHotelPage(Long lastId, int size, String keyword) {
         List<Long> ids = hotelMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -117,31 +131,41 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
 
 
     @Override
-    @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.DRAMA_UPDATE,
+            value = "Update hotel ID: #{#dramaId}"
+    )
     public HotelVO updateHotelByAdmin(Long hotelId, UpdateHotelDTO updateDTO) {
-        Hotel hotel = this.getById(hotelId);
-        if (hotel == null || Boolean.TRUE.equals(hotel.getDeleted())) {
+        // 1. 校验是否存在且未删除
+        Hotel existing = this.getById(hotelId);
+        if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
             throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
         }
 
-        if (updateDTO.getName() != null) hotel.setName(updateDTO.getName());
-        if (updateDTO.getDescription() != null) hotel.setDescription(updateDTO.getDescription());
-        if (updateDTO.getAddress() != null) hotel.setAddress(updateDTO.getAddress());
-        if (updateDTO.getManagerName() != null) hotel.setManagerName(updateDTO.getManagerName());
-        if (updateDTO.getManagerPhone() != null) hotel.setManagerPhone(updateDTO.getManagerPhone());
-        if (updateDTO.getImage() != null) hotel.setImage(updateDTO.getImage());
-        if (updateDTO.getThumbImage() != null) hotel.setThumbImage(updateDTO.getThumbImage());
-        if (updateDTO.getLongitude() != null) hotel.setLongitude(updateDTO.getLongitude());
-        if (updateDTO.getLatitude() != null) hotel.setLatitude(updateDTO.getLatitude());
+        // 2. 执行动态更新
+        int updatedRows = hotelMapper.updateHotel(hotelId, updateDTO);
 
-        cache.asMap().put(CaffeineConstants.HOTEL + hotelId, hotel);
-        this.updateById(hotel);
-        return toHotelVO(hotel);
+        // 3. 若无记录被更新
+        if (updatedRows == 0) {
+            throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+        }
+
+        // 4. 重新加载最新数据（保证返回的是 DB 最新状态）
+        Hotel updatedHotel = this.getById(hotelId);
+
+        // 5. 更新缓存（注意：存的是对象，不是 ID！）
+        cache.put(CaffeineConstants.HOTEL + hotelId, updatedHotel);
+
+        // 6. 返回 VO
+        return toHotelVO(updatedHotel);
     }
 
 
     @Override
-    @Bulkhead(name = "delete", type = Bulkhead.Type.SEMAPHORE)
+    @Loggable(
+            type = LogType.HOTEL_DELETE,
+            value = "Delete hotel by ID: #{#hotelId}"
+    )
     public void deleteHotelByAdmin(Long hotelId) {
         boolean updated = hotelMapper.update(null,
                 Wrappers.<Hotel>lambdaUpdate()
@@ -183,21 +207,24 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
 
     @Override
     public HotelVO getByIdFallback(Long id,Throwable e) {
-        Object store;
-        store = cache.getIfPresent(CaffeineConstants.HOTEL + id);
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
+
+        Object store = cache.getIfPresent(CaffeineConstants.HOTEL + id);
         if (store != null) {
             return toHotelVO((Hotel) store);
-        }
-        store = redisUtils.get(RedisKeyConstants.HOTEL+id);
-        if (store != null) {
-            Hotel hotel = JsonUtils.fromJson((String) store, Hotel.class);
-            return toHotelVO(hotel);
         }
         return null;
     }
 
     @Override
     public List<HotelVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+
+        if (e instanceof NotFoundException || e instanceof BusinessException) {
+            throw (RuntimeException) e;
+        }
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
@@ -222,6 +249,10 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     }
 
     @Override
+    @Loggable(
+            type = LogType.DRAMA_ADMIN_GET_PAGE,
+            value = "Admin get hotel Page"
+    )
     public Page<HotelVO> getHotelPageAdmin(Page<Hotel> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

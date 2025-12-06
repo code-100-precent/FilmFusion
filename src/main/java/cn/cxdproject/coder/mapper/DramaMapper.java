@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.mapper;
 
+import cn.cxdproject.coder.model.dto.UpdateDramaDTO;
 import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Banner;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -27,7 +28,11 @@ public interface DramaMapper extends BaseMapper<Drama> {
     );
 
 
-
     List<Drama> selectLatest10();
+
+    int updateDrama(
+            @Param("dramaId") Long dramaId,
+            @Param("dto") UpdateDramaDTO dto
+    );
 
 }
