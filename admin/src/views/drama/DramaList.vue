@@ -36,7 +36,166 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
+        :scroll-x="1400"
+      />
+      
+      <!-- 移动端卡片列表 -->
+      <div v-else class="mobile-list">
+        <n-spin :show="loading">
+          <div v-if="dramaList.length === 0 && !loading" class="empty-state">
+            <Icon icon="mdi:film-off" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
+            <p style="color: #9ca3af;">暂无数据</p>
+          </div>
+          <div v-else class="card-list">
+            <n-card
+              v-for="drama in dramaList"
+              :key="drama.id"
+              class="mobile-card"
+              hoverable
+            >
+              <div class="card-header">
+                <div class="drama-info">
+                  <h3 class="drama-name">{{ drama.name }}</h3>
+                  <p class="drama-company">{{ drama.prodCompany }}</p>
+                </div>
+                <div class="drama-cover">
+                  <n-image
+                    v-if="drama.cover"
+                    :src="drama.cover"
+                    width="80"
+                    height="60"
+                    object-fit="cover"
+                    preview-disabled
+                  />
+                  <div v-else class="no-cover">
+                    <Icon icon="mdi:film" :width="32" />
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="info-item">
+                  <span class="label">备案号：</span>
+                  <span>{{ drama.filingNum || '-' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">拍摄地：</span>
+                  <span>{{ drama.shootLocation || '-' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">演员：</span>
+                  <span class="cast-info">{{ drama.cast || '-' }}</span>
+                </div>
+              </div>
+              <div class="card-actions">
+                <n-button size="small" @click="handleEdit(drama)" block style="margin-bottom: 8px">
+                  编辑
+                </n-button>
+                <n-popconfirm @positive-click="handleDelete(drama.id)">
+                  <template #trigger>
+                    <n-button size="small" type="error" quaternary block>
+                      删除
+                    </n-button>
+                  </template>
+                  确定要删除这个电视剧吗？
+                </n-popconfirm>
+              </div>
+            </n-card>
+          </div>
+          
+          <!-- 移动端分页 -->
+          <div class="mobile-pagination">
+            <n-pagination
+              :page="pagination.page"
+              :page-size="pagination.pageSize"
+              :item-count="pagination.itemCount"
+              :page-sizes="[10, 20, 50]"
+              show-size-picker
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+            />
+          </div>
+        </n-spin>
+      </div>
+    </n-card>
+    
+    <n-modal 
+      v-model:show="dialogVisible" 
+      preset="dialog" 
+      :title="dialogTitle" 
+      style="width: 90%; max-width: 900px"
+      :mask-closable="false"
+    >
+      <n-form 
+        ref="formRef" 
+        :model="dramaForm" 
+        :rules="formRules" 
+        :label-placement="isMobile ? 'top' : 'left'"
+        :label-width="isMobile ? 'auto' : '120'"
+      >
+        <n-form-item label="电视剧名称" path="name">
+          <n-input v-model:value="dramaForm.name" placeholder="请输入电视剧名称" />
+        </n-form-item>
+        <n-form-item label="备案号" path="filingNum">
+          <n-input v-model:value="dramaForm.filingNum" placeholder="请输入备案号" />
+        </n-form-item>
+        <n-form-item label="出品公司" path="prodCompany">
+          <n-input v-model:value="dramaForm.prodCompany" placeholder="请输入出品公司" />
+        </n-form-item>
+        <n-form-item label="公司简介" path="crewDescription">
+          <n-input v-model:value="dramaForm.crewDescription" type="textarea" :rows="3" placeholder="请输入公司简介" />
+        </n-form-item>
+        <n-form-item label="电视剧简介" path="dramaDescription">
+          <n-input v-model:value="dramaForm.dramaDescription" type="textarea" :rows="4" placeholder="请输入电视剧简介" />
+        </n-form-item>
+        <!-- 这里应该添加更多表单字段 -->
+      </n-form>
+      <template #footer>
+        <n-space>
+          <n-button @click="dialogVisible = false">取消</n-button>
+          <n-button type="primary" @click="handleDialogSave">保存</n-button>
+        </n-space>
+      </template>
+    </n-modal>
 
+<template>
+  <div class="drama-management">
+    <n-card class="management-card">
+      <div class="search-header">
+        <n-form :model="searchForm" inline class="search-form">
+          <n-form-item label="电视剧名称">
+            <n-input v-model:value="searchForm.keyword" placeholder="请输入电视剧名称" clearable @keyup.enter="handleSearch" />
+          </n-form-item>
+          <n-form-item>
+            <n-button type="primary" @click="handleSearch">
+              <template #icon>
+                <Icon icon="mdi:magnify" />
+              </template>
+              搜索
+            </n-button>
+            <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
+          </n-form-item>
+        </n-form>
+        <div class="action-buttons">
+          <n-button type="primary" @click="handleAdd">
+            <template #icon>
+              <Icon icon="mdi:plus" />
+            </template>
+            新增电视剧
+          </n-button>
+        </div>
+      </div>
+      
+      <!-- 桌面端表格 -->
+      <n-data-table
+        v-if="!isMobile"
+        :columns="columns"
+        :data="dramaList"
+        :loading="loading"
+        :pagination="pagination"
+        :row-key="row => row.id"
+        @update:page="handlePageChange"
+        @update:page-size="handlePageSizeChange"
+        :scroll-x="1400"
       />
       
       <!-- 移动端卡片列表 -->
@@ -156,6 +315,18 @@
         <n-form-item label="协拍服务" path="service">
           <n-input v-model:value="dramaForm.service" type="textarea" :rows="3" placeholder="请输入协拍服务描述" />
         </n-form-item>
+        <n-form-item label="封面图片" path="cover">
+          <n-input v-model:value="dramaForm.cover" placeholder="请输入封面图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略封面" path="thumbCover">
+          <n-input v-model:value="dramaForm.thumbCover" placeholder="请输入缩略封面URL" />
+        </n-form-item>
+        <n-form-item label="详情图片" path="image">
+          <n-input v-model:value="dramaForm.image" placeholder="请输入详情图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略详情图" path="thumbImage">
+          <n-input v-model:value="dramaForm.thumbImage" placeholder="请输入缩略详情图URL" />
+        </n-form-item>
       </n-form>
       <template #action>
         <n-button @click="dialogVisible = false">取消</n-button>
@@ -178,7 +349,8 @@ import {
   NPopconfirm,
   NModal,
   NImage,
-
+  NSpin,
+  NPagination,
   useMessage
 } from 'naive-ui'
 import { getDramaPage, addDrama, updateDrama, deleteDrama, getDramaById } from '@/api'
@@ -213,7 +385,11 @@ const dramaForm = reactive({
   dramaDescription: '',
   cast: '',
   shootLocation: '',
-  service: ''
+  service: '',
+  cover: '',
+  image: '',
+  thumbCover: '',
+  thumbImage: ''
 })
 
 const pagination = reactive({
@@ -236,173 +412,76 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
-  { title: '剧名', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
-  { title: '备案号', key: 'filingNum', width: 180, ellipsis: { tooltip: true } },
-  { title: '出品公司', key: 'prodCompany', width: 150, ellipsis: { tooltip: true } },
-  { title: '剧组简介', key: 'crewDescription', width: 200, ellipsis: { tooltip: true } },
-  { title: '剧集简介', key: 'dramaDescription', width: 200, ellipsis: { tooltip: true } },
-  { title: '演员', key: 'cast', width: 150, ellipsis: { tooltip: true } },
-  { title: '拍摄地', key: 'shootLocation', width: 120 },
-  { title: '协拍服务', key: 'service', width: 150, ellipsis: { tooltip: true } },
-  { 
-    title: '封面图', 
-    key: 'cover', 
+  { title: 'ID', key: 'id', width: 80 },
+  {
+      title: '封面',
+      key: 'cover',
+      width: 100,
+      render: (row) => {
+        // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
+        const thumbnailUrl = row.thumbUrl;
+        // 获取原图URL用于预览
+        const originalUrl = row.cover || '';
+        
+        return h(NImage, {
+          width: 60,
+          height: 45,
+          src: thumbnailUrl || originalUrl, // 显示压缩后的图片
+          objectFit: 'cover',
+          previewDisabled: false, // 启用预览功能
+          showToolbar: false,
+          // 配置预览功能，点击时显示原图
+          srcset: [
+            {
+              src: originalUrl,
+              alt: '电视剧封面'
+            }
+          ],
+          fallbackSrc: '/placeholder.jpg'
+        })
+      }
+    },
+  {
+    title: '缩略封面',
+    key: 'thumbCover',
     width: 100,
     render: (row) => {
-      if (!row.cover) return '-'
-      return h(NImage, {
+      return row.thumbCover ? h(NImage, {
         width: 60,
         height: 45,
-        src: row.cover,
+        src: row.thumbCover,
         objectFit: 'cover',
-        style: { borderRadius: '4px' }
-      })
+        previewDisabled: false
+      }) : '-'
     }
   },
   {
-    title: '创建时间',
-    key: 'createdAt',
-    width: 180,
+    title: '详情图片',
+    key: 'image',
+    width: 100,
     render: (row) => {
-      if (Array.isArray(row.createdAt)) {
-        return dayjs(row.createdAt[0] + '-' + String(row.createdAt[1]).padStart(2, '0') + '-' + String(row.createdAt[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
-      }
-      return row.createdAt ? dayjs(row.createdAt).format('YYYY-MM-DD HH:mm:ss') : '-'
+      return row.image ? h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.image,
+        objectFit: 'cover',
+        previewDisabled: false
+      }) : '-'
     }
   },
   {
-    title: '操作',
-    key: 'actions',
-    width: 150,
-    fixed: 'right',
+    title: '缩略详情图',
+    key: 'thumbImage',
+    width: 100,
     render: (row) => {
-      return h('div', { style: 'display: flex; gap: 8px;' }, [
-        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
-        h(
-          NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
-        )
-      ])
+      return row.thumbImage ? h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.thumbImage,
+        objectFit: 'cover',
+        previewDisabled: false
+      }) : '-'
     }
-  }
-]
-
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-  loadData()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
-})
-
-const loadData = async () => {
-  try {
-    loading.value = true
-    const res = await getDramaPage(pagination.page, pagination.pageSize, searchForm.keyword)
-    if (res.code === 200) {
-      dramaList.value = res.data || []
-      pagination.itemCount = res.pagination?.totalItems || 0
-    }
-  } catch (error) {
-    console.error('加载电视剧列表失败:', error)
-    message.error('加载电视剧列表失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  pagination.page = 1
-  loadData()
-}
-
-const handleReset = () => {
-  searchForm.keyword = ''
-  pagination.page = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  pagination.page = page
-  loadData()
-}
-
-const handlePageSizeChange = (pageSize) => {
-  pagination.pageSize = pageSize
-  pagination.page = 1
-  loadData()
-}
-
-const handleAdd = () => {
-  dialogTitle.value = '新增电视剧'
-  Object.assign(dramaForm, {
-    id: null,
-    name: '',
-    filingNum: '',
-    prodCompany: '',
-    crewDescription: '',
-    dramaDescription: '',
-    cast: '',
-    shootLocation: '',
-    service: ''
-  })
-  dialogVisible.value = true
-}
-
-const handleEdit = async (row) => {
-  try {
-    const res = await getDramaById(row.id)
-    if (res.code === 200 && res.data) {
-      dialogTitle.value = '编辑电视剧'
-      Object.assign(dramaForm, {
-        id: res.data.id,
-        name: res.data.name || '',
-        filingNum: res.data.filingNum || '',
-        prodCompany: res.data.prodCompany || '',
-        crewDescription: res.data.crewDescription || '',
-        dramaDescription: res.data.dramaDescription || '',
-        cast: res.data.cast || '',
-        shootLocation: res.data.shootLocation || '',
-        service: res.data.service || ''
-      })
-      dialogVisible.value = true
-    }
-  } catch (error) {
-    console.error('获取电视剧详情失败:', error)
-    message.error('获取电视剧详情失败')
-  }
-}
-
-const handleDialogSave = async () => {
-  if (!formRef.value) return
-  try {
-    await formRef.value.validate()
-  } catch (error) {
-    return
-  }
-  
-  try {
-    dialogLoading.value = true
-    const data = {
-      name: dramaForm.name,
-      filingNum: dramaForm.filingNum,
-      prodCompany: dramaForm.prodCompany,
-      crewDescription: dramaForm.crewDescription,
-      dramaDescription: dramaForm.dramaDescription,
-      cast: dramaForm.cast,
-      shootLocation: dramaForm.shootLocation,
-      service: dramaForm.service
-    }
-    
-    let res
-    if (dramaForm.id) {
-      res = await updateDrama({ ...data, id: dramaForm.id })
     } else {
       res = await addDrama(data)
     }
@@ -635,7 +714,6 @@ const handleDelete = async (id) => {
     }
   }
 }
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -646,4 +724,7 @@ const handleDelete = async (id) => {
     transform: translateY(0);
   }
 }
-</style>
+</style></div>
+  </div>
+  </div>
+</template>

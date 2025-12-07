@@ -36,6 +36,7 @@ public class BannerController {
      * 查找 Banner 记录
      */
     @GetMapping("/{id}")
+    @PublicAccess
     public ApiResponse<BannerVO> getImageById(@PathVariable @NotNull(message = "图片ID不能为空") Long id) {
         BannerVO bannerVo = bannerService.getImageById(id);
         return ApiResponse.success(bannerVo);
@@ -45,6 +46,7 @@ public class BannerController {
      * 分页查询
      */
     @GetMapping("/page")
+    @PublicAccess
     public PageResponse<BannerVO> getImagePage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,

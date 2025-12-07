@@ -36,7 +36,171 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
-        :scroll-x="2400"
+        :scroll-x="1500"
+      />
+      
+      <!-- 移动端卡片列表 -->
+      <div v-else class="mobile-list">
+        <n-spin :show="loading">
+          <div v-if="locationList.length === 0 && !loading" class="empty-state">
+            <Icon icon="mdi:map-marker-off" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
+            <p style="color: #9ca3af;">暂无数据</p>
+          </div>
+          <div v-else class="card-list">
+            <n-card
+              v-for="location in locationList"
+              :key="location.id"
+              class="mobile-card"
+              hoverable
+            >
+              <div class="card-header">
+                <div class="location-info">
+                  <h3 class="location-name">{{ location.name }}</h3>
+                  <p class="location-type">{{ location.type }}</p>
+                </div>
+                <div class="location-cover">
+                  <n-image
+                    v-if="location.cover"
+                    :src="location.cover"
+                    width="80"
+                    height="60"
+                    object-fit="cover"
+                    preview-disabled
+                  />
+                  <div v-else class="no-cover">
+                    <Icon icon="mdi:image" :width="32" />
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="info-item">
+                  <span class="label">地址：</span>
+                  <span>{{ location.address || '-' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">联系人：</span>
+                  <span>{{ location.locationPrincipalName || '-' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">联系电话：</span>
+                  <span>{{ location.locationPrincipalPhone || '-' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">价格：</span>
+                  <span class="price">{{ location.price ? '¥' + location.price : '-' }}</span>
+                </div>
+              </div>
+              <div class="card-actions">
+                <n-button size="small" @click="handleEdit(location)" block style="margin-bottom: 8px">
+                  编辑
+                </n-button>
+                <n-popconfirm @positive-click="handleDelete(location.id)">
+                  <template #trigger>
+                    <n-button size="small" type="error" quaternary block>
+                      删除
+                    </n-button>
+                  </template>
+                  确定要删除这个场地吗？
+                </n-popconfirm>
+              </div>
+            </n-card>
+          </div>
+          
+          <!-- 移动端分页 -->
+          <div class="mobile-pagination">
+            <n-pagination
+              :page="pagination.page"
+              :page-size="pagination.pageSize"
+              :item-count="pagination.itemCount"
+              :page-sizes="[10, 20, 50]"
+              show-size-picker
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+            />
+          </div>
+        </n-spin>
+      </div>
+    </n-card>
+    
+    <n-modal 
+      v-model:show="dialogVisible" 
+      preset="dialog" 
+      :title="dialogTitle" 
+      style="width: 90%; max-width: 900px"
+      :mask-closable="false"
+    >
+      <n-form 
+        ref="formRef" 
+        :model="locationForm" 
+        :rules="formRules" 
+        :label-placement="isMobile ? 'top' : 'left'"
+        :label-width="isMobile ? 'auto' : '120'"
+      >
+        <n-form-item label="场地名称" path="name">
+          <n-input v-model:value="locationForm.name" placeholder="请输入场地名称" />
+        </n-form-item>
+        <n-form-item label="类型" path="type">
+          <n-select v-model:value="locationForm.type" :options="typeOptions" placeholder="请选择场地类型" />
+        </n-form-item>
+        <n-form-item label="地址" path="address">
+          <n-input v-model:value="locationForm.address" placeholder="请输入详细地址" />
+        </n-form-item>
+        <n-form-item label="价格" path="price">
+          <n-input-number 
+            v-model:value="locationForm.price" 
+            placeholder="请输入价格" 
+            :min="0"
+          />
+        </n-form-item>
+        <!-- 这里应该添加更多表单字段 -->
+      </n-form>
+      <template #footer>
+        <n-space>
+          <n-button @click="dialogVisible = false">取消</n-button>
+          <n-button type="primary" @click="handleDialogSave">保存</n-button>
+        </n-space>
+      </template>
+    </n-modal>
+
+<template>
+  <div class="location-management">
+    <n-card class="management-card">
+      <div class="search-header">
+        <n-form :model="searchForm" inline class="search-form">
+          <n-form-item label="场地名称">
+            <n-input v-model:value="searchForm.keyword" placeholder="请输入场地名称" clearable @keyup.enter="handleSearch" />
+          </n-form-item>
+          <n-form-item>
+            <n-button type="primary" @click="handleSearch">
+              <template #icon>
+                <Icon icon="mdi:magnify" />
+              </template>
+              搜索
+            </n-button>
+            <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
+          </n-form-item>
+        </n-form>
+        <div class="action-buttons">
+          <n-button type="primary" @click="handleAdd">
+            <template #icon>
+              <Icon icon="mdi:plus" />
+            </template>
+            新增场地
+          </n-button>
+        </div>
+      </div>
+      
+      <!-- 桌面端表格 -->
+      <n-data-table
+        v-if="!isMobile"
+        :columns="columns"
+        :data="locationList"
+        :loading="loading"
+        :pagination="pagination"
+        :row-key="row => row.id"
+        @update:page="handlePageChange"
+        @update:page-size="handlePageSizeChange"
+        :scroll-x="1500"
       />
       
       <!-- 移动端卡片列表 -->
@@ -160,6 +324,18 @@
             <template #unchecked>不可用</template>
           </n-switch>
         </n-form-item>
+        <n-form-item label="封面图片" path="cover">
+          <n-input v-model:value="locationForm.cover" placeholder="请输入封面图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略封面" path="thumbCover">
+          <n-input v-model:value="locationForm.thumbCover" placeholder="请输入缩略封面URL" />
+        </n-form-item>
+        <n-form-item label="详情图片" path="image">
+          <n-input v-model:value="locationForm.image" placeholder="请输入详情图片URL" />
+        </n-form-item>
+        <n-form-item label="缩略详情图" path="thumbImage">
+          <n-input v-model:value="locationForm.thumbImage" placeholder="请输入缩略详情图URL" />
+        </n-form-item>
         <n-form-item label="场地介绍" path="locationDescription">
           <n-input v-model:value="locationForm.locationDescription" type="textarea" :rows="4" placeholder="请输入场地介绍" />
         </n-form-item>
@@ -206,6 +382,8 @@ import {
   NPopconfirm,
   NModal,
   NImage,
+  NSpin,
+  NPagination,
   useMessage
 } from 'naive-ui'
 import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById } from '@/api'
@@ -244,7 +422,11 @@ const locationForm = reactive({
   govPrincipalName: '',
   govPrincipalPhone: '',
   longitude: '',
-  latitude: ''
+  latitude: '',
+  cover: '',
+  image: '',
+  thumbCover: '',
+  thumbImage: ''
 })
 
 const typeOptions = [
@@ -285,220 +467,75 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
-  { title: '场地名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+  { title: 'ID', key: 'id', width: 80 },
   {
-    title: '类型',
-    key: 'type',
-    width: 120,
-    render: (row) => {
-      const typeMap = {
-        '自然风光': '自然风光',
-        '历史建筑': '历史建筑',
-        '现代建筑': '现代建筑',
-        '文化场所': '文化场所',
-        '商业场所': '商业场所',
-        '古镇古村': '古镇古村',
-        '其他': '其他'
+      title: '封面',
+      key: 'cover',
+      width: 100,
+      render: (row) => {
+        // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
+        const thumbnailUrl = row.thumbUrl;
+        // 获取原图URL用于预览
+        const originalUrl = row.cover || '';
+        
+        return h(NImage, {
+          width: 60,
+          height: 45,
+          src: thumbnailUrl || originalUrl, // 显示压缩后的图片
+          objectFit: 'cover',
+          previewDisabled: false, // 启用预览功能
+          showToolbar: false,
+          // 配置预览功能，点击时显示原图
+          srcset: [
+            {
+              src: originalUrl,
+              alt: '场地封面'
+            }
+          ]
+        })
       }
-      return typeMap[row.type] || row.type
-    }
-  },
-  { title: '场地描述', key: 'locationDescription', width: 250, ellipsis: { tooltip: true } },
-  { title: '地址', key: 'address', width: 200, ellipsis: { tooltip: true } },
-  { title: '价格', key: 'price', width: 120, render: (row) => `¥${row.price || 0}` },
-  { title: '场地联系人', key: 'locationPrincipalName', width: 120 },
-  { title: '场地电话', key: 'locationPrincipalPhone', width: 130 },
-  { title: '政府联系人', key: 'govPrincipalName', width: 120 },
-  { title: '政府电话', key: 'govPrincipalPhone', width: 130 },
-  { title: '经度', key: 'longitude', width: 100 },
-  { title: '纬度', key: 'latitude', width: 100 },
+    },
   {
-    title: '状态',
-    key: 'status',
+    title: '缩略封面',
+    key: 'thumbCover',
     width: 100,
     render: (row) => {
-      const isActive = row.status === true || row.status === 1
-      return h(NTag, { 
-        type: isActive ? 'success' : 'error', 
-        size: 'small' 
-      }, { 
-        default: () => isActive ? '可用' : '不可用' 
-      })
-    }
-  },
-  { 
-    title: '封面图', 
-    key: 'cover', 
-    width: 100,
-    render: (row) => {
-      if (!row.cover) return '-'
-      return h(NImage, {
+      return row.thumbCover ? h(NImage, {
         width: 60,
         height: 45,
-        src: row.cover,
+        src: row.thumbCover,
         objectFit: 'cover',
-        style: { borderRadius: '4px' }
-      })
-    }
-  },
-  { title: '场地联系人', key: 'locationPrincipalName', width: 120 },
-  { title: '场地联系电话', key: 'locationPrincipalPhone', width: 130 },
-  {
-    title: '创建时间',
-    key: 'createdAt',
-    width: 180,
-    render: (row) => {
-      if (Array.isArray(row.createdAt)) {
-        return dayjs(row.createdAt[0] + '-' + String(row.createdAt[1]).padStart(2, '0') + '-' + String(row.createdAt[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
-      }
-      return row.createdAt ? dayjs(row.createdAt).format('YYYY-MM-DD HH:mm:ss') : '-'
+        previewDisabled: false
+      }) : '-'
     }
   },
   {
-    title: '操作',
-    key: 'actions',
-    width: 150,
-    fixed: 'right',
+    title: '详情图片',
+    key: 'image',
+    width: 100,
     render: (row) => {
-      return h('div', { style: 'display: flex; gap: 8px;' }, [
-        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
-        h(
-          NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
-        )
-      ])
+      return row.image ? h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.image,
+        objectFit: 'cover',
+        previewDisabled: false
+      }) : '-'
     }
-  }
-]
-
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-  loadData()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
-})
-
-const loadData = async () => {
-  try {
-    loading.value = true
-    const res = await getLocationPage(pagination.page, pagination.pageSize, searchForm.keyword)
-    if (res.code === 200) {
-      locationList.value = res.data || []
-      pagination.itemCount = res.pagination?.totalItems || 0
+  },
+  {
+    title: '缩略详情图',
+    key: 'thumbImage',
+    width: 100,
+    render: (row) => {
+      return row.thumbImage ? h(NImage, {
+        width: 60,
+        height: 45,
+        src: row.thumbImage,
+        objectFit: 'cover',
+        previewDisabled: false
+      }) : '-'
     }
-  } catch (error) {
-    console.error('加载场地列表失败:', error)
-    message.error('加载场地列表失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  pagination.page = 1
-  loadData()
-}
-
-const handleReset = () => {
-  searchForm.keyword = ''
-  pagination.page = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  pagination.page = page
-  loadData()
-}
-
-const handlePageSizeChange = (pageSize) => {
-  pagination.pageSize = pageSize
-  pagination.page = 1
-  loadData()
-}
-
-const handleAdd = () => {
-  dialogTitle.value = '新增场地'
-  Object.assign(locationForm, {
-    id: null,
-    name: '',
-    type: '',
-    address: '',
-    price: 0,
-    status: true,
-    locationDescription: '',
-    locationPrincipalName: '',
-    locationPrincipalPhone: '',
-    govPrincipalName: '',
-    govPrincipalPhone: '',
-    longitude: '',
-    latitude: ''
-  })
-  dialogVisible.value = true
-}
-
-const handleEdit = async (row) => {
-  try {
-    const res = await getLocationById(row.id)
-    if (res.code === 200 && res.data) {
-      dialogTitle.value = '编辑场地'
-      Object.assign(locationForm, {
-        id: res.data.id,
-        name: res.data.name || '',
-        type: res.data.type || '',
-        address: res.data.address || '',
-        price: res.data.price || 0,
-        status: res.data.status !== false,
-        locationDescription: res.data.locationDescription || '',
-        locationPrincipalName: res.data.locationPrincipalName || '',
-        locationPrincipalPhone: res.data.locationPrincipalPhone || '',
-        govPrincipalName: res.data.govPrincipalName || '',
-        govPrincipalPhone: res.data.govPrincipalPhone || '',
-        longitude: res.data.longitude || '',
-        latitude: res.data.latitude || ''
-      })
-      dialogVisible.value = true
-    }
-  } catch (error) {
-    console.error('获取场地详情失败:', error)
-    message.error('获取场地详情失败')
-  }
-}
-
-const handleDialogSave = async () => {
-  if (!formRef.value) return
-  try {
-    await formRef.value.validate()
-  } catch (error) {
-    return
-  }
-  
-  try {
-    dialogLoading.value = true
-    const data = {
-      name: locationForm.name,
-      type: locationForm.type,
-      address: locationForm.address,
-      price: locationForm.price,
-      status: locationForm.status,
-      locationDescription: locationForm.locationDescription,
-      locationPrincipalName: locationForm.locationPrincipalName,
-      locationPrincipalPhone: locationForm.locationPrincipalPhone,
-      govPrincipalName: locationForm.govPrincipalName,
-      govPrincipalPhone: locationForm.govPrincipalPhone,
-      longitude: locationForm.longitude,
-      latitude: locationForm.latitude
-    }
-    
-    let res
-    if (locationForm.id) {
-      res = await updateLocation({ ...data, id: locationForm.id })
     } else {
       res = await addLocation(data)
     }
@@ -739,7 +776,6 @@ const handleDelete = async (id) => {
     }
   }
 }
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -750,4 +786,7 @@ const handleDelete = async (id) => {
     transform: translateY(0);
   }
 }
-</style>
+</style></div>
+  </div>
+  </div>
+</template>
