@@ -1,4 +1,8 @@
 import request from '@/utils/request'
+import { mockApi } from '@/utils/mock'
+
+// 是否启用 Mock（开发环境默认启用）
+const USE_MOCK = false
 
 // ==================== 管理员相关接口 ====================
 
@@ -85,7 +89,7 @@ export const uploadFile = (file, type = 'image') => {
   formData.append('file', file)
   formData.append('type', type)
   return request({
-    url: '/file/upload',
+    url: '/common/upload',
     method: 'post',
     data: formData,
     headers: {
@@ -101,12 +105,52 @@ export const uploadAvatarFile = (file) => {
   const formData = new FormData()
   formData.append('file', file)
   return request({
-    url: '/file/upload/avatar',
+    url: '/common/upload/avatar',
     method: 'post',
     data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'
     }
+  })
+}
+
+// 游客管理
+export const getVisitorPage = (pageRequest) => {
+  return request({
+    url: '/admin/visitor/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+export const deleteVisitor = (id) => {
+  return request({
+    url: `/admin/visitor/${id}`,
+    method: 'delete'
+  })
+}
+
+export const getVisitorById = (id) => {
+  return request({
+    url: `/admin/visitor/${id}`,
+    method: 'get'
+  })
+}
+
+// 操作日志
+export const getRecentOperationLogs = (limit = 10) => {
+  return request({
+    url: '/admin/operation-log/recent',
+    method: 'get',
+    params: { limit }
+  })
+}
+
+export const getOperationLogPage = (pageRequest) => {
+  return request({
+    url: '/admin/operation-log/page',
+    method: 'post',
+    data: pageRequest
   })
 }
 
@@ -127,8 +171,247 @@ export const verifyToken = () => {
   return getAdminInfo()
 }
 
-// ==================== 用户管理 ====================
+// 校友管理
+export const addAlumni = (data) => {
+  return request({
+    url: '/admin/alumni/add',
+    method: 'post',
+    data
+  })
+}
 
+export const updateAlumni = (data) => {
+  return request({
+    url: '/admin/alumni/update',
+    method: 'post',
+    data
+  })
+}
+
+export const deleteAlumni = (id) => {
+  return request({
+    url: `/admin/alumni/${id}`,
+    method: 'delete'
+  })
+}
+
+export const getAlumniById = (id) => {
+  return request({
+    url: `/admin/alumni/${id}`,
+    method: 'get'
+  })
+}
+
+export const getAlumniList = (params) => {
+  return request({
+    url: '/admin/alumni/list',
+    method: 'get',
+    params
+  })
+}
+
+export const getAlumniPage = (pageRequest) => {
+  return request({
+    url: '/admin/alumni/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// POI 管理
+export const addPOI = (data) => {
+  return request({
+    url: '/admin/poi/add',
+    method: 'post',
+    data
+  })
+}
+
+export const updatePOI = (data) => {
+  return request({
+    url: '/admin/poi/update',
+    method: 'post',
+    data
+  })
+}
+
+export const deletePOI = (id) => {
+  return request({
+    url: `/admin/poi/${id}`,
+    method: 'delete'
+  })
+}
+
+export const getPOIById = (id) => {
+  return request({
+    url: `/admin/poi/${id}`,
+    method: 'get'
+  })
+}
+
+export const getPOIList = () => {
+  return request({
+    url: '/admin/poi/list',
+    method: 'get'
+  })
+}
+
+export const getPOIPage = (pageRequest) => {
+  return request({
+    url: '/admin/poi/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 校友故事管理
+export const addStory = (data) => {
+  return request({
+    url: '/admin/story/add',
+    method: 'post',
+    data
+  })
+}
+
+export const updateStory = (data) => {
+  return request({
+    url: '/admin/story/update',
+    method: 'post',
+    data
+  })
+}
+
+export const auditStory = (data) => {
+  return request({
+    url: '/admin/story/audit',
+    method: 'post',
+    data
+  })
+}
+
+export const deleteStory = (id) => {
+  return request({
+    url: `/admin/story/${id}`,
+    method: 'delete'
+  })
+}
+
+export const getStoryById = (id) => {
+  return request({
+    url: `/admin/story/${id}`,
+    method: 'get'
+  })
+}
+
+export const getStoryList = (params) => {
+  return request({
+    url: '/admin/story/list',
+    method: 'get',
+    params
+  })
+}
+
+export const getStoryPage = (pageRequest) => {
+  return request({
+    url: '/admin/story/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 情感标签管理
+export const addTag = (data) => {
+  return request({
+    url: '/admin/tag/add',
+    method: 'post',
+    data
+  })
+}
+
+export const updateTag = (data) => {
+  return request({
+    url: '/admin/tag/update',
+    method: 'post',
+    data
+  })
+}
+
+export const deleteTag = (id) => {
+  return request({
+    url: `/admin/tag/${id}`,
+    method: 'delete'
+  })
+}
+
+export const getTagById = (id) => {
+  return request({
+    url: `/admin/tag/${id}`,
+    method: 'get'
+  })
+}
+
+export const getTagList = () => {
+  return request({
+    url: '/admin/tag/list',
+    method: 'get'
+  })
+}
+
+export const getTagPage = (pageRequest) => {
+  return request({
+    url: '/admin/tag/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 路线管理
+export const addRoute = (data) => {
+  return request({
+    url: '/admin/route/add',
+    method: 'post',
+    data
+  })
+}
+
+export const updateRoute = (data) => {
+  return request({
+    url: '/admin/route/update',
+    method: 'post',
+    data
+  })
+}
+
+export const deleteRoute = (id) => {
+  return request({
+    url: `/admin/route/${id}`,
+    method: 'delete'
+  })
+}
+
+export const getRouteById = (id) => {
+  return request({
+    url: `/admin/route/${id}`,
+    method: 'get'
+  })
+}
+
+export const getRouteList = () => {
+  return request({
+    url: '/admin/route/list',
+    method: 'get'
+  })
+}
+
+export const getRoutePage = (pageRequest) => {
+  return request({
+    url: '/admin/route/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// ==================== 用户管理 ====================
 /**
  * 分页获取用户列表
  */
@@ -187,7 +470,6 @@ export const deleteUser = (id) => {
 }
 
 // ==================== 反馈管理 ====================
-
 export const getFeedbackPage = (current = 1, size = 10, keyword = '') => {
   return request({
     url: '/feedback/admin/page',
@@ -223,9 +505,9 @@ export const deleteFeedback = (id) => {
     method: 'delete'
   })
 }
+// ==================== 雅安相关接口 ====================
 
-// ==================== 文章管理 ====================
-
+// 文章管理
 /**
  * 添加文章
  */
@@ -271,6 +553,17 @@ export const getArticleById = (id) => {
 /**
  * 获取文章列表
  */
+export const getArticleList = (params) => {
+  return request({
+    url: '/admin/article/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 分页获取文章
+ */
 export const getArticlePage = (current = 1, size = 10, keyword = '') => {
   return request({
     url: '/article/admin/page',
@@ -283,8 +576,7 @@ export const getArticlePage = (current = 1, size = 10, keyword = '') => {
   })
 }
 
-// ==================== 电视剧管理 ====================
-
+// 电视剧管理
 /**
  * 添加电视剧
  */
@@ -332,7 +624,7 @@ export const getDramaById = (id) => {
  */
 export const getDramaList = (params) => {
   return request({
-    url: '/drama/list',
+    url: '/admin/drama/list',
     method: 'get',
     params
   })
@@ -353,8 +645,56 @@ export const getDramaPage = (current = 1, size = 10, keyword = '') => {
   })
 }
 
-// ==================== 场地管理 ====================
+// 图片管理
+/**
+ * 上传图片
+ */
+export const uploadImage = (formData) => {
+  return request({
+    url: '/admin/image/upload',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
 
+/**
+ * 删除图片
+ */
+export const deleteImage = (id) => {
+  return request({
+    url: `/admin/image/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 批量删除图片
+ */
+export const batchDeleteImage = (ids) => {
+  return request({
+    url: '/admin/image/batch-delete',
+    method: 'post',
+    data: {
+      ids
+    }
+  })
+}
+
+/**
+ * 分页获取图片
+ */
+export const getImagePage = (pageRequest) => {
+  return request({
+    url: '/admin/image/page',
+    method: 'post',
+    data: pageRequest
+  })
+}
+
+// 场地管理
 /**
  * 添加场地
  */
@@ -402,7 +742,7 @@ export const getLocationById = (id) => {
  */
 export const getLocationList = (params) => {
   return request({
-    url: '/location/list',
+    url: '/admin/location/list',
     method: 'get',
     params
   })
@@ -423,8 +763,7 @@ export const getLocationPage = (current = 1, size = 10, keyword = '') => {
   })
 }
 
-// ==================== 服务管理 ====================
-
+// 服务管理
 /**
  * 添加服务
  */
@@ -472,7 +811,7 @@ export const getServiceById = (id) => {
  */
 export const getServiceList = (params) => {
   return request({
-    url: '/shoot/list',
+    url: '/admin/service/list',
     method: 'get',
     params
   })
@@ -493,8 +832,7 @@ export const getServicePage = (current = 1, size = 10, keyword = '') => {
   })
 }
 
-// ==================== 电视剧拍摄报告管理 ====================
-
+// 电视剧拍摄报告管理
 /**
  * 添加报告
  */
@@ -542,7 +880,7 @@ export const getReportById = (id) => {
  */
 export const getReportList = (params) => {
   return request({
-    url: '/report/list',
+    url: '/admin/report/list',
     method: 'get',
     params
   })
@@ -563,250 +901,15 @@ export const getReportPage = (current = 1, size = 10, keyword = '') => {
   })
 }
 
-// ==================== Banner管理 ====================
+// ==================== 旅游线路相关接口 ====================
 
 /**
- * 分页获取Banner列表
- */
-export const getBannerPage = (current = 1, size = 10, keyword = '') => {
-  return request({
-    url: '/banner/page',
-    method: 'get',
-    params: {
-      current,
-      size,
-      keyword
-    }
-  })
-}
-
-/**
- * 根据ID获取Banner
- */
-export const getBannerById = (id) => {
-  return request({
-    url: `/banner/${id}`,
-    method: 'get'
-  })
-}
-
-/**
- * 创建Banner
- */
-export const createBanner = (data) => {
-  return request({
-    url: '/banner',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 更新Banner
- */
-export const updateBanner = (id, data) => {
-  return request({
-    url: `/banner/update/${id}`,
-    method: 'put',
-    data
-  })
-}
-
-/**
- * 删除Banner
- */
-export const deleteBanner = (id) => {
-  return request({
-    url: `/banner/delete/${id}`,
-    method: 'delete'
-  })
-}
-
-// ==================== Hotel管理 ====================
-
-/**
- * 分页获取酒店列表
- */
-export const getHotelPage = (current = 1, size = 10, keyword = '') => {
-  return request({
-    url: '/hotel/admin/page',
-    method: 'get',
-    params: {
-      current,
-      size,
-      keyword
-    }
-  })
-}
-
-/**
- * 根据ID获取酒店
- */
-export const getHotelById = (id) => {
-  return request({
-    url: `/hotel/${id}`,
-    method: 'get'
-  })
-}
-
-/**
- * 创建酒店
- */
-export const createHotel = (data) => {
-  return request({
-    url: '/hotel/admin/create',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 更新酒店
- */
-export const updateHotel = (id, data) => {
-  return request({
-    url: `/hotel/admin/update/${id}`,
-    method: 'put',
-    data
-  })
-}
-
-/**
- * 删除酒店
- */
-export const deleteHotel = (id) => {
-  return request({
-    url: `/hotel/admin/delete/${id}`,
-    method: 'delete'
-  })
-}
-
-// ==================== Tour管理 ====================
-
-/**
- * 分页获取旅游线路列表
- */
-export const getTourPage = (current = 1, size = 10, keyword = '') => {
-  return request({
-    url: '/tour/admin/page',
-    method: 'get',
-    params: {
-      current,
-      size,
-      keyword
-    }
-  })
-}
-
-/**
- * 根据ID获取旅游线路
- */
-export const getTourById = (id) => {
-  return request({
-    url: `/tour/${id}`,
-    method: 'get'
-  })
-}
-
-/**
- * 创建旅游线路
- */
-export const createTour = (data) => {
-  return request({
-    url: '/tour/admin/create',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 更新旅游线路
- */
-export const updateTour = (id, data) => {
-  return request({
-    method: 'put',
-    data
-  })
-}
-
-/**
- * 删除旅游线路
- */
-export const deleteTour = (id) => {
-  return request({
-    url: `/tour/admin/delete/${id}`,
-    method: 'delete'
-  })
-}
-
-// ==================== Policy管理 ====================
-
-/**
- * 分页获取政策列表
- */
-export const getPolicyPage = (current = 1, size = 10, keyword = '') => {
-  return request({
-    url: '/policy/admin/page',
-    method: 'get',
-    params: {
-      current,
-      size,
-      keyword
-    }
-  })
-}
-
-/**
- * 根据ID获取政策
- */
-export const getPolicyById = (id) => {
-  return request({
-    url: `/policy/${id}`,
-    method: 'get'
-  })
-}
-
-/**
- * 创建政策
- */
-export const createPolicy = (data) => {
-  return request({
-    url: '/policy/admin/create',
-    method: 'post',
-    data
-  })
-}
-
-// 为了兼容性，添加addPolicy作为createPolicy的别名
-export const addPolicy = createPolicy
-
-/**
- * 更新政策
- */
-export const updatePolicy = (id, data) => {
-  return request({
-    url: `/policy/admin/update/${data.id}`,
-    method: 'put',
-    data
-  })
-}
-
-/**
- * 删除政策
- */
-export const deletePolicy = (id) => {
-  return request({
-    url: `/policy/admin/delete/${id}`,
-    method: 'delete'
-  })
-}
-
-// ==================== 旅游线路管理 ====================
-
-/**
- * 分页获取旅游线路列表
+ * 分页获取旅游线路
  */
 export const getTourRoutePage = (current = 1, size = 10, keyword = '') => {
+  if (USE_MOCK) {
+    return mockApi.getTourRoutePage(current, size, keyword)
+  }
   return request({
     url: '/tour/admin/page',
     method: 'get',
@@ -822,6 +925,9 @@ export const getTourRoutePage = (current = 1, size = 10, keyword = '') => {
  * 根据ID获取旅游线路
  */
 export const getTourRouteById = (id) => {
+  if (USE_MOCK) {
+    return mockApi.getTourRouteById(id)
+  }
   return request({
     url: `/tour/${id}`,
     method: 'get'
@@ -829,9 +935,12 @@ export const getTourRouteById = (id) => {
 }
 
 /**
- * 创建旅游线路
+ * 新增旅游线路
  */
 export const addTourRoute = (data) => {
+  if (USE_MOCK) {
+    return mockApi.addTourRoute(data)
+  }
   return request({
     url: '/tour/admin/create',
     method: 'post',
@@ -842,9 +951,12 @@ export const addTourRoute = (data) => {
 /**
  * 更新旅游线路
  */
-export const updateTourRoute = (id, data) => {
+export const updateTourRoute = (data) => {
+  if (USE_MOCK) {
+    return mockApi.updateTourRoute(data)
+  }
   return request({
-    url: `/tour/admin/update/${id}`,
+    url: `/tour/admin/update/${data.id}`,
     method: 'put',
     data
   })
@@ -854,8 +966,87 @@ export const updateTourRoute = (id, data) => {
  * 删除旅游线路
  */
 export const deleteTourRoute = (id) => {
+  if (USE_MOCK) {
+    return mockApi.deleteTourRoute(id)
+  }
   return request({
     url: `/tour/admin/delete/${id}`,
     method: 'delete'
   })
 }
+
+// ==================== 政策相关接口 ====================
+
+/**
+ * 分页获取政策
+ */
+export const getPolicyPage = (current = 1, size = 10, keyword = '', type = '') => {
+  if (USE_MOCK) {
+    return mockApi.getPolicyPage(current, size, keyword, type)
+  }
+  return request({
+    url: '/policy/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword,
+      type
+    }
+  })
+}
+
+/**
+ * 根据ID获取政策
+ */
+export const getPolicyById = (id) => {
+  if (USE_MOCK) {
+    return mockApi.getPolicyById(id)
+  }
+  return request({
+    url: `/policy/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 新增政策
+ */
+export const addPolicy = (data) => {
+  if (USE_MOCK) {
+    return mockApi.addPolicy(data)
+  }
+  return request({
+    url: '/policy/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新政策
+ */
+export const updatePolicy = (data) => {
+  if (USE_MOCK) {
+    return mockApi.updatePolicy(data)
+  }
+  return request({
+    url: `/policy/admin/update/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除政策
+ */
+export const deletePolicy = (id) => {
+  if (USE_MOCK) {
+    return mockApi.deletePolicy(id)
+  }
+  return request({
+    url: `/policy/admin/delete/${id}`,
+    method: 'delete'
+  })
+}
+

@@ -31,13 +31,5 @@ export default defineConfig({
         changeOrigin: true
       }
     }
-  },
-  test: {
-    environment: 'jsdom',
-    include: ['src/**/*.spec.js', 'src/**/*.test.js'],
-    setupFiles: ['src/setupTests.js'],
-    coverage: {
-      reporter: ['text', 'json', 'html']
-    }
   }
 })
