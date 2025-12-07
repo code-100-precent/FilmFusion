@@ -35,7 +35,7 @@
 import { ref, reactive, computed, onMounted, h } from 'vue'
 import { getLogPage } from '@/api'
 import { NButton, NCard, NDataTable, NForm, NFormItem, NInput, NSpace } from 'naive-ui'
-import { Icon } from '@/components'
+import { Icon } from '@iconify/vue'
 
 export default {
   name: 'LogList',

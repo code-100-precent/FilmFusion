@@ -161,208 +161,6 @@
         </n-space>
       </template>
     </n-modal>
-
-<template>
-  <div class="location-management">
-    <n-card class="management-card">
-      <div class="search-header">
-        <n-form :model="searchForm" inline class="search-form">
-          <n-form-item label="场地名称">
-            <n-input v-model:value="searchForm.keyword" placeholder="请输入场地名称" clearable @keyup.enter="handleSearch" />
-          </n-form-item>
-          <n-form-item>
-            <n-button type="primary" @click="handleSearch">
-              <template #icon>
-                <Icon icon="mdi:magnify" />
-              </template>
-              搜索
-            </n-button>
-            <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
-          </n-form-item>
-        </n-form>
-        <div class="action-buttons">
-          <n-button type="primary" @click="handleAdd">
-            <template #icon>
-              <Icon icon="mdi:plus" />
-            </template>
-            新增场地
-          </n-button>
-        </div>
-      </div>
-      
-      <!-- 桌面端表格 -->
-      <n-data-table
-        v-if="!isMobile"
-        :columns="columns"
-        :data="locationList"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="row => row.id"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-        :scroll-x="1500"
-      />
-      
-      <!-- 移动端卡片列表 -->
-      <div v-else class="mobile-list">
-        <n-spin :show="loading">
-          <div v-if="locationList.length === 0 && !loading" class="empty-state">
-            <Icon icon="mdi:map-marker-off" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
-            <p style="color: #9ca3af;">暂无数据</p>
-          </div>
-          <div v-else class="card-list">
-            <n-card
-              v-for="location in locationList"
-              :key="location.id"
-              class="mobile-card"
-              hoverable
-            >
-              <div class="card-header">
-                <div class="location-info">
-                  <h3 class="location-name">{{ location.name }}</h3>
-                  <p class="location-type">{{ location.type }}</p>
-                </div>
-                <div class="location-cover">
-                  <n-image
-                    v-if="location.cover"
-                    :src="location.cover"
-                    width="80"
-                    height="60"
-                    object-fit="cover"
-                    preview-disabled
-                  />
-                  <div v-else class="no-cover">
-                    <Icon icon="mdi:image" :width="32" />
-                  </div>
-                </div>
-              </div>
-              <div class="card-content">
-                <div class="info-item">
-                  <span class="label">地址：</span>
-                  <span>{{ location.address || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="label">联系人：</span>
-                  <span>{{ location.locationPrincipalName || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="label">联系电话：</span>
-                  <span>{{ location.locationPrincipalPhone || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="label">价格：</span>
-                  <span class="price">{{ location.price ? '¥' + location.price : '-' }}</span>
-                </div>
-              </div>
-              <div class="card-actions">
-                <n-button size="small" @click="handleEdit(location)" block style="margin-bottom: 8px">
-                  编辑
-                </n-button>
-                <n-popconfirm @positive-click="handleDelete(location.id)">
-                  <template #trigger>
-                    <n-button size="small" type="error" quaternary block>
-                      删除
-                    </n-button>
-                  </template>
-                  确定要删除这个场地吗？
-                </n-popconfirm>
-              </div>
-            </n-card>
-          </div>
-          
-          <!-- 移动端分页 -->
-          <div class="mobile-pagination">
-            <n-pagination
-              :page="pagination.page"
-              :page-size="pagination.pageSize"
-              :item-count="pagination.itemCount"
-              :page-sizes="[10, 20, 50]"
-              show-size-picker
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
-            />
-          </div>
-        </n-spin>
-      </div>
-    </n-card>
-    
-    <n-modal 
-      v-model:show="dialogVisible" 
-      preset="dialog" 
-      :title="dialogTitle" 
-      style="width: 90%; max-width: 900px"
-      :mask-closable="false"
-    >
-      <n-form 
-        ref="formRef" 
-        :model="locationForm" 
-        :rules="formRules" 
-        :label-placement="isMobile ? 'top' : 'left'"
-        :label-width="isMobile ? 'auto' : '120'"
-      >
-        <n-form-item label="场地名称" path="name">
-          <n-input v-model:value="locationForm.name" placeholder="请输入场地名称" />
-        </n-form-item>
-        <n-form-item label="类型" path="type">
-          <n-select v-model:value="locationForm.type" :options="typeOptions" placeholder="请选择场地类型" />
-        </n-form-item>
-        <n-form-item label="地址" path="address">
-          <n-input v-model:value="locationForm.address" placeholder="请输入详细地址" />
-        </n-form-item>
-        <n-form-item label="价格" path="price">
-          <n-input-number 
-            v-model:value="locationForm.price" 
-            placeholder="请输入价格（元）" 
-            :precision="2"
-            :min="0"
-            style="width: 100%"
-          />
-        </n-form-item>
-        <n-form-item label="状态" path="status">
-          <n-switch v-model:value="locationForm.status">
-            <template #checked>可用</template>
-            <template #unchecked>不可用</template>
-          </n-switch>
-        </n-form-item>
-        <n-form-item label="封面图片" path="cover">
-          <n-input v-model:value="locationForm.cover" placeholder="请输入封面图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略封面" path="thumbCover">
-          <n-input v-model:value="locationForm.thumbCover" placeholder="请输入缩略封面URL" />
-        </n-form-item>
-        <n-form-item label="详情图片" path="image">
-          <n-input v-model:value="locationForm.image" placeholder="请输入详情图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略详情图" path="thumbImage">
-          <n-input v-model:value="locationForm.thumbImage" placeholder="请输入缩略详情图URL" />
-        </n-form-item>
-        <n-form-item label="场地介绍" path="locationDescription">
-          <n-input v-model:value="locationForm.locationDescription" type="textarea" :rows="4" placeholder="请输入场地介绍" />
-        </n-form-item>
-        <n-form-item label="场地联系人" path="locationPrincipalName">
-          <n-input v-model:value="locationForm.locationPrincipalName" placeholder="请输入场地联系人姓名" />
-        </n-form-item>
-        <n-form-item label="场地联系电话" path="locationPrincipalPhone">
-          <n-input v-model:value="locationForm.locationPrincipalPhone" placeholder="请输入场地联系电话" />
-        </n-form-item>
-        <n-form-item label="政府联系人" path="govPrincipalName">
-          <n-input v-model:value="locationForm.govPrincipalName" placeholder="请输入政府联系人姓名" />
-        </n-form-item>
-        <n-form-item label="政府联系电话" path="govPrincipalPhone">
-          <n-input v-model:value="locationForm.govPrincipalPhone" placeholder="请输入政府联系电话" />
-        </n-form-item>
-        <n-form-item label="经度" path="longitude">
-          <n-input v-model:value="locationForm.longitude" placeholder="请输入经度" />
-        </n-form-item>
-        <n-form-item label="纬度" path="latitude">
-          <n-input v-model:value="locationForm.latitude" placeholder="请输入纬度" />
-        </n-form-item>
-      </n-form>
-      <template #action>
-        <n-button @click="dialogVisible = false">取消</n-button>
-        <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
-      </template>
-    </n-modal>
   </div>
 </template>
 
@@ -536,6 +334,25 @@ const columns = [
         previewDisabled: false
       }) : '-'
     }
+  }
+]
+
+const handleDialogSave = async () => {
+  if (!formRef.value) return
+  
+  try {
+    await formRef.value.validate()
+  } catch (error) {
+    return
+  }
+  
+  try {
+    dialogLoading.value = true
+    const data = { ...locationForm }
+    
+    let res
+    if (locationForm.id) {
+      res = await updateLocation(locationForm.id, data)
     } else {
       res = await addLocation(data)
     }
@@ -565,6 +382,110 @@ const handleDelete = async (id) => {
     message.error('删除失败')
   }
 }
+
+const loadData = async () => {
+  try {
+    loading.value = true
+    const res = await getLocationPage(pagination.page, pagination.pageSize, searchForm.keyword)
+    if (res.code === 200) {
+      locationList.value = res.data?.records || res.data || []
+      pagination.itemCount = res.data?.total || res.total || 0
+    }
+  } catch (error) {
+    console.error('加载场地列表失败:', error)
+    message.error('加载场地列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSearch = () => {
+  pagination.page = 1
+  loadData()
+}
+
+const handleReset = () => {
+  searchForm.keyword = ''
+  pagination.page = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  pagination.page = page
+  loadData()
+}
+
+const handlePageSizeChange = (pageSize) => {
+  pagination.pageSize = pageSize
+  pagination.page = 1
+  loadData()
+}
+
+const handleAdd = () => {
+  dialogTitle.value = '新增场地'
+  Object.assign(locationForm, {
+    id: null,
+    name: '',
+    type: '',
+    address: '',
+    price: 0,
+    status: true,
+    locationDescription: '',
+    locationPrincipalName: '',
+    locationPrincipalPhone: '',
+    govPrincipalName: '',
+    govPrincipalPhone: '',
+    longitude: '',
+    latitude: '',
+    cover: '',
+    image: '',
+    thumbCover: '',
+    thumbImage: ''
+  })
+  dialogVisible.value = true
+}
+
+const handleEdit = async (row) => {
+  try {
+    const res = await getLocationById(row.id)
+    if (res.code === 200 && res.data) {
+      dialogTitle.value = '编辑场地'
+      Object.assign(locationForm, {
+        id: res.data.id,
+        name: res.data.name || '',
+        type: res.data.type || '',
+        address: res.data.address || '',
+        price: res.data.price || 0,
+        status: res.data.status !== false,
+        locationDescription: res.data.locationDescription || '',
+        locationPrincipalName: res.data.locationPrincipalName || '',
+        locationPrincipalPhone: res.data.locationPrincipalPhone || '',
+        govPrincipalName: res.data.govPrincipalName || '',
+        govPrincipalPhone: res.data.govPrincipalPhone || '',
+        longitude: res.data.longitude || '',
+        latitude: res.data.latitude || '',
+        cover: res.data.cover || '',
+        image: res.data.image || '',
+        thumbCover: res.data.thumbCover || '',
+        thumbImage: res.data.thumbImage || ''
+      })
+      dialogVisible.value = true
+    }
+  } catch (error) {
+    console.error('获取场地详情失败:', error)
+    message.error('获取场地详情失败')
+  }
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  loadData()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <style scoped lang="scss">
@@ -786,7 +707,4 @@ const handleDelete = async (id) => {
     transform: translateY(0);
   }
 }
-</style></div>
-  </div>
-  </div>
-</template>
+</style>

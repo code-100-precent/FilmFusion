@@ -472,7 +472,7 @@ export const getServiceById = (id) => {
  */
 export const getServiceList = (params) => {
   return request({
-    url: '/shoot/list',
+    url: '/shoot/admin/page',
     method: 'get',
     params
   })
@@ -857,5 +857,22 @@ export const deleteTourRoute = (id) => {
   return request({
     url: `/tour/admin/delete/${id}`,
     method: 'delete'
+  })
+}
+
+// ==================== 操作日志管理 ====================
+
+/**
+ * 分页获取操作日志列表
+ */
+export const getLogPage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/operationlog/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
   })
 }

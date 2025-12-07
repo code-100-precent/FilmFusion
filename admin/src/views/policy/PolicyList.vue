@@ -201,7 +201,6 @@ import {
   NImage,
   NDatePicker,
   useMessage,
-  NImage,
   NTag
 } from 'naive-ui'
 import { getPolicyPage, addPolicy, updatePolicy, deletePolicy, getPolicyById } from '@/api'

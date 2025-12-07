@@ -16,7 +16,7 @@ const getMessage = () => {
 }
 
 const service = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://162.14.106.139:8080/api',
   timeout: 30000
 })
 
@@ -127,6 +127,7 @@ service.interceptors.response.use(
   },
   error => {
     // 增强错误日志记录
+    let errorMsg = ''
 
     if (error.response) {
       // 服务器返回了错误状态码
@@ -174,6 +175,7 @@ service.interceptors.response.use(
       // 其他错误
       console.error('请求配置错误:', error.message)
       errorMsg = error.message || '请求配置错误'
+    }
 
     // 显示详细的错误信息
     showMessage(errorMsg, 'error')

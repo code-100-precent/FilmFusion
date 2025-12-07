@@ -156,183 +156,6 @@
         </n-space>
       </template>
     </n-modal>
-
-<template>
-  <div class="drama-management">
-    <n-card class="management-card">
-      <div class="search-header">
-        <n-form :model="searchForm" inline class="search-form">
-          <n-form-item label="电视剧名称">
-            <n-input v-model:value="searchForm.keyword" placeholder="请输入电视剧名称" clearable @keyup.enter="handleSearch" />
-          </n-form-item>
-          <n-form-item>
-            <n-button type="primary" @click="handleSearch">
-              <template #icon>
-                <Icon icon="mdi:magnify" />
-              </template>
-              搜索
-            </n-button>
-            <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
-          </n-form-item>
-        </n-form>
-        <div class="action-buttons">
-          <n-button type="primary" @click="handleAdd">
-            <template #icon>
-              <Icon icon="mdi:plus" />
-            </template>
-            新增电视剧
-          </n-button>
-        </div>
-      </div>
-      
-      <!-- 桌面端表格 -->
-      <n-data-table
-        v-if="!isMobile"
-        :columns="columns"
-        :data="dramaList"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="row => row.id"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-        :scroll-x="1400"
-      />
-      
-      <!-- 移动端卡片列表 -->
-      <div v-else class="mobile-list">
-        <n-spin :show="loading">
-          <div v-if="dramaList.length === 0 && !loading" class="empty-state">
-            <Icon icon="mdi:film-off" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
-            <p style="color: #9ca3af;">暂无数据</p>
-          </div>
-          <div v-else class="card-list">
-            <n-card
-              v-for="drama in dramaList"
-              :key="drama.id"
-              class="mobile-card"
-              hoverable
-            >
-              <div class="card-header">
-                <div class="drama-info">
-                  <h3 class="drama-name">{{ drama.name }}</h3>
-                  <p class="drama-company">{{ drama.prodCompany }}</p>
-                </div>
-                <div class="drama-cover">
-                  <n-image
-                    v-if="drama.cover"
-                    :src="drama.cover"
-                    width="80"
-                    height="60"
-                    object-fit="cover"
-                    preview-disabled
-                  />
-                  <div v-else class="no-cover">
-                    <Icon icon="mdi:film" :width="32" />
-                  </div>
-                </div>
-              </div>
-              <div class="card-content">
-                <div class="info-item">
-                  <span class="label">备案号：</span>
-                  <span>{{ drama.filingNum || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="label">拍摄地：</span>
-                  <span>{{ drama.shootLocation || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="label">演员：</span>
-                  <span class="cast-info">{{ drama.cast || '-' }}</span>
-                </div>
-              </div>
-              <div class="card-actions">
-                <n-button size="small" @click="handleEdit(drama)" block style="margin-bottom: 8px">
-                  编辑
-                </n-button>
-                <n-popconfirm @positive-click="handleDelete(drama.id)">
-                  <template #trigger>
-                    <n-button size="small" type="error" quaternary block>
-                      删除
-                    </n-button>
-                  </template>
-                  确定要删除这个电视剧吗？
-                </n-popconfirm>
-              </div>
-            </n-card>
-          </div>
-          
-          <!-- 移动端分页 -->
-          <div class="mobile-pagination">
-            <n-pagination
-              :page="pagination.page"
-              :page-size="pagination.pageSize"
-              :item-count="pagination.itemCount"
-              :page-sizes="[10, 20, 50]"
-              show-size-picker
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
-            />
-          </div>
-        </n-spin>
-      </div>
-    </n-card>
-    
-    <n-modal 
-      v-model:show="dialogVisible" 
-      preset="dialog" 
-      :title="dialogTitle" 
-      style="width: 90%; max-width: 900px"
-      :mask-closable="false"
-    >
-      <n-form 
-        ref="formRef" 
-        :model="dramaForm" 
-        :rules="formRules" 
-        :label-placement="isMobile ? 'top' : 'left'"
-        :label-width="isMobile ? 'auto' : '120'"
-      >
-        <n-form-item label="电视剧名称" path="name">
-          <n-input v-model:value="dramaForm.name" placeholder="请输入电视剧名称" />
-        </n-form-item>
-        <n-form-item label="备案号" path="filingNum">
-          <n-input v-model:value="dramaForm.filingNum" placeholder="请输入备案号" />
-        </n-form-item>
-        <n-form-item label="出品公司" path="prodCompany">
-          <n-input v-model:value="dramaForm.prodCompany" placeholder="请输入出品公司" />
-        </n-form-item>
-        <n-form-item label="公司简介" path="crewDescription">
-          <n-input v-model:value="dramaForm.crewDescription" type="textarea" :rows="3" placeholder="请输入公司简介" />
-        </n-form-item>
-        <n-form-item label="电视剧简介" path="dramaDescription">
-          <n-input v-model:value="dramaForm.dramaDescription" type="textarea" :rows="4" placeholder="请输入电视剧简介" />
-        </n-form-item>
-        <n-form-item label="演员名单" path="cast">
-          <n-input v-model:value="dramaForm.cast" type="textarea" :rows="3" placeholder="请输入演员名单，多个演员用逗号分隔" />
-        </n-form-item>
-        <n-form-item label="拍摄地" path="shootLocation">
-          <n-input v-model:value="dramaForm.shootLocation" placeholder="请输入拍摄地" />
-        </n-form-item>
-        <n-form-item label="协拍服务" path="service">
-          <n-input v-model:value="dramaForm.service" type="textarea" :rows="3" placeholder="请输入协拍服务描述" />
-        </n-form-item>
-        <n-form-item label="封面图片" path="cover">
-          <n-input v-model:value="dramaForm.cover" placeholder="请输入封面图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略封面" path="thumbCover">
-          <n-input v-model:value="dramaForm.thumbCover" placeholder="请输入缩略封面URL" />
-        </n-form-item>
-        <n-form-item label="详情图片" path="image">
-          <n-input v-model:value="dramaForm.image" placeholder="请输入详情图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略详情图" path="thumbImage">
-          <n-input v-model:value="dramaForm.thumbImage" placeholder="请输入缩略详情图URL" />
-        </n-form-item>
-      </n-form>
-      <template #action>
-        <n-button @click="dialogVisible = false">取消</n-button>
-        <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
-      </template>
-    </n-modal>
   </div>
 </template>
 
@@ -482,6 +305,25 @@ const columns = [
         previewDisabled: false
       }) : '-'
     }
+  }
+]
+
+const handleDialogSave = async () => {
+  if (!formRef.value) return
+  
+  try {
+    await formRef.value.validate()
+  } catch (error) {
+    return
+  }
+  
+  try {
+    dialogLoading.value = true
+    const data = { ...dramaForm }
+    
+    let res
+    if (dramaForm.id) {
+      res = await updateDrama(dramaForm.id, data)
     } else {
       res = await addDrama(data)
     }
@@ -511,6 +353,102 @@ const handleDelete = async (id) => {
     message.error('删除失败')
   }
 }
+
+const loadData = async () => {
+  try {
+    loading.value = true
+    const res = await getDramaPage(pagination.page, pagination.pageSize, searchForm.keyword)
+    if (res.code === 200) {
+      dramaList.value = res.data?.records || res.data || []
+      pagination.itemCount = res.data?.total || res.total || 0
+    }
+  } catch (error) {
+    console.error('加载电视剧列表失败:', error)
+    message.error('加载电视剧列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSearch = () => {
+  pagination.page = 1
+  loadData()
+}
+
+const handleReset = () => {
+  searchForm.keyword = ''
+  pagination.page = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  pagination.page = page
+  loadData()
+}
+
+const handlePageSizeChange = (pageSize) => {
+  pagination.pageSize = pageSize
+  pagination.page = 1
+  loadData()
+}
+
+const handleAdd = () => {
+  dialogTitle.value = '新增电视剧'
+  Object.assign(dramaForm, {
+    id: null,
+    name: '',
+    filingNum: '',
+    prodCompany: '',
+    crewDescription: '',
+    dramaDescription: '',
+    cast: '',
+    shootLocation: '',
+    service: '',
+    cover: '',
+    image: '',
+    thumbCover: '',
+    thumbImage: ''
+  })
+  dialogVisible.value = true
+}
+
+const handleEdit = async (row) => {
+  try {
+    const res = await getDramaById(row.id)
+    if (res.code === 200 && res.data) {
+      dialogTitle.value = '编辑电视剧'
+      Object.assign(dramaForm, {
+        id: res.data.id,
+        name: res.data.name || '',
+        filingNum: res.data.filingNum || '',
+        prodCompany: res.data.prodCompany || '',
+        crewDescription: res.data.crewDescription || '',
+        dramaDescription: res.data.dramaDescription || '',
+        cast: res.data.cast || '',
+        shootLocation: res.data.shootLocation || '',
+        service: res.data.service || '',
+        cover: res.data.cover || '',
+        image: res.data.image || '',
+        thumbCover: res.data.thumbCover || '',
+        thumbImage: res.data.thumbImage || ''
+      })
+      dialogVisible.value = true
+    }
+  } catch (error) {
+    console.error('获取电视剧详情失败:', error)
+    message.error('获取电视剧详情失败')
+  }
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  loadData()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <style scoped lang="scss">
@@ -724,7 +662,4 @@ const handleDelete = async (id) => {
     transform: translateY(0);
   }
 }
-</style></div>
-  </div>
-  </div>
-</template>
+</style>

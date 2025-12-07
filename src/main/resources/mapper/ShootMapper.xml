@@ -63,17 +63,11 @@
         SELECT *
         FROM fi_shoots
         WHERE deleted = 0
-        AND id IN (
-        SELECT id
-        FROM fi_shoots
-        WHERE deleted = 0
         <if test="keyword != null and keyword != ''">
             AND title LIKE CONCAT('%', #{keyword}, '%')
         </if>
         ORDER BY created_at DESC
         LIMIT #{offset}, #{size}
-        )
-        ORDER BY created_at DESC
     </select>
 
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Shoot">

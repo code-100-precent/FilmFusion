@@ -46,7 +46,7 @@ public class LocalStorageService implements FileStorageAdapter {
             // 1. 保存原图
             file.transferTo(originPath.toFile());
 
-            String baseUrl = "/api/files"; // 假设你通过此路径提供静态资源访问
+            String baseUrl = "/files"; // 前端baseURL已包含/api，这里只返回/files
             String originalUrl = baseUrl + "/origin/" + baseName;
             String thumbnailUrl = null;
 
@@ -67,11 +67,15 @@ public class LocalStorageService implements FileStorageAdapter {
     public FileVO upload(String prefix, MultipartFile file) {
 
         try {
-            String baseName = System.currentTimeMillis() + "_" + prefix + "/" + file.getOriginalFilename();
+            // 清理文件名，移除路径分隔符，防止路径遍历攻击
+            String safeFilename = file.getOriginalFilename() != null 
+                ? file.getOriginalFilename().replaceAll("[/\\\\]", "_") 
+                : "file";
+            String baseName = System.currentTimeMillis() + "_" + safeFilename;
 
-            // 构造本地存储路径
-            Path originDir = Paths.get(properties.getLocalBasePath(), "origin");
-            Path thumbDir = Paths.get(properties.getLocalBasePath(), "thumb");
+            // 构造本地存储路径，prefix作为子目录
+            Path originDir = Paths.get(properties.getLocalBasePath(), prefix, "origin");
+            Path thumbDir = Paths.get(properties.getLocalBasePath(), prefix, "thumb");
             Files.createDirectories(originDir);
             Files.createDirectories(thumbDir);
 
@@ -81,13 +85,14 @@ public class LocalStorageService implements FileStorageAdapter {
             // 1. 保存原图
             file.transferTo(originPath.toFile());
 
-            String baseUrl = "/api/files"; // 假设你通过此路径提供静态资源访问
-            String originalUrl = baseUrl + "/origin/" + baseName;
+            String baseUrl = "/files"; // 前端baseURL已包含/api，这里只返回/files
+            // 返回的URL需要包含prefix路径
+            String originalUrl = baseUrl + "/" + prefix + "/origin/" + baseName;
             String thumbnailUrl = null;
 
             // 2. 如果是图片，生成缩略图（建议同步生成，避免前端访问不到）
             if (isImageFile(file)) {
-                thumbnailUrl = baseUrl + "/thumb/" + baseName;
+                thumbnailUrl = baseUrl + "/" + prefix + "/thumb/" + baseName;
                 // 同步生成缩略图（更可靠）
                 generateLocalThumbnail(originPath, thumbPath);
             }

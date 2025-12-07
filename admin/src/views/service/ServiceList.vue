@@ -9,7 +9,7 @@
           <n-form-item>
             <n-button type="primary" @click="handleSearch">
               <template #icon>
-                <NIcon icon="mdi:magnify" />
+                <Icon icon="mdi:magnify" />
               </template>
               搜索
             </n-button>
@@ -19,7 +19,7 @@
         <div class="action-buttons">
           <n-button type="primary" @click="handleAdd">
             <template #icon>
-              <NIcon icon="mdi:plus" />
+              <Icon icon="mdi:plus" />
             </template>
             新增服务
           </n-button>
@@ -43,7 +43,7 @@
       <div v-else class="mobile-list">
         <n-spin :show="loading">
           <div v-if="serviceList.length === 0 && !loading" class="empty-state">
-            <NIcon icon="mdi:services" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
+            <Icon icon="mdi:services" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
             <p style="color: #9ca3af;">暂无数据</p>
           </div>
           <div v-else class="card-list">
@@ -67,7 +67,7 @@
                     preview-disabled
                   />
                   <div v-else class="no-cover">
-                    <NIcon icon="mdi:services" :width="32" />
+                    <Icon icon="mdi:services" :width="32" />
                   </div>
                 </div>
               </div>
@@ -179,13 +179,174 @@
   </template>
   
   <script setup>
-  import { ref, reactive, onMounted, onUnmounted } from 'vue'
-  import { NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, NModal, NDataTable, NPagination, NSpace, NSpin } from 'naive-ui'
-import { message as NMessage } from 'naive-ui'
-  import { NIcon } from 'naive-ui'
+  import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
+  import { NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, NModal, NDataTable, NPagination, NSpace, NSpin, useMessage, NTag, NPopconfirm } from 'naive-ui'
+  import { Icon } from '@iconify/vue'
   import { deleteService, updateService, addService, getServiceList } from '@/api/index'
   
-  // 前面的代码...
+  const message = useMessage()
+  
+  const isMobile = ref(false)
+  const loading = ref(false)
+  const serviceList = ref([])
+  const dialogVisible = ref(false)
+  const dialogLoading = ref(false)
+  const dialogTitle = ref('新增服务')
+  const formRef = ref(null)
+  
+  const searchForm = reactive({
+    keyword: ''
+  })
+  
+  const serviceForm = reactive({
+    id: null,
+    name: '',
+    price: 0,
+    contactName: '',
+    phone: '',
+    address: '',
+    description: '',
+    status: true
+  })
+  
+  const pagination = reactive({
+    page: 1,
+    pageSize: 10,
+    itemCount: 0,
+    showSizePicker: true,
+    pageSizes: [10, 20, 50, 100]
+  })
+  
+  const formRules = {
+    name: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
+    contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
+    phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
+  }
+  
+  const columns = [
+    { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+    { title: '服务名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+    { title: '价格', key: 'price', width: 120, render: (row) => row.price ? `¥${row.price}` : '-' },
+    { title: '联系人', key: 'contactName', width: 120 },
+    { title: '联系电话', key: 'phone', width: 150 },
+    { title: '服务地址', key: 'address', width: 250, ellipsis: { tooltip: true } },
+    { title: '简介', key: 'description', width: 200, ellipsis: { tooltip: true } },
+    {
+      title: '状态',
+      key: 'status',
+      width: 100,
+      render: (row) => {
+        const isActive = row.status !== false
+        return h(NTag, { 
+          type: isActive ? 'success' : 'default', 
+          size: 'small' 
+        }, { 
+          default: () => isActive ? '上线' : '下线' 
+        })
+      }
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      width: 150,
+      fixed: 'right',
+      render: (row) => {
+        return h('div', { style: 'display: flex; gap: 8px;' }, [
+          h(NButton, {
+            size: 'small',
+            onClick: () => handleEdit(row)
+          }, { default: () => '编辑' }),
+          h(NPopconfirm, {
+            onPositiveClick: () => handleDelete(row.id)
+          }, {
+            trigger: () => h(NButton, {
+              size: 'small',
+              type: 'error',
+              quaternary: true
+            }, { default: () => '删除' }),
+            default: () => '确定要删除这个服务吗？'
+          })
+        ])
+      }
+    }
+  ]
+  
+  // 检测移动端
+  const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768
+  }
+  
+  const loadData = async () => {
+    try {
+      loading.value = true
+      const res = await getServiceList({
+        current: pagination.page,
+        size: pagination.pageSize,
+        keyword: searchForm.keyword
+      })
+      if (res.code === 200) {
+        serviceList.value = res.data?.records || res.data || []
+        pagination.itemCount = res.data?.total || res.total || 0
+      }
+    } catch (error) {
+      console.error('加载服务列表失败:', error)
+      message.error('加载服务列表失败')
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  const handleSearch = () => {
+    pagination.page = 1
+    loadData()
+  }
+  
+  const handleReset = () => {
+    searchForm.keyword = ''
+    pagination.page = 1
+    loadData()
+  }
+  
+  const handlePageChange = (page) => {
+    pagination.page = page
+    loadData()
+  }
+  
+  const handlePageSizeChange = (pageSize) => {
+    pagination.pageSize = pageSize
+    pagination.page = 1
+    loadData()
+  }
+  
+  const handleAdd = () => {
+    dialogTitle.value = '新增服务'
+    Object.assign(serviceForm, {
+      id: null,
+      name: '',
+      price: 0,
+      contactName: '',
+      phone: '',
+      address: '',
+      description: '',
+      status: true
+    })
+    dialogVisible.value = true
+  }
+  
+  const handleEdit = (service) => {
+    dialogTitle.value = '编辑服务'
+    Object.assign(serviceForm, {
+      id: service.id,
+      name: service.name || '',
+      price: service.price || 0,
+      contactName: service.contactName || '',
+      phone: service.phone || '',
+      address: service.address || '',
+      description: service.description || '',
+      status: service.status !== false
+    })
+    dialogVisible.value = true
+  }
   
   const handleDialogSave = async () => {
     try {
@@ -223,6 +384,16 @@ const handleDelete = async (id) => {
     message.error('删除失败')
   }
 }
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  loadData()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <style scoped lang="scss">

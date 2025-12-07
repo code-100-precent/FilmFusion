@@ -479,6 +479,12 @@ const formRules = {
   ],
   latitude: [
     { required: true, message: '请输入纬度', trigger: 'blur' }
+  ]
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   loadData()
 })
 
