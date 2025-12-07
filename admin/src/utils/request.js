@@ -16,7 +16,7 @@ const getMessage = () => {
 }
 
 const service = axios.create({
-  baseURL: 'http://162.14.106.139:8080/api',
+  baseURL: 'http://localhost:8080/api',
   timeout: 30000
 })
 

@@ -12,7 +12,7 @@
               class="avatar"
             >
               <template #fallback>
-                <Icon icon="mdi:account" :width="60" />
+                <Icon icon="mdi:account" :width="110" :height="110" />
               </template>
             </n-avatar>
             <div class="avatar-overlay" @click="handleUploadAvatar">
