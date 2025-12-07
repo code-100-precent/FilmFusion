@@ -137,7 +137,7 @@ import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
 // 使用真实后端API
-import { getArticlePage, getLocationPage } from '../../services/backend-api'
+import { getArticlePage, getLocationPage, getBannerPage } from '../../services/backend-api'
 // 使用加载状态管理Mixin
 import { loadingMixin } from '../../utils/index'
 
@@ -151,23 +151,7 @@ export default {
   mixins: [loadingMixin],
   data() {
     return {
-      banners: [
-        {
-          title: '雅安影视服务',
-          desc: '专业影视拍摄一站式服务平台',
-          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E8%B5%B5%E6%AF%85%E2%80%94%E2%80%94%E3%80%8A%E8%90%A8%E9%87%8C%E5%AE%89%E5%A4%9A%E6%9B%BC%E3%80%8B%E2%80%94%E2%80%94%E7%9F%B3%E6%A3%89%E5%8E%BF%E8%9F%B9%E8%9E%BA%E8%97%8F%E6%97%8F%E4%B9%A1%E6%B1%9F%E5%9D%9D%E6%9D%91%EF%BC%8C%E5%B0%94%E8%8B%8F%E8%97%8F%E6%97%8F%E5%A6%87%E5%A5%B3%E8%B7%B3%E8%B5%B7%E6%AC%A2%E5%BF%AB%E7%9A%84%E6%AD%8C%E8%88%9E%E2%80%9C%E8%90%A8%E9%87%8C%E5%AE%89%E5%A4%9A%E6%9B%BC%E2%80%9D%E3%80%82%E6%AF%8F%E9%80%A2%E8%8A%82%E6%97%A5%E5%BA%86%E5%85%B8%E6%88%96%E7%A5%AD%E7%A5%80%E6%B4%BB%E5%8A%A8%EF%BC%8C%E5%B0%94%E8%8B%8F%E8%97%8F%E6%97%8F%E9%83%BD%E4%BC%9A%E4%BB%A5%E6%AD%8C%E8%88%9E%E5%BD%A2%E5%BC%8F%E8%A1%A8%E8%BE%BE%E5%96%9C%E6%82%A6%E5%BF%83%E6%83%85%EF%BC%8C%E2%80%9C%E8%90%A8%E9%87%8C%E5%AE%89%E5%A4%9A%E6%9B%BC%EF%BC%88%E6%84%8F%E6%80%9D%E6%98%AF%E5%A4%A7%E5%AE%B6%E5%94%B1%E8%B5%B7%E6%9D%A5%E3%80%81%E8%B7%B3%E8%B5%B7%E6%9D%A5%EF%BC%89%E2%80%9D%E5%B0%B1%E6%98%AF%E5%85%B6%E4%B8%AD%E4%B9%8B%E4%B8%80%EF%BC%8C%E8%BF%99%E6%98%AF%E5%B0%94%E8%8B%8F%E8%97%8F%E6%97%8F%E5%85%88%E6%B0%91%E7%95%99%E7%BB%99%E5%90%8E%E4%BA%BA%E7%9A%84%E7%8F%8D%E8%B4%B5%E6%96%87%E5%8C%96%E9%81%97%E4%BA%A7%E3%80%82%E2%80%94%E2%80%9413608260099.jpg") center/cover no-repeat'
-        },
-        {
-          title: '发现精彩取景点',
-          desc: '探索雅安最美拍摄场景',
-          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%AE%8B%E6%9C%89%E5%AE%8F-%E3%80%8A%E6%AD%A3%E6%98%AF%E9%87%87%E8%8C%B6%E5%AD%A3%E3%80%8B%2B%E3%80%8122%E5%B9%B4%E6%8B%8D%E4%BA%8E%E9%9B%85%E5%AE%89%E5%90%8D%E5%B1%B1%E5%8C%BA%E7%BA%A2%E6%98%9F%E9%95%87.JPG") center/cover no-repeat'
-        },
-        {
-          title: '专业协拍服务',
-          desc: '提供全方位影视制作支持',
-          bg: 'url("https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20251124103009.jpg") center/cover no-repeat'
-        }
-      ],
+      banners: [],
       functions: [
         { icon: 'videocam', text: '光影雅安', desc: '影视作品展示', color: '#ef4444', bgColor: 'linear-gradient(135deg, #fecaca 0%, #fca5a5 100%)', path: '/pages/films/films' },
         { icon: 'location', text: '拍摄场地', desc: '寻找完美取景地', color: '#f59e0b', bgColor: 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)', path: '/pages/scenes/scenes' },
@@ -188,10 +172,22 @@ export default {
     async loadData() {
       try {
         await this.withLoading(async () => {
-          const [articleRes, locationRes] = await Promise.all([
+          // 并行获取所有数据
+          const [bannerRes, articleRes, locationRes] = await Promise.all([
+            getBannerPage({ current: 1, size: 10 }), // 获取最多10条轮播图数据
             getArticlePage({ current: 1, size: 5 }),
             getLocationPage({ current: 1, size: 5 })
           ])
+
+          // 处理轮播图数据
+          if (bannerRes && bannerRes.data) {
+            // 将后端Banner数据转换为前端需要的格式
+            this.banners = bannerRes.data.map(banner => ({
+              title: banner.imageName || '',
+              desc: banner.targetModule || '',
+              bg: `url("${banner.imageUrl}") center/cover no-repeat`
+            }))
+          }
 
           // 处理文章数据 - 游标分页格式
           if (articleRes && articleRes.records) {

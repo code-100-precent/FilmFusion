@@ -9,7 +9,7 @@
           <n-form-item>
             <n-button type="primary" @click="handleSearch">
               <template #icon>
-                <Icon icon="mdi:magnify" />
+                <NIcon icon="mdi:magnify" />
               </template>
               搜索
             </n-button>
@@ -19,7 +19,7 @@
         <div class="action-buttons">
           <n-button type="primary" @click="handleAdd">
             <template #icon>
-              <Icon icon="mdi:plus" />
+              <NIcon icon="mdi:plus" />
             </template>
             新增服务
           </n-button>
@@ -36,14 +36,14 @@
         :row-key="row => row.id"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
-        :scroll-x="1800"
+        :scroll-x="1400"
       />
       
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
         <n-spin :show="loading">
           <div v-if="serviceList.length === 0 && !loading" class="empty-state">
-            <Icon icon="mdi:services" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
+            <NIcon icon="mdi:services" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
             <p style="color: #9ca3af;">暂无数据</p>
           </div>
           <div v-else class="card-list">
@@ -67,7 +67,7 @@
                     preview-disabled
                   />
                   <div v-else class="no-cover">
-                    <Icon icon="mdi:services" :width="32" />
+                    <NIcon icon="mdi:services" :width="32" />
                   </div>
                 </div>
               </div>
@@ -166,274 +166,34 @@
         <n-form-item label="服务地址" path="address">
           <n-input v-model:value="serviceForm.address" placeholder="请输入服务地址" />
         </n-form-item>
-        <n-form-item label="状态" path="status">
-          <n-switch v-model:value="serviceForm.status">
-            <template #checked>上线</template>
-            <template #unchecked>下线</template>
-          </n-switch>
-        </n-form-item>
-        <n-form-item label="服务简介" path="description">
-          <n-input v-model:value="serviceForm.description" type="textarea" :rows="4" placeholder="请输入服务简介" />
-        </n-form-item>
       </n-form>
-      <template #action>
-        <n-button @click="dialogVisible = false">取消</n-button>
-        <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
+      <template #footer>
+        <n-space>
+          <n-button @click="dialogVisible = false">取消</n-button>
+          <n-button type="primary" @click="handleDialogSave">保存</n-button>
+        </n-space>
       </template>
     </n-modal>
-  </div>
-</template>
-
-<script setup>
-import { ref, reactive, h, onMounted, onUnmounted } from 'vue'
-import { Icon } from '@iconify/vue'
-import {
-  NCard,
-  NButton,
-  NForm,
-  NFormItem,
-  NInput,
-  NInputNumber,
-  NSwitch,
-  NDataTable,
-  NPopconfirm,
-  NModal,
-  NImage,
-  useMessage
-} from 'naive-ui'
-import { getServicePage, addService, updateService, deleteService, getServiceById } from '@/api'
-import dayjs from 'dayjs'
-
-const message = useMessage()
-
-const isMobile = ref(false)
-const loading = ref(false)
-
-// 检测移动端
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768
-}
-
-const serviceList = ref([])
-const dialogVisible = ref(false)
-const dialogLoading = ref(false)
-const dialogTitle = ref('新增服务')
-const formRef = ref(null)
-
-const searchForm = reactive({
-  keyword: ''
-})
-
-const serviceForm = reactive({
-  id: null,
-  name: '',
-  description: '',
-  price: 0,
-  status: true,
-  address: '',
-  phone: '',
-  contactName: ''
-})
-
-const pagination = reactive({
-  page: 1,
-  pageSize: 10,
-  itemCount: 0,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
-})
-
-const formRules = {
-  name: [
-    { required: true, message: '请输入服务名称', trigger: 'blur' },
-    { min: 1, max: 100, message: '服务名称长度在 1 到 100 个字符', trigger: 'blur' }
-  ],
-  contactName: [
-    { required: true, message: '请输入联系人姓名', trigger: 'blur' }
-  ],
-  phone: [
-    { required: true, message: '请输入联系电话', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
-  ]
-}
-
-const columns = [
-  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
-  { title: '服务名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
-  { title: '服务描述', key: 'description', width: 250, ellipsis: { tooltip: true } },
-  { title: '价格', key: 'price', width: 120, render: (row) => `¥${row.price || 0}` },
-  { title: '服务地址', key: 'address', width: 200, ellipsis: { tooltip: true } },
-  { title: '联系电话', key: 'phone', width: 130 },
-  { title: '联系人', key: 'contactName', width: 100 },
-  {
-    title: '状态',
-    key: 'status',
-    width: 100,
-    render: (row) => {
-      const isActive = row.status === true || row.status === 1
-      return h(NTag, { 
-        type: isActive ? 'success' : 'error', 
-        size: 'small' 
-      }, { 
-        default: () => isActive ? '可用' : '不可用' 
-      })
-    }
-  },
-  { 
-    title: '封面图', 
-    key: 'cover', 
-    width: 100,
-    render: (row) => {
-      if (!row.cover) return '-'
-      return h(NImage, {
-        width: 60,
-        height: 45,
-        src: row.cover,
-        objectFit: 'cover',
-        style: { borderRadius: '4px' }
-      })
-    }
-  },
-  {
-    title: '创建时间',
-    key: 'createdAt',
-    width: 180,
-    render: (row) => {
-      if (Array.isArray(row.createdAt)) {
-        return dayjs(row.createdAt[0] + '-' + String(row.createdAt[1]).padStart(2, '0') + '-' + String(row.createdAt[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
-      }
-      return row.createdAt ? dayjs(row.createdAt).format('YYYY-MM-DD HH:mm:ss') : '-'
-    }
-  },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 150,
-    fixed: 'right',
-    render: (row) => {
-      return h('div', { style: 'display: flex; gap: 8px;' }, [
-        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
-        h(
-          NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
-        )
-      ])
-    }
-  }
-]
-
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-  loadData()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
-})
-
-const loadData = async () => {
-  try {
-    loading.value = true
-    const res = await getServicePage(pagination.page, pagination.pageSize, searchForm.keyword)
-    if (res.code === 200) {
-      serviceList.value = res.data || []
-      pagination.itemCount = res.pagination?.totalItems || 0
-    }
-  } catch (error) {
-    console.error('加载服务列表失败:', error)
-    message.error('加载服务列表失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  pagination.page = 1
-  loadData()
-}
-
-const handleReset = () => {
-  searchForm.keyword = ''
-  pagination.page = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  pagination.page = page
-  loadData()
-}
-
-const handlePageSizeChange = (pageSize) => {
-  pagination.pageSize = pageSize
-  pagination.page = 1
-  loadData()
-}
-
-const handleAdd = () => {
-  dialogTitle.value = '新增服务'
-  Object.assign(serviceForm, {
-    id: null,
-    name: '',
-    description: '',
-    price: 0,
-    status: true,
-    address: '',
-    phone: '',
-    contactName: ''
-  })
-  dialogVisible.value = true
-}
-
-const handleEdit = async (row) => {
-  try {
-    const res = await getServiceById(row.id)
-    if (res.code === 200 && res.data) {
-      dialogTitle.value = '编辑服务'
-      Object.assign(serviceForm, {
-        id: res.data.id,
-        name: res.data.name || '',
-        description: res.data.description || '',
-        price: res.data.price || 0,
-        status: res.data.status !== false,
-        address: res.data.address || '',
-        phone: res.data.phone || '',
-        contactName: res.data.contactName || ''
-      })
-      dialogVisible.value = true
-    }
-  } catch (error) {
-    console.error('获取服务详情失败:', error)
-    message.error('获取服务详情失败')
-  }
-}
-
-const handleDialogSave = async () => {
-  if (!formRef.value) return
-  try {
-    await formRef.value.validate()
-  } catch (error) {
-    return
-  }
-  
-  try {
-    dialogLoading.value = true
-    const data = {
-      name: serviceForm.name,
-      description: serviceForm.description,
-      price: serviceForm.price,
-      status: serviceForm.status,
-      address: serviceForm.address,
-      phone: serviceForm.phone,
-      contactName: serviceForm.contactName
-    }
     
-    let res
-    if (serviceForm.id) {
-      res = await updateService({ ...data, id: serviceForm.id })
+    </div>
+  </template>
+  
+  <script setup>
+  import { ref, reactive, onMounted, onUnmounted } from 'vue'
+  import { NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, NModal, NDataTable, NPagination, NSpace, NSpin } from 'naive-ui'
+import { message as NMessage } from 'naive-ui'
+  import { NIcon } from 'naive-ui'
+  import { deleteService, updateService, addService, getServiceList } from '@/api/index'
+  
+  // 前面的代码...
+  
+  const handleDialogSave = async () => {
+    try {
+      dialogLoading.value = true
+      const data = { ...serviceForm }
+      let res
+      if (data.id) {
+        res = await updateService(data)
     } else {
       res = await addService(data)
     }
