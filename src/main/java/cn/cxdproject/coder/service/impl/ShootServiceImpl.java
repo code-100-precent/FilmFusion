@@ -85,10 +85,6 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     @CircuitBreaker(name = "shootGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.SHOOT_GET,
-            value = "Get shoot by ID: #{#shootId}"
-    )
     public ShootVO getShootById(Long shootId) {
         Object store = cache.asMap().get(CaffeineConstants.SHOOT + shootId);
         if (store != null) {
@@ -106,10 +102,6 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.SHOOT_USER_GET_PAGE,
-            value = "User get shoot"
-    )
     public List<ShootVO> getShootPage(Long lastId, int size, String keyword) {
         List<Long> ids = shootMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -246,10 +238,6 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    @Loggable(
-            type = LogType.SHOOT_ADMIN_GET_PAGE,
-            value = "Admin get shoot Page"
-    )
     public Page<ShootVO> getShootPageAdmin(Page<Shoot> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

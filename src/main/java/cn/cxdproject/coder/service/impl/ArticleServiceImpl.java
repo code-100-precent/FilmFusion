@@ -61,10 +61,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @CircuitBreaker(name = "articleGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.ARTICLE_GET,
-            value = "Get article by ID: #{#articleId}"
-    )
     public ArticleVO getArticleById(Long articleId) {
         Object store = cache.getIfPresent(CaffeineConstants.ARTICLE + articleId);
         if (store != null) {
@@ -83,10 +79,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @CircuitBreaker(name = "articleGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.ARTICLE_USER_GET_PAGE,
-            value = "User get page "
-    )
     public List<ArticleVO> getArticlePage(Long lastId, int size, String keyword) {
         List<Long> ids = articleMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -252,10 +244,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    @Loggable(
-            type = LogType.ARTICLE_ADMIN_GET_PAGE,
-            value = "Admin get article page"
-    )
     public Page<ArticleVO> getArticlePagAdmin(Page<Article> page, String keyword) {
 
         long current = page.getCurrent();

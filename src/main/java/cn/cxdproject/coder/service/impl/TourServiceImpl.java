@@ -83,10 +83,6 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     @CircuitBreaker(name = "tourGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.TOUR_GET,
-            value = "Get tour by ID: #{#tourId}"
-    )
     public TourVO getTourById(Long tourId) {
         Object store = cache.asMap().get(CaffeineConstants.TOUR + tourId);
         if (store != null) {
@@ -104,10 +100,6 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     @CircuitBreaker(name = "tourGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.TOUR_USER_GET_PAGE,
-            value = "User get tour"
-    )
     public List<TourVO> getTourPage(Long lastId, int size, String keyword) {
         List<Long> ids = tourMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -249,10 +241,6 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     }
 
     @Override
-    @Loggable(
-            type = LogType.TOUR_ADMIN_GET_PAGE,
-            value = "Admin get tour Page"
-    )
     public Page<TourVO> getTourPageAdmin(Page<Tour> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

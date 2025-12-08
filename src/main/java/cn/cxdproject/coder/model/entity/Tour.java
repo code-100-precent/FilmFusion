@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("fi_tour")
+@TableName("fi_tours")
 @EqualsAndHashCode(callSuper = true)
 public class Tour extends BaseEntity implements Serializable {
 

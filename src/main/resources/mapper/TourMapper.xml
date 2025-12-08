@@ -46,7 +46,7 @@
 
     <select id="selectIds" resultType="long">
         SELECT id
-        FROM fi_tour
+        FROM fi_tours
         <where>
             deleted = 0
             <!-- 模糊搜索 -->
@@ -83,13 +83,13 @@
 
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Tour">
         SELECT *
-        FROM fi_tour
+        FROM fi_tours
         ORDER BY created_at DESC
             LIMIT 10
     </select>
 
     <update id="updateTour">
-        UPDATE fi_tour
+        UPDATE fi_tours
         <set>
             <if test="dto.name != null and dto.name != ''">
                 name = #{dto.name},

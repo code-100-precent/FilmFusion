@@ -159,10 +159,6 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
 
 
     @Override
-    @Loggable(
-            type = LogType.REPORT_USER_GET_PAGE,
-            value = "User get all own report applications"
-    )
     public Page<ReportVO> getMyReportPage(Long userId, Page<Report> page) {
         long current = page.getCurrent();
         long size = page.getSize();
@@ -210,10 +206,6 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
 
 
     @Override
-    @Loggable(
-            type = LogType.REPORT_ADMIN_GET_PAGE,
-            value = "Admin get paginated report applications"
-    )
     public Page<ReportVO> getReportPageByAdmin(Page<Report> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();
@@ -240,10 +232,6 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
     @Override
-    @Loggable(
-            type = LogType.REPORT_ADMIN_GET,
-            value = "Admin get report application by ID: #{#reportId}"
-    )
     public ReportVO getReportByIdByAdmin(Long reportId) {
         Object store = cache.asMap().get(CaffeineConstants.REPORT + reportId);
         if (store != null) {

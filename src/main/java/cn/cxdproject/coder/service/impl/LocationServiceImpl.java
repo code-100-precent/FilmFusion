@@ -90,10 +90,6 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     @Override
     @CircuitBreaker(name = "locationGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.LOCATION_GET,
-            value = "Get location by ID: #{#locationId}"
-    )
     public LocationVO getLocationById(Long locationId) {
         Object store = cache.asMap().get(CaffeineConstants.LOCATION + locationId);
         if (store != null) {
@@ -111,10 +107,6 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     @Override
     @CircuitBreaker(name = "locationGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.LOCATION_USER_GET_PAGE,
-            value = "User get location"
-    )
     public List<LocationVO> getLocationPage(Long lastId, int size, String keyword) {
         List<Long> ids = locationMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -257,10 +249,6 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
     @Override
-    @Loggable(
-            type = LogType.LOCATION_ADMIN_GET_PAGE,
-            value = "Admin get location Page"
-    )
     public Page<LocationVO> getLocationPageAdmin(Page<Location> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();
