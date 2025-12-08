@@ -62,16 +62,23 @@
           <n-input v-model:value="tourRouteForm.foodRecommendation" type="textarea" :rows="3" placeholder="请输入美食推荐" />
         </n-form-item>
         <n-form-item label="封面图片" path="cover">
-          <n-input v-model:value="tourRouteForm.cover" placeholder="请输入封面图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略封面" path="thumbCover">
-          <n-input v-model:value="tourRouteForm.thumbCover" placeholder="请输入缩略封面URL" />
-        </n-form-item>
-        <n-form-item label="详情图片" path="image">
-          <n-input v-model:value="tourRouteForm.image" placeholder="请输入详情图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略详情图" path="thumbImage">
-          <n-input v-model:value="tourRouteForm.thumbImage" placeholder="请输入缩略详情图URL" />
+          <n-upload
+            :max="1"
+            :file-list="coverFileList"
+            @update:file-list="handleCoverFileListChange"
+            :custom-request="handleCoverUpload"
+            accept="image/*"
+          >
+            <n-button>上传封面图片</n-button>
+          </n-upload>
+          <div v-if="tourRouteForm.cover" style="margin-top: 12px;">
+            <n-image
+              :src="getImageUrl(tourRouteForm.thumbCover || tourRouteForm.cover)"
+              width="200"
+              height="120"
+              object-fit="cover"
+            />
+          </div>
         </n-form-item>
         <n-form-item label="状态" path="status">
           <n-select v-model:value="tourRouteForm.status" :options="statusOptions" />
@@ -98,11 +105,13 @@ import {
   NPopconfirm,
   NModal,
   NSelect,
+  NUpload,
   useMessage,
   NImage,
   NTag
 } from 'naive-ui'
-import { getTourRoutePage, addTourRoute, updateTourRoute, deleteTourRoute, getTourRouteById } from '@/api'
+import { getTourRoutePage, addTourRoute, updateTourRoute, deleteTourRoute, getTourById, uploadFile } from '@/api'
+import { getImageUrl } from '@/utils/image'
 
 const message = useMessage()
 
@@ -125,7 +134,6 @@ const tourRouteForm = reactive({
   features: '',
   transportInfo: '',
   accommodation: '',
-  accommodation: '',
   foodRecommendation: '',
   cover: '',
   image: '',
@@ -133,6 +141,8 @@ const tourRouteForm = reactive({
   thumbImage: '',
   status: 1
 })
+
+const coverFileList = ref([])
 
 const pagination = reactive({
   page: 1,
@@ -166,7 +176,7 @@ const columns = [
       return h(NImage, {
         width: 60,
         height: 45,
-        src: row.cover,
+        src: getImageUrl(row.cover),
         objectFit: 'cover',
         style: { borderRadius: '4px' }
       })
@@ -231,9 +241,14 @@ const loadData = async () => {
     console.log('后端API响应数据:', JSON.stringify(res))
     
     if (res.code === 200) {
-      tourRouteList.value = res.data?.records || res.data || []
-      pagination.itemCount = res.data?.total || res.total || 0
-      pagination.pageCount = res.data?.pages || 1
+      // PageResponse的数据结构：data是数组，pagination包含分页信息
+      tourRouteList.value = res.data || []
+      if (res.pagination) {
+        pagination.itemCount = res.pagination.totalItems || 0
+        pagination.pageCount = res.pagination.totalPages || 1
+        pagination.page = res.pagination.currentPage || 1
+        pagination.pageSize = res.pagination.pageSize || 10
+      }
       console.log('数据加载成功，获取到', tourRouteList.value.length, '条记录')
     } else {
       console.error('API返回非成功状态:', res.code, res.message)
@@ -287,16 +302,36 @@ const handleAdd = () => {
     thumbImage: '',
     status: 1
   })
+  coverFileList.value = []
   dialogVisible.value = true
 }
 
 const handleEdit = async (row) => {
   try {
-    const res = await getTourRouteById(row.id)
-    if (res.code === 200 && res.data) {
-      dialogTitle.value = '编辑线路'
-      Object.assign(tourRouteForm, res.data)
-      dialogVisible.value = true
+    const res = await getTourById(row.id)
+    console.log('获取线路详情响应:', res)
+    if (res.code === 200) {
+      if (res.data) {
+        dialogTitle.value = '编辑线路'
+        Object.assign(tourRouteForm, res.data)
+        
+        // 设置封面图片文件列表
+        if (res.data.cover || res.data.thumbCover) {
+          coverFileList.value = [{
+            id: 'cover',
+            name: 'cover.jpg',
+            status: 'finished',
+            url: res.data.thumbCover || res.data.cover
+          }]
+        } else {
+          coverFileList.value = []
+        }
+        
+        dialogVisible.value = true
+      } else {
+        console.error('获取线路详情失败: 数据为空', res)
+        message.error('获取详情失败：数据为空')
+      }
     } else {
       // 处理业务逻辑错误
       console.error('获取线路详情失败: 业务错误', res.code, res.message)
@@ -304,8 +339,58 @@ const handleEdit = async (row) => {
     }
   } catch (error) {
     console.error('获取线路详情失败:', error)
-    console.error('错误详情:', error.message)
-    message.error('获取线路详情失败：' + (error.message || '未知错误'))
+    console.error('错误详情:', error.response || error.message)
+    const errorMsg = error.response?.data?.message || error.message || '未知错误'
+    message.error('获取线路详情失败：' + errorMsg)
+  }
+}
+
+// 处理封面图片上传
+const handleCoverUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || originUrl
+      
+      tourRouteForm.cover = originUrl
+      tourRouteForm.thumbCover = thumbUrl
+      
+      // 更新文件列表中的URL，用于预览显示
+      const fileIndex = coverFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
+      if (fileIndex !== -1) {
+        coverFileList.value[fileIndex].url = thumbUrl
+        coverFileList.value[fileIndex].status = 'finished'
+      } else {
+        coverFileList.value.push({
+          id: file.id || 'cover',
+          name: file.name || 'cover.jpg',
+          status: 'finished',
+          url: thumbUrl
+        })
+      }
+      
+      onFinish({
+        url: thumbUrl
+      })
+      message.success('封面图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传封面图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 处理封面文件列表变化
+const handleCoverFileListChange = (files) => {
+  coverFileList.value = files
+  if (files.length === 0) {
+    tourRouteForm.cover = ''
+    tourRouteForm.thumbCover = ''
   }
 }
 

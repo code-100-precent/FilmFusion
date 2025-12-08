@@ -187,6 +187,8 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .content(policy.getContent())
                 .image(policy.getImage())
                 .thumbImage(policy.getThumbImage())
+                .cover(policy.getImage()) // 封面图片，与image相同
+                .thumbCover(policy.getThumbImage()) // 缩略封面，与thumbImage相同
                 .createdAt(policy.getCreatedAt())
                 .updatedAt(policy.getUpdatedAt())
                 .build();

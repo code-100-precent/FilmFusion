@@ -27,6 +27,8 @@ public interface TourMapper extends BaseMapper<Tour> {
             @Param("size") long size
     );
 
+    long countAdminPage(@Param("keyword") String keyword);
+
     List<Tour> selectLatest10();
 
     int updateTour(
