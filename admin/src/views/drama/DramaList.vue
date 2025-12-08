@@ -226,6 +226,7 @@ import {
   useMessage
 } from 'naive-ui'
 import { getDramaPage, addDrama, updateDrama, deleteDrama, getDramaById, uploadFile } from '@/api'
+import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -287,76 +288,42 @@ const formRules = {
 
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
+  { title: '电视剧名称', key: 'name', width: 200, ellipsis: { tooltip: true } },
+  { title: '备案号', key: 'filingNum', width: 150, ellipsis: { tooltip: true } },
+  { title: '出品公司', key: 'prodCompany', width: 200, ellipsis: { tooltip: true } },
   {
-      title: '封面',
-      key: 'cover',
-      width: 100,
-      render: (row) => {
-        // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
-        const thumbnailUrl = row.thumbUrl;
-        // 获取原图URL用于预览
-        const originalUrl = row.cover || '';
-        
-        return h(NImage, {
-          width: 60,
-          height: 45,
-          src: thumbnailUrl || originalUrl, // 显示压缩后的图片
-          objectFit: 'cover',
-          previewDisabled: false, // 启用预览功能
-          showToolbar: false,
-          // 配置预览功能，点击时显示原图
-          srcset: [
-            {
-              src: originalUrl,
-              alt: '电视剧封面'
-            }
-          ],
-          fallbackSrc: '/placeholder.jpg'
-        })
-      }
-    },
-  {
-    title: '缩略封面',
-    key: 'thumbCover',
+    title: '封面',
+    key: 'cover',
     width: 100,
     render: (row) => {
-      return row.thumbCover ? h(NImage, {
+      // 优先使用缩略封面，如果没有则使用封面，最后使用详情图片
+      const coverUrl = row.thumbCover || row.cover || row.thumbImage || row.image
+      if (!coverUrl) return '-'
+      
+      // 原图用于预览
+      const originalUrl = row.cover || row.image || coverUrl
+      
+      return h(NImage, {
         width: 60,
         height: 45,
-        src: row.thumbCover,
+        src: getImageUrl(coverUrl),
         objectFit: 'cover',
-        previewDisabled: false
-      }) : '-'
+        previewDisabled: false,
+        showToolbar: false,
+        // 配置预览功能，点击时显示原图
+        srcset: [
+          {
+            src: getImageUrl(originalUrl),
+            alt: '电视剧封面'
+          }
+        ],
+        fallbackSrc: '/placeholder.jpg'
+      })
     }
   },
-  {
-    title: '详情图片',
-    key: 'image',
-    width: 100,
-    render: (row) => {
-      return row.image ? h(NImage, {
-        width: 60,
-        height: 45,
-        src: row.image,
-        objectFit: 'cover',
-        previewDisabled: false
-      }) : '-'
-    }
-  },
-  {
-    title: '缩略详情图',
-    key: 'thumbImage',
-    width: 100,
-    render: (row) => {
-      return row.thumbImage ? h(NImage, {
-        width: 60,
-        height: 45,
-        src: row.thumbImage,
-        objectFit: 'cover',
-        previewDisabled: false
-      }) : '-'
-    }
-  },
+  { title: '演员名单', key: 'cast', width: 200, ellipsis: { tooltip: true } },
+  { title: '拍摄地', key: 'shootLocation', width: 150, ellipsis: { tooltip: true } },
+  { title: '协拍服务', key: 'service', width: 150, ellipsis: { tooltip: true } },
   {
     title: '操作',
     key: 'actions',
@@ -388,7 +355,12 @@ const handleDialogSave = async () => {
   
   try {
     dialogLoading.value = true
-    const data = { ...dramaForm }
+    // 将 cover 映射到 image，thumbCover 映射到 thumbImage（后端只支持 image 和 thumbImage）
+    const data = {
+      ...dramaForm,
+      image: dramaForm.cover || dramaForm.image, // 优先使用 cover，如果没有则使用 image
+      thumbImage: dramaForm.thumbCover || dramaForm.thumbImage // 优先使用 thumbCover，如果没有则使用 thumbImage
+    }
     
     let res
     if (dramaForm.id) {
@@ -488,6 +460,8 @@ const handleEdit = async (row) => {
     const res = await getDramaById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑电视剧'
+      // 后端返回 cover 和 thumbCover（已添加），直接使用
+      // 后端现在返回 cover 和 thumbCover 字段（已添加），直接使用
       Object.assign(dramaForm, {
         id: res.data.id,
         name: res.data.name || '',
@@ -498,10 +472,10 @@ const handleEdit = async (row) => {
         cast: res.data.cast || '',
         shootLocation: res.data.shootLocation || '',
         service: res.data.service || '',
-        cover: res.data.cover || '',
-        image: res.data.image || '',
-        thumbCover: res.data.thumbCover || '',
-        thumbImage: res.data.thumbImage || ''
+        cover: res.data.cover || res.data.image || '', // 优先使用 cover，如果没有则使用 image
+        image: res.data.image || '', // 详情图片
+        thumbCover: res.data.thumbCover || res.data.thumbImage || '', // 优先使用 thumbCover，如果没有则使用 thumbImage
+        thumbImage: res.data.thumbImage || '' // 缩略详情图
       })
       
       // 设置封面图片文件列表

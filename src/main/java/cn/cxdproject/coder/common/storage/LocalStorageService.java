@@ -46,13 +46,13 @@ public class LocalStorageService implements FileStorageAdapter {
             // 1. 保存原图
             file.transferTo(originPath.toFile());
 
-            String baseUrl = "/files"; // 前端baseURL已包含/api，这里只返回/files
-            String originalUrl = baseUrl + "/origin/" + baseName;
+            // 返回相对路径，前端会根据配置拼接完整URL
+            String originalUrl = "/files/origin/" + baseName;
             String thumbnailUrl = null;
 
             // 2. 如果是图片，生成缩略图（建议同步生成，避免前端访问不到）
             if (isImageFile(file)) {
-                thumbnailUrl = baseUrl + "/thumb/" + baseName;
+                thumbnailUrl = "/files/thumb/" + baseName;
                 // 同步生成缩略图（更可靠）
                 generateLocalThumbnail(originPath, thumbPath);
             }
@@ -85,14 +85,13 @@ public class LocalStorageService implements FileStorageAdapter {
             // 1. 保存原图
             file.transferTo(originPath.toFile());
 
-            String baseUrl = "/files"; // 前端baseURL已包含/api，这里只返回/files
-            // 返回的URL需要包含prefix路径
-            String originalUrl = baseUrl + "/" + prefix + "/origin/" + baseName;
+            // 返回相对路径，前端会根据配置拼接完整URL
+            String originalUrl = "/files/" + prefix + "/origin/" + baseName;
             String thumbnailUrl = null;
 
             // 2. 如果是图片，生成缩略图（建议同步生成，避免前端访问不到）
             if (isImageFile(file)) {
-                thumbnailUrl = baseUrl + "/" + prefix + "/thumb/" + baseName;
+                thumbnailUrl = "/files/" + prefix + "/thumb/" + baseName;
                 // 同步生成缩略图（更可靠）
                 generateLocalThumbnail(originPath, thumbPath);
             }

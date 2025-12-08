@@ -173,7 +173,7 @@ import {
 } from 'naive-ui'
 import { useUserStore } from '@/store/user'
 import { getAdminInfo, changePassword, uploadAvatar } from '@/api'
-import request from '@/utils/request'
+import { getImageUrl } from '@/utils/image'
 
 const userStore = useUserStore()
 const message = useMessage()
@@ -195,26 +195,7 @@ const avatarUrl = computed(() => {
   if (!userInfo.value || !userInfo.value.avatar) {
     return ''
   }
-  
-  let url = String(userInfo.value.avatar).trim()
-  if (!url) {
-    return ''
-  }
-  
-  // 如果URL以/开头，说明是相对路径，需要拼接baseURL
-  if (url.startsWith('/')) {
-    // 获取baseURL（去掉/api后缀）
-    const baseURL = request.defaults.baseURL.replace(/\/api$/, '')
-    url = baseURL + url
-    console.log('拼接头像URL:', baseURL, '+', userInfo.value.avatar, '=', url)
-  }
-  
-  // 如果已经是完整URL（http://或https://开头），直接返回
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  
-  return url
+  return getImageUrl(userInfo.value.avatar)
 })
 
 const passwordRules = {

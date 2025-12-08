@@ -185,6 +185,7 @@ import {
   useMessage
 } from 'naive-ui'
 import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById } from '@/api'
+import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -266,73 +267,55 @@ const formRules = {
 
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
+  { title: '场地名称', key: 'name', width: 150, ellipsis: { tooltip: true } },
+  { title: '类型', key: 'type', width: 100 },
   {
-      title: '封面',
-      key: 'cover',
-      width: 100,
-      render: (row) => {
-        // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
-        const thumbnailUrl = row.thumbUrl;
-        // 获取原图URL用于预览
-        const originalUrl = row.cover || '';
-        
-        return h(NImage, {
-          width: 60,
-          height: 45,
-          src: thumbnailUrl || originalUrl, // 显示压缩后的图片
-          objectFit: 'cover',
-          previewDisabled: false, // 启用预览功能
-          showToolbar: false,
-          // 配置预览功能，点击时显示原图
-          srcset: [
-            {
-              src: originalUrl,
-              alt: '场地封面'
-            }
-          ]
-        })
-      }
-    },
-  {
-    title: '缩略封面',
-    key: 'thumbCover',
+    title: '封面',
+    key: 'cover',
     width: 100,
     render: (row) => {
-      return row.thumbCover ? h(NImage, {
+      // 优先使用缩略图，如果没有则使用原图
+      const coverUrl = row.thumbImage || row.image || row.cover || row.thumbCover
+      if (!coverUrl) return '-'
+      
+      const originalUrl = row.image || row.cover || coverUrl
+      
+      return h(NImage, {
         width: 60,
         height: 45,
-        src: row.thumbCover,
+        src: getImageUrl(coverUrl),
         objectFit: 'cover',
-        previewDisabled: false
-      }) : '-'
+        previewDisabled: false,
+        showToolbar: false,
+        srcset: [
+          {
+            src: getImageUrl(originalUrl),
+            alt: '场地封面'
+          }
+        ]
+      })
     }
   },
+  { title: '地址', key: 'address', width: 200, ellipsis: { tooltip: true } },
+  { title: '联系人', key: 'locationPrincipalName', width: 120 },
+  { title: '联系电话', key: 'locationPrincipalPhone', width: 130 },
+  { title: '价格', key: 'price', width: 100, render: (row) => row.price ? '¥' + row.price : '-' },
   {
-    title: '详情图片',
-    key: 'image',
-    width: 100,
+    title: '操作',
+    key: 'actions',
+    width: 150,
+    fixed: 'right',
     render: (row) => {
-      return row.image ? h(NImage, {
-        width: 60,
-        height: 45,
-        src: row.image,
-        objectFit: 'cover',
-        previewDisabled: false
-      }) : '-'
-    }
-  },
-  {
-    title: '缩略详情图',
-    key: 'thumbImage',
-    width: 100,
-    render: (row) => {
-      return row.thumbImage ? h(NImage, {
-        width: 60,
-        height: 45,
-        src: row.thumbImage,
-        objectFit: 'cover',
-        previewDisabled: false
-      }) : '-'
+      return h('div', { style: 'display: flex; gap: 8px;' }, [
+        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
+        h(
+          NPopconfirm,
+          { onPositiveClick: () => handleDelete(row.id) },
+          {
+            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+          }
+        )
+      ])
     }
   }
 ]

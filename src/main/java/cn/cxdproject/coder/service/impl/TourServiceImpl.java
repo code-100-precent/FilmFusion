@@ -247,6 +247,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         long offset = (current - 1) * size;
 
         List<Tour> tours = tourMapper.getAdminPage(keyword, offset, size);
+        long total = tourMapper.countAdminPage(keyword);
 
         List<TourVO> voList = tours.stream()
                 .map(this::toTourVO)
@@ -255,6 +256,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         return new Page<TourVO>()
                 .setCurrent(current)
                 .setSize(size)
+                .setTotal(total)
                 .setRecords(voList);
     }
 }

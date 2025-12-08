@@ -81,6 +81,19 @@
         LIMIT #{offset}, #{size}
     </select>
 
+    <select id="countAdminPage" resultType="long">
+        SELECT COUNT(*)
+        FROM fi_tours
+        WHERE deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (
+            name LIKE CONCAT('%', #{keyword}, '%')
+            OR description LIKE CONCAT('%', #{keyword}, '%')
+            OR theme LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+    </select>
+
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Tour">
         SELECT *
         FROM fi_tours

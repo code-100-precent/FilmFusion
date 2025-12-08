@@ -56,6 +56,15 @@ public class ArticleVO {
 
     private String thumbImage;
 
+    /**
+     * 封面图片（与image相同，用于前端兼容）
+     */
+    private String cover;
+
+    /**
+     * 缩略封面（与thumbImage相同，用于前端兼容）
+     */
+    private String thumbCover;
 
     /**
      * 创建时间

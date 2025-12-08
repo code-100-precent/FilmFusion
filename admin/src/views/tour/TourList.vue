@@ -61,7 +61,7 @@
                 <div class="tour-image">
                   <n-image
                       v-if="tour.cover"
-                      :src="tour.thumb_cover || tour.cover"
+                      :src="getImageUrl(tour.thumb_cover || tour.cover)"
                       width="80"
                       height="60"
                       object-fit="cover"
@@ -185,7 +185,7 @@
           </n-upload>
           <div v-if="tourForm.cover" style="margin-top: 12px;">
             <n-image
-                :src="tourForm.thumb_cover || tourForm.cover"
+                :src="getImageUrl(tourForm.thumb_cover || tourForm.cover)"
                 width="200"
                 height="120"
                 object-fit="cover"
@@ -204,7 +204,7 @@
           </n-upload>
           <div v-if="tourForm.image" style="margin-top: 12px;">
             <n-image
-                :src="tourForm.thumb_image || tourForm.image"
+                :src="getImageUrl(tourForm.thumb_image || tourForm.image)"
                 width="200"
                 height="120"
                 object-fit="cover"
@@ -241,7 +241,8 @@ import {
   NUpload,
   useMessage
 } from 'naive-ui'
-import { getTourRoutePage, addTourRoute, updateTourRoute, deleteTourRoute, getTourRouteById, uploadFile } from '@/api'
+import { getTourPage, createTour, updateTour, deleteTour, getTourById, uploadFile } from '@/api'
+import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -341,12 +342,12 @@ const columns = [
       return h(NImage, {
         width: 60,
         height: 45,
-        src: imgUrl, // 显示压缩后的图片
+        src: getImageUrl(imgUrl), // 显示压缩后的图片
         objectFit: 'cover',
         previewDisabled: false, // 启用预览功能
         fallbackSrc: '/placeholder.jpg',
         // 配置预览功能，点击时显示原图
-        previewSrc: originalUrl
+        previewSrc: getImageUrl(originalUrl)
       });
     }
   },
@@ -435,14 +436,18 @@ const loadData = async () => {
     })
 
     // 直接调用后端API获取真实数据
-    const res = await getTourRoutePage(pagination.page, pagination.pageSize, searchForm.keyword)
+    const res = await getTourPage(pagination.page, pagination.pageSize, searchForm.keyword)
     console.log('后端API响应数据:', res)
 
     if (res.code === 200) {
-      // 使用后端API返回的真实数据
-      tourList.value = res.data?.records || res.data || []
-      pagination.itemCount = res.data?.total || res.total || 0
-      pagination.pageCount = res.data?.pages || 1
+      // PageResponse的数据结构：data是数组，pagination包含分页信息
+      tourList.value = res.data || []
+      if (res.pagination) {
+        pagination.itemCount = res.pagination.totalItems || 0
+        pagination.pageCount = res.pagination.totalPages || 1
+        pagination.page = res.pagination.currentPage || 1
+        pagination.pageSize = res.pagination.pageSize || 10
+      }
     } else {
       console.warn('API返回非成功状态:', res.code)
       message.error(`获取体验游失败: ${res.message || '未知错误'}`)
@@ -507,7 +512,7 @@ const handleAdd = () => {
 
 const handleEdit = async (row) => {
   try {
-    const res = await getTourRouteById(row.id)
+    const res = await getTourById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑体验游'
       Object.assign(tourForm, {
@@ -650,9 +655,9 @@ const handleDialogSave = async () => {
 
     let res
     if (tourForm.id) {
-      res = await updateTourRoute(tourForm.id, data)
+      res = await updateTour(tourForm.id, data)
     } else {
-      res = await addTourRoute(data)
+      res = await createTour(data)
     }
 
     if (res.code === 200) {
@@ -670,7 +675,7 @@ const handleDialogSave = async () => {
 
 const handleDelete = async (id) => {
   try {
-    const res = await deleteTourRoute(id)
+    const res = await deleteTour(id)
     if (res.code === 200) {
       message.success('删除成功')
       loadData()

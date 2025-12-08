@@ -143,8 +143,8 @@ public class WebConfig extends WebMvcConfigurationSupport {
         if (!basePath.endsWith("/")) {
             basePath += "/";
         }
-        // 配置静态资源访问 - /files路径映射到本地存储
-        registry.addResourceHandler("/files/**")
+        // 配置静态资源访问 - /api/files路径映射到本地存储
+        registry.addResourceHandler("/api/files/**")
                 .addResourceLocations("file:" + basePath);
     }
 

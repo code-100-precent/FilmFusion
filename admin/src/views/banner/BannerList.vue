@@ -55,8 +55,8 @@
             >
               <div class="card-header">
                 <div class="banner-info">
-                  <h3 class="banner-title">{{ banner.title }}</h3>
-                  <p class="banner-link">{{ banner.link }}</p>
+                  <h3 class="banner-title">{{ banner.imageName || banner.title }}</h3>
+                  <p class="banner-link">{{ banner.targetModule || banner.link }}</p>
                 </div>
                 <div class="banner-image">
                   <n-image
@@ -75,13 +75,13 @@
               <div class="card-content">
                 <div class="info-item">
                   <span class="label">状态：</span>
-                  <n-tag :type="banner.status === 1 ? 'success' : 'error'">
-                    {{ banner.status === 1 ? '启用' : '禁用' }}
+                  <n-tag :type="(banner.status === true || banner.status === 1) ? 'success' : 'error'">
+                    {{ (banner.status === true || banner.status === 1) ? '启用' : '禁用' }}
                   </n-tag>
                 </div>
                 <div class="info-item">
                   <span class="label">排序：</span>
-                  <span>{{ banner.sortOrder }}</span>
+                  <span>{{ banner.sort || banner.sortOrder }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">描述：</span>
@@ -152,7 +152,7 @@
           </n-upload>
           <div v-if="bannerForm.imageUrl" style="margin-top: 12px;">
             <n-image
-              :src="bannerForm.imageUrl"
+              :src="getImageUrl(bannerForm.imageUrl)"
               width="200"
               height="120"
               object-fit="cover"
@@ -204,6 +204,7 @@ import {
 } from 'naive-ui'
 import request from '@/utils/request'
 import { uploadFile } from '@/api'
+import { getImageUrl } from '@/utils/image'
 // Banner相关API函数
 const getBannerPage = (current = 1, size = 10, keyword = '') => {
   return request({
@@ -219,14 +220,14 @@ const getBannerPage = (current = 1, size = 10, keyword = '') => {
 
 const getBannerById = (id) => {
   return request({
-    url: `/banner/admin/${id}`,
+    url: `/banner/${id}`,
     method: 'get'
   })
 }
 
 const createBanner = (data) => {
   return request({
-    url: '/banner/admin/create',
+    url: '/banner',
     method: 'post',
     data
   })
@@ -234,7 +235,7 @@ const createBanner = (data) => {
 
 const updateBanner = (id, data) => {
   return request({
-    url: `/banner/admin/${id}`,
+    url: `/banner/update/${id}`,
     method: 'put',
     data
   })
@@ -242,7 +243,7 @@ const updateBanner = (id, data) => {
 
 const deleteBanner = (id) => {
   return request({
-    url: `/banner/admin/${id}`,
+    url: `/banner/delete/${id}`,
     method: 'delete'
   })
 }
@@ -320,7 +321,7 @@ const columns = [
         return h(NImage, {
           width: 80,
           height: 50,
-          src: thumbnailUrl || originalUrl, // 显示压缩后的图片
+          src: getImageUrl(thumbnailUrl || originalUrl), // 显示压缩后的图片
           objectFit: 'cover',
           previewDisabled: false, // 启用预览功能
           showToolbar: false,
@@ -328,25 +329,26 @@ const columns = [
           // 配置预览功能，点击时显示原图
           srcset: [
             {
-              src: originalUrl,
+              src: getImageUrl(originalUrl),
               alt: 'Banner图片'
             }
           ]
         })
       }
     },
-  { title: '标题', key: 'title', width: 200, ellipsis: { tooltip: true } },
-  { title: '链接', key: 'link', width: 200, ellipsis: { tooltip: true } },
-  { title: '排序', key: 'sortOrder', width: 80 },
+  { title: '标题', key: 'title', width: 200, ellipsis: { tooltip: true }, render: (row) => row.imageName || row.title || '-' },
+  { title: '链接', key: 'link', width: 200, ellipsis: { tooltip: true }, render: (row) => row.targetModule || row.link || '-' },
+  { title: '排序', key: 'sortOrder', width: 80, render: (row) => row.sort || row.sortOrder || 0 },
   {
     title: '状态',
     key: 'status',
     width: 100,
     render: (row) => {
+      const status = row.status === true || row.status === 1
       return h(NTag, {
-        type: row.status === 1 ? 'success' : 'error'
+        type: status ? 'success' : 'error'
       }, {
-        default: () => row.status === 1 ? '启用' : '禁用'
+        default: () => status ? '启用' : '禁用'
       })
     }
   },
@@ -449,14 +451,15 @@ const handleEdit = async (row) => {
     const res = await getBannerById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑Banner'
+      // 映射后端字段到前端字段
       Object.assign(bannerForm, {
         id: res.data.id,
-        title: res.data.title || '',
-        link: res.data.link || '',
+        title: res.data.imageName || res.data.title || '', // imageName映射到title
+        link: res.data.targetModule || res.data.link || '', // targetModule映射到link
         imageUrl: res.data.imageUrl || '',
         description: res.data.description || '',
-        sortOrder: res.data.sortOrder || 0,
-        status: res.data.status || 1
+        sortOrder: res.data.sort || res.data.sortOrder || 0, // sort映射到sortOrder
+        status: res.data.status === true ? 1 : (res.data.status === false ? 0 : (res.data.status || 1)) // Boolean转换为数字
       })
       
       // 设置文件列表
@@ -526,13 +529,13 @@ const handleDialogSave = async () => {
   
   try {
     dialogLoading.value = true
+    // 映射前端字段到后端DTO字段
     const data = {
-      title: bannerForm.title,
-      link: bannerForm.link,
+      imageName: bannerForm.title || bannerForm.imageName, // title映射到imageName
       imageUrl: bannerForm.imageUrl,
-      description: bannerForm.description,
-      sortOrder: bannerForm.sortOrder,
-      status: bannerForm.status
+      targetModule: bannerForm.link || bannerForm.targetModule, // link映射到targetModule
+      sort: bannerForm.sortOrder || bannerForm.sort || 0, // sortOrder映射到sort
+      status: bannerForm.status === 1 ? true : (bannerForm.status === 0 ? false : bannerForm.status) // 转换为Boolean
     }
     
     let res
