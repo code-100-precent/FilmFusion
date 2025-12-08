@@ -60,7 +60,7 @@
             >
               <div class="card-header">
                 <div class="user-avatar-name">
-                  <n-avatar :src="user.avatar" size="medium" round>
+                  <n-avatar :src="getAvatarUrl(user.avatar)" size="medium" round>
                     <Icon icon="mdi:account" :width="24" />
                   </n-avatar>
                   <div class="user-info">
@@ -254,6 +254,20 @@ const formRules = {
   role: [{ required: true, message: '请选择角色', trigger: 'change' }]
 }
 
+// 处理头像URL
+const getAvatarUrl = (avatar) => {
+  if (!avatar) return ''
+  // 如果已经是完整URL，直接返回
+  if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+    return avatar
+  }
+  // 如果是相对路径，拼接baseURL
+  if (avatar.startsWith('/')) {
+    return 'http://localhost:8080' + avatar
+  }
+  return avatar
+}
+
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
   {
@@ -263,7 +277,7 @@ const columns = [
     render: (row) => {
       return h(NAvatar, {
         size: 'small',
-        src: row.avatar,
+        src: getAvatarUrl(row.avatar),
         round: true
       }, {
         default: () => h(Icon, { icon: 'mdi:account', width: 20 })

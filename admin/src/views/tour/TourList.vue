@@ -241,7 +241,7 @@ import {
   NUpload,
   useMessage
 } from 'naive-ui'
-import { getTourRoutePage, addTourRoute, updateTourRoute, deleteTourRoute, getTourRouteById } from '@/api'
+import { getTourRoutePage, addTourRoute, updateTourRoute, deleteTourRoute, getTourRouteById, uploadFile } from '@/api'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -591,22 +591,32 @@ const handleUploadFinish = ({ file, event }) => {
   }
 }
 
-const handleUpload = ({ file, onFinish, onError }) => {
-  const formData = new FormData()
-  formData.append('file', file.file)
-
-  // 这里应该调用上传API，暂时模拟
-  setTimeout(() => {
-    // 模拟上传结果
-    if (file.id === 'cover') {
-      tourForm.cover = URL.createObjectURL(file.file)
-      tourForm.thumb_cover = URL.createObjectURL(file.file)
-    } else if (file.id === 'image') {
-      tourForm.image = URL.createObjectURL(file.file)
-      tourForm.thumb_image = URL.createObjectURL(file.file)
+const handleUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const imageUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || imageUrl
+      
+      // 根据上传的文件类型更新对应字段
+      if (file.id === 'cover' || coverFileList.value.some(f => f.id === file.id)) {
+        tourForm.cover = imageUrl
+        tourForm.thumb_cover = thumbUrl
+      } else if (file.id === 'image' || imageFileList.value.some(f => f.id === file.id)) {
+        tourForm.image = imageUrl
+        tourForm.thumb_image = thumbUrl
+      }
+      onFinish()
+      message.success('图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
     }
-    onFinish()
-  }, 1000)
+  } catch (error) {
+    console.error('上传图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
 }
 
 const handleDialogSave = async () => {

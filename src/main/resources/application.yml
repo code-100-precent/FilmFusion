@@ -19,9 +19,9 @@ code100:
   # 对象存储
   storage:
     type: local  # 支持 local、minio
-    minio-endpoint: https://codeonezerozero.cn:19000
+    minio-endpoint: https://xxx.com:19000
     minio-access-key: minio
-    minio-secret-key: 6fRHxhNJa3Zt2WAP
+    minio-secret-key: minio
     minio-bucket: code100
     local-base-path: ${user.home}/app_uploads
 

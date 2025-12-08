@@ -80,12 +80,11 @@ export const uploadAvatar = (file) => {
 /**
  * 文件上传（通用）
  */
-export const uploadFile = (file, type = 'image') => {
+export const uploadFile = (file) => {
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('type', type)
   return request({
-    url: '/file/upload',
+    url: '/file',
     method: 'post',
     data: formData,
     headers: {

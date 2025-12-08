@@ -203,6 +203,7 @@ import {
   useDialog
 } from 'naive-ui'
 import request from '@/utils/request'
+import { uploadFile } from '@/api'
 // Banner相关API函数
 const getBannerPage = (current = 1, size = 10, keyword = '') => {
   return request({
@@ -497,15 +498,22 @@ const handleUploadFinish = ({ file, event }) => {
   }
 }
 
-const handleUpload = ({ file, onFinish, onError }) => {
-  const formData = new FormData()
-  formData.append('file', file.file)
-  
-  // 这里应该调用上传API，暂时模拟
-  setTimeout(() => {
-    bannerForm.imageUrl = URL.createObjectURL(file.file)
-    onFinish()
-  }, 1000)
+const handleUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      bannerForm.imageUrl = res.data.originUrl || res.data.url
+      onFinish()
+      message.success('图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
 }
 
 const handleDialogSave = async () => {

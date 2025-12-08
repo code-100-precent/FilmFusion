@@ -147,13 +147,61 @@
         <n-form-item label="电视剧简介" path="dramaDescription">
           <n-input v-model:value="dramaForm.dramaDescription" type="textarea" :rows="4" placeholder="请输入电视剧简介" />
         </n-form-item>
-        <!-- 这里应该添加更多表单字段 -->
+        <n-form-item label="演员" path="cast">
+          <n-input v-model:value="dramaForm.cast" placeholder="请输入演员信息" />
+        </n-form-item>
+        <n-form-item label="拍摄地" path="shootLocation">
+          <n-input v-model:value="dramaForm.shootLocation" placeholder="请输入拍摄地" />
+        </n-form-item>
+        <n-form-item label="服务" path="service">
+          <n-input v-model:value="dramaForm.service" type="textarea" :rows="2" placeholder="请输入服务信息" />
+        </n-form-item>
+        <n-form-item label="封面图片" path="cover">
+          <n-upload
+            :max="1"
+            :file-list="coverFileList"
+            @update:file-list="handleCoverFileListChange"
+            :custom-request="handleCoverUpload"
+            accept="image/*"
+          >
+            <n-button>上传封面图片</n-button>
+          </n-upload>
+          <div v-if="dramaForm.cover" style="margin-top: 12px;">
+            <n-image
+              :src="dramaForm.thumbCover || dramaForm.cover"
+              width="200"
+              height="120"
+              object-fit="cover"
+            />
+          </div>
+        </n-form-item>
+        <n-form-item label="详情图片" path="image">
+          <n-upload
+            :max="10"
+            :file-list="imageFileList"
+            @update:file-list="handleImageFileListChange"
+            :custom-request="handleImageUpload"
+            accept="image/*"
+            multiple
+          >
+            <n-button>上传详情图片（可多张）</n-button>
+          </n-upload>
+          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <n-image
+              v-for="(file, index) in imageFileList"
+              :key="index"
+              :src="file.url"
+              width="100"
+              height="75"
+              object-fit="cover"
+              style="border-radius: 4px;"
+            />
+          </div>
+        </n-form-item>
       </n-form>
-      <template #footer>
-        <n-space>
-          <n-button @click="dialogVisible = false">取消</n-button>
-          <n-button type="primary" @click="handleDialogSave">保存</n-button>
-        </n-space>
+      <template #action>
+        <n-button @click="dialogVisible = false">取消</n-button>
+        <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
       </template>
     </n-modal>
   </div>
@@ -174,9 +222,10 @@ import {
   NImage,
   NSpin,
   NPagination,
+  NUpload,
   useMessage
 } from 'naive-ui'
-import { getDramaPage, addDrama, updateDrama, deleteDrama, getDramaById } from '@/api'
+import { getDramaPage, addDrama, updateDrama, deleteDrama, getDramaById, uploadFile } from '@/api'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -194,6 +243,8 @@ const dialogVisible = ref(false)
 const dialogLoading = ref(false)
 const dialogTitle = ref('新增电视剧')
 const formRef = ref(null)
+const coverFileList = ref([])
+const imageFileList = ref([])
 
 const searchForm = reactive({
   keyword: ''
@@ -305,6 +356,24 @@ const columns = [
         previewDisabled: false
       }) : '-'
     }
+  },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 180,
+    fixed: 'right',
+    render: (row) => {
+      return h('div', { style: 'display: flex; gap: 8px;' }, [
+        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
+        h(
+          NPopconfirm,
+          { onPositiveClick: () => handleDelete(row.id) },
+          {
+            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+          }
+        )
+      ])
+    }
   }
 ]
 
@@ -409,6 +478,8 @@ const handleAdd = () => {
     thumbCover: '',
     thumbImage: ''
   })
+  coverFileList.value = []
+  imageFileList.value = []
   dialogVisible.value = true
 }
 
@@ -432,12 +503,100 @@ const handleEdit = async (row) => {
         thumbCover: res.data.thumbCover || '',
         thumbImage: res.data.thumbImage || ''
       })
+      
+      // 设置封面图片文件列表
+      if (res.data.cover) {
+        coverFileList.value = [{
+          id: 'cover',
+          name: 'cover.jpg',
+          status: 'finished',
+          url: res.data.thumbCover || res.data.cover
+        }]
+      } else {
+        coverFileList.value = []
+      }
+      
+      // 设置详情图片文件列表（支持多张）
+      if (res.data.image) {
+        const imageUrls = res.data.image.split(',').filter(url => url.trim())
+        imageFileList.value = imageUrls.map((url, index) => ({
+          id: `image-${index}`,
+          name: `image-${index}.jpg`,
+          status: 'finished',
+          url: url.trim()
+        }))
+      } else {
+        imageFileList.value = []
+      }
+      
       dialogVisible.value = true
     }
   } catch (error) {
     console.error('获取电视剧详情失败:', error)
     message.error('获取电视剧详情失败')
   }
+}
+
+// 处理封面图片上传
+const handleCoverUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      dramaForm.cover = res.data.originUrl || res.data.url
+      dramaForm.thumbCover = res.data.thumbUrl || res.data.originUrl || res.data.url
+      onFinish()
+      message.success('封面图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传封面图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 处理详情图片上传
+const handleImageUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const imageUrl = res.data.originUrl || res.data.url
+      // 添加到图片列表
+      const existingImages = dramaForm.image ? dramaForm.image.split(',').filter(url => url.trim()) : []
+      existingImages.push(imageUrl)
+      dramaForm.image = existingImages.join(',')
+      onFinish()
+      message.success('详情图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传详情图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 处理封面文件列表变化
+const handleCoverFileListChange = (files) => {
+  coverFileList.value = files
+  if (files.length === 0) {
+    dramaForm.cover = ''
+    dramaForm.thumbCover = ''
+  }
+}
+
+// 处理详情图片文件列表变化
+const handleImageFileListChange = (files) => {
+  imageFileList.value = files
+  // 更新image字段为逗号分隔的URL字符串
+  const imageUrls = files
+    .filter(file => file.status === 'finished' && file.url)
+    .map(file => file.url)
+  dramaForm.image = imageUrls.join(',')
 }
 
 onMounted(() => {
