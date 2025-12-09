@@ -6,9 +6,6 @@
           <n-form-item label="政策标题">
             <n-input v-model:value="searchForm.keyword" placeholder="请输入政策标题" clearable @keyup.enter="handleSearch" />
           </n-form-item>
-          <n-form-item label="政策类型">
-            <n-select v-model:value="searchForm.type" :options="typeOptions" placeholder="请选择政策类型" clearable />
-          </n-form-item>
           <n-form-item>
             <n-button type="primary" @click="handleSearch">
               <template #icon>
@@ -31,15 +28,22 @@
 
       <!-- 桌面端表格 -->
       <n-data-table
-        v-if="!isMobile"
-        :columns="columns"
-        :data="policyList"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="row => row.id"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-        :scroll-x="1500"
+          v-if="!isMobile"
+          :columns="columns"
+          :data="policyList"
+          :loading="loading"
+          :pagination="{
+            page: currentPage,
+            pageSize: pageSize,
+            itemCount: totalItems,
+            showSizePicker: true,
+            pageSizes: [5, 10, 20, 50],
+            onUpdatePage: handlePageChange,
+            onUpdatePageSize: handlePageSizeChange,
+            prefix: (info) => `共 ${info.itemCount} 条`
+          }"
+          :row-key="row => row.id"
+          :scroll-x="1500"
       />
 
       <!-- 移动端卡片列表 -->
@@ -51,10 +55,10 @@
           </div>
           <div v-else class="card-list">
             <n-card
-              v-for="policy in policyList"
-              :key="policy.id"
-              class="mobile-card"
-              hoverable
+                v-for="policy in policyList"
+                :key="policy.id"
+                class="mobile-card"
+                hoverable
             >
               <div class="card-header">
                 <div class="policy-info">
@@ -68,12 +72,12 @@
                 </div>
                 <div class="policy-cover">
                   <n-image
-                    v-if="policy.cover"
-                    :src="getImageUrl(policy.cover)"
-                    width="80"
-                    height="60"
-                    object-fit="cover"
-                    preview-disabled
+                      v-if="policy.image"
+                      :src="getImageUrl(policy.thumbImage || policy.image)"
+                      width="80"
+                      height="60"
+                      object-fit="cover"
+                      preview-disabled
                   />
                   <div v-else class="no-cover">
                     <Icon icon="mdi:file-document" :width="32" />
@@ -87,7 +91,7 @@
                 </div>
                 <div class="info-item">
                   <span class="label">内容预览：</span>
-                  <p class="policy-content-preview">{{ policy.content || '-' }}</p>
+                  <p class="policy-content-preview">{{ policy.content?.substring(0, 50) + (policy.content?.length > 50 ? '...' : '') || '-' }}</p>
                 </div>
               </div>
               <div class="card-actions">
@@ -109,13 +113,13 @@
           <!-- 移动端分页 -->
           <div class="mobile-pagination">
             <n-pagination
-              :page="pagination.page"
-              :page-size="pagination.pageSize"
-              :item-count="pagination.itemCount"
-              :page-sizes="[10, 20, 50]"
-              show-size-picker
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
+                :page="currentPage"
+                :page-size="pageSize"
+                :item-count="totalItems"
+                :page-sizes="[5, 10, 20, 50]"
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange"
             />
           </div>
         </n-spin>
@@ -123,18 +127,18 @@
     </n-card>
 
     <n-modal
-      v-model:show="dialogVisible"
-      preset="dialog"
-      :title="dialogTitle"
-      style="width: 90%; max-width: 900px"
-      :mask-closable="false"
+        v-model:show="dialogVisible"
+        preset="dialog"
+        :title="dialogTitle"
+        style="width: 90%; max-width: 900px"
+        :mask-closable="false"
     >
       <n-form
-        ref="formRef"
-        :model="policyForm"
-        :rules="formRules"
-        :label-placement="isMobile ? 'top' : 'left'"
-        :label-width="isMobile ? 'auto' : '120'"
+          ref="formRef"
+          :model="policyForm"
+          :rules="formRules"
+          :label-placement="isMobile ? 'top' : 'left'"
+          :label-width="isMobile ? 'auto' : '120'"
       >
         <n-form-item label="政策标题" path="title">
           <n-input v-model:value="policyForm.title" placeholder="请输入政策标题" />
@@ -147,30 +151,38 @@
         </n-form-item>
         <n-form-item label="发布时间" path="issueTime">
           <n-date-picker
-            v-model:value="policyForm.issueTime"
-            type="datetime"
-            placeholder="请选择发布时间"
-            format="yyyy-MM-dd HH:mm:ss"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            clearable
+              v-model:value="policyForm.issueTime"
+              type="datetime"
+              placeholder="请选择发布时间"
+              format="yyyy-MM-dd HH:mm:ss"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              clearable
           />
         </n-form-item>
-        <n-form-item label="封面图片" path="cover">
+        <n-form-item label="政策内容" path="content">
+          <n-input
+              v-model:value="policyForm.content"
+              type="textarea"
+              placeholder="请输入政策内容"
+              :autosize="{ minRows: 3, maxRows: 6 }"
+          />
+        </n-form-item>
+        <n-form-item label="封面图片" path="image">
           <n-upload
-            :max="1"
-            :file-list="coverFileList"
-            @update:file-list="handleCoverFileListChange"
-            :custom-request="handleCoverUpload"
-            accept="image/*"
+              :max="1"
+              :file-list="imageFileList"
+              @update:file-list="handleImageFileListChange"
+              :custom-request="handleImageUpload"
+              accept="image/*"
           >
             <n-button>上传封面图片</n-button>
           </n-upload>
-          <div v-if="policyForm.cover" style="margin-top: 12px;">
+          <div v-if="policyForm.image" style="margin-top: 12px;">
             <n-image
-              :src="getImageUrl(policyForm.thumbCover || policyForm.cover)"
-              width="200"
-              height="120"
-              object-fit="cover"
+                :src="getImageUrl(policyForm.thumbImage || policyForm.image)"
+                width="200"
+                height="120"
+                object-fit="cover"
             />
           </div>
         </n-form-item>
@@ -187,7 +199,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, h, onMounted, onUnmounted, computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   NCard,
@@ -203,10 +215,10 @@ import {
   NDatePicker,
   NUpload,
   useMessage,
-  NTag
+  NTag,
+  NSpin,
+  NPagination
 } from 'naive-ui'
-import { getPolicyPage, addPolicy, updatePolicy, deletePolicy, getPolicyById, uploadFile } from '@/api'
-import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -225,9 +237,9 @@ const dialogLoading = ref(false)
 const dialogTitle = ref('新增政策')
 const formRef = ref(null)
 
+// 简化：只保留关键词搜索
 const searchForm = reactive({
-  keyword: '',
-  type: ''
+  keyword: ''
 })
 
 const policyForm = reactive({
@@ -237,27 +249,28 @@ const policyForm = reactive({
   issueUnit: '',
   issueTime: null,
   content: '',
-  cover: '',
   image: '',
-  thumbCover: '',
   thumbImage: '',
   status: 1
 })
 
-const coverFileList = ref([])
+const imageFileList = ref([])
 
+// 政策类型选项（保留用于编辑）
 const typeOptions = [
   { label: '省级', value: '省级' },
   { label: '市级', value: '市级' }
 ]
 
-const pagination = reactive({
-  page: 1,
-  pageSize: 10,
-  itemCount: 0,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
-})
+const statusOptions = [
+  { label: '发布', value: 1 },
+  { label: '草稿', value: 0 }
+]
+
+// 分页相关状态
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalItems = ref(0)
 
 const formRules = {
   title: [
@@ -277,59 +290,208 @@ const formRules = {
   ]
 }
 
-const columns = [
+// 从localStorage获取token
+const getToken = () => {
+  return localStorage.getItem('token') || sessionStorage.getItem('token')
+}
+
+// 简化API调用，只传递关键词
+const getPolicyPage = (current = 1, size = 10, keyword = '') => {
+  const token = getToken()
+
+  // 构建URL参数，只包含关键词搜索
+  const params = new URLSearchParams({
+    current: current.toString(),
+    size: size.toString(),
+    keyword: keyword
+  })
+
+  const url = `/api/policy/admin/page?${params.toString()}`
+
+  console.log('请求URL:', url)
+
+  return fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        return response.json()
+      })
+      .then(data => {
+        console.log('API响应数据:', data)
+        return data
+      })
+      .catch(error => {
+        console.error('API请求错误:', error)
+        return {
+          code: 500,
+          message: error.message || '网络请求失败'
+        }
+      })
+}
+
+const getPolicyById = (id) => {
+  const token = getToken()
+  return fetch(`/api/policy/${id}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        return response.json()
+      })
+      .catch(error => {
+        console.error('API请求错误:', error)
+        return {
+          code: 500,
+          message: error.message || '网络请求失败'
+        }
+      })
+}
+
+const addPolicy = (data) => {
+  const token = getToken()
+  return fetch('/api/policy/admin/create', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        return response.json()
+      })
+      .catch(error => {
+        console.error('API请求错误:', error)
+        return {
+          code: 500,
+          message: error.message || '网络请求失败'
+        }
+      })
+}
+
+const updatePolicy = (id, data) => {
+  const token = getToken()
+  return fetch(`/api/policy/admin/update/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        return response.json()
+      })
+      .catch(error => {
+        console.error('API请求错误:', error)
+        return {
+          code: 500,
+          message: error.message || '网络请求失败'
+        }
+      })
+}
+
+const deletePolicy = (id) => {
+  const token = getToken()
+  return fetch(`/api/policy/admin/delete/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        return response.json()
+      })
+      .catch(error => {
+        console.error('API请求错误:', error)
+        return {
+          code: 500,
+          message: error.message || '网络请求失败'
+        }
+      })
+}
+
+const uploadFile = (file) => {
+  // 模拟文件上传API
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        code: 200,
+        data: {
+          originUrl: `https://example.com/uploads/${file.name}`,
+          thumbUrl: `https://example.com/uploads/thumb_${file.name}`
+        }
+      })
+    }, 1000)
+  })
+}
+
+const getImageUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return `${window.location.origin}/uploads/${url}`
+}
+
+const columns = computed(() => [
   { title: 'ID', key: 'id', width: 80, fixed: 'left' },
   { title: '政策标题', key: 'title', width: 200, ellipsis: { tooltip: true }, fixed: 'left' },
   {
     title: '封面',
-    key: 'cover',
+    key: 'image',
     width: 100,
     render: (row) => {
-      // 优先使用缩略封面，如果没有则使用封面、缩略图或原图
-      const coverUrl = row.thumbCover || row.cover || row.thumbImage || row.image
-      if (!coverUrl) return '-'
-
-      const originalUrl = row.cover || row.image || coverUrl
+      if (!row.image) return '-'
 
       return h(NImage, {
         width: 60,
         height: 45,
-        src: getImageUrl(coverUrl),
+        src: getImageUrl(row.thumbImage || row.image),
         objectFit: 'cover',
         style: { borderRadius: '4px' },
-        previewDisabled: false,
-        srcset: [
-          {
-            src: getImageUrl(originalUrl),
-            alt: '政策封面'
-          }
-        ]
+        previewDisabled: true
       })
     }
   },
   { title: '政策类型', key: 'type', width: 120 },
   { title: '发布单位', key: 'issueUnit', width: 150, ellipsis: { tooltip: true } },
-  { title: '政策内容', key: 'content', width: 300, ellipsis: { tooltip: true } },
   {
-    title: '政策标题',
-    key: 'title',
-    width: 200,
-    ellipsis: { tooltip: true }
-  },
-  {
-    title: '政策类型',
-    key: 'type',
-    width: 120,
+    title: '政策内容',
+    key: 'content',
+    width: 300,
+    ellipsis: { tooltip: true },
     render: (row) => {
-      return h(NTag, {
-        type: row.type === '省级' ? 'info' : 'warning',
-        size: 'small'
-      }, {
-        default: () => row.type || '-'
-      })
+      return row.content?.substring(0, 30) + (row.content?.length > 30 ? '...' : '') || '-'
     }
   },
-  { title: '发布单位', key: 'issueUnit', width: 150, ellipsis: { tooltip: true } },
+  {
+    title: '发布时间',
+    key: 'issueTime',
+    width: 160,
+    render: (row) => formatDate(row.issueTime)
+  },
   {
     title: '状态',
     key: 'status',
@@ -353,21 +515,20 @@ const columns = [
       return h('div', { style: 'display: flex; gap: 8px;' }, [
         h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
         h(
-          NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
+            NPopconfirm,
+            { onPositiveClick: () => handleDelete(row.id) },
+            {
+              trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+            }
         )
       ])
     }
   }
-]
+])
 
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
-  // 这里需要根据实际的Policy API来调整
   loadData()
 })
 
@@ -377,25 +538,41 @@ onUnmounted(() => {
 
 const formatDate = (date) => {
   if (!date) return '-'
-  if (Array.isArray(date)) {
-    return dayjs(date[0] + '-' + String(date[1]).padStart(2, '0') + '-' + String(date[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
+  if (typeof date === 'string' || typeof date === 'number') {
+    return dayjs(date).format('YYYY-MM-dd HH:mm:ss')
   }
-  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+  return '-'
 }
 
 const loadData = async () => {
   try {
     loading.value = true
-    const res = await getPolicyPage(pagination.page, pagination.pageSize, searchForm.keyword, searchForm.type)
+    console.log(`加载第 ${currentPage.value} 页，每页 ${pageSize.value} 条，关键词: ${searchForm.keyword}`)
 
-    console.log('完整响应数据:', res)
-    console.log('res.code:', res.code)
-    console.log('res.data:', res.data)
-    console.log('res.pagination:', res.pagination)
+    const res = await getPolicyPage(currentPage.value, pageSize.value, searchForm.keyword)
+
+    console.log('API响应:', res)
 
     if (res.code === 200) {
       policyList.value = res.data || []
-      pagination.itemCount = res.pagination?.totalItems || 0
+
+      // 设置总数 - 尝试多种可能的字段名
+      if (res.pagination && res.pagination.totalItems !== undefined) {
+        totalItems.value = res.pagination.totalItems
+      } else if (res.pagination && res.pagination.total !== undefined) {
+        totalItems.value = res.pagination.total
+      } else if (res.total !== undefined) {
+        totalItems.value = res.total
+      } else if (Array.isArray(res.data)) {
+        totalItems.value = res.data.length
+        console.warn('警告：未找到总数，使用当前页数据长度。请检查后端API是否返回总数信息。')
+      }
+
+      console.log(`成功加载数据，总数: ${totalItems.value}，当前页数据条数: ${policyList.value.length}`)
+    } else if (res.code === 401 || res.code === 403) {
+      message.error('未登录或权限不足，请重新登录')
+    } else {
+      message.error(res.message || '加载政策列表失败')
     }
   } catch (error) {
     console.error('加载政策列表失败:', error)
@@ -406,25 +583,26 @@ const loadData = async () => {
 }
 
 const handleSearch = () => {
-  pagination.page = 1
+  currentPage.value = 1
   loadData()
 }
 
 const handleReset = () => {
   searchForm.keyword = ''
-  searchForm.type = ''
-  pagination.page = 1
+  currentPage.value = 1
   loadData()
 }
 
 const handlePageChange = (page) => {
-  pagination.page = page
+  console.log('页码变化到:', page)
+  currentPage.value = page
   loadData()
 }
 
-const handlePageSizeChange = (pageSize) => {
-  pagination.pageSize = pageSize
-  pagination.page = 1
+const handlePageSizeChange = (newPageSize) => {
+  console.log('每页大小变化到:', newPageSize)
+  pageSize.value = newPageSize
+  currentPage.value = 1  // 页大小改变时回到第一页
   loadData()
 }
 
@@ -437,13 +615,11 @@ const handleAdd = () => {
     issueUnit: '',
     issueTime: null,
     content: '',
-    cover: '',
     image: '',
-    thumbCover: '',
     thumbImage: '',
     status: 1
   })
-  coverFileList.value = []
+  imageFileList.value = []
   dialogVisible.value = true
 }
 
@@ -452,7 +628,6 @@ const handleEdit = async (row) => {
     const res = await getPolicyById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑政策'
-      // 后端现在返回 cover 和 thumbCover 字段（已添加），直接使用
       Object.assign(policyForm, {
         id: res.data.id,
         title: res.data.title || '',
@@ -460,26 +635,28 @@ const handleEdit = async (row) => {
         issueUnit: res.data.issueUnit || '',
         issueTime: res.data.issueTime || null,
         content: res.data.content || '',
-        cover: res.data.cover || res.data.image || '',
         image: res.data.image || '',
-        thumbCover: res.data.thumbCover || res.data.thumbImage || '',
         thumbImage: res.data.thumbImage || '',
         status: res.data.status || 1
       })
 
       // 设置封面图片文件列表
-      if (res.data.cover || res.data.thumbCover) {
-        coverFileList.value = [{
-          id: 'cover',
-          name: 'cover.jpg',
+      if (res.data.image || res.data.thumbImage) {
+        imageFileList.value = [{
+          id: 'image',
+          name: 'image.jpg',
           status: 'finished',
-          url: res.data.thumbCover || res.data.cover
+          url: res.data.thumbImage || res.data.image
         }]
       } else {
-        coverFileList.value = []
+        imageFileList.value = []
       }
 
       dialogVisible.value = true
+    } else if (res.code === 401 || res.code === 403) {
+      message.error('未登录或权限不足，请重新登录')
+    } else {
+      message.error(res.message || '获取政策详情失败')
     }
   } catch (error) {
     console.error('获取政策详情失败:', error)
@@ -497,15 +674,15 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
-    // DTO只支持 image 和 thumbImage，将 cover 映射到 image，thumbCover 映射到 thumbImage
     const data = {
       title: policyForm.title,
       type: policyForm.type,
       issueUnit: policyForm.issueUnit,
       issueTime: policyForm.issueTime,
       content: policyForm.content,
-      image: policyForm.cover || policyForm.image, // 封面图片映射到 image
-      thumbImage: policyForm.thumbCover || policyForm.thumbImage // 缩略封面映射到 thumbImage
+      image: policyForm.image,
+      thumbImage: policyForm.thumbImage,
+      status: policyForm.status
     }
 
     let res
@@ -519,6 +696,10 @@ const handleDialogSave = async () => {
       message.success(policyForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
       loadData()
+    } else if (res.code === 401 || res.code === 403) {
+      message.error('未登录或权限不足，请重新登录')
+    } else {
+      message.error(res.message || '保存失败')
     }
   } catch (error) {
     console.error('保存失败:', error)
@@ -529,25 +710,25 @@ const handleDialogSave = async () => {
 }
 
 // 处理封面图片上传
-const handleCoverUpload = async ({ file, onFinish, onError }) => {
+const handleImageUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
-      const originUrl = res.data.originUrl || res.data.url
-      const thumbUrl = res.data.thumbUrl || originUrl
+      const originUrl = res.data.originUrl
+      const thumbUrl = res.data.thumbUrl
 
-      policyForm.cover = originUrl
-      policyForm.thumbCover = thumbUrl
+      policyForm.image = originUrl
+      policyForm.thumbImage = thumbUrl
 
       // 更新文件列表中的URL，用于预览显示
-      const fileIndex = coverFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
+      const fileIndex = imageFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
       if (fileIndex !== -1) {
-        coverFileList.value[fileIndex].url = thumbUrl
-        coverFileList.value[fileIndex].status = 'finished'
+        imageFileList.value[fileIndex].url = thumbUrl
+        imageFileList.value[fileIndex].status = 'finished'
       } else {
-        coverFileList.value.push({
-          id: file.id || 'cover',
-          name: file.name || 'cover.jpg',
+        imageFileList.value.push({
+          id: file.id || 'image',
+          name: file.name || 'image.jpg',
           status: 'finished',
           url: thumbUrl
         })
@@ -569,11 +750,11 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
 }
 
 // 处理封面文件列表变化
-const handleCoverFileListChange = (files) => {
-  coverFileList.value = files
+const handleImageFileListChange = (files) => {
+  imageFileList.value = files
   if (files.length === 0) {
-    policyForm.cover = ''
-    policyForm.thumbCover = ''
+    policyForm.image = ''
+    policyForm.thumbImage = ''
   }
 }
 
@@ -583,6 +764,10 @@ const handleDelete = async (id) => {
     if (res.code === 200) {
       message.success('删除成功')
       loadData()
+    } else if (res.code === 401 || res.code === 403) {
+      message.error('未登录或权限不足，请重新登录')
+    } else {
+      message.error(res.message || '删除失败')
     }
   } catch (error) {
     console.error('删除失败:', error)
@@ -815,3 +1000,6 @@ const handleDelete = async (id) => {
   }
 }
 </style>
+
+
+
