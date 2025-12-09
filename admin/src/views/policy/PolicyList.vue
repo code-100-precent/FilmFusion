@@ -28,7 +28,7 @@
           </n-button>
         </div>
       </div>
-      
+
       <!-- 桌面端表格 -->
       <n-data-table
         v-if="!isMobile"
@@ -41,7 +41,7 @@
         @update:page-size="handlePageSizeChange"
         :scroll-x="1500"
       />
-      
+
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
         <n-spin :show="loading">
@@ -105,7 +105,7 @@
               </div>
             </n-card>
           </div>
-          
+
           <!-- 移动端分页 -->
           <div class="mobile-pagination">
             <n-pagination
@@ -121,18 +121,18 @@
         </n-spin>
       </div>
     </n-card>
-    
-    <n-modal 
-      v-model:show="dialogVisible" 
-      preset="dialog" 
-      :title="dialogTitle" 
+
+    <n-modal
+      v-model:show="dialogVisible"
+      preset="dialog"
+      :title="dialogTitle"
       style="width: 90%; max-width: 900px"
       :mask-closable="false"
     >
-      <n-form 
-        ref="formRef" 
-        :model="policyForm" 
-        :rules="formRules" 
+      <n-form
+        ref="formRef"
+        :model="policyForm"
+        :rules="formRules"
         :label-placement="isMobile ? 'top' : 'left'"
         :label-width="isMobile ? 'auto' : '120'"
       >
@@ -146,9 +146,9 @@
           <n-input v-model:value="policyForm.issueUnit" placeholder="请输入发布单位" />
         </n-form-item>
         <n-form-item label="发布时间" path="issueTime">
-          <n-date-picker 
-            v-model:value="policyForm.issueTime" 
-            type="datetime" 
+          <n-date-picker
+            v-model:value="policyForm.issueTime"
+            type="datetime"
             placeholder="请选择发布时间"
             format="yyyy-MM-dd HH:mm:ss"
             value-format="yyyy-MM-dd HH:mm:ss"
@@ -288,9 +288,9 @@ const columns = [
       // 优先使用缩略封面，如果没有则使用封面、缩略图或原图
       const coverUrl = row.thumbCover || row.cover || row.thumbImage || row.image
       if (!coverUrl) return '-'
-      
+
       const originalUrl = row.cover || row.image || coverUrl
-      
+
       return h(NImage, {
         width: 60,
         height: 45,
@@ -321,11 +321,11 @@ const columns = [
     key: 'type',
     width: 120,
     render: (row) => {
-      return h(NTag, { 
-        type: row.type === '省级' ? 'info' : 'warning', 
-        size: 'small' 
-      }, { 
-        default: () => row.type || '-' 
+      return h(NTag, {
+        type: row.type === '省级' ? 'info' : 'warning',
+        size: 'small'
+      }, {
+        default: () => row.type || '-'
       })
     }
   },
@@ -336,11 +336,11 @@ const columns = [
     width: 100,
     render: (row) => {
       const isActive = row.status === 1
-      return h(NTag, { 
-        type: isActive ? 'success' : 'default', 
-        size: 'small' 
-      }, { 
-        default: () => isActive ? '发布' : '草稿' 
+      return h(NTag, {
+        type: isActive ? 'success' : 'default',
+        size: 'small'
+      }, {
+        default: () => isActive ? '发布' : '草稿'
       })
     }
   },
@@ -368,7 +368,7 @@ onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
   // 这里需要根据实际的Policy API来调整
-  // loadData()
+  loadData()
 })
 
 onUnmounted(() => {
@@ -387,12 +387,12 @@ const loadData = async () => {
   try {
     loading.value = true
     const res = await getPolicyPage(pagination.page, pagination.pageSize, searchForm.keyword, searchForm.type)
-    
+
     console.log('完整响应数据:', res)
     console.log('res.code:', res.code)
     console.log('res.data:', res.data)
     console.log('res.pagination:', res.pagination)
-    
+
     if (res.code === 200) {
       policyList.value = res.data || []
       pagination.itemCount = res.pagination?.totalItems || 0
@@ -466,7 +466,7 @@ const handleEdit = async (row) => {
         thumbImage: res.data.thumbImage || '',
         status: res.data.status || 1
       })
-      
+
       // 设置封面图片文件列表
       if (res.data.cover || res.data.thumbCover) {
         coverFileList.value = [{
@@ -478,7 +478,7 @@ const handleEdit = async (row) => {
       } else {
         coverFileList.value = []
       }
-      
+
       dialogVisible.value = true
     }
   } catch (error) {
@@ -494,7 +494,7 @@ const handleDialogSave = async () => {
   } catch (error) {
     return
   }
-  
+
   try {
     dialogLoading.value = true
     // DTO只支持 image 和 thumbImage，将 cover 映射到 image，thumbCover 映射到 thumbImage
@@ -507,14 +507,14 @@ const handleDialogSave = async () => {
       image: policyForm.cover || policyForm.image, // 封面图片映射到 image
       thumbImage: policyForm.thumbCover || policyForm.thumbImage // 缩略封面映射到 thumbImage
     }
-    
+
     let res
     if (policyForm.id) {
       res = await updatePolicy(policyForm.id, data)
     } else {
       res = await addPolicy(data)
     }
-    
+
     if (res.code === 200) {
       message.success(policyForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
@@ -535,10 +535,10 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
-      
+
       policyForm.cover = originUrl
       policyForm.thumbCover = thumbUrl
-      
+
       // 更新文件列表中的URL，用于预览显示
       const fileIndex = coverFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
       if (fileIndex !== -1) {
@@ -552,7 +552,7 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
           url: thumbUrl
         })
       }
-      
+
       onFinish({
         url: thumbUrl
       })
@@ -628,28 +628,28 @@ const handleDelete = async (id) => {
     text-align: center;
     padding: 60px 20px;
   }
-  
+
   .card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .mobile-card {
     :deep(.n-card__content) {
       padding: 16px;
     }
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
-      
+
       .policy-info {
         flex: 1;
         margin-right: 12px;
-        
+
         .policy-name {
           font-size: 16px;
           font-weight: 600;
@@ -657,23 +657,23 @@ const handleDelete = async (id) => {
           margin: 0 0 4px 0;
           line-height: 1.4;
         }
-        
+
         .policy-meta {
           display: flex;
           flex-direction: column;
           gap: 6px;
           align-items: flex-start;
-          
+
           .policy-date {
             font-size: 12px;
             color: #6b7280;
           }
         }
       }
-      
+
       .policy-cover {
         flex-shrink: 0;
-        
+
         .no-cover {
           width: 80px;
           height: 60px;
@@ -686,7 +686,7 @@ const handleDelete = async (id) => {
         }
       }
     }
-    
+
     .card-content {
       display: flex;
       flex-direction: column;
@@ -695,17 +695,17 @@ const handleDelete = async (id) => {
       padding: 12px;
       background: #f9fafb;
       border-radius: 8px;
-      
+
       .info-item {
         display: flex;
         font-size: 13px;
-        
+
         .label {
           color: #6b7280;
           min-width: 80px;
           flex-shrink: 0;
         }
-        
+
         .policy-content-preview {
           color: #374151;
           line-height: 1.4;
@@ -717,20 +717,20 @@ const handleDelete = async (id) => {
         }
       }
     }
-    
+
     .card-actions {
       margin-top: 12px;
       padding-top: 12px;
       border-top: 1px solid #e5e7eb;
     }
   }
-  
+
   .mobile-pagination {
     margin-top: 16px;
     padding: 12px;
     background: #ffffff;
     border-radius: 8px;
-    
+
     :deep(.n-pagination) {
       justify-content: center;
     }
@@ -742,60 +742,60 @@ const handleDelete = async (id) => {
   .search-header {
     flex-direction: column;
     gap: 12px;
-    
+
     .search-form {
       width: 100%;
       min-width: auto;
-      
+
       :deep(.n-form-item) {
         margin-bottom: 12px;
-        
+
         .n-form-item-label {
           width: auto !important;
           margin-bottom: 4px;
         }
       }
     }
-    
+
     .action-buttons {
       width: 100%;
-      
+
       button {
         flex: 1;
       }
     }
   }
-  
+
   .management-card {
     :deep(.n-card__content) {
       padding: 12px;
     }
   }
-  
+
   // 移动端表单优化
   :deep(.n-modal) {
     .n-dialog {
       margin: 20px auto;
     }
-    
+
     .n-form-item {
       margin-bottom: 16px;
-      
+
       .n-form-item-label {
         font-weight: 500;
         margin-bottom: 8px;
       }
-      
+
       .n-input,
       .n-select,
       .n-date-picker {
         width: 100%;
       }
     }
-    
+
     .n-dialog__action {
       padding: 12px 16px;
-      
+
       .n-button {
         flex: 1;
         margin: 0 4px;

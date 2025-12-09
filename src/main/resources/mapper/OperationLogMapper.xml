@@ -9,6 +9,7 @@
         <result column="type" property="type" />
         <result column="description" property="description" />
         <result column="user_id" property="userId" />
+        <result column="user_name" property="userName" />
         <result column="operator" property="operator" />
         <result column="success" property="success" />
         <result column="params" property="params" />
@@ -24,6 +25,7 @@
             `type`,
             `description`,
             `user_id`,
+            'user_name',
             `operator`,
             `success`,
             `params`,

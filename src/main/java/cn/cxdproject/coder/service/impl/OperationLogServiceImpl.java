@@ -87,6 +87,7 @@ public class OperationLogServiceImpl extends ServiceImpl<OperationLogMapper, Ope
                 .type(operationLog.getType())
                 .description(operationLog.getDescription())
                 .userId(operationLog.getUserId())
+                .userName(operationLog.getUserName())
                 .operator(operationLog.getOperator())
                 .success(operationLog.getSuccess())
                 .params(operationLog.getParams())
