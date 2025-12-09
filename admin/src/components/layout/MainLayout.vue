@@ -10,14 +10,14 @@
     <n-layout-sider
       bordered
       :width="240"
-      :collapsed="collapsed"
+      v-model:collapsed="collapsed"
       :collapsed-width="64"
       collapse-mode="width"
       :native-scrollbar="false"
       class="sidebar"
       :class="{ 'mobile-sidebar': isMobile }"
       :show-trigger="!isMobile"
-      :collapsible="!isMobile"
+      :collapsible="true"
     >
       <div class="logo" :class="{ collapsed }">
         <div class="logo-content">
@@ -194,7 +194,7 @@ const menuOptions = [
   {
     label: '旅游线路管理',
     key: '/tourroute',
-    icon: 'mdi:guide'
+    icon: 'mdi:routes'
   },
   {
     label: '政策管理',
@@ -288,7 +288,7 @@ const handleUserSelect = (key) => {
 .sidebar {
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   &.mobile-sidebar {
     position: fixed !important;
@@ -299,9 +299,14 @@ const handleUserSelect = (key) => {
     height: 100vh;
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
     
-    &.n-layout-sider--collapsed {
+    :deep(.n-layout-sider--collapsed) {
       transform: translateX(-100%);
     }
+  }
+  
+  // 确保折叠状态正确应用
+  :deep(.n-layout-sider) {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .logo {

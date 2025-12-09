@@ -34,26 +34,26 @@ public class LocalStorageService implements FileStorageAdapter {
         try {
             String baseName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
-            // 构造本地存储路径
-            Path originDir = Paths.get(properties.getLocalBasePath(), "origin");
-            Path thumbDir = Paths.get(properties.getLocalBasePath(), "thumb");
+            // ✅ 关键改进：解析为绝对路径，并标准化（防止 ../ 等）
+            Path basePath = Paths.get(properties.getLocalBasePath()).toAbsolutePath().normalize();
+            Path originDir = basePath.resolve("origin");
+            Path thumbDir = basePath.resolve("thumb");
+
+            // 创建目录（幂等操作，存在也不报错）
             Files.createDirectories(originDir);
             Files.createDirectories(thumbDir);
 
             Path originPath = originDir.resolve(baseName);
             Path thumbPath = thumbDir.resolve(baseName);
 
-            // 1. 保存原图
+            // 保存原图
             file.transferTo(originPath.toFile());
 
-            // 返回相对路径，前端会根据配置拼接完整URL
             String originalUrl = "/files/origin/" + baseName;
             String thumbnailUrl = null;
 
-            // 2. 如果是图片，生成缩略图（建议同步生成，避免前端访问不到）
             if (isImageFile(file)) {
                 thumbnailUrl = "/files/thumb/" + baseName;
-                // 同步生成缩略图（更可靠）
                 generateLocalThumbnail(originPath, thumbPath);
             }
 

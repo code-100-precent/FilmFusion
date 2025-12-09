@@ -32,6 +32,8 @@ public class OperationLogVO {
      */
     private Long userId;
 
+    private String userName;
+
     /**
      * 操作人标识（用户名或IP）
      */

@@ -23,7 +23,7 @@ public class FileController {
 
     @PostMapping
     public ApiResponse imageUpload(@RequestPart("file") MultipartFile file) throws Exception {
-        FileVO fileVO = fileService.imageUpload(file);
-        return ApiResponse.success(fileVO);
+            FileVO fileVO = fileService.imageUpload(file);
+            return ApiResponse.success(fileVO);
     }
 }

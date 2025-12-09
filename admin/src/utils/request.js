@@ -103,11 +103,6 @@ service.interceptors.response.use(
   response => {
     const res = response.data
 
-    // 记录成功响应的基本信息
-    console.log(`请求成功: ${response.config.url}, 状态码: ${response.status}`)
-    console.log('响应数据 response.data:', JSON.stringify(res))
-    console.log('res.code:', res.code)
-
     if (res.code === 200) {
       return res
     } else {
@@ -123,7 +118,6 @@ service.interceptors.response.use(
           router.push('/login')
         }, 1000)
       }
-
       // 构建详细的错误对象
       const error = new Error(errorMsg)
       error.code = res.code
@@ -134,25 +128,12 @@ service.interceptors.response.use(
   },
   error => {
     // 增强错误日志记录
-    const requestInfo = error.config ?
-      `${error.config.method?.toUpperCase()} ${error.config.url}` : '未知请求'
-
-    console.error(`响应错误 - 请求: ${requestInfo}`)
-
-    // 声明 errorMsg 变量在函数作用域中
-    let errorMsg = '请求失败'
+    let errorMsg = ''
 
     if (error.response) {
       // 服务器返回了错误状态码
       const { status, statusText, config } = error.response
       const data = error.response.data
-
-      console.error(`HTTP错误: ${status} ${statusText}`)
-      console.error(`请求详情: ${JSON.stringify(config)}`)
-      console.error(`响应数据: ${JSON.stringify(data)}`)
-
-      errorMsg = `请求失败 (${status} ${statusText})`
-
       switch (status) {
         case 400:
           errorMsg = data?.message || '请求参数错误，请检查输入'
@@ -177,7 +158,6 @@ service.interceptors.response.use(
         default:
           errorMsg = data?.message || `请求失败 (${status} ${statusText})`
       }
-
       // 增强错误对象
       error.httpStatus = status
       error.errorType = 'http'
@@ -196,9 +176,6 @@ service.interceptors.response.use(
       // 其他错误
       console.error('请求配置错误:', error.message)
       errorMsg = error.message || '请求配置错误'
-
-      // 增强错误对象
-      error.errorType = 'config'
     }
 
     // 显示详细的错误信息

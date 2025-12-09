@@ -208,7 +208,7 @@ import { getImageUrl } from '@/utils/image'
 // Banner相关API函数
 const getBannerPage = (current = 1, size = 10, keyword = '') => {
   return request({
-    url: '/banner/admin/page',
+    url: '/banner/page',
     method: 'get',
     params: {
       current,

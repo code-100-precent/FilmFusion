@@ -18,12 +18,12 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    @Loggable(
-            type = LogType.FILE_UPLOAD,
-            value = "upload file"
-    )
+//    @Loggable(
+//            type = LogType.FILE_UPLOAD,
+//            value = "upload file"
+//    )
     public FileVO imageUpload(MultipartFile file) {
-        FileVO fileVO = fileStorageAdapter.upload(file);
-        return fileVO;
+            FileVO fileVO = fileStorageAdapter.upload(file);
+            return fileVO;
     }
 }

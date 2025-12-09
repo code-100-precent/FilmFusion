@@ -86,10 +86,6 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     @CircuitBreaker(name = "hotelGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.HOTEL_GET,
-            value = "Get hotel by ID: #{#hotelId}"
-    )
     public HotelVO getHotelById(Long hotelId) {
         Object store = cache.asMap().get(CaffeineConstants.HOTEL + hotelId);
         if (store != null) {
@@ -107,10 +103,6 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     @CircuitBreaker(name = "hotelGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.ARTICLE_USER_GET_PAGE,
-            value = "User get hotel"
-    )
     public List<HotelVO> getHotelPage(Long lastId, int size, String keyword) {
         List<Long> ids = hotelMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -249,10 +241,6 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     }
 
     @Override
-    @Loggable(
-            type = LogType.DRAMA_ADMIN_GET_PAGE,
-            value = "Admin get hotel Page"
-    )
     public Page<HotelVO> getHotelPageAdmin(Page<Hotel> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

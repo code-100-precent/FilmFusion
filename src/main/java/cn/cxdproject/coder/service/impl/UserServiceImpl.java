@@ -17,6 +17,7 @@ import cn.cxdproject.coder.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -367,7 +368,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 转换为VO
         Page<UserVO> voPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
         List<UserVO> voList = userPage.getRecords().stream()
-                .map(this::toUserVO)
+                .map(this::toUserAdminVO)
                 .collect(Collectors.toList());
         voPage.setRecords(voList);
 
@@ -391,9 +392,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         UserVO vo = new UserVO();
         BeanUtils.copyProperties(user, vo);
         // 电话号码脱敏在UserVO的getter方法中处理
+        vo.setPhoneNumber(getMaskedPhoneNumber(user.getPhoneNumber()));
+        return vo;
+    }
+
+    public UserVO toUserAdminVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVO vo = new UserVO();
+        BeanUtils.copyProperties(user, vo);
         vo.setPhoneNumber(user.getPhoneNumber());
         return vo;
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -444,5 +456,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         this.updateById(user);
 
         return fileVO;
+    }
+
+    /**
+     * 获取脱敏后的电话号码（用于JSON序列化）
+     */
+    public String getMaskedPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return null;
+        }
+        if (phoneNumber.length() <= 7) {
+            return phoneNumber;
+        }
+        // 保留前3位和后4位，中间用*代替
+        return phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(phoneNumber.length() - 4);
     }
 }
