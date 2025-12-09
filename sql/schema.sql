@@ -217,7 +217,7 @@ CREATE TABLE `fi_hotel` (
       PRIMARY KEY ( `id` )
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
 
-CREATE TABLE `fi_tour` (
+CREATE TABLE `fi_tours` (
      `id`              int               NOT NULL AUTO_INCREMENT,
      `name`            varchar(255)      NOT NULL COMMENT '体验游名称',
      `description`     varchar(2550)     NOT NULL COMMENT '介绍',

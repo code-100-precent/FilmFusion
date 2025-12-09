@@ -71,9 +71,9 @@ public interface UserConstants {
 
     String EMPTY_PASSWORD_HASH = generateComplexPassword();
 
-    String DEFAULT_USER = "https://codeonezerozero.cn:19000/code100/origin/1764422966905_picture1.png";
+    String DEFAULT_USER = "";
 
-    String DEFAULT_THUMB_USER = "https://codeonezerozero.cn:19000/code100/thumb/1764422966905_picture1.png";
+    String DEFAULT_THUMB_USER = "";
 
     String USER_LANGUAGE_DEFAULT = "zh-CN";
 

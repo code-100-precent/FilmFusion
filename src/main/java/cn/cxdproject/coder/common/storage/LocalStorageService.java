@@ -67,11 +67,15 @@ public class LocalStorageService implements FileStorageAdapter {
     public FileVO upload(String prefix, MultipartFile file) {
 
         try {
-            String baseName = System.currentTimeMillis() + "_" + prefix + "/" + file.getOriginalFilename();
+            // 清理文件名，移除路径分隔符，防止路径遍历攻击
+            String safeFilename = file.getOriginalFilename() != null 
+                ? file.getOriginalFilename().replaceAll("[/\\\\]", "_") 
+                : "file";
+            String baseName = System.currentTimeMillis() + "_" + safeFilename;
 
-            // 构造本地存储路径
-            Path originDir = Paths.get(properties.getLocalBasePath(), "origin");
-            Path thumbDir = Paths.get(properties.getLocalBasePath(), "thumb");
+            // 构造本地存储路径，prefix作为子目录
+            Path originDir = Paths.get(properties.getLocalBasePath(), prefix, "origin");
+            Path thumbDir = Paths.get(properties.getLocalBasePath(), prefix, "thumb");
             Files.createDirectories(originDir);
             Files.createDirectories(thumbDir);
 

@@ -444,9 +444,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 上传新头像
         FileVO fileVO = fileStorageAdapter.upload("avatars", avatarFile);
         
-        // 构建访问URL（本地存储使用/api/files/前缀）
-        String originUrl = "/api/files/" + fileVO.getOriginUrl();
-        String thumbUrl =  "/api/files/" + fileVO.getThumbUrl();
+        // fileVO.getOriginUrl() 返回的是 /files/... 格式（不包含/api前缀，因为前端baseURL已包含/api）
+        String originUrl = fileVO.getOriginUrl();
+        String thumbUrl = fileVO.getThumbUrl();
 
         fileVO.setOriginUrl(originUrl);
         fileVO.setThumbUrl(thumbUrl);

@@ -3,6 +3,7 @@ package cn.cxdproject.coder.config;
 import cn.cxdproject.coder.interceptor.AdminInterceptor;
 import cn.cxdproject.coder.interceptor.AuthInterceptor;
 import cn.cxdproject.coder.interceptor.RegistrationInterceptor;
+import cn.cxdproject.coder.common.storage.FileStorageProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -30,10 +31,13 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     private final RegistrationInterceptor registrationInterceptor;
 
-    public WebConfig(AuthInterceptor jwtInterceptor, AdminInterceptor adminInterceptor, RegistrationInterceptor registrationInterceptor) {
+    private final FileStorageProperties fileStorageProperties;
+
+    public WebConfig(AuthInterceptor jwtInterceptor, AdminInterceptor adminInterceptor, RegistrationInterceptor registrationInterceptor, FileStorageProperties fileStorageProperties) {
         this.jwtInterceptor = jwtInterceptor;
         this.adminInterceptor = adminInterceptor;
         this.registrationInterceptor = registrationInterceptor;
+        this.fileStorageProperties = fileStorageProperties;
     }
 
     @Override
@@ -64,6 +68,8 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .excludePathPatterns("/api/feedback/admin/**")
                 .addPathPatterns("/api/hotel/**")
                 .excludePathPatterns("/api/hotel/admin/**")
+                .addPathPatterns("/api/banner/**")
+                .excludePathPatterns("/api/banner/admin/**")
                 .addPathPatterns("/api/tour/**")
                 .excludePathPatterns("/api/tour/admin/**")
                 .addPathPatterns("/api/policy/**")
@@ -92,8 +98,9 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .addPathPatterns("/api/hotel/admin/**")
                 // 政策模块管理员接口
                 .addPathPatterns("/api/policy/admin/**")
-                //banner模块接口
-                .addPathPatterns("/api/banner/**")
+                //banner模块接口 - 只拦截需要管理员权限的接口，排除公开接口
+                .addPathPatterns("/api/banner/admin/**")
+                .excludePathPatterns("/api/banner/*", "/api/banner/page")
                 //操作日志相关接口
                 .addPathPatterns("/api/operationlog/admin/**");
         registry.addInterceptor(registrationInterceptor);
@@ -127,8 +134,7 @@ public class WebConfig extends WebMvcConfigurationSupport {
         registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/");
         registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/");
         registry.addResourceHandler("/images/**").addResourceLocations("classpath:/static/images/");
-        // 配置静态资源访问 - tmp文件夹
-        // 使用绝对路径，基于项目根目录
+        // 配置静态资源访问 - 使用配置文件中的localBasePath
         String projectRoot = System.getProperty("user.dir");
         String localBasePath = fileStorageProperties.getLocalBasePath();
         // 如果localBasePath是相对路径，则基于项目根目录
