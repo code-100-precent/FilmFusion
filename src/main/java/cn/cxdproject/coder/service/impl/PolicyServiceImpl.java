@@ -78,10 +78,6 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @Override
     @CircuitBreaker(name = "policyGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.POLICY_GET,
-            value = "Get policy by ID: #{#policyId}"
-    )
     public PolicyVO getPolicyById(Long policyId) {
         Object store = cache.asMap().get(CaffeineConstants.POLICY + policyId);
         if (store != null) {
@@ -99,10 +95,6 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @Override
     @CircuitBreaker(name = "policyGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.POLICY_USER_GET_PAGE,
-            value = "User get policy"
-    )
     public List<PolicyVO> getPolicyPage(Long lastId, int size, String keyword) {
         List<Long> ids = policyMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -237,10 +229,6 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     }
 
     @Override
-    @Loggable(
-            type = LogType.POLICY_ADMIN_GET_PAGE,
-            value = "Admin get policy Page"
-    )
     public Page<PolicyVO> getPolicyPageAdmin(Page<Policy> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

@@ -755,51 +755,35 @@ export const getPolicyPage = (current = 1, size = 10, keyword = '') => {
   })
 }
 
-/**
- * 根据ID获取政策
- */
 export const getPolicyById = (id) => {
   return request({
-    url: `/policy/${id}`,
+    url: `/api/policy/${id}`, // ← 加上 /api
     method: 'get'
   })
 }
 
-/**
- * 创建政策
- */
 export const createPolicy = (data) => {
   return request({
-    url: '/policy/admin/create',
+    url: '/api/policy/admin/create', // ← 加上 /api
     method: 'post',
     data
   })
 }
 
-// 为了兼容性，添加addPolicy作为createPolicy的别名
-export const addPolicy = createPolicy
-
-/**
- * 更新政策
- */
 export const updatePolicy = (id, data) => {
   return request({
-    url: `/policy/admin/update/${data.id}`,
+    url: `/api/policy/admin/update/${id}`, // ← 注意：这里应该是 id，不是 data.id
     method: 'put',
     data
   })
 }
 
-/**
- * 删除政策
- */
 export const deletePolicy = (id) => {
   return request({
-    url: `/policy/admin/delete/${id}`,
+    url: `/api/policy/admin/delete/${id}`, // ← 加上 /api
     method: 'delete'
   })
 }
-
 // ==================== 旅游线路管理 ====================
 
 /**

@@ -48,6 +48,9 @@ public class OperationLog extends BaseEntity implements Serializable, Cloneable 
     @TableField("user_id")
     private Long userId;
 
+    @TableField("user_name")
+    private String userName;
+
     /**
      * 操作人标识（用户名或IP）
      */

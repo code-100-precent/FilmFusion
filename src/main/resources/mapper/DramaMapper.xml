@@ -70,7 +70,10 @@
         FROM fi_dramas
         WHERE deleted = 0
         <if test="keyword != null and keyword != ''">
-            AND title LIKE CONCAT('%', #{keyword}, '%')
+            AND (
+            name LIKE CONCAT('%', #{keyword}, '%')
+            OR drama_description LIKE CONCAT('%', #{keyword}, '%')
+            )
         </if>
         ORDER BY created_at DESC
         LIMIT #{offset}, #{size}

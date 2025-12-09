@@ -23,7 +23,7 @@ code100:
     minio-access-key: minio
     minio-secret-key: minio
     minio-bucket: code100
-    local-base-path: ${user.home}/app_uploads
+    local-base-path: app_uploads
 
 # 基础服务器配置
 server:

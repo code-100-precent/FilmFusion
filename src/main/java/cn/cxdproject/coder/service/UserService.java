@@ -109,6 +109,9 @@ public interface UserService extends IService<User> {
      * @return 用户VO
      */
     UserVO toUserVO(User user);
+
+    //将User实体转换为UserVO(不对电话号码进行铭感处理)
+    UserVO toUserAdminVO(User user);
     
     /**
      * 上传用户头像

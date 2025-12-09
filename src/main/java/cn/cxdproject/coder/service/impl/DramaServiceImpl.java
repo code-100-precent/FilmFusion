@@ -86,10 +86,6 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     @CircuitBreaker(name = "dramaGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.DRAMA_GET,
-            value = "Get drama by ID: #{#dramaId}"
-    )
     public DramaVO getDramaById(Long dramaId) {
         Object store = cache.asMap().get(CaffeineConstants.DRAMA + dramaId);
         if (store != null) {
@@ -107,10 +103,6 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    @Loggable(
-            type = LogType.DRAMA_USER_GET_PAGE,
-            value = "User get drama page"
-    )
     public List<DramaVO> getDramaPage(Long lastId, int size, String keyword) {
         List<Long> ids = dramaMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -253,10 +245,6 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     }
 
     @Override
-    @Loggable(
-            type = LogType.DRAMA_ADMIN_GET_PAGE,
-            value = "Admin get drama page"
-    )
     public Page<DramaVO> getDramaPageAdmin(Page<Drama> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

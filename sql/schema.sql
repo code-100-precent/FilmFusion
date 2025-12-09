@@ -29,6 +29,7 @@ CREATE TABLE `fi_operation_logs`
     `type`        VARCHAR(100) NOT NULL COMMENT '操作类型（如：LOGIN、DOC_EDIT）',
     `description` TEXT COMMENT '操作描述',
     `user_id`     BIGINT COMMENT '执行用户ID',
+    `user_name`   varchar(50)  NOT NULL COMMENT '执行用户名',
     `operator`    VARCHAR(100) NOT NULL COMMENT '操作人标识（用户名或IP）',
     `success`     BOOLEAN      NOT NULL COMMENT '是否成功',
     `params`      TEXT COMMENT '输入参数快照',

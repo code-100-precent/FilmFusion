@@ -78,7 +78,7 @@
             LIMIT 10
     </select>
 
-    <update id="updateHotelSelective">
+    <update id="updateHotel">
         UPDATE fi_hotel
         <set>
             <if test="dto.name != null and dto.name != ''">

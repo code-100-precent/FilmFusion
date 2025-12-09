@@ -88,8 +88,10 @@ public class ServiceLogAspect {
         if (currentUser == null){
             log.warn("未登录");
             logEntity.setUserId(0L);
+            logEntity.setUserName("未登录");
         }else {
             logEntity.setUserId(currentUser.getId());
+            logEntity.setUserName(currentUser.getUsername());
         }
         String clientIp = IpUtils.getIpAddr();
         logEntity.setOperator(clientIp);
