@@ -78,6 +78,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .thumbImage(createDTO.getThumbImage())
                 .build();
 
+        shoot.setCreatedAt(LocalDateTime.now());
+        shoot.setUpdatedAt(LocalDateTime.now());
+
         this.save(shoot);
         return toShootVO(shoot);
     }

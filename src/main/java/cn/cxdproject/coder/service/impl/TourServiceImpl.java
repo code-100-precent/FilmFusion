@@ -76,6 +76,9 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .dramaId(createDTO.getDramaId())
                 .build();
 
+        tour.setCreatedAt(LocalDateTime.now());
+        tour.setUpdatedAt(LocalDateTime.now());
+
         this.save(tour);
         return toTourVO(tour);
     }

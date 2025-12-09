@@ -45,7 +45,7 @@ public class BannerController {
     /**
      * 分页查询
      */
-    @GetMapping("/page")
+    @GetMapping("/admin/page")
     @PublicAccess
     public PageResponse<BannerVO> getImagePage(
             @RequestParam(defaultValue = "1") Integer current,
@@ -65,7 +65,7 @@ public class BannerController {
     /**
      * 新增图片
      */
-    @PostMapping
+    @PostMapping("/admin/create")
     public ApiResponse<BannerVO> createImage(@Valid @RequestBody CreateBannerDTO createDTO) {
         BannerVO bannerVo = bannerService.createImage(createDTO);
         return ApiResponse.success(bannerVo);
@@ -74,7 +74,7 @@ public class BannerController {
     /**
      * 更新图片信息
      */
-    @PutMapping("/update/{id}")
+    @PutMapping("/admin/update/{id}")
     public ApiResponse<BannerVO> updateImage(
             @PathVariable @NotNull(message = "图片ID不能为空") Long id,
             @Valid @RequestBody UpdateBannerDTO updateDTO) {
@@ -85,7 +85,7 @@ public class BannerController {
     /**
      * 删除
      */
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/admin/delete/{id}")
     public ApiResponse<Void> deleteImage(@PathVariable @NotNull(message = "图片ID不能为空") Long id) {
         bannerService.deleteImage(id);
         return ApiResponse.success();

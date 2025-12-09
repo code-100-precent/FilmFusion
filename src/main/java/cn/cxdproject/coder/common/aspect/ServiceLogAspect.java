@@ -98,7 +98,7 @@ public class ServiceLogAspect {
 
 
 
-        // ===== 4. 请求参数快照（使用你的 JsonUtils）=====
+        // 4. 请求参数快照
         try {
             logEntity.setParams(JsonUtils.toJson(joinPoint.getArgs()));
         } catch (Exception e) {
@@ -106,7 +106,7 @@ public class ServiceLogAspect {
             logEntity.setParams("[PARAM_SERIALIZE_ERROR]");
         }
 
-        // ===== 5. 执行目标方法并记录结果 =====
+        // 5. 执行目标方法并记录结果
         Object result;
         try {
             result = joinPoint.proceed();
@@ -128,7 +128,7 @@ public class ServiceLogAspect {
             throw ex;
         }
 
-        // ===== 6. 异步保存日志 =====
+        //  6. 异步保存日志
         saveLogAsync(logEntity);
 
         return result;

@@ -28,6 +28,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,6 +71,9 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .image(createDTO.getImage())
                 .thumbImage(createDTO.getThumbImage())
                 .build();
+
+        policy.setCreatedAt(LocalDateTime.now());
+        policy.setUpdatedAt(LocalDateTime.now());
 
         this.save(policy);
         return toPolicyVO(policy);

@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,6 +79,9 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .latitude(createDTO.getLatitude())
                 .longitude(createDTO.getLongitude())
                 .build();
+
+        hotel.setCreatedAt(LocalDateTime.now());
+        hotel.setUpdatedAt(LocalDateTime.now());
 
         this.save(hotel);
         return toHotelVO(hotel);

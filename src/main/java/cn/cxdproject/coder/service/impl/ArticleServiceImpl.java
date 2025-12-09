@@ -123,6 +123,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .thumbImage(createDTO.getThumbImage())
                 .build();
 
+        article.setCreatedAt(LocalDateTime.now());
+        article.setUpdatedAt(LocalDateTime.now());
+
         // 保存文章
         this.save(article);
         return toArticleVO(article);
