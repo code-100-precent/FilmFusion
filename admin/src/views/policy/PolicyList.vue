@@ -39,6 +39,85 @@
         @update:page-size="handlePageSizeChange"
         :scroll-x="1500"
       />
+      
+      <!-- 移动端卡片列表 -->
+      <div v-else class="mobile-list">
+        <n-spin :show="loading">
+          <div v-if="policyList.length === 0 && !loading" class="empty-state">
+            <Icon icon="mdi:file-document-off" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
+            <p style="color: #9ca3af;">暂无数据</p>
+          </div>
+          <div v-else class="card-list">
+            <n-card
+              v-for="policy in policyList"
+              :key="policy.id"
+              class="mobile-card"
+              hoverable
+            >
+              <div class="card-header">
+                <div class="policy-info">
+                  <h3 class="policy-name">{{ policy.title }}</h3>
+                  <div class="policy-meta">
+                    <n-tag :type="policy.type === '省级' ? 'info' : 'warning'" size="small">
+                      {{ policy.type || '-' }}
+                    </n-tag>
+                    <span class="policy-date">{{ formatDate(policy.issueTime) }}</span>
+                  </div>
+                </div>
+                <div class="policy-cover">
+                  <n-image
+                    v-if="policy.cover"
+                    :src="getImageUrl(policy.cover)"
+                    width="80"
+                    height="60"
+                    object-fit="cover"
+                    preview-disabled
+                  />
+                  <div v-else class="no-cover">
+                    <Icon icon="mdi:file-document" :width="32" />
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="info-item">
+                  <span class="label">发布单位：</span>
+                  <span>{{ policy.issueUnit || '-' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">内容预览：</span>
+                  <p class="policy-content-preview">{{ policy.content || '-' }}</p>
+                </div>
+              </div>
+              <div class="card-actions">
+                <n-button size="small" @click="handleEdit(policy)" block style="margin-bottom: 8px">
+                  编辑
+                </n-button>
+                <n-popconfirm @positive-click="handleDelete(policy.id)">
+                  <template #trigger>
+                    <n-button size="small" type="error" quaternary block>
+                      删除
+                    </n-button>
+                  </template>
+                  确定要删除这个政策吗？
+                </n-popconfirm>
+              </div>
+            </n-card>
+          </div>
+          
+          <!-- 移动端分页 -->
+          <div class="mobile-pagination">
+            <n-pagination
+              :page="pagination.page"
+              :page-size="pagination.pageSize"
+              :item-count="pagination.itemCount"
+              :page-sizes="[10, 20, 50]"
+              show-size-picker
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+            />
+          </div>
+        </n-spin>
+      </div>
     </n-card>
     
     <n-modal v-model:show="dialogVisible" preset="dialog" :title="dialogTitle" style="width: 900px">
@@ -55,20 +134,24 @@
         <n-form-item label="发布日期" path="issueDate">
           <n-date-picker v-model:value="policyForm.issueDate" type="date" clearable />
         </n-form-item>
-        <n-form-item label="政策内容" path="content">
-          <n-input v-model:value="policyForm.content" type="textarea" :rows="8" placeholder="请输入政策内容" />
-        </n-form-item>
         <n-form-item label="封面图片" path="cover">
-          <n-input v-model:value="policyForm.cover" placeholder="请输入封面图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略封面" path="thumbCover">
-          <n-input v-model:value="policyForm.thumbCover" placeholder="请输入缩略封面URL" />
-        </n-form-item>
-        <n-form-item label="详情图片" path="image">
-          <n-input v-model:value="policyForm.image" placeholder="请输入详情图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略详情图" path="thumbImage">
-          <n-input v-model:value="policyForm.thumbImage" placeholder="请输入缩略详情图URL" />
+          <n-upload
+            :max="1"
+            :file-list="coverFileList"
+            @update:file-list="handleCoverFileListChange"
+            :custom-request="handleCoverUpload"
+            accept="image/*"
+          >
+            <n-button>上传封面图片</n-button>
+          </n-upload>
+          <div v-if="policyForm.cover" style="margin-top: 12px;">
+            <n-image
+              :src="getImageUrl(policyForm.thumbCover || policyForm.cover)"
+              width="200"
+              height="120"
+              object-fit="cover"
+            />
+          </div>
         </n-form-item>
         <n-form-item label="状态" path="status">
           <n-select v-model:value="policyForm.status" :options="statusOptions" />
@@ -96,11 +179,13 @@ import {
   NModal,
   NSelect,
   NDatePicker,
+  NUpload,
   useMessage,
   NImage,
   NTag
 } from 'naive-ui'
-import { getPolicyPage, addPolicy, updatePolicy, deletePolicy, getPolicyById } from '@/api'
+import { getPolicyPage, addPolicy, updatePolicy, deletePolicy, getPolicyById, uploadFile } from '@/api'
+import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -130,6 +215,13 @@ const policyForm = reactive({
   thumbImage: '',
   status: 1
 })
+
+const coverFileList = ref([])
+
+const typeOptions = [
+  { label: '省级', value: '省级' },
+  { label: '市级', value: '市级' }
+]
 
 const pagination = reactive({
   page: 1,
@@ -164,13 +256,25 @@ const columns = [
     key: 'cover',
     width: 100,
     render: (row) => {
-      if (!row.cover) return '-'
+      // 优先使用缩略封面，如果没有则使用封面、缩略图或原图
+      const coverUrl = row.thumbCover || row.cover || row.thumbImage || row.image
+      if (!coverUrl) return '-'
+      
+      const originalUrl = row.cover || row.image || coverUrl
+      
       return h(NImage, {
         width: 60,
         height: 45,
-        src: row.cover,
+        src: getImageUrl(coverUrl),
         objectFit: 'cover',
-        style: { borderRadius: '4px' }
+        style: { borderRadius: '4px' },
+        previewDisabled: false,
+        srcset: [
+          {
+            src: getImageUrl(originalUrl),
+            alt: '政策封面'
+          }
+        ]
       })
     }
   },
@@ -280,6 +384,7 @@ const handleAdd = () => {
     thumbImage: '',
     status: 1
   })
+  coverFileList.value = []
   dialogVisible.value = true
 }
 
@@ -288,11 +393,38 @@ const handleEdit = async (row) => {
     const res = await getPolicyById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑政策'
-      Object.assign(policyForm, res.data)
+      // 后端现在返回 cover 和 thumbCover 字段（已添加），直接使用
+      Object.assign(policyForm, {
+        id: res.data.id,
+        title: res.data.title || '',
+        type: res.data.type || '省级',
+        issueUnit: res.data.issueUnit || '',
+        issueTime: res.data.issueTime || null,
+        content: res.data.content || '',
+        cover: res.data.cover || res.data.image || '',
+        image: res.data.image || '',
+        thumbCover: res.data.thumbCover || res.data.thumbImage || '',
+        thumbImage: res.data.thumbImage || '',
+        status: res.data.status || 1
+      })
+      
+      // 设置封面图片文件列表
+      if (res.data.cover || res.data.thumbCover) {
+        coverFileList.value = [{
+          id: 'cover',
+          name: 'cover.jpg',
+          status: 'finished',
+          url: res.data.thumbCover || res.data.cover
+        }]
+      } else {
+        coverFileList.value = []
+      }
+      
       dialogVisible.value = true
     }
   } catch (error) {
     console.error('获取政策详情失败:', error)
+    message.error('获取政策详情失败')
   }
 }
 
@@ -306,17 +438,15 @@ const handleDialogSave = async () => {
   
   try {
     dialogLoading.value = true
+    // DTO只支持 image 和 thumbImage，将 cover 映射到 image，thumbCover 映射到 thumbImage
     const data = {
       title: policyForm.title,
       type: policyForm.type,
       issueUnit: policyForm.issueUnit,
       issueDate: policyForm.issueDate,
       content: policyForm.content,
-      cover: policyForm.cover,
-      image: policyForm.image,
-      thumbCover: policyForm.thumbCover,
-      thumbImage: policyForm.thumbImage,
-      status: policyForm.status
+      image: policyForm.cover || policyForm.image, // 封面图片映射到 image
+      thumbImage: policyForm.thumbCover || policyForm.thumbImage // 缩略封面映射到 thumbImage
     }
     
     let res
@@ -335,6 +465,55 @@ const handleDialogSave = async () => {
     console.error('保存失败:', error)
   } finally {
     dialogLoading.value = false
+  }
+}
+
+// 处理封面图片上传
+const handleCoverUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || originUrl
+      
+      policyForm.cover = originUrl
+      policyForm.thumbCover = thumbUrl
+      
+      // 更新文件列表中的URL，用于预览显示
+      const fileIndex = coverFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
+      if (fileIndex !== -1) {
+        coverFileList.value[fileIndex].url = thumbUrl
+        coverFileList.value[fileIndex].status = 'finished'
+      } else {
+        coverFileList.value.push({
+          id: file.id || 'cover',
+          name: file.name || 'cover.jpg',
+          status: 'finished',
+          url: thumbUrl
+        })
+      }
+      
+      onFinish({
+        url: thumbUrl
+      })
+      message.success('封面图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传封面图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 处理封面文件列表变化
+const handleCoverFileListChange = (files) => {
+  coverFileList.value = files
+  if (files.length === 0) {
+    policyForm.cover = ''
+    policyForm.thumbCover = ''
   }
 }
 

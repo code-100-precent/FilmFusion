@@ -1,6 +1,7 @@
 import axios from 'axios'
 import router from '@/router'
 import { useMessage } from 'naive-ui'
+import config from '@/config'
 
 // 创建消息实例（在需要时使用）
 let messageInstance = null
@@ -16,7 +17,7 @@ const getMessage = () => {
 }
 
 const service = axios.create({
-  baseURL: '/api',
+  baseURL: config.apiBaseURL,
   timeout: 30000
 })
 

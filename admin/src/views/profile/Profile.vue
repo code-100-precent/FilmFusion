@@ -125,7 +125,8 @@ import {
   useMessage
 } from 'naive-ui'
 import { useUserStore } from '@/store/user'
-import { getAdminInfo, updateAdminInfo, changePassword, uploadAvatar } from '@/api'
+import { getAdminInfo, changePassword, uploadAvatar } from '@/api'
+import { getImageUrl } from '@/utils/image'
 
 const userStore = useUserStore()
 const message = useMessage()
@@ -149,15 +150,13 @@ const passwordForm = reactive({
   confirmPassword: ''
 })
 
-const formRules = {
-  username: [
-    { required: true, message: '用户名不能为空', trigger: 'blur' }
-  ],
-  phoneNumber: [
-    { required: true, message: '手机号不能为空', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
-  ]
-}
+// 计算头像URL
+const avatarUrl = computed(() => {
+  if (!userInfo.value || !userInfo.value.avatar) {
+    return ''
+  }
+  return getImageUrl(userInfo.value.avatar)
+})
 
 const passwordRules = {
   oldPassword: [

@@ -130,8 +130,18 @@ public class WebConfig extends WebMvcConfigurationSupport {
         // 配置静态资源访问 - tmp文件夹
         // 使用绝对路径，基于项目根目录
         String projectRoot = System.getProperty("user.dir");
+        String localBasePath = fileStorageProperties.getLocalBasePath();
+        // 如果localBasePath是相对路径，则基于项目根目录
+        String basePath = localBasePath != null && !localBasePath.startsWith("/") 
+            ? projectRoot + "/" + localBasePath 
+            : (localBasePath != null ? localBasePath : projectRoot + "/tmp/uploads");
+        // 确保路径以/结尾
+        if (!basePath.endsWith("/")) {
+            basePath += "/";
+        }
+        // 配置静态资源访问 - /api/files路径映射到本地存储
         registry.addResourceHandler("/api/files/**")
-                .addResourceLocations("file:" + projectRoot + "/tmp/uploads/");
+                .addResourceLocations("file:" + basePath);
     }
 
 }

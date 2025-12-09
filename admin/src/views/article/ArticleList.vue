@@ -50,16 +50,46 @@
           <n-input v-model:value="articleForm.content" type="textarea" :rows="10" placeholder="请输入文章内容" />
         </n-form-item>
         <n-form-item label="封面图片" path="cover">
-          <n-input v-model:value="articleForm.cover" placeholder="请输入封面图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略封面" path="thumbCover">
-          <n-input v-model:value="articleForm.thumbCover" placeholder="请输入缩略封面URL" />
+          <n-upload
+            :max="1"
+            :file-list="coverFileList"
+            @update:file-list="handleCoverFileListChange"
+            :custom-request="handleCoverUpload"
+            accept="image/*"
+          >
+            <n-button>上传封面图片</n-button>
+          </n-upload>
+          <div v-if="articleForm.cover" style="margin-top: 12px;">
+            <n-image
+              :src="getImageUrl(articleForm.thumbCover || articleForm.cover)"
+              width="200"
+              height="120"
+              object-fit="cover"
+            />
+          </div>
         </n-form-item>
         <n-form-item label="详情图片" path="image">
-          <n-input v-model:value="articleForm.image" placeholder="请输入详情图片URL" />
-        </n-form-item>
-        <n-form-item label="缩略详情图" path="thumbImage">
-          <n-input v-model:value="articleForm.thumbImage" placeholder="请输入缩略详情图URL" />
+          <n-upload
+            :max="10"
+            :file-list="imageFileList"
+            @update:file-list="handleImageFileListChange"
+            :custom-request="handleImageUpload"
+            accept="image/*"
+            multiple
+          >
+            <n-button>上传详情图片（可多张）</n-button>
+          </n-upload>
+          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <n-image
+              v-for="(file, index) in imageFileList"
+              :key="index"
+              :src="getImageUrl(file.url)"
+              width="100"
+              height="75"
+              object-fit="cover"
+              style="border-radius: 4px;"
+            />
+          </div>
         </n-form-item>
       </n-form>
       <template #action>
@@ -85,9 +115,11 @@ import {
   NDatePicker,
   useMessage,
   useDialog,
-  NImage
+  NImage,
+  NUpload
 } from 'naive-ui'
-import { getArticlePage, addArticle, updateArticle, deleteArticle, getArticleById } from '@/api'
+import { getArticlePage, addArticle, updateArticle, deleteArticle, getArticleById, uploadFile } from '@/api'
+import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -115,6 +147,9 @@ const articleForm = reactive({
   thumbImage: ''
 })
 
+const coverFileList = ref([])
+const imageFileList = ref([])
+
 const pagination = reactive({
   page: 1,
   pageSize: 10,
@@ -137,13 +172,16 @@ const columns = [
     key: 'cover',
     width: 100,
     render: (row) => {
-      if (!row.cover) return '-'
+      // 使用 thumbImage 或 image 作为封面显示
+      const coverUrl = row.thumbImage || row.image || row.cover || row.thumbCover
+      if (!coverUrl) return '-'
       return h(NImage, {
         width: 60,
         height: 45,
-        src: row.cover,
+        src: getImageUrl(coverUrl),
         objectFit: 'cover',
-        style: { borderRadius: '4px' }
+        style: { borderRadius: '4px' },
+        previewDisabled: false
       })
     }
   },
@@ -234,6 +272,8 @@ const handleAdd = () => {
     thumbCover: '',
     thumbImage: ''
   })
+  coverFileList.value = []
+  imageFileList.value = []
   dialogVisible.value = true
 }
 
@@ -242,21 +282,151 @@ const handleEdit = async (row) => {
     const res = await getArticleById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑文章'
+      // 后端返回的是 image 和 thumbImage，映射到前端的 cover 和 thumbCover
       Object.assign(articleForm, {
         id: res.data.id,
         title: res.data.title,
         issueUnit: res.data.issueUnit,
         content: res.data.content,
-        cover: res.data.cover,
-        image: res.data.image,
-        thumbCover: res.data.thumbCover,
-        thumbImage: res.data.thumbImage
+        cover: res.data.image || res.data.cover, // 后端返回的是 image，映射到 cover
+        image: res.data.image, // 详情图片
+        thumbCover: res.data.thumbImage || res.data.thumbCover, // 后端返回的是 thumbImage，映射到 thumbCover
+        thumbImage: res.data.thumbImage // 缩略详情图
       })
+      
+      // 设置封面图片文件列表（使用 image 或 thumbImage）
+      if (res.data.image || res.data.thumbImage) {
+        coverFileList.value = [{
+          id: 'cover',
+          name: 'cover.jpg',
+          status: 'finished',
+          url: res.data.thumbImage || res.data.image
+        }]
+      } else {
+        coverFileList.value = []
+      }
+      
+      // 设置详情图片文件列表（支持多张）
+      if (res.data.image) {
+        const imageUrls = res.data.image.split(',').filter(url => url.trim())
+        imageFileList.value = imageUrls.map((url, index) => ({
+          id: `image-${index}`,
+          name: `image-${index}.jpg`,
+          status: 'finished',
+          url: url.trim()
+        }))
+      } else {
+        imageFileList.value = []
+      }
+      
       dialogVisible.value = true
     }
   } catch (error) {
     console.error('获取文章详情失败:', error)
   }
+}
+
+// 处理封面图片上传
+const handleCoverUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || originUrl
+      
+      articleForm.cover = originUrl
+      articleForm.thumbCover = thumbUrl
+      
+      // 更新文件列表中的URL，用于预览显示
+      const fileIndex = coverFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
+      if (fileIndex !== -1) {
+        coverFileList.value[fileIndex].url = thumbUrl
+        coverFileList.value[fileIndex].status = 'finished'
+      } else {
+        // 如果找不到，添加新文件
+        coverFileList.value.push({
+          id: file.id || 'cover',
+          name: file.name || 'cover.jpg',
+          status: 'finished',
+          url: thumbUrl
+        })
+      }
+      
+      onFinish({
+        url: thumbUrl
+      })
+      message.success('封面图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传封面图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 处理详情图片上传
+const handleImageUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || originUrl
+      
+      // 添加到图片列表
+      const existingImages = articleForm.image ? articleForm.image.split(',').filter(url => url.trim()) : []
+      existingImages.push(originUrl)
+      articleForm.image = existingImages.join(',')
+      
+      // 更新文件列表中的URL，用于预览显示
+      const fileIndex = imageFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
+      if (fileIndex !== -1) {
+        imageFileList.value[fileIndex].url = thumbUrl
+        imageFileList.value[fileIndex].status = 'finished'
+      } else {
+        // 如果找不到，添加新文件
+        imageFileList.value.push({
+          id: file.id || `image-${Date.now()}`,
+          name: file.name || 'image.jpg',
+          status: 'finished',
+          url: thumbUrl
+        })
+      }
+      
+      onFinish({
+        url: thumbUrl
+      })
+      message.success('详情图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传详情图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 处理封面文件列表变化
+const handleCoverFileListChange = (files) => {
+  coverFileList.value = files
+  if (files.length === 0) {
+    articleForm.cover = ''
+    articleForm.thumbCover = ''
+  }
+}
+
+// 处理详情图片文件列表变化
+const handleImageFileListChange = (files) => {
+  imageFileList.value = files
+  // 更新image字段为逗号分隔的URL字符串
+  const imageUrls = files
+    .filter(file => file.status === 'finished' && file.url)
+    .map(file => file.url)
+  articleForm.image = imageUrls.join(',')
 }
 
 const handleDialogSave = async () => {
@@ -269,14 +439,13 @@ const handleDialogSave = async () => {
   
   try {
     dialogLoading.value = true
+    // DTO只支持 image 和 thumbImage，将 cover 映射到 image，thumbCover 映射到 thumbImage
     const data = {
       title: articleForm.title,
       issueUnit: articleForm.issueUnit,
       content: articleForm.content,
-      cover: articleForm.cover,
-      image: articleForm.image,
-      thumbCover: articleForm.thumbCover,
-      thumbImage: articleForm.thumbImage
+      image: articleForm.cover || articleForm.image, // 封面图片映射到 image
+      thumbImage: articleForm.thumbCover || articleForm.thumbImage // 缩略封面映射到 thumbImage
     }
     
     let res

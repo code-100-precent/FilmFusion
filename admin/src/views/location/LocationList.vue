@@ -92,6 +92,7 @@ import {
   useMessage
 } from 'naive-ui'
 import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById } from '@/api'
+import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -151,74 +152,40 @@ const formRules = {
 }
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
-  { title: '场地名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+  { title: 'ID', key: 'id', width: 80 },
+  { title: '场地名称', key: 'name', width: 150, ellipsis: { tooltip: true } },
+  { title: '类型', key: 'type', width: 100 },
   {
-    title: '类型',
-    key: 'type',
-    width: 120,
-    render: (row) => {
-      const typeMap = {
-        '自然风光': '自然风光',
-        '历史建筑': '历史建筑',
-        '现代建筑': '现代建筑',
-        '文化场所': '文化场所',
-        '商业场所': '商业场所',
-        '古镇古村': '古镇古村',
-        '其他': '其他'
-      }
-      return typeMap[row.type] || row.type
-    }
-  },
-  { title: '场地描述', key: 'locationDescription', width: 250, ellipsis: { tooltip: true } },
-  { title: '地址', key: 'address', width: 200, ellipsis: { tooltip: true } },
-  { title: '价格', key: 'price', width: 120, render: (row) => `¥${row.price || 0}` },
-  { title: '场地联系人', key: 'locationPrincipalName', width: 120 },
-  { title: '场地电话', key: 'locationPrincipalPhone', width: 130 },
-  { title: '政府联系人', key: 'govPrincipalName', width: 120 },
-  { title: '政府电话', key: 'govPrincipalPhone', width: 130 },
-  { title: '经度', key: 'longitude', width: 100 },
-  { title: '纬度', key: 'latitude', width: 100 },
-  {
-    title: '状态',
-    key: 'status',
+    title: '封面',
+    key: 'cover',
     width: 100,
     render: (row) => {
-      const isActive = row.status === true || row.status === 1
-      return h(NTag, { 
-        type: isActive ? 'success' : 'error', 
-        size: 'small' 
-      }, { 
-        default: () => isActive ? '可用' : '不可用' 
-      })
-    }
-  },
-  { 
-    title: '封面图', 
-    key: 'cover', 
-    width: 100,
-    render: (row) => {
-      if (!row.cover) return '-'
+      // 优先使用缩略图，如果没有则使用原图
+      const coverUrl = row.thumbImage || row.image || row.cover || row.thumbCover
+      if (!coverUrl) return '-'
+      
+      const originalUrl = row.image || row.cover || coverUrl
+      
       return h(NImage, {
         width: 60,
         height: 45,
-        src: row.cover,
+        src: getImageUrl(coverUrl),
         objectFit: 'cover',
-        style: { borderRadius: '4px' }
+        previewDisabled: false,
+        showToolbar: false,
+        srcset: [
+          {
+            src: getImageUrl(originalUrl),
+            alt: '场地封面'
+          }
+        ]
       })
     }
   },
-  {
-    title: '创建时间',
-    key: 'createdAt',
-    width: 180,
-    render: (row) => {
-      if (Array.isArray(row.createdAt)) {
-        return dayjs(row.createdAt[0] + '-' + String(row.createdAt[1]).padStart(2, '0') + '-' + String(row.createdAt[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
-      }
-      return row.createdAt ? dayjs(row.createdAt).format('YYYY-MM-DD HH:mm:ss') : '-'
-    }
-  },
+  { title: '地址', key: 'address', width: 200, ellipsis: { tooltip: true } },
+  { title: '联系人', key: 'locationPrincipalName', width: 120 },
+  { title: '联系电话', key: 'locationPrincipalPhone', width: 130 },
+  { title: '价格', key: 'price', width: 100, render: (row) => row.price ? '¥' + row.price : '-' },
   {
     title: '操作',
     key: 'actions',
@@ -239,9 +206,51 @@ const columns = [
   }
 ]
 
-onMounted(() => {
-  loadData()
-})
+const handleDialogSave = async () => {
+  if (!formRef.value) return
+  
+  try {
+    await formRef.value.validate()
+  } catch (error) {
+    return
+  }
+  
+  try {
+    dialogLoading.value = true
+    const data = { ...locationForm }
+    
+    let res
+    if (locationForm.id) {
+      res = await updateLocation(locationForm.id, data)
+    } else {
+      res = await addLocation(data)
+    }
+    
+    if (res.code === 200) {
+      message.success(locationForm.id ? '更新成功' : '创建成功')
+      dialogVisible.value = false
+      loadData()
+    }
+  } catch (error) {
+    console.error('保存失败:', error)
+    message.error('保存失败')
+  } finally {
+    dialogLoading.value = false
+  }
+}
+
+const handleDelete = async (id) => {
+  try {
+    const res = await deleteLocation(id)
+    if (res.code === 200) {
+      message.success('删除成功')
+      loadData()
+    }
+  } catch (error) {
+    console.error('删除失败:', error)
+    message.error('删除失败')
+  }
+}
 
 const loadData = async () => {
   try {

@@ -46,13 +46,13 @@ public class LocalStorageService implements FileStorageAdapter {
             // 1. 保存原图
             file.transferTo(originPath.toFile());
 
-            String baseUrl = "/api/files"; // 假设你通过此路径提供静态资源访问
-            String originalUrl = baseUrl + "/origin/" + baseName;
+            // 返回相对路径，前端会根据配置拼接完整URL
+            String originalUrl = "/files/origin/" + baseName;
             String thumbnailUrl = null;
 
             // 2. 如果是图片，生成缩略图（建议同步生成，避免前端访问不到）
             if (isImageFile(file)) {
-                thumbnailUrl = baseUrl + "/thumb/" + baseName;
+                thumbnailUrl = "/files/thumb/" + baseName;
                 // 同步生成缩略图（更可靠）
                 generateLocalThumbnail(originPath, thumbPath);
             }
@@ -81,13 +81,13 @@ public class LocalStorageService implements FileStorageAdapter {
             // 1. 保存原图
             file.transferTo(originPath.toFile());
 
-            String baseUrl = "/api/files"; // 假设你通过此路径提供静态资源访问
-            String originalUrl = baseUrl + "/origin/" + baseName;
+            // 返回相对路径，前端会根据配置拼接完整URL
+            String originalUrl = "/files/" + prefix + "/origin/" + baseName;
             String thumbnailUrl = null;
 
             // 2. 如果是图片，生成缩略图（建议同步生成，避免前端访问不到）
             if (isImageFile(file)) {
-                thumbnailUrl = baseUrl + "/thumb/" + baseName;
+                thumbnailUrl = "/files/" + prefix + "/thumb/" + baseName;
                 // 同步生成缩略图（更可靠）
                 generateLocalThumbnail(originPath, thumbPath);
             }
@@ -99,12 +99,30 @@ public class LocalStorageService implements FileStorageAdapter {
     }
 
     /**
+     * 将URL路径转换为本地文件系统路径
+     * 例如: /files/avatars/origin/xxx.jpg -> avatars/origin/xxx.jpg
+     */
+    private String convertUrlPathToLocalPath(String path) {
+        if (path == null || path.isEmpty()) {
+            return path;
+        }
+        // 移除 /files 前缀（如果存在）
+        if (path.startsWith("/files/")) {
+            path = path.substring(7); // 移除 "/files/"
+        } else if (path.startsWith("files/")) {
+            path = path.substring(6); // 移除 "files/"
+        }
+        return path;
+    }
+
+    /**
      * 下载文件
      */
     @Override
     public byte[] download(String path) {
         try {
-            Path filePath = Paths.get(properties.getLocalBasePath(), path);
+            String localPath = convertUrlPathToLocalPath(path);
+            Path filePath = Paths.get(properties.getLocalBasePath(), localPath);
             return Files.readAllBytes(filePath);
         } catch (IOException e) {
             throw new RuntimeException("本地文件下载失败", e);
@@ -117,28 +135,47 @@ public class LocalStorageService implements FileStorageAdapter {
     @Override
     public void delete(String path) {
         try {
-            Path filePath = Paths.get(properties.getLocalBasePath(), path);
+            String localPath = convertUrlPathToLocalPath(path);
+            Path filePath = Paths.get(properties.getLocalBasePath(), localPath);
             Files.deleteIfExists(filePath);
+            
+            // 如果是图片，同时删除缩略图
+            if (localPath.contains("/origin/")) {
+                String thumbPath = localPath.replace("/origin/", "/thumb/");
+                Path thumbFilePath = Paths.get(properties.getLocalBasePath(), thumbPath);
+                Files.deleteIfExists(thumbFilePath);
+            }
         } catch (IOException e) {
             throw new RuntimeException("本地文件删除失败", e);
         }
     }
-
 
     /**
      * 文件是否存在
      */
     @Override
     public boolean exists(String path) {
-        return Files.exists(Paths.get(properties.getLocalBasePath(), path));
+        String localPath = convertUrlPathToLocalPath(path);
+        return Files.exists(Paths.get(properties.getLocalBasePath(), localPath));
     }
 
     /**
      * 获取文件URL
+     * 如果path已经是/files/开头的URL，直接返回
+     * 如果是本地路径，转换为/files/开头的URL
      */
     @Override
     public String getUrl(String path) {
-        return "file://" + Paths.get(properties.getLocalBasePath(), path).toAbsolutePath();
+        if (path == null || path.isEmpty()) {
+            return path;
+        }
+        // 如果已经是 /files/ 开头的URL，直接返回
+        if (path.startsWith("/files/")) {
+            return path;
+        }
+        // 如果是本地路径，转换为 /files/ 开头的URL
+        String localPath = convertUrlPathToLocalPath(path);
+        return "/files/" + localPath;
     }
 
     /**
@@ -147,7 +184,8 @@ public class LocalStorageService implements FileStorageAdapter {
     @Override
     public long getFileSize(String path) {
         try {
-            return Files.size(Paths.get(properties.getLocalBasePath(), path));
+            String localPath = convertUrlPathToLocalPath(path);
+            return Files.size(Paths.get(properties.getLocalBasePath(), localPath));
         } catch (IOException e) {
             throw new RuntimeException("获取文件大小失败", e);
         }
@@ -159,7 +197,8 @@ public class LocalStorageService implements FileStorageAdapter {
     @Override
     public String getContentType(String path) {
         try {
-            return Files.probeContentType(Paths.get(properties.getLocalBasePath(), path));
+            String localPath = convertUrlPathToLocalPath(path);
+            return Files.probeContentType(Paths.get(properties.getLocalBasePath(), localPath));
         } catch (IOException e) {
             throw new RuntimeException("获取文件类型失败", e);
         }
@@ -171,8 +210,10 @@ public class LocalStorageService implements FileStorageAdapter {
     @Override
     public void rename(String oldPath, String newPath) {
         try {
-            Path source = Paths.get(properties.getLocalBasePath(), oldPath);
-            Path target = Paths.get(properties.getLocalBasePath(), newPath);
+            String oldLocalPath = convertUrlPathToLocalPath(oldPath);
+            String newLocalPath = convertUrlPathToLocalPath(newPath);
+            Path source = Paths.get(properties.getLocalBasePath(), oldLocalPath);
+            Path target = Paths.get(properties.getLocalBasePath(), newLocalPath);
             Files.move(source, target);
         } catch (IOException e) {
             throw new RuntimeException("文件重命名失败", e);
@@ -185,9 +226,11 @@ public class LocalStorageService implements FileStorageAdapter {
     @Override
     public void copy(String sourcePath, String targetPath) {
         try {
+            String sourceLocalPath = convertUrlPathToLocalPath(sourcePath);
+            String targetLocalPath = convertUrlPathToLocalPath(targetPath);
             Files.copy(
-                    Paths.get(properties.getLocalBasePath(), sourcePath),
-                    Paths.get(properties.getLocalBasePath(), targetPath),
+                    Paths.get(properties.getLocalBasePath(), sourceLocalPath),
+                    Paths.get(properties.getLocalBasePath(), targetLocalPath),
                     StandardCopyOption.REPLACE_EXISTING
             );
         } catch (IOException e) {
@@ -205,6 +248,9 @@ public class LocalStorageService implements FileStorageAdapter {
 
     /**
      * 上传文件
+     * @param file 要上传的文件
+     * @param filename 存储的文件名（相对路径，例如: "avatars/origin/xxx.jpg"）
+     * @return 返回访问URL路径（例如: "/files/avatars/origin/xxx.jpg"）
      */
     @Override
     public String uploadFile(File file, String filename) {
@@ -214,7 +260,8 @@ public class LocalStorageService implements FileStorageAdapter {
             Files.createDirectories(path.getParent());
             // Copy the provided file to the destination path
             Files.copy(file.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
-            return filename;
+            // 返回访问URL路径
+            return "/files/" + filename;
         } catch (IOException e) {
             throw new RuntimeException("本地文件上传失败", e);
         }

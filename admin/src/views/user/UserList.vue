@@ -60,8 +60,10 @@
             >
               <div class="card-header">
                 <div class="user-avatar-name">
-                  <n-avatar :src="user.avatar" size="medium" round>
-                    <Icon icon="mdi:account" :width="24" />
+                  <n-avatar :src="getImageUrl(user.avatar)" size="medium" round>
+                    <template #fallback>
+                      <Icon icon="mdi:account" :width="24" />
+                    </template>
                   </n-avatar>
                   <div class="user-info">
                     <div class="user-name">{{ user.username }}</div>
@@ -186,6 +188,7 @@ import {
   useMessage
 } from 'naive-ui'
 import { getUserPage, createUser, updateUser, deleteUser, getUserById } from '@/api'
+import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -254,6 +257,7 @@ const formRules = {
   role: [{ required: true, message: '请选择角色', trigger: 'change' }]
 }
 
+
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
   {
@@ -261,12 +265,13 @@ const columns = [
     key: 'avatar',
     width: 80,
     render: (row) => {
+      const avatarUrl = getImageUrl(row.avatar)
       return h(NAvatar, {
         size: 'small',
-        src: row.avatar,
+        src: avatarUrl,
         round: true
       }, {
-        default: () => h(Icon, { icon: 'mdi:account', width: 20 })
+        fallback: () => h(Icon, { icon: 'mdi:account', width: 20 })
       })
     }
   },

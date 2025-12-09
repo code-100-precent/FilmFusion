@@ -203,6 +203,8 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .updatedAt(drama.getUpdatedAt())
                 .image(drama.getImage())
                 .thumbImage(drama.getThumbImage())
+                .cover(drama.getImage()) // 封面图片，与image相同
+                .thumbCover(drama.getThumbImage()) // 缩略封面，与thumbImage相同
                 .build();
 
     }

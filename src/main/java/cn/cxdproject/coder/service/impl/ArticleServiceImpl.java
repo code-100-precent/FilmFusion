@@ -205,6 +205,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .updatedAt(article.getUpdatedAt())
                 .image(article.getImage())
                 .thumbImage(article.getThumbImage())
+                .cover(article.getImage()) // 封面图片，与image相同
+                .thumbCover(article.getThumbImage()) // 缩略封面，与thumbImage相同
                 .build();
     }
 
