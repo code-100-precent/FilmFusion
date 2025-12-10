@@ -129,5 +129,4 @@
         WHERE id = #{dramaId}
         AND deleted = false
     </update>
-
 </mapper>

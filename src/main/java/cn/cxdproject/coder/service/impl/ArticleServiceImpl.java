@@ -250,12 +250,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public Page<ArticleVO> getArticlePagAdmin(Page<Article> page, String keyword) {
-
         long current = page.getCurrent();
         long size = page.getSize();
         long offset = (current - 1) * size;
 
+        // 获取当前页的数据和总记录数
         List<Article> articles = articleMapper.getAdminPage(keyword, offset, size);
+        Long total = articleMapper.getTotal(keyword);
 
         List<ArticleVO> voList = articles.stream()
                 .map(this::toArticleVO)
@@ -264,6 +265,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return new Page<ArticleVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total); // 设置总记录数
     }
 }
