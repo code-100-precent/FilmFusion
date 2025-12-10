@@ -36,4 +36,6 @@ public interface ArticleMapper extends BaseMapper<Article> {
             @Param("dto") UpdateArticleDTO updateArticleDTO
     );
 
+    Long getTotal(@Param("keyword") String keyword);
+
 }

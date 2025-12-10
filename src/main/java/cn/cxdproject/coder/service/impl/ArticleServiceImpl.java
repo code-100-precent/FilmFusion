@@ -256,6 +256,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         long offset = (current - 1) * size;
 
         List<Article> articles = articleMapper.getAdminPage(keyword, offset, size);
+        Long total = articleMapper.getTotal(keyword);
 
         List<ArticleVO> voList = articles.stream()
                 .map(this::toArticleVO)
@@ -264,6 +265,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return new Page<ArticleVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 }
