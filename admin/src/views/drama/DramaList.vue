@@ -400,8 +400,8 @@ const loadData = async () => {
     loading.value = true
     const res = await getDramaPage(pagination.page, pagination.pageSize, searchForm.keyword)
     if (res.code === 200) {
-      dramaList.value = res.data?.records || res.data || []
-      pagination.itemCount = res.data?.total || res.total || 0
+      dramaList.value = res.data || []
+      pagination.itemCount = res.pagination?.totalItems || 0
     }
   } catch (error) {
     console.error('加载电视剧列表失败:', error)

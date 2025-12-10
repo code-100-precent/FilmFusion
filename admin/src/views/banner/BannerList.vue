@@ -208,7 +208,7 @@ import { getImageUrl } from '@/utils/image'
 // Banner相关API函数
 const getBannerPage = (current = 1, size = 10, keyword = '') => {
   return request({
-    url: '/banner/page',
+    url: '/banner/admin/page',
     method: 'get',
     params: {
       current,
@@ -227,7 +227,7 @@ const getBannerById = (id) => {
 
 const createBanner = (data) => {
   return request({
-    url: '/banner',
+    url: '/banner/admin/create',
     method: 'post',
     data
   })
@@ -235,7 +235,7 @@ const createBanner = (data) => {
 
 const updateBanner = (id, data) => {
   return request({
-    url: `/banner/update/${id}`,
+    url: `/banner/admin/update/${id}`,
     method: 'put',
     data
   })
@@ -243,7 +243,7 @@ const updateBanner = (id, data) => {
 
 const deleteBanner = (id) => {
   return request({
-    url: `/banner/delete/${id}`,
+    url: `/banner/admin/delete/${id}`,
     method: 'delete'
   })
 }
@@ -397,9 +397,18 @@ const loadData = async () => {
   try {
     loading.value = true
     const res = await getBannerPage(pagination.page, pagination.pageSize, searchForm.keyword)
+    console.log('=== Banner API 响应数据 ===')
+    console.log('完整响应:', res)
+    console.log('res.code:', res.code)
+    console.log('res.data:', res.data)
+    console.log('res.pagination:', res.pagination)
+    console.log('res.pagination?.totalItems:', res.pagination?.totalItems)
+
     if (res.code === 200) {
       bannerList.value = res.data || []
-      pagination.itemCount = res.total || 0
+      pagination.itemCount = res.pagination?.totalItems || 0
+      console.log('设置后的 pagination.itemCount:', pagination.itemCount)
+      console.log('当前 pagination 对象:', pagination)
     }
   } catch (error) {
     console.error('加载Banner列表失败:', error)
@@ -421,11 +430,17 @@ const handleReset = () => {
 }
 
 const handlePageChange = (page) => {
+  console.log('=== handlePageChange 被调用 ===')
+  console.log('新页码:', page)
+  console.log('当前 pagination.page:', pagination.page)
   pagination.page = page
+  console.log('更新后 pagination.page:', pagination.page)
   loadData()
 }
 
 const handlePageSizeChange = (pageSize) => {
+  console.log('=== handlePageSizeChange 被调用 ===')
+  console.log('新每页条数:', pageSize)
   pagination.pageSize = pageSize
   pagination.page = 1
   loadData()

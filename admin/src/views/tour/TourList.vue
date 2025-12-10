@@ -194,19 +194,22 @@
         </n-form-item>
         <n-form-item label="详情图片" path="image">
           <n-upload
-              :max="1"
+              :max="10"
+              multiple
               :default-file-list="imageFileList"
               @update:file-list="handleImageFileListChange"
-              @finish="handleUploadFinish"
-              :custom-request="handleUpload"
+              :custom-request="handleImageUpload"
+              accept="image/*"
           >
-            <n-button>上传详情图片</n-button>
+            <n-button>上传详情图片（最多10张）</n-button>
           </n-upload>
-          <div v-if="tourForm.image" style="margin-top: 12px;">
+          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
             <n-image
-                :src="getImageUrl(tourForm.thumb_image || tourForm.image)"
-                width="200"
-                height="120"
+                v-for="(file, index) in imageFileList"
+                :key="index"
+                :src="file.url"
+                width="100"
+                height="100"
                 object-fit="cover"
             />
           </div>
@@ -535,27 +538,29 @@ const handleEdit = async (row) => {
         drama_id: res.data.drama_id || ''
       })
 
-      // 设置文件列表
+      // 设置封面图片文件列表
+      coverFileList.value = []
       if (res.data.cover) {
         coverFileList.value = [{
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: res.data.cover
+          url: res.data.thumb_cover || res.data.cover
         }]
-      } else {
-        coverFileList.value = []
       }
 
+      // 设置详情图片文件列表
+      imageFileList.value = []
       if (res.data.image) {
-        imageFileList.value = [{
-          id: 'image',
-          name: 'image.jpg',
+        const imageUrls = res.data.image.split(',').filter(url => url.trim())
+        const thumbUrls = res.data.thumb_image ? res.data.thumb_image.split(',').filter(url => url.trim()) : []
+
+        imageFileList.value = imageUrls.map((url, index) => ({
+          id: `image-${index}`,
+          name: `image-${index}.jpg`,
           status: 'finished',
-          url: res.data.image
-        }]
-      } else {
-        imageFileList.value = []
+          url: thumbUrls[index] || url.trim()
+        }))
       }
 
       dialogVisible.value = true
@@ -572,6 +577,18 @@ const handleCoverFileListChange = (files) => {
 
 const handleImageFileListChange = (files) => {
   imageFileList.value = files
+
+  // 从文件列表中提取已上传的图片URL
+  const uploadedFiles = files.filter(f => f.status === 'finished' && f.url)
+  const imageUrls = uploadedFiles.map(f => f.url)
+
+  // 更新表单中的图片字段
+  if (imageUrls.length > 0) {
+    tourForm.image = imageUrls.join(',')
+  } else {
+    tourForm.image = ''
+    tourForm.thumb_image = ''
+  }
 }
 
 const handleUploadFinish = ({ file, event }) => {
@@ -583,9 +600,6 @@ const handleUploadFinish = ({ file, event }) => {
         if (file.id === 'cover') {
           tourForm.cover = res.data.url
           tourForm.thumb_cover = res.data.thumbUrl || res.data.url
-        } else if (file.id === 'image') {
-          tourForm.image = res.data.url
-          tourForm.thumb_image = res.data.thumbUrl || res.data.url
         }
       } else {
         message.error('上传失败：' + res.message)
@@ -602,17 +616,43 @@ const handleUpload = async ({ file, onFinish, onError }) => {
     if (res.code === 200 && res.data) {
       const imageUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || imageUrl
-      
-      // 根据上传的文件类型更新对应字段
-      if (file.id === 'cover' || coverFileList.value.some(f => f.id === file.id)) {
-        tourForm.cover = imageUrl
-        tourForm.thumb_cover = thumbUrl
-      } else if (file.id === 'image' || imageFileList.value.some(f => f.id === file.id)) {
-        tourForm.image = imageUrl
-        tourForm.thumb_image = thumbUrl
-      }
+
+      tourForm.cover = imageUrl
+      tourForm.thumb_cover = thumbUrl
+
       onFinish()
-      message.success('图片上传成功')
+      message.success('封面图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 详情图片上传处理
+const handleImageUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const imageUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || imageUrl
+
+      // 将新上传的图片添加到现有图片列表
+      const currentImages = tourForm.image ? tourForm.image.split(',').filter(url => url.trim()) : []
+      const currentThumbs = tourForm.thumb_image ? tourForm.thumb_image.split(',').filter(url => url.trim()) : []
+
+      currentImages.push(imageUrl)
+      currentThumbs.push(thumbUrl)
+
+      tourForm.image = currentImages.join(',')
+      tourForm.thumb_image = currentThumbs.join(',')
+
+      onFinish()
+      message.success('详情图片上传成功')
     } else {
       onError()
       message.error('上传失败：' + (res.message || '未知错误'))

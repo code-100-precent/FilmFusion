@@ -166,6 +166,47 @@
         <n-form-item label="服务地址" path="address">
           <n-input v-model:value="serviceForm.address" placeholder="请输入服务地址" />
         </n-form-item>
+        <n-form-item label="封面图片" path="cover">
+          <n-upload
+              :max="1"
+              :file-list="coverFileList"
+              @update:file-list="handleCoverFileListChange"
+              :custom-request="handleCoverUpload"
+              accept="image/*"
+          >
+            <n-button>上传封面图片</n-button>
+          </n-upload>
+          <div v-if="serviceForm.cover" style="margin-top: 12px;">
+            <n-image
+                :src="getImageUrl(serviceForm.thumbCover || serviceForm.cover)"
+                width="200"
+                height="120"
+                object-fit="cover"
+            />
+          </div>
+        </n-form-item>
+        <n-form-item label="详情图片" path="image">
+          <n-upload
+              :max="10"
+              multiple
+              :file-list="imageFileList"
+              @update:file-list="handleImageFileListChange"
+              :custom-request="handleImageUpload"
+              accept="image/*"
+          >
+            <n-button>上传详情图片（最多10张）</n-button>
+          </n-upload>
+          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
+            <n-image
+                v-for="(file, index) in imageFileList"
+                :key="index"
+                :src="file.url"
+                width="100"
+                height="100"
+                object-fit="cover"
+            />
+          </div>
+        </n-form-item>
       </n-form>
       <template #footer>
         <n-space>
@@ -180,9 +221,10 @@
   
   <script setup>
   import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
-  import { NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, NModal, NDataTable, NPagination, NSpace, NSpin, useMessage, NTag, NPopconfirm } from 'naive-ui'
+  import { NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, NModal, NDataTable, NPagination, NSpace, NSpin, useMessage, NTag, NPopconfirm, NUpload, NImage, NCard } from 'naive-ui'
   import { Icon } from '@iconify/vue'
-  import { deleteService, updateService, addService, getServiceList } from '@/api/index'
+  import { deleteService, updateService, addService, getServiceList, uploadFile } from '@/api/index'
+  import { getImageUrl } from '@/utils/image'
   
   const message = useMessage()
   
@@ -206,8 +248,15 @@
     phone: '',
     address: '',
     description: '',
+    cover: '',
+    thumbCover: '',
+    image: '',
+    thumbImage: '',
     status: true
   })
+
+  const coverFileList = ref([])
+  const imageFileList = ref([])
   
   const pagination = reactive({
     page: 1,
@@ -285,8 +334,8 @@
         keyword: searchForm.keyword
       })
       if (res.code === 200) {
-        serviceList.value = res.data?.records || res.data || []
-        pagination.itemCount = res.data?.total || res.total || 0
+        serviceList.value = res.data || []
+        pagination.itemCount = res.pagination?.totalItems || 0
       }
     } catch (error) {
       console.error('加载服务列表失败:', error)
@@ -328,13 +377,29 @@
       phone: '',
       address: '',
       description: '',
+      cover: '',
+      thumbCover: '',
+      image: '',
+      thumbImage: '',
       status: true
     })
+    coverFileList.value = []
+    imageFileList.value = []
     dialogVisible.value = true
   }
-  
+
   const handleEdit = (service) => {
     dialogTitle.value = '编辑服务'
+
+    // 分离封面图片和详情图片
+    const imageUrls = service.image ? service.image.split(',').filter(url => url.trim()) : []
+    const thumbUrls = service.thumbImage ? service.thumbImage.split(',').filter(url => url.trim()) : []
+
+    const coverImage = imageUrls.length > 0 ? imageUrls[0] : ''
+    const coverThumb = thumbUrls.length > 0 ? thumbUrls[0] : ''
+    const detailImages = imageUrls.slice(1)
+    const detailThumbs = thumbUrls.slice(1)
+
     Object.assign(serviceForm, {
       id: service.id,
       name: service.name || '',
@@ -343,34 +408,89 @@
       phone: service.phone || '',
       address: service.address || '',
       description: service.description || '',
+      cover: coverImage,
+      thumbCover: coverThumb,
+      image: detailImages.join(','),
+      thumbImage: detailThumbs.join(','),
       status: service.status !== false
     })
+
+    // 设置封面图片文件列表
+    coverFileList.value = []
+    if (coverImage) {
+      coverFileList.value = [{
+        id: 'cover',
+        name: 'cover.jpg',
+        status: 'finished',
+        url: coverThumb || coverImage
+      }]
+    }
+
+    // 设置详情图片文件列表
+    imageFileList.value = []
+    if (detailImages.length > 0) {
+      imageFileList.value = detailImages.map((url, index) => ({
+        id: `image-${index}`,
+        name: `image-${index}.jpg`,
+        status: 'finished',
+        url: detailThumbs[index] || url
+      }))
+    }
+
     dialogVisible.value = true
   }
   
   const handleDialogSave = async () => {
     try {
       dialogLoading.value = true
-      const data = { ...serviceForm }
+
+      // 合并封面和详情图片为逗号分隔的字符串
+      const allImages = []
+      const allThumbs = []
+
+      // 先添加封面图片
+      if (serviceForm.cover) {
+        allImages.push(serviceForm.cover)
+        allThumbs.push(serviceForm.thumbCover || serviceForm.cover)
+      }
+
+      // 再添加详情图片
+      if (serviceForm.image) {
+        const detailImages = serviceForm.image.split(',').filter(url => url.trim())
+        const detailThumbs = serviceForm.thumbImage ? serviceForm.thumbImage.split(',').filter(url => url.trim()) : []
+        allImages.push(...detailImages)
+        allThumbs.push(...detailThumbs)
+      }
+
+      const data = {
+        ...serviceForm,
+        image: allImages.join(','),
+        thumbImage: allThumbs.join(',')
+      }
+
+      // 删除前端专用字段
+      delete data.cover
+      delete data.thumbCover
+
       let res
       if (data.id) {
         res = await updateService(data)
-    } else {
-      res = await addService(data)
+      } else {
+        res = await addService(data)
+      }
+
+      if (res.code === 200) {
+        message.success(serviceForm.id ? '更新成功' : '创建成功')
+        dialogVisible.value = false
+        loadData()
+      }
+    } catch (error) {
+      console.error('保存失败:', error)
+      message.error('保存失败')
+    } finally {
+      dialogLoading.value = false
     }
-    
-    if (res.code === 200) {
-      message.success(serviceForm.id ? '更新成功' : '创建成功')
-      dialogVisible.value = false
-      loadData()
-    }
-  } catch (error) {
-    console.error('保存失败:', error)
-    message.error('保存失败')
-  } finally {
-    dialogLoading.value = false
   }
-}
 
 const handleDelete = async (id) => {
   try {
@@ -382,6 +502,87 @@ const handleDelete = async (id) => {
   } catch (error) {
     console.error('删除失败:', error)
     message.error('删除失败')
+  }
+}
+
+// 处理封面图片上传
+const handleCoverUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const originUrl = res.data.originUrl
+      const thumbUrl = res.data.thumbUrl
+
+      serviceForm.cover = originUrl
+      serviceForm.thumbCover = thumbUrl
+
+      onFinish()
+      message.success('封面图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传封面图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 处理封面文件列表变化
+const handleCoverFileListChange = (files) => {
+  coverFileList.value = files
+  if (files.length === 0) {
+    serviceForm.cover = ''
+    serviceForm.thumbCover = ''
+  }
+}
+
+// 处理详情图片上传
+const handleImageUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const originUrl = res.data.originUrl
+      const thumbUrl = res.data.thumbUrl
+
+      // 将新上传的图片添加到现有图片列表
+      const currentImages = serviceForm.image ? serviceForm.image.split(',').filter(url => url.trim()) : []
+      const currentThumbs = serviceForm.thumbImage ? serviceForm.thumbImage.split(',').filter(url => url.trim()) : []
+
+      currentImages.push(originUrl)
+      currentThumbs.push(thumbUrl)
+
+      serviceForm.image = currentImages.join(',')
+      serviceForm.thumbImage = currentThumbs.join(',')
+
+      onFinish()
+      message.success('详情图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传详情图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 处理详情图片文件列表变化
+const handleImageFileListChange = (files) => {
+  imageFileList.value = files
+
+  // 从文件列表中提取已上传的图片URL
+  const uploadedFiles = files.filter(f => f.status === 'finished' && f.url)
+  const imageUrls = uploadedFiles.map(f => f.url)
+
+  // 更新表单中的图片字段
+  if (imageUrls.length > 0) {
+    serviceForm.image = imageUrls.join(',')
+  } else {
+    serviceForm.image = ''
+    serviceForm.thumbImage = ''
   }
 }
 

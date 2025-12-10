@@ -569,7 +569,7 @@ export const getReportPage = (current = 1, size = 10, keyword = '') => {
  */
 export const getBannerPage = (current = 1, size = 10, keyword = '') => {
   return request({
-    url: '/banner/page',
+    url: '/banner/admin/page',
     method: 'get',
     params: {
       current,
@@ -594,7 +594,7 @@ export const getBannerById = (id) => {
  */
 export const createBanner = (data) => {
   return request({
-    url: '/banner',
+    url: '/banner/admin/create',
     method: 'post',
     data
   })
@@ -605,7 +605,7 @@ export const createBanner = (data) => {
  */
 export const updateBanner = (id, data) => {
   return request({
-    url: `/banner/update/${id}`,
+    url: `/banner/admin/update/${id}`,
     method: 'put',
     data
   })
@@ -616,7 +616,7 @@ export const updateBanner = (id, data) => {
  */
 export const deleteBanner = (id) => {
   return request({
-    url: `/banner/delete/${id}`,
+    url: `/banner/admin/delete/${id}`,
     method: 'delete'
   })
 }
