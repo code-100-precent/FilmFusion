@@ -267,7 +267,10 @@ const pagination = reactive({
   itemCount: 0,
   showSizePicker: true,
   pageSizes: [5, 10, 20, 50],
-  prefix: (info) => `共 ${info.itemCount} 条`
+  showQuickJumper: true,
+  // 添加以下属性以确保Naive UI正确计算分页
+  pageCount: 1,
+  prefix: ({ itemCount }) => `共 ${itemCount} 条`
 })
 
 const formRules = {
@@ -545,15 +548,16 @@ const formatDate = (date) => {
 const loadData = async () => {
   try {
     loading.value = true
-    console.log(`加载第 ${pagination.page} 页，每页 ${pagination.pageSize} 条，关键词: ${searchForm.keyword}`)
-
     const res = await getPolicyPage(pagination.page, pagination.pageSize, searchForm.keyword)
-
-    console.log('API响应:', res)
-
+    console.log('分页响应数据:', res) // 添加调试日志
     if (res.code === 200) {
       policyList.value = res.data || []
+      // 设置总数据量
       pagination.itemCount = res.pagination?.totalItems || 0
+      // 自动计算总页数
+      pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
+      console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
+      console.log('自动计算总页数:', pagination.pageCount) // 添加调试日志
 
       console.log(`成功加载数据，总数: ${pagination.itemCount}，当前页数据条数: ${policyList.value.length}`)
     } else if (res.code === 401 || res.code === 403) {

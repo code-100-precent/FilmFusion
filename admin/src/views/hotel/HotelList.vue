@@ -333,7 +333,11 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
+  pageSizes: [10, 20, 50, 100],
+  showQuickJumper: true,
+  // 添加以下属性以确保Naive UI正确计算分页
+  pageCount: 1,
+  prefix: ({ itemCount }) => `共 ${itemCount} 条`
 })
 
 // 文件列表
@@ -488,6 +492,8 @@ const loadData = async () => {
     }))
 
     pagination.itemCount = totalItems
+    // 自动计算总页数
+    pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
 
   } catch (error) {
     console.error('加载酒店列表失败:', error)

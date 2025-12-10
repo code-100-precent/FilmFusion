@@ -302,7 +302,8 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
+  pageSizes: [10, 20, 50, 100],
+  showQuickJumper: true
 })
 
 const formRules = {
@@ -447,7 +448,8 @@ const loadData = async () => {
       tourList.value = res.data || []
       if (res.pagination) {
         pagination.itemCount = res.pagination.totalItems || 0
-        pagination.pageCount = res.pagination.totalPages || 1
+        // 自动计算总页数
+        pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
         pagination.page = res.pagination.currentPage || 1
         pagination.pageSize = res.pagination.pageSize || 10
       }

@@ -4,7 +4,7 @@
  */
 // 根据环境配置API地址
 export const baseURL = process.env.NODE_ENV === 'development'
-  ? 'http://localhost:8080/api'  // 开发环境
+  ? 'http://162.14.106.139:8080/api'  // 开发环境
   : 'https://your-production-domain.com/api'  // 生产环境，请替换为实际域名
 
 // 为不同类型的请求创建不同的拦截器配置

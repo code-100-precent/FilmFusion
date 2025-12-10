@@ -111,8 +111,10 @@
               :page="pagination.page"
               :page-size="pagination.pageSize"
               :item-count="pagination.itemCount"
+              :page-count="pagination.pageCount"
               :page-sizes="[10, 20, 50]"
               show-size-picker
+              show-quick-jumper
               @update:page="handlePageChange"
               @update:page-size="handlePageSizeChange"
             />
@@ -238,7 +240,11 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
+  pageSizes: [10, 20, 50, 100],
+  showQuickJumper: true,
+  // 添加以下属性以确保Naive UI正确计算分页
+  pageCount: 1,
+  prefix: ({ itemCount }) => `共 ${itemCount} 条`
 })
 
 const formRules = {
@@ -345,20 +351,26 @@ onUnmounted(() => {
 })
 
 const loadData = async () => {
-  try {
-    loading.value = true
-    const res = await getUserPage(pagination.page, pagination.pageSize, searchForm.keyword)
-    if (res.code === 200) {
-      userList.value = res.data || []
-      pagination.itemCount = res.pagination?.totalItems || 0
-    }
-  } catch (error) {
-    console.error('加载用户列表失败:', error)
-    message.error('加载用户列表失败')
-  } finally {
-    loading.value = false
-  }
-}
+          try {
+            loading.value = true
+            const res = await getUserPage(pagination.page, pagination.pageSize, searchForm.keyword)
+            console.log('分页响应数据:', res) // 添加调试日志
+            if (res.code === 200) {
+              userList.value = res.data || []
+              // 设置总数据量
+              pagination.itemCount = res.pagination?.totalItems || 0
+              // 自动计算总页数
+              pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
+              console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
+              console.log('自动计算总页数:', pagination.pageCount) // 添加调试日志
+            }
+          } catch (error) {
+            console.error('加载用户列表失败:', error)
+            message.error('加载用户列表失败')
+          } finally {
+            loading.value = false
+          }
+        }
 
 const handleSearch = () => {
   pagination.page = 1

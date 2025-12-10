@@ -286,7 +286,11 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
+  pageSizes: [10, 20, 50, 100],
+  showQuickJumper: true,
+  // 添加以下属性以确保Naive UI正确计算分页
+  pageCount: 1,
+  prefix: ({ itemCount }) => `共 ${itemCount} 条`
 })
 
 const formRules = {
@@ -507,7 +511,8 @@ const loadData = async () => {
       // 设置分页信息
       if (res.pagination) {
         pagination.itemCount = res.pagination.totalItems || 0
-        pagination.pageCount = res.pagination.totalPages || 1
+        // 自动计算总页数
+        pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
         pagination.page = res.pagination.currentPage || 1
         pagination.pageSize = res.pagination.pageSize || 10
       }
