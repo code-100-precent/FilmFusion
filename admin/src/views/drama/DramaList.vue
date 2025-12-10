@@ -25,20 +25,20 @@
           </n-button>
         </div>
       </div>
-      
+
       <!-- 桌面端表格 -->
       <n-data-table
-        v-if="!isMobile"
-        :columns="columns"
-        :data="dramaList"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="row => row.id"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-        :scroll-x="1400"
+          v-if="!isMobile"
+          :columns="columns"
+          :data="dramaList"
+          :loading="loading"
+          :pagination="pagination"
+          :row-key="row => row.id"
+          @update:page="handlePageChange"
+          @update:page-size="handlePageSizeChange"
+          :scroll-x="1400"
       />
-      
+
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
         <n-spin :show="loading">
@@ -48,10 +48,10 @@
           </div>
           <div v-else class="card-list">
             <n-card
-              v-for="drama in dramaList"
-              :key="drama.id"
-              class="mobile-card"
-              hoverable
+                v-for="drama in dramaList"
+                :key="drama.id"
+                class="mobile-card"
+                hoverable
             >
               <div class="card-header">
                 <div class="drama-info">
@@ -60,12 +60,12 @@
                 </div>
                 <div class="drama-cover">
                   <n-image
-                    v-if="drama.cover"
-                    :src="drama.cover"
-                    width="80"
-                    height="60"
-                    object-fit="cover"
-                    preview-disabled
+                      v-if="drama.cover"
+                      :src="drama.cover"
+                      width="80"
+                      height="60"
+                      object-fit="cover"
+                      preview-disabled
                   />
                   <div v-else class="no-cover">
                     <Icon icon="mdi:film" :width="32" />
@@ -101,36 +101,36 @@
               </div>
             </n-card>
           </div>
-          
+
           <!-- 移动端分页 -->
           <div class="mobile-pagination">
             <n-pagination
-              :page="pagination.page"
-              :page-size="pagination.pageSize"
-              :item-count="pagination.itemCount"
-              :page-sizes="[10, 20, 50]"
-              show-size-picker
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
+                :page="pagination.page"
+                :page-size="pagination.pageSize"
+                :item-count="pagination.itemCount"
+                :page-sizes="[10, 20, 50]"
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange"
             />
           </div>
         </n-spin>
       </div>
     </n-card>
-    
-    <n-modal 
-      v-model:show="dialogVisible" 
-      preset="dialog" 
-      :title="dialogTitle" 
-      style="width: 90%; max-width: 900px"
-      :mask-closable="false"
+
+    <n-modal
+        v-model:show="dialogVisible"
+        preset="dialog"
+        :title="dialogTitle"
+        style="width: 90%; max-width: 900px"
+        :mask-closable="false"
     >
-      <n-form 
-        ref="formRef" 
-        :model="dramaForm" 
-        :rules="formRules" 
-        :label-placement="isMobile ? 'top' : 'left'"
-        :label-width="isMobile ? 'auto' : '120'"
+      <n-form
+          ref="formRef"
+          :model="dramaForm"
+          :rules="formRules"
+          :label-placement="isMobile ? 'top' : 'left'"
+          :label-width="isMobile ? 'auto' : '120'"
       >
         <n-form-item label="电视剧名称" path="name">
           <n-input v-model:value="dramaForm.name" placeholder="请输入电视剧名称" />
@@ -158,43 +158,43 @@
         </n-form-item>
         <n-form-item label="封面图片" path="cover">
           <n-upload
-            :max="1"
-            :file-list="coverFileList"
-            @update:file-list="handleCoverFileListChange"
-            :custom-request="handleCoverUpload"
-            accept="image/*"
+              :max="1"
+              :file-list="coverFileList"
+              @update:file-list="handleCoverFileListChange"
+              :custom-request="handleCoverUpload"
+              accept="image/*"
           >
             <n-button>上传封面图片</n-button>
           </n-upload>
           <div v-if="dramaForm.cover" style="margin-top: 12px;">
             <n-image
-              :src="dramaForm.thumbCover || dramaForm.cover"
-              width="200"
-              height="120"
-              object-fit="cover"
+                :src="dramaForm.thumbCover || dramaForm.cover"
+                width="200"
+                height="120"
+                object-fit="cover"
             />
           </div>
         </n-form-item>
         <n-form-item label="详情图片" path="image">
           <n-upload
-            :max="10"
-            :file-list="imageFileList"
-            @update:file-list="handleImageFileListChange"
-            :custom-request="handleImageUpload"
-            accept="image/*"
-            multiple
+              :max="10"
+              :file-list="imageFileList"
+              @update:file-list="handleImageFileListChange"
+              :custom-request="handleImageUpload"
+              accept="image/*"
+              multiple
           >
             <n-button>上传详情图片（可多张）</n-button>
           </n-upload>
           <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
             <n-image
-              v-for="(file, index) in imageFileList"
-              :key="index"
-              :src="file.url"
-              width="100"
-              height="75"
-              object-fit="cover"
-              style="border-radius: 4px;"
+                v-for="(file, index) in imageFileList"
+                :key="index"
+                :src="file.url"
+                width="100"
+                height="75"
+                object-fit="cover"
+                style="border-radius: 4px;"
             />
           </div>
         </n-form-item>
@@ -299,10 +299,10 @@ const columns = [
       // 优先使用缩略封面，如果没有则使用封面，最后使用详情图片
       const coverUrl = row.thumbCover || row.cover || row.thumbImage || row.image
       if (!coverUrl) return '-'
-      
+
       // 原图用于预览
       const originalUrl = row.cover || row.image || coverUrl
-      
+
       return h(NImage, {
         width: 60,
         height: 45,
@@ -333,11 +333,11 @@ const columns = [
       return h('div', { style: 'display: flex; gap: 8px;' }, [
         h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
         h(
-          NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
+            NPopconfirm,
+            { onPositiveClick: () => handleDelete(row.id) },
+            {
+              trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+            }
         )
       ])
     }
@@ -346,13 +346,13 @@ const columns = [
 
 const handleDialogSave = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
   } catch (error) {
     return
   }
-  
+
   try {
     dialogLoading.value = true
     // 将 cover 映射到 image，thumbCover 映射到 thumbImage（后端只支持 image 和 thumbImage）
@@ -361,14 +361,14 @@ const handleDialogSave = async () => {
       image: dramaForm.cover || dramaForm.image, // 优先使用 cover，如果没有则使用 image
       thumbImage: dramaForm.thumbCover || dramaForm.thumbImage // 优先使用 thumbCover，如果没有则使用 thumbImage
     }
-    
+
     let res
     if (dramaForm.id) {
       res = await updateDrama(dramaForm.id, data)
     } else {
       res = await addDrama(data)
     }
-    
+
     if (res.code === 200) {
       message.success(dramaForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
@@ -477,7 +477,7 @@ const handleEdit = async (row) => {
         thumbCover: res.data.thumbCover || res.data.thumbImage || '', // 优先使用 thumbCover，如果没有则使用 thumbImage
         thumbImage: res.data.thumbImage || '' // 缩略详情图
       })
-      
+
       // 设置封面图片文件列表
       if (res.data.cover) {
         coverFileList.value = [{
@@ -489,7 +489,7 @@ const handleEdit = async (row) => {
       } else {
         coverFileList.value = []
       }
-      
+
       // 设置详情图片文件列表（支持多张）
       if (res.data.image) {
         const imageUrls = res.data.image.split(',').filter(url => url.trim())
@@ -502,7 +502,7 @@ const handleEdit = async (row) => {
       } else {
         imageFileList.value = []
       }
-      
+
       dialogVisible.value = true
     }
   } catch (error) {
@@ -568,8 +568,8 @@ const handleImageFileListChange = (files) => {
   imageFileList.value = files
   // 更新image字段为逗号分隔的URL字符串
   const imageUrls = files
-    .filter(file => file.status === 'finished' && file.url)
-    .map(file => file.url)
+      .filter(file => file.status === 'finished' && file.url)
+      .map(file => file.url)
   dramaForm.image = imageUrls.join(',')
 }
 
@@ -621,45 +621,45 @@ onUnmounted(() => {
     text-align: center;
     padding: 60px 20px;
   }
-  
+
   .card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .mobile-card {
     :deep(.n-card__content) {
       padding: 16px;
     }
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
-      
+
       .drama-info {
         flex: 1;
         margin-right: 12px;
-        
+
         .drama-name {
           font-size: 16px;
           font-weight: 600;
           color: #1f2937;
           margin: 0 0 4px 0;
         }
-        
+
         .drama-company {
           font-size: 14px;
           color: #6b7280;
           margin: 0;
         }
       }
-      
+
       .drama-cover {
         flex-shrink: 0;
-        
+
         .no-cover {
           width: 80px;
           height: 60px;
@@ -672,7 +672,7 @@ onUnmounted(() => {
         }
       }
     }
-    
+
     .card-content {
       display: flex;
       flex-direction: column;
@@ -681,17 +681,17 @@ onUnmounted(() => {
       padding: 12px;
       background: #f9fafb;
       border-radius: 8px;
-      
+
       .info-item {
         display: flex;
         font-size: 13px;
-        
+
         .label {
           color: #6b7280;
           min-width: 60px;
           flex-shrink: 0;
         }
-        
+
         .cast-info {
           color: #374151;
           overflow: hidden;
@@ -700,20 +700,20 @@ onUnmounted(() => {
         }
       }
     }
-    
+
     .card-actions {
       margin-top: 12px;
       padding-top: 12px;
       border-top: 1px solid #e5e7eb;
     }
   }
-  
+
   .mobile-pagination {
     margin-top: 16px;
     padding: 12px;
     background: #ffffff;
     border-radius: 8px;
-    
+
     :deep(.n-pagination) {
       justify-content: center;
     }
@@ -725,59 +725,59 @@ onUnmounted(() => {
   .search-header {
     flex-direction: column;
     gap: 12px;
-    
+
     .search-form {
       width: 100%;
       min-width: auto;
-      
+
       :deep(.n-form-item) {
         margin-bottom: 12px;
-        
+
         .n-form-item-label {
           width: auto !important;
           margin-bottom: 4px;
         }
       }
     }
-    
+
     .action-buttons {
       width: 100%;
-      
+
       button {
         flex: 1;
       }
     }
   }
-  
+
   .management-card {
     :deep(.n-card__content) {
       padding: 12px;
     }
   }
-  
+
   // 移动端表单优化
   :deep(.n-modal) {
     .n-dialog {
       margin: 20px auto;
     }
-    
+
     .n-form-item {
       margin-bottom: 16px;
-      
+
       .n-form-item-label {
         font-weight: 500;
         margin-bottom: 8px;
       }
-      
+
       .n-input,
       .n-select {
         width: 100%;
       }
     }
-    
+
     .n-dialog__action {
       padding: 12px 16px;
-      
+
       .n-button {
         flex: 1;
         margin: 0 4px;

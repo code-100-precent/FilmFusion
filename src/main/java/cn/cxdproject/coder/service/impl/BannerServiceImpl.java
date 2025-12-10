@@ -14,6 +14,7 @@ import cn.cxdproject.coder.service.BannerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,6 +85,9 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
                 .sort(createDTO.getSort())
                 .status(true)
                 .build();
+
+        banner.setCreatedAt(LocalDateTime.now());
+        banner.setUpdatedAt(LocalDateTime.now());
 
         this.save(banner);
         return toBannerVO(banner);

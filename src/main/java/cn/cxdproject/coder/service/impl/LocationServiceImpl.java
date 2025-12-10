@@ -29,6 +29,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,6 +83,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .longitude(createDTO.getLongitude())
                 .latitude(createDTO.getLatitude())
                 .build();
+
+        location.setCreatedAt(LocalDateTime.now());
+        location.setUpdatedAt(LocalDateTime.now());
 
         this.save(location);
         return toLocationVO(location);

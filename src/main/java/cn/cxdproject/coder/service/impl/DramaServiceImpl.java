@@ -79,6 +79,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .thumbImage(createDTO.getThumbImage())
                 .build();
 
+        drama.setCreatedAt(LocalDateTime.now());
+        drama.setUpdatedAt(LocalDateTime.now());
+
         this.save(drama);
         return toDramaVO(drama);
     }
