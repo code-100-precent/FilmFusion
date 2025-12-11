@@ -26,82 +26,154 @@
         </div>
       </div>
 
-      <n-data-table
-          :columns="columns"
-          :data="articleList"
-          :loading="loading"
-          :row-key="row => row.id"
-          :scroll-x="1500"
-      />
-
-      <!-- 独立分页组件 -->
-      <div class="pagination-container" v-if="pagination.totalItems > 0">
-        <n-pagination
-            v-model:page="pagination.page"
-            v-model:page-size="pagination.pageSize"
-            :page-count="Math.ceil(pagination.totalItems / pagination.pageSize)"
-            :item-count="pagination.totalItems"
-            :page-sizes="pagination.pageSizes"
-            show-size-picker
-            show-quick-jumper
-            @update:page="handlePageChange"
-            @update:page-size="handlePageSizeChange"
+      <!-- 桌面端表格 -->
+      <template v-if="!isMobile">
+        <n-data-table
+            :columns="columns"
+            :data="articleList"
+            :loading="loading"
+            :row-key="row => row.id"
+            :scroll-x="1200"
         />
+
+        <!-- 独立分页组件 -->
+        <div class="pagination-container" v-if="pagination.itemCount > 0">
+          <n-pagination
+              v-model:page="pagination.page"
+              v-model:page-size="pagination.pageSize"
+              :page-count="Math.ceil(pagination.itemCount / pagination.pageSize)"
+              :item-count="pagination.itemCount"
+              :page-sizes="pagination.pageSizes"
+              show-size-picker
+              show-quick-jumper
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+          />
+        </div>
+      </template>
+
+      <!-- 移动端卡片列表 -->
+      <div v-else class="mobile-list">
+        <n-spin :show="loading">
+          <div v-if="articleList.length === 0 && !loading" class="empty-state">
+            <Icon icon="mdi:file-document-off" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
+            <p style="color: #9ca3af;">暂无数据</p>
+          </div>
+          <div v-else class="card-list">
+            <n-card
+                v-for="article in articleList"
+                :key="article.id"
+                class="mobile-card"
+                hoverable
+            >
+              <div class="card-header">
+                <div class="article-info">
+                  <h3 class="article-title">{{ article.title }}</h3>
+                  <p class="article-unit">{{ article.issueUnit }}</p>
+                </div>
+                <div class="article-cover">
+                  <n-image
+                      v-if="getCover(article, 'thumb')"
+                      :src="getImageUrl(getCover(article, 'thumb'))"
+                      :preview-src="getImageUrl(getCover(article, 'origin'))"
+                      width="80"
+                      height="60"
+                      object-fit="cover"
+                  />
+                  <div v-else class="no-cover">
+                    <Icon icon="mdi:file-image" :width="32" />
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="info-item">
+                  <span class="label">发布时间：</span>
+                  <span>{{ formatDate(article.issueTime || article.issue_time) }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">内容摘要：</span>
+                  <span class="content-preview">{{ article.content ? article.content.substring(0, 30) + '...' : '-' }}</span>
+                </div>
+              </div>
+              <div class="card-actions">
+                <n-button size="small" @click="handleEdit(article)" block style="margin-bottom: 8px">
+                  编辑
+                </n-button>
+                <n-popconfirm @positive-click="handleDelete(article.id)">
+                  <template #trigger>
+                    <n-button size="small" type="error" quaternary block>
+                      删除
+                    </n-button>
+                  </template>
+                  确定要删除这篇文章吗？
+                </n-popconfirm>
+              </div>
+            </n-card>
+          </div>
+
+          <!-- 移动端分页 -->
+          <div class="mobile-pagination" v-if="pagination.itemCount > 0">
+            <n-pagination
+                :page="pagination.page"
+                :page-size="pagination.pageSize"
+                :item-count="pagination.itemCount"
+                :page-sizes="[10, 20, 50]"
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange"
+            />
+          </div>
+        </n-spin>
       </div>
     </n-card>
 
-    <n-modal v-model:show="dialogVisible" preset="dialog" :title="dialogTitle" style="width: 90%; max-width: 800px">
-      <n-form ref="formRef" :model="articleForm" :rules="formRules" label-placement="left" label-width="100">
+    <n-modal
+        v-model:show="dialogVisible"
+        preset="dialog"
+        :title="dialogTitle"
+        style="width: 90%; max-width: 800px"
+        :mask-closable="false"
+    >
+      <n-form
+          ref="formRef"
+          :model="articleForm"
+          :rules="formRules"
+          :label-placement="isMobile ? 'top' : 'left'"
+          :label-width="isMobile ? 'auto' : '100'"
+      >
         <n-form-item label="文章标题" path="title">
           <n-input v-model:value="articleForm.title" placeholder="请输入文章标题" />
         </n-form-item>
         <n-form-item label="发布单位" path="issueUnit">
           <n-input v-model:value="articleForm.issueUnit" placeholder="请输入发布单位" />
         </n-form-item>
+        <n-form-item label="发布时间" path="issueTime">
+          <n-date-picker v-model:value="articleForm.issueTime" type="datetime" clearable style="width: 100%" />
+        </n-form-item>
         <n-form-item label="文章内容" path="content">
           <n-input v-model:value="articleForm.content" type="textarea" :rows="10" placeholder="请输入文章内容" />
         </n-form-item>
-        <n-form-item label="封面图片" path="cover">
+        <n-form-item label="封面图片" path="image">
           <n-upload
               :max="1"
-              :file-list="coverFileList"
-              @update:file-list="handleCoverFileListChange"
-              :custom-request="handleCoverUpload"
+              v-model:file-list="coverFileList"
+              :custom-request="(options) => handleImageUpload(options, 'cover')"
               accept="image/*"
+              list-type="image-card"
           >
-            <n-button>上传封面图片</n-button>
+            点击上传封面
           </n-upload>
-          <div v-if="articleForm.cover" style="margin-top: 12px;">
-            <n-image
-                :src="getImageUrl(articleForm.thumbCover || articleForm.cover)"
-                width="200"
-                height="120"
-                object-fit="cover"
-            />
-          </div>
         </n-form-item>
-        <n-form-item label="详情图片" path="image">
+        <n-form-item label="详情图片" path="detailImages">
           <n-upload
-              :max="10"
-              :file-list="imageFileList"
-              @update:file-list="handleImageFileListChange"
-              :custom-request="handleImageUpload"
+              v-model:file-list="detailFileList"
+              :custom-request="(options) => handleImageUpload(options, 'detail')"
               accept="image/*"
+              list-type="image-card"
               multiple
           >
-            <n-button>上传详情图片（可多张）</n-button>
+            点击上传详情图
           </n-upload>
-          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-            <n-image
-                v-for="(file, index) in imageFileList"
-                :key="index"
-                :src="getImageUrl(file.url)"
-                width="100"
-                height="75"
-                object-fit="cover"
-                style="border-radius: 4px;"
-            />
-          </div>
         </n-form-item>
       </n-form>
       <template #action>
@@ -113,7 +185,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted } from 'vue'
+import { ref, reactive, h, onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   NCard,
@@ -124,20 +196,23 @@ import {
   NDataTable,
   NPopconfirm,
   NModal,
-  NDatePicker,
   useMessage,
-  useDialog,
   NImage,
   NUpload,
-  NPagination
+  NPagination,
+  NSpin,
+  NDatePicker
 } from 'naive-ui'
+import { useUserStore } from '@/store/user'
 import { getArticlePage, addArticle, updateArticle, deleteArticle, getArticleById, uploadFile } from '@/api'
 import { getImageUrl } from '@/utils/image'
+import config from '@/config'
 import dayjs from 'dayjs'
 
 const message = useMessage()
-const dialog = useDialog()
+const userStore = useUserStore()
 
+const isMobile = ref(false)
 const loading = ref(false)
 const articleList = ref([])
 const dialogVisible = ref(false)
@@ -153,101 +228,96 @@ const articleForm = reactive({
   id: null,
   title: '',
   issueUnit: '',
+  issueTime: null,
   content: '',
-  cover: '',
   image: '',
-  thumbCover: '',
-  thumbImage: ''
+  thumbImage: '',
+  userId: null
 })
 
 const coverFileList = ref([])
-const imageFileList = ref([])
+const detailFileList = ref([])
 
 const pagination = reactive({
   page: 1,
   pageSize: 10,
-  totalItems: 0,
+  itemCount: 0,
   pageSizes: [10, 20, 50, 100]
 })
 
 const formRules = {
   title: [{ required: true, message: '请输入文章标题', trigger: 'blur' }],
   issueUnit: [{ required: true, message: '请输入发布单位', trigger: 'blur' }],
+  issueTime: [{ required: true, message: '请选择发布时间', trigger: 'change', type: 'number' }],
   content: [{ required: true, message: '请输入文章内容', trigger: 'blur' }]
+}
+
+// 检测移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+const formatDate = (date) => {
+  if (!date) return '-'
+  if (Array.isArray(date)) {
+    return dayjs(date[0] + '-' + String(date[1]).padStart(2, '0') + '-' + String(date[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
+  }
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+}
+
+const getCover = (article, type = 'thumb') => {
+  const thumbStr = article.thumbImage || article.thumb_image || ''
+  const originStr = article.image || ''
+  
+  if (type === 'thumb') {
+    return thumbStr ? thumbStr.split(',')[0] : (originStr ? originStr.split(',')[0] : '')
+  } else {
+    return originStr ? originStr.split(',')[0] : (thumbStr ? thumbStr.split(',')[0] : '')
+  }
 }
 
 const columns = [
   { title: 'ID', key: 'id', width: 80, fixed: 'left' },
   { title: '文章标题', key: 'title', width: 200, ellipsis: { tooltip: true }, fixed: 'left' },
   {
-    title: '封面',
-    key: 'cover',
+    title: '图片',
+    key: 'image',
     width: 100,
     render: (row) => {
-      // 尝试多种可能的封面字段
-      let coverUrl = null
+      const thumbStr = row.thumbImage || row.thumb_image || ''
+      const originStr = row.image || ''
+      
+      // 优先展示缩略图，如果没有缩略图则展示原图
+      const firstThumb = thumbStr ? thumbStr.split(',')[0] : (originStr ? originStr.split(',')[0] : '')
+      // 预览时展示原图，如果没有原图则展示缩略图
+      const firstOrigin = originStr ? originStr.split(',')[0] : (thumbStr ? thumbStr.split(',')[0] : '')
 
-      // 按优先级尝试不同的字段
-      if (row.thumbImage) {
-        coverUrl = row.thumbImage
-      } else if (row.image) {
-        coverUrl = row.image
-      } else if (row.thumbCover) {
-        coverUrl = row.thumbCover
-      } else if (row.cover) {
-        coverUrl = row.cover
-      }
-
-      // 如果是数组，取第一个元素
-      if (Array.isArray(coverUrl)) {
-        coverUrl = coverUrl[0]
-      }
-
-      // 如果是逗号分隔的字符串，取第一个
-      if (typeof coverUrl === 'string' && coverUrl.includes(',')) {
-        coverUrl = coverUrl.split(',')[0].trim()
-      }
-
-      // 检查 URL 是否有效
-      if (!coverUrl || coverUrl === '') {
-        return '-'
-      }
-
-      // 确保 URL 是有效的
-      const imageUrl = getImageUrl(coverUrl)
-      if (!imageUrl) {
-        return '-'
-      }
-
-      // 调试日志
-      console.log('封面图片URL:', imageUrl, '原始数据:', row)
+      if (!firstThumb) return '-'
 
       return h(NImage, {
         width: 60,
         height: 45,
-        src: imageUrl,
+        src: getImageUrl(firstThumb),
+        previewSrc: getImageUrl(firstOrigin),
         objectFit: 'cover',
         style: { borderRadius: '4px' },
-        previewDisabled: false,
-        // 添加错误处理
-        onError: (e) => {
-          console.error('封面图片加载失败:', e)
-        }
+        previewDisabled: false
       })
     }
   },
   { title: '发布单位', key: 'issueUnit', width: 150, ellipsis: { tooltip: true } },
-  { title: '文章内容', key: 'content', width: 300, ellipsis: { tooltip: true } },
   {
     title: '发布时间',
     key: 'issueTime',
     width: 180,
-    render: (row) => {
-      if (Array.isArray(row.issueTime)) {
-        return dayjs(row.issueTime[0] + '-' + String(row.issueTime[1]).padStart(2, '0') + '-' + String(row.issueTime[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
-      }
-      return row.issueTime ? dayjs(row.issueTime).format('YYYY-MM-DD HH:mm:ss') : '-'
-    }
+    render: (row) => formatDate(row.issueTime || row.issue_time)
+  },
+  { title: '文章内容', key: 'content', width: 300, ellipsis: { tooltip: true } },
+  {
+    title: '创建时间',
+    key: 'createdAt',
+    width: 180,
+    render: (row) => formatDate(row.createdAt || row.created_at)
   },
   {
     title: '操作',
@@ -270,26 +340,23 @@ const columns = [
 ]
 
 onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   loadData()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 
 const loadData = async () => {
   try {
     loading.value = true
     const res = await getArticlePage(pagination.page, pagination.pageSize, searchForm.keyword)
-    console.log('API响应:', res)
-
+    
     if (res.code === 200) {
-      articleList.value = res.data || []
-      pagination.totalItems = res.pagination?.totalItems || 0
-      console.log('设置的总数:', pagination.totalItems, '当前页:', pagination.page, '每页:', pagination.pageSize)
-
-      // 调试：输出第一页和当前页的数据结构
-      if (pagination.page === 1) {
-        console.log('第一页数据结构示例:', res.data[0])
-      } else {
-        console.log(`第${pagination.page}页数据结构示例:`, res.data[0])
-      }
+      articleList.value = res.data?.records || res.data || []
+      pagination.itemCount = res.data?.total || res.total || res.pagination?.totalItems || 0
     } else {
       message.error(res.message || '获取数据失败')
     }
@@ -313,13 +380,11 @@ const handleReset = () => {
 }
 
 const handlePageChange = (page) => {
-  console.log('页码变化:', page)
   pagination.page = page
   loadData()
 }
 
 const handlePageSizeChange = (pageSize) => {
-  console.log('页面大小变化:', pageSize)
   pagination.pageSize = pageSize
   pagination.page = 1
   loadData()
@@ -331,14 +396,14 @@ const handleAdd = () => {
     id: null,
     title: '',
     issueUnit: '',
+    issueTime: Date.now(),
     content: '',
-    cover: '',
     image: '',
-    thumbCover: '',
-    thumbImage: ''
+    thumbImage: '',
+    userId: userStore.userInfo?.id || null
   })
   coverFileList.value = []
-  imageFileList.value = []
+  detailFileList.value = []
   dialogVisible.value = true
 }
 
@@ -347,39 +412,50 @@ const handleEdit = async (row) => {
     const res = await getArticleById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑文章'
+      const data = res.data
       Object.assign(articleForm, {
-        id: res.data.id,
-        title: res.data.title,
-        issueUnit: res.data.issueUnit,
-        content: res.data.content,
-        cover: res.data.image || res.data.cover,
-        image: res.data.image,
-        thumbCover: res.data.thumbImage || res.data.thumbCover,
-        thumbImage: res.data.thumbImage
+        id: data.id,
+        title: data.title,
+        issueUnit: data.issueUnit || data.issue_unit,
+        issueTime: data.issueTime ? new Date(data.issueTime).getTime() : (data.issue_time ? new Date(data.issue_time).getTime() : Date.now()),
+        content: data.content,
+        image: data.image,
+        thumbImage: data.thumbImage || data.thumb_image,
+        userId: data.userId || data.user_id
       })
 
-      if (res.data.image || res.data.thumbImage) {
+      // 图片回显
+      const imgs = (articleForm.image || '').split(',').filter(Boolean)
+      const thumbs = (articleForm.thumbImage || '').split(',').filter(Boolean)
+
+      // 封面
+      if (imgs.length > 0) {
+        const coverImg = imgs[0]
+        const coverThumb = thumbs[0] || coverImg
         coverFileList.value = [{
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: res.data.thumbImage || res.data.image
+          url: getImageUrl(coverThumb),
+          originUrl: coverImg,
+          thumbUrl: coverThumb
         }]
       } else {
         coverFileList.value = []
       }
 
-      if (res.data.image) {
-        const imageUrls = res.data.image.split(',').filter(url => url.trim())
-        imageFileList.value = imageUrls.map((url, index) => ({
-          id: `image-${index}`,
-          name: `image-${index}.jpg`,
+      // 详情
+      detailFileList.value = imgs.slice(1).map((img, index) => {
+        const thumb = thumbs[index + 1] || img
+        return {
+          id: `detail-${index}`,
+          name: `detail-${index}.jpg`,
           status: 'finished',
-          url: url.trim()
-        }))
-      } else {
-        imageFileList.value = []
-      }
+          url: getImageUrl(thumb),
+          originUrl: img,
+          thumbUrl: thumb
+        }
+      })
 
       dialogVisible.value = true
     }
@@ -388,97 +464,40 @@ const handleEdit = async (row) => {
   }
 }
 
-const handleCoverUpload = async ({ file, onFinish, onError }) => {
+const handleImageUpload = async ({ file, onFinish, onError }, type) => {
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
 
-      articleForm.cover = originUrl
-      articleForm.thumbCover = thumbUrl
-
-      const fileIndex = coverFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
-      if (fileIndex !== -1) {
-        coverFileList.value[fileIndex].url = thumbUrl
-        coverFileList.value[fileIndex].status = 'finished'
-      } else {
-        coverFileList.value.push({
-          id: file.id || 'cover',
-          name: file.name || 'cover.jpg',
-          status: 'finished',
-          url: thumbUrl
-        })
+      // 更新文件列表中的文件信息
+      const list = type === 'cover' ? coverFileList : detailFileList
+      let fileIndex = list.value.findIndex(f => f.id === file.id)
+      
+      // Fallback: 如果通过id找不到，尝试通过file对象引用查找
+      if (fileIndex === -1) {
+        fileIndex = list.value.findIndex(f => f.file === file.file)
       }
 
-      onFinish({
-        url: thumbUrl
-      })
-      message.success('封面图片上传成功')
+      if (fileIndex !== -1) {
+        list.value[fileIndex].url = getImageUrl(thumbUrl)
+        list.value[fileIndex].status = 'finished'
+        list.value[fileIndex].originUrl = originUrl.startsWith('http') ? originUrl.replace(config.fileBaseURL, '') : originUrl
+        list.value[fileIndex].thumbUrl = thumbUrl.startsWith('http') ? thumbUrl.replace(config.fileBaseURL, '') : thumbUrl
+      }
+
+      onFinish({ url: thumbUrl })
+      message.success('图片上传成功')
     } else {
       onError()
       message.error('上传失败：' + (res.message || '未知错误'))
     }
   } catch (error) {
-    console.error('上传封面图片失败:', error)
+    console.error('上传图片失败:', error)
     onError()
     message.error('上传失败')
   }
-}
-
-const handleImageUpload = async ({ file, onFinish, onError }) => {
-  try {
-    const res = await uploadFile(file.file)
-    if (res.code === 200 && res.data) {
-      const originUrl = res.data.originUrl || res.data.url
-      const thumbUrl = res.data.thumbUrl || originUrl
-
-      const existingImages = articleForm.image ? articleForm.image.split(',').filter(url => url.trim()) : []
-      existingImages.push(originUrl)
-      articleForm.image = existingImages.join(',')
-
-      const fileIndex = imageFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
-      if (fileIndex !== -1) {
-        imageFileList.value[fileIndex].url = thumbUrl
-        imageFileList.value[fileIndex].status = 'finished'
-      } else {
-        imageFileList.value.push({
-          id: file.id || `image-${Date.now()}`,
-          name: file.name || 'image.jpg',
-          status: 'finished',
-          url: thumbUrl
-        })
-      }
-
-      onFinish({
-        url: thumbUrl
-      })
-      message.success('详情图片上传成功')
-    } else {
-      onError()
-      message.error('上传失败：' + (res.message || '未知错误'))
-    }
-  } catch (error) {
-    console.error('上传详情图片失败:', error)
-    onError()
-    message.error('上传失败')
-  }
-}
-
-const handleCoverFileListChange = (files) => {
-  coverFileList.value = files
-  if (files.length === 0) {
-    articleForm.cover = ''
-    articleForm.thumbCover = ''
-  }
-}
-
-const handleImageFileListChange = (files) => {
-  imageFileList.value = files
-  const imageUrls = files
-      .filter(file => file.status === 'finished' && file.url)
-      .map(file => file.url)
-  articleForm.image = imageUrls.join(',')
 }
 
 const handleDialogSave = async () => {
@@ -491,12 +510,23 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
+    
+    // 整理图片数据
+    const allFiles = [...coverFileList.value, ...detailFileList.value]
+    // 过滤掉未上传成功的文件（防止出错）
+    const validFiles = allFiles.filter(f => f.status === 'finished' && (f.originUrl || f.url))
+    
+    const originUrls = validFiles.map(f => f.originUrl || f.url.replace(config.fileBaseURL, '')).join(',')
+    const thumbUrls = validFiles.map(f => f.thumbUrl || f.url.replace(config.fileBaseURL, '')).join(',')
+    
     const data = {
       title: articleForm.title,
-      issueUnit: articleForm.issueUnit,
+      issue_unit: articleForm.issueUnit,
+      issue_time: dayjs(articleForm.issueTime).format('YYYY-MM-DD HH:mm:ss'),
       content: articleForm.content,
-      image: articleForm.cover || articleForm.image,
-      thumbImage: articleForm.thumbCover || articleForm.thumbImage
+      image: originUrls,
+      thumb_image: thumbUrls,
+      user_id: articleForm.userId
     }
 
     let res
@@ -513,6 +543,7 @@ const handleDialogSave = async () => {
     }
   } catch (error) {
     console.error('保存失败:', error)
+    message.error('保存失败')
   } finally {
     dialogLoading.value = false
   }
@@ -527,6 +558,7 @@ const handleDelete = async (id) => {
     }
   } catch (error) {
     console.error('删除失败:', error)
+    message.error('删除失败')
   }
 }
 </script>
@@ -570,6 +602,92 @@ const handleDelete = async (id) => {
 }
 
 // 移动端适配
+.mobile-list {
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 0;
+  }
+
+  .card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mobile-card {
+    :deep(.n-card__content) {
+      padding: 12px;
+    }
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    .article-info {
+      flex: 1;
+      margin-right: 12px;
+
+      .article-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 4px 0;
+        line-height: 1.4;
+      }
+
+      .article-unit {
+        font-size: 13px;
+        color: #6b7280;
+        margin: 0;
+      }
+    }
+
+    .article-cover {
+      flex-shrink: 0;
+      width: 80px;
+      height: 60px;
+      border-radius: 4px;
+      overflow: hidden;
+      background-color: #f3f4f6;
+      
+      .no-cover {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+      }
+    }
+  }
+
+  .card-content {
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #4b5563;
+
+    .info-item {
+      display: flex;
+      margin-bottom: 4px;
+
+      .label {
+        color: #9ca3af;
+        min-width: 70px;
+      }
+    }
+  }
+
+  .mobile-pagination {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 768px) {
   .search-header {
     flex-direction: column;
@@ -593,20 +711,6 @@ const handleDelete = async (id) => {
       padding: 12px;
     }
   }
-
-  :deep(.n-data-table) {
-    .n-data-table-wrapper {
-      overflow-x: auto;
-    }
-  }
-
-  .pagination-container {
-    flex-wrap: wrap;
-  }
-}
-
-.action-bar {
-  margin-bottom: 16px;
 }
 
 @keyframes fadeIn {

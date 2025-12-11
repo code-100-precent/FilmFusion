@@ -241,9 +241,11 @@ import {
 import { Icon } from '@iconify/vue'
 import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile } from '@/api/index'
 import { getImageUrl } from '@/utils/image'
+import { useUserStore } from '@/store/user'
 import config from '@/config'
 
 const message = useMessage()
+const userStore = useUserStore()
 
 const isMobile = ref(false)
 const loading = ref(false)
@@ -269,7 +271,8 @@ const serviceForm = reactive({
   description: '',
   status: true,
   image: '',
-  thumbImage: ''
+  thumbImage: '',
+  userId: null
 })
 
 const pagination = reactive({
@@ -493,7 +496,8 @@ const handleAdd = () => {
     description: '',
     status: true,
     image: '',
-    thumbImage: ''
+    thumbImage: '',
+    userId: userStore.userInfo?.id || null
   })
   coverFileList.value = []
   imageFileList.value = []
@@ -517,7 +521,8 @@ const handleEdit = async (row) => {
           description: data.description || '',
           status: data.status === 1 || data.status === true,
           image: data.image || '',
-          thumbImage: data.thumbImage || ''
+          thumbImage: data.thumbImage || '',
+          userId: data.userId || data.user_id
         })
 
         const urls = (data.image || '').split(',').filter(u => u.trim())
@@ -619,7 +624,7 @@ const handleDialogSave = async () => {
       status: serviceForm.status ? 1 : 0,
       image: allImages.join(','),
       thumbImage: allThumbImages.join(','),
-      user_id: 1 
+      user_id: serviceForm.userId
     }
 
     let res

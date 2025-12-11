@@ -401,7 +401,7 @@ export const getLocationById = (id) => {
  */
 export const getLocationList = (params) => {
   return request({
-    url: '/location/list',
+    url: '/location/admin/page',
     method: 'get',
     params
   })
