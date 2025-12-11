@@ -331,7 +331,7 @@ export const getDramaById = (id) => {
  */
 export const getDramaList = (params) => {
   return request({
-    url: '/drama/list',
+    url: '/drama/admin/page',
     method: 'get',
     params
   })
@@ -723,6 +723,7 @@ export const createTour = (data) => {
  */
 export const updateTour = (id, data) => {
   return request({
+    url: `/tour/admin/update/${id}`,
     method: 'put',
     data
   })
