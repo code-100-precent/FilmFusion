@@ -878,13 +878,19 @@ const handleDelete = async (id) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 16px;
+}
+
+.search-form {
+  flex: 1;
+  min-width: 0;
 }
 
 .action-buttons {
   display: flex;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .pagination-container {

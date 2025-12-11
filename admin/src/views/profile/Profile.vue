@@ -6,13 +6,13 @@
         <div class="profile-header">
           <div class="avatar-wrapper">
             <n-avatar 
-              :size="120" 
+              :size="80" 
               :src="avatarUrl" 
               round
               class="avatar"
             >
               <template #fallback>
-                <Icon icon="mdi:account" :width="110" :height="110" />
+                <Icon icon="mdi:account" :width="70" :height="70" />
               </template>
             </n-avatar>
             <div class="avatar-overlay" @click="handleUploadAvatar">

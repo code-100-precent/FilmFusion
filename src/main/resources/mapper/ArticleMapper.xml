@@ -60,7 +60,7 @@
         <if test="keyword != null and keyword != ''">
             AND title LIKE CONCAT('%', #{keyword}, '%')
         </if>
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC, id DESC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -94,7 +94,6 @@
         WHERE id = #{articleId}
         AND deleted = false
     </update>
-git
 
     <select id="getTotal" resultType="java.lang.Long">
         SELECT COUNT(1)

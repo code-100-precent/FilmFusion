@@ -67,6 +67,11 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         if (updateDTO.getImageUrl() != null) {
             banner.setImageUrl(updateDTO.getImageUrl());
         }
+        // 如果targetModule为空，设置为空字符串
+        if (updateDTO.getTargetModule() != null) {
+            String targetModule = updateDTO.getTargetModule().trim().isEmpty() ? "" : updateDTO.getTargetModule();
+            banner.setTargetModule(targetModule);
+        }
         if (updateDTO.getSort() != null) {
             banner.setSort(updateDTO.getSort());
         }
@@ -80,10 +85,16 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
 
     @Override
     public BannerVO createImage(CreateBannerDTO createDTO) {
+        // 如果targetModule为空，设置为空字符串
+        String targetModule = createDTO.getTargetModule();
+        if (targetModule == null || targetModule.trim().isEmpty()) {
+            targetModule = "";
+        }
+        
         Banner banner = Banner.builder()
                 .imageName(createDTO.getImageName())
                 .imageUrl(createDTO.getImageUrl())
-                .targetModule(createDTO.getTargetModule())
+                .targetModule(targetModule)
                 .sort(createDTO.getSort())
                 .status(true)
                 .build();

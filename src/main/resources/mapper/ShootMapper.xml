@@ -92,7 +92,7 @@
             <if test="dto.price != null and dto.price != ''">
                 price = #{dto.price},
             </if>
-            <if test="dto.status != null and dto.status != ''">
+            <if test="dto.status != null">
                 status = #{dto.status},
             </if>
             <if test="dto.address != null and dto.address != ''">

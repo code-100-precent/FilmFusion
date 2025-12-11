@@ -269,9 +269,10 @@ const columns = [
       return h(NAvatar, {
         size: 'small',
         src: avatarUrl,
-        round: true
+        round: true,
+        style: { display: 'flex', alignItems: 'center', justifyContent: 'center' }
       }, {
-        fallback: () => h(Icon, { icon: 'mdi:account', width: 20 })
+        fallback: () => h(Icon, { icon: 'mdi:account', width: 16, height: 16 })
       })
     }
   },

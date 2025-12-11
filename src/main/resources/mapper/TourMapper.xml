@@ -143,6 +143,9 @@
             <if test="dto.dramaId != null and dto.dramaId != ''">
                 drama_id = #{dto.dramaId},
             </if>
+            <if test="dto.deleted != null">
+                deleted = #{dto.deleted},
+            </if>
         </set>
         WHERE id = #{id}
         AND deleted = false

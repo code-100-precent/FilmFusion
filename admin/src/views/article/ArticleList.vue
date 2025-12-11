@@ -33,7 +33,7 @@
             :data="articleList"
             :loading="loading"
             :row-key="row => row.id"
-            :scroll-x="1200"
+            :scroll-x="1400"
         />
 
         <!-- 独立分页组件 -->

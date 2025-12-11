@@ -98,8 +98,8 @@
                 </div>
                 <div class="info-item">
                   <span class="label">状态：</span>
-                  <n-tag :type="tour.deleted === 0 ? 'success' : 'error'" size="small">
-                    {{ tour.deleted === 0 ? '启用' : '已删除' }}
+                  <n-tag :type="(tour.deleted === 0 || tour.deleted === false) ? 'success' : 'error'" size="small">
+                    {{ (tour.deleted === 0 || tour.deleted === false) ? '启用' : '禁用' }}
                   </n-tag>
                 </div>
               </div>
@@ -199,7 +199,7 @@
             />
           </n-form-item>
           <n-form-item label="状态" path="deleted">
-            <n-switch v-model:value="statusSwitch" :checked-value="0" :unchecked-value="1">
+            <n-switch v-model:value="statusSwitch">
               <template #checked>启用</template>
               <template #unchecked>禁用</template>
             </n-switch>
@@ -318,9 +318,9 @@ const tourForm = reactive({
 })
 
 const statusSwitch = computed({
-  get: () => tourForm.deleted,
+  get: () => tourForm.deleted === 0, // 0表示启用，转换为true
   set: (val) => {
-    tourForm.deleted = val
+    tourForm.deleted = val ? 0 : 1 // true转换为0（启用），false转换为1（禁用）
   }
 })
 
@@ -440,10 +440,11 @@ const columns = [
     key: 'deleted',
     width: 100,
     render: (row) => {
+      const isEnabled = row.deleted === 0 || row.deleted === false
       return h(NTag, {
-        type: row.deleted === 0 ? 'success' : 'error'
+        type: isEnabled ? 'success' : 'error'
       }, {
-        default: () => row.deleted === 0 ? '启用' : '已删除'
+        default: () => isEnabled ? '启用' : '禁用'
       })
     }
   },
@@ -503,8 +504,10 @@ const loadData = async () => {
     const res = await getTourPage(pagination.page, pagination.pageSize, searchForm.keyword)
 
     if (res.code === 200) {
-      const listData = res.data?.list || res.data?.records || res.data || []
-      const totalItems = res.data?.total || res.data?.totalItems || res.pagination?.totalItems || res.pagination?.total || 0
+      // PageResponse结构：data为数组，pagination包含分页信息
+      const listData = res.data || []
+      const totalItems = res.pagination?.totalItems || 0
+      const totalPages = res.pagination?.totalPages || 1
 
       tourList.value = listData.map(tour => {
         // 解析图片字段
@@ -524,6 +527,7 @@ const loadData = async () => {
       })
 
       pagination.itemCount = totalItems
+      pagination.pageCount = totalPages
     } else {
       message.error(`获取体验游失败: ${res.message || '未知错误'}`)
     }

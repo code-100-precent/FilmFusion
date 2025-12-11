@@ -137,8 +137,14 @@
         <n-form-item label="标题" path="title">
           <n-input v-model:value="bannerForm.title" placeholder="请输入Banner标题" />
         </n-form-item>
-        <n-form-item label="链接" path="link">
-          <n-input v-model:value="bannerForm.link" placeholder="请输入跳转链接" />
+        <n-form-item label="跳转模块" path="link">
+          <n-select 
+            v-model:value="bannerForm.link" 
+            :options="moduleOptions" 
+            placeholder="请选择跳转模块" 
+            clearable
+            style="width: 100%;"
+          />
         </n-form-item>
         <n-form-item label="图片" path="imageUrl">
           <n-upload
@@ -166,7 +172,7 @@
           <n-input-number v-model:value="bannerForm.sortOrder" placeholder="请输入排序值" :min="0" style="width: 100%;" />
         </n-form-item>
         <n-form-item label="状态" path="status">
-          <n-switch v-model:value="statusSwitch" :checked-value="1" :unchecked-value="0">
+          <n-switch v-model:value="statusSwitch">
             <template #checked>启用</template>
             <template #unchecked>禁用</template>
           </n-switch>
@@ -199,6 +205,7 @@ import {
   NTag,
   NSwitch,
   NUpload,
+  NSelect,
   useMessage,
   useDialog
 } from 'naive-ui'
@@ -208,7 +215,7 @@ import { getImageUrl } from '@/utils/image'
 // Banner相关API函数
 const getBannerPage = (current = 1, size = 10, keyword = '') => {
   return request({
-    url: '/banner/page',
+    url: '/banner/admin/page',
     method: 'get',
     params: {
       current,
@@ -227,7 +234,7 @@ const getBannerById = (id) => {
 
 const createBanner = (data) => {
   return request({
-    url: '/banner',
+    url: '/banner/admin/create',
     method: 'post',
     data
   })
@@ -235,7 +242,7 @@ const createBanner = (data) => {
 
 const updateBanner = (id, data) => {
   return request({
-    url: `/banner/update/${id}`,
+    url: `/banner/admin/update/${id}`,
     method: 'put',
     data
   })
@@ -243,7 +250,7 @@ const updateBanner = (id, data) => {
 
 const deleteBanner = (id) => {
   return request({
-    url: `/banner/delete/${id}`,
+    url: `/banner/admin/delete/${id}`,
     method: 'delete'
   })
 }
@@ -295,6 +302,19 @@ const pagination = reactive({
   showSizePicker: true,
   pageSizes: [10, 20, 50, 100]
 })
+
+// 跳转模块选项
+const moduleOptions = [
+  { label: '首页', value: '首页' },
+  { label: '文章列表', value: '文章列表' },
+  { label: '电视剧列表', value: '电视剧列表' },
+  { label: '场地列表', value: '场地列表' },
+  { label: '服务列表', value: '服务列表' },
+  { label: '住宿列表', value: '住宿列表' },
+  { label: '旅游线路', value: '旅游线路' },
+  { label: '政策列表', value: '政策列表' },
+  { label: '反馈', value: '反馈' }
+]
 
 const formRules = {
   title: [
@@ -373,8 +393,13 @@ const columns = [
         h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
         h(
           NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
+          { 
+            onPositiveClick: () => handleDelete(row.id),
+            positiveText: '确定',
+            negativeText: '取消'
+          },
           {
+            default: () => '确定要删除这个Banner吗？',
             trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
           }
         )
@@ -399,7 +424,7 @@ const loadData = async () => {
     const res = await getBannerPage(pagination.page, pagination.pageSize, searchForm.keyword)
     if (res.code === 200) {
       bannerList.value = res.data || []
-      pagination.itemCount = res.total || 0
+      pagination.itemCount = res.pagination?.totalItems || res.total || 0
     }
   } catch (error) {
     console.error('加载Banner列表失败:', error)

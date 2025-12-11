@@ -75,7 +75,7 @@
             OR drama_description LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC, id DESC
         LIMIT #{offset}, #{size}
     </select>
 

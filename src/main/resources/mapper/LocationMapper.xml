@@ -103,7 +103,7 @@
             <if test="dto.type != null and dto.type != ''">
                 type = #{dto.type},
             </if>
-            <if test="dto.status != null and dto.status != ''">
+            <if test="dto.status != null">
                 status = #{dto.status},
             </if>
             <if test="dto.locationDescription != null and dto.locationDescription != ''">

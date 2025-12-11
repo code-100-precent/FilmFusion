@@ -99,8 +99,8 @@
                 </div>
                 <div class="info-item">
                   <span class="label">状态：</span>
-                  <span :class="service.status ? 'status-available' : 'status-unavailable'">
-                    {{ service.status ? '上线' : '下线' }}
+                  <span :class="(service.status === true || service.status === 1) ? 'status-available' : 'status-unavailable'">
+                    {{ (service.status === true || service.status === 1) ? '上线' : '下线' }}
                   </span>
                 </div>
                 <div class="info-item">
@@ -402,7 +402,8 @@ const columns = [
     key: 'status',
     width: 100,
     render: (row) => {
-      const isActive = row.status === 1 || row.status === true
+      // status是Boolean类型
+      const isActive = row.status === true || row.status === 1
       return h(
         'span',
         { class: isActive ? 'status-available' : 'status-unavailable' },
@@ -621,7 +622,7 @@ const handleDialogSave = async () => {
 
     const data = {
       ...serviceForm,
-      status: serviceForm.status ? 1 : 0,
+      status: serviceForm.status, // 直接传递Boolean值
       image: allImages.join(','),
       thumbImage: allThumbImages.join(','),
       user_id: serviceForm.userId

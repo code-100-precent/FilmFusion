@@ -102,6 +102,12 @@
                   <span class="label">价格：</span>
                   <span class="price">{{ location.price ? '¥' + location.price : '-' }}</span>
                 </div>
+                <div class="info-item">
+                  <span class="label">状态：</span>
+                  <span :class="(location.status === true || location.status === 1) ? 'status-available' : 'status-unavailable'">
+                    {{ (location.status === true || location.status === 1) ? '可用' : '不可用' }}
+                  </span>
+                </div>
               </div>
               <div class="card-actions">
                 <n-button size="small" @click="handleEdit(location)" block style="margin-bottom: 8px">
@@ -430,8 +436,8 @@ const columns = [
     key: 'status',
     width: 80,
     render: (row) => {
-      // 兼容 1/0 和 true/false
-      const isActive = row.status === 1 || row.status === true
+      // status是Boolean类型
+      const isActive = row.status === true || row.status === 1
       return h(
         'span',
         { class: isActive ? 'status-available' : 'status-unavailable' },
@@ -585,7 +591,7 @@ const handleDialogSave = async () => {
 
     const data = { 
       ...locationForm,
-      status: locationForm.status ? 1 : 0,
+      status: locationForm.status, // 直接传递Boolean值
       image: finalImageStr,
       thumbImage: finalThumbImageStr,
       user_id: locationForm.userId

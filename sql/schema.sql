@@ -189,7 +189,7 @@ CREATE TABLE `fi_banner` (
     `id`               INT                NOT NULL AUTO_INCREMENT COMMENT 'id',
     `image_name`       VARCHAR ( 255 )    NOT NULL COMMENT '图片名称',
     `image_url`        VARCHAR ( 255 )    NOT NULL COMMENT '图片地址',
-    `target_module`    VARCHAR ( 25 )     NOT NULL COMMENT '跳转模块名称',
+    `target_module`    VARCHAR ( 25 )     NULL COMMENT '跳转模块名称',
     `status`           TINYINT            NOT NULL COMMENT '状态(0:禁用 1:启用)',
     `deleted`          TINYINT            NOT NULL COMMENT '是否删除(0:未删 1:已删)',
     `created_at`       DATETIME           NOT NULL COMMENT '创建时间',
@@ -217,7 +217,7 @@ CREATE TABLE `fi_hotel` (
       PRIMARY KEY ( `id` )
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
 
-CREATE TABLE `fi_tour` (
+CREATE TABLE `fi_tours` (
      `id`              int               NOT NULL AUTO_INCREMENT,
      `name`            varchar(255)      NOT NULL COMMENT '体验游名称',
      `description`     varchar(2550)     NOT NULL COMMENT '介绍',
