@@ -57,32 +57,47 @@
             class="shoot-card"
             @click="goToDetail(shoot.id)"
           >
-            <view class="shoot-header">
-              <view class="shoot-title-row">
-                <text class="shoot-name">{{ shoot.name }}</text>
-                <view class="shoot-status" :class="{ 'status-online': shoot.status === 1 }">
-                  {{ shoot.status === 1 ? '上线' : '下线' }}
+            <!-- 服务封面图片 -->
+            <view class="shoot-cover">
+              <image 
+                v-if="shoot.image || shoot.thumbImage"
+                :src="shoot.image || shoot.thumbImage" 
+                class="cover-image" 
+                mode="aspectFill"
+              ></image>
+              <view v-else class="cover-placeholder">
+                <uni-icons type="image" size="40" color="#d1d5db"></uni-icons>
+              </view>
+            </view>
+            
+            <view class="shoot-content">
+              <view class="shoot-header">
+                <view class="shoot-title-row">
+                  <text class="shoot-name">{{ shoot.name }}</text>
+                  <view class="shoot-status" :class="{ 'status-online': shoot.status === 1 }">
+                    {{ shoot.status === 1 ? '上线' : '下线' }}
+                  </view>
                 </view>
               </view>
-            </view>
-            <text class="shoot-desc">{{ shoot.description }}</text>
-            <view class="shoot-info">
-              <view class="info-item">
-                <uni-icons type="location" size="16" color="#6366f1"></uni-icons>
-                <text>{{ shoot.address }}</text>
+              <text class="shoot-desc">{{ shoot.description }}</text>
+              <view class="shoot-info">
+                <view class="info-item">
+                  <uni-icons type="location" size="16" color="#6366f1"></uni-icons>
+                  <text>{{ shoot.address }}</text>
+                </view>
+                <view class="info-item">
+                  <uni-icons type="phone" size="16" color="#6366f1"></uni-icons>
+                  <text>{{ shoot.phone }}</text>
+                </view>
+                <view class="info-item">
+                  <uni-icons type="person" size="16" color="#6366f1"></uni-icons>
+                  <text>{{ shoot.contactName }}</text>
+                </view>
               </view>
-              <view class="info-item">
-                <uni-icons type="phone" size="16" color="#6366f1"></uni-icons>
-                <text>{{ shoot.phone }}</text>
+              <view class="shoot-footer">
+                <text class="shoot-price">¥{{ shoot.price }}</text>
+                <text class="view-detail">查看详情</text>
               </view>
-              <view class="info-item">
-                <uni-icons type="person" size="16" color="#6366f1"></uni-icons>
-                <text>{{ shoot.contactName }}</text>
-              </view>
-            </view>
-            <view class="shoot-footer">
-              <text class="shoot-price">¥{{ shoot.price }}</text>
-              <text class="view-detail">查看详情</text>
             </view>
           </view>
         </view>
@@ -331,17 +346,43 @@ export default {
 .shoot-card {
   background: #fff;
   border-radius: 20rpx;
-  padding: 24rpx;
   margin-bottom: 16rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s;
   width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .shoot-card:active {
   transform: translateY(-4rpx);
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.shoot-cover {
+  width: 100%;
+  height: 200rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.cover-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shoot-content {
+  padding: 24rpx;
 }
 
 .shoot-header {

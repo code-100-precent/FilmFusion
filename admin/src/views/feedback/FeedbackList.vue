@@ -205,7 +205,11 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
+  pageSizes: [10, 20, 50, 100],
+  showQuickJumper: true,
+  // 添加以下属性以确保Naive UI正确计算分页
+  pageCount: 1,
+  prefix: ({ itemCount }) => `共 ${itemCount} 条`
 })
 
 const statusOptions = [
@@ -358,6 +362,13 @@ const getStatusTagType = (status) => {
 const loadData = async () => {
   try {
     loading.value = true
+<<<<<<< HEAD
+    const res = await getFeedbackPage(pagination.page, pagination.pageSize, searchForm.keyword)
+    console.log('分页响应数据:', res) // 添加调试日志
+    if (res.code === 200) {
+      feedbackList.value = res.data || []
+      // 确保正确设置总数据量和总页数
+=======
     const res = await getFeedbackPage(pagination.page, pagination.pageSize, searchForm.keyword, searchForm.status)
     if (res.code === 200) {
       let list = res.data || []
@@ -366,7 +377,11 @@ const loadData = async () => {
         list = list.filter(item => item.type === searchForm.type)
       }
       feedbackList.value = list
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       pagination.itemCount = res.pagination?.totalItems || 0
+      pagination.pageCount = res.pagination?.totalPages || 1
+      console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
+      console.log('设置总页数:', pagination.pageCount) // 添加调试日志
     }
   } catch (error) {
     console.error('加载反馈列表失败:', error)

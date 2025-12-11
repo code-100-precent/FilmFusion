@@ -58,33 +58,49 @@
             class="location-card"
             @click="goToDetail(location.id)"
           >
-            <view class="location-header">
-              <view class="location-title-row">
-                <text class="location-name">{{ location.name }}</text>
-                <view class="location-badge">{{ location.type }}</view>
-              </view>
-              <view class="location-status" :class="{ 'status-available': location.status === 1 }">
-                {{ location.status === 1 ? '可用' : '不可用' }}
-              </view>
-            </view>
-            <text class="location-desc">{{ location.locationDescription }}</text>
-            <view class="location-info">
-              <view class="info-item">
-                <uni-icons type="location" size="16" color="#6366f1"></uni-icons>
-                <text>{{ location.address }}</text>
-              </view>
-              <view class="info-item">
-                <uni-icons type="phone" size="16" color="#6366f1"></uni-icons>
-                <text>{{ location.contactPhone }}</text>
-              </view>
-              <view class="info-item">
-                <uni-icons type="person" size="16" color="#6366f1"></uni-icons>
-                <text>{{ location.contactName }}</text>
+            <!-- 场地封面图片 -->
+            <view class="location-cover">
+              <image 
+                v-if="location.cover" 
+                :src="location.cover" 
+                class="cover-image" 
+                mode="aspectFill"
+                @error="handleImageError"
+              />
+              <view v-else class="cover-placeholder">
+                <uni-icons type="image" size="40" color="#d1d5db"></uni-icons>
+                <text class="placeholder-text">暂无图片</text>
               </view>
             </view>
-            <view class="location-footer">
-              <text class="location-price">¥{{ location.price }}/天</text>
-              <text class="view-detail">查看详情</text>
+            
+            <view class="location-content">
+              <view class="location-header">
+                <view class="location-title-row">
+                  <text class="location-name">{{ location.name }}</text>
+                  <view class="location-badge">{{ location.type }}</view>
+                </view>
+                <view class="location-status" :class="{ 'status-available': location.status === 1 }">
+                  {{ location.status === 1 ? '可用' : '不可用' }}
+                </view>
+              </view>
+              
+              <text class="location-desc">{{ location.locationDescription }}</text>
+              
+              <view class="location-info">
+                <view class="info-item">
+                  <uni-icons type="location" size="16" color="#6366f1"></uni-icons>
+                  <text>{{ location.address }}</text>
+                </view>
+                <view class="info-item">
+                  <uni-icons type="phone" size="16" color="#6366f1"></uni-icons>
+                  <text>{{ location.contactPhone }}</text>
+                </view>
+              </view>
+              
+              <view class="location-footer">
+                <text class="location-price">¥{{ location.price }}/天</text>
+                <text class="view-detail">查看详情</text>
+              </view>
             </view>
           </view>
         </view>
@@ -200,6 +216,10 @@ export default {
       uni.navigateTo({
         url: `/pages/location/detail?id=${id}`
       })
+    },
+    handleImageError(e) {
+      console.log('图片加载失败:', e)
+      // 可以在这里设置默认图片或其他处理逻辑
     }
   }
 }
@@ -336,17 +356,50 @@ export default {
 .location-card {
   background: #fff;
   border-radius: 20rpx;
-  padding: 24rpx;
   margin-bottom: 16rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s;
   width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .location-card:active {
   transform: translateY(-4rpx);
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.location-cover {
+  width: 100%;
+  height: 320rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+  gap: 16rpx;
+}
+
+.placeholder-text {
+  font-size: 26rpx;
+  color: #9ca3af;
+}
+
+.location-content {
+  padding: 24rpx;
 }
 
 .location-header {
@@ -364,13 +417,14 @@ export default {
 }
 
 .location-name {
-  font-size: 28rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #1f2937;
+  flex: 1;
 }
 
 .location-badge {
-  padding: 4rpx 12rpx;
+  padding: 6rpx 12rpx;
   background: #eef2ff;
   color: #6366f1;
   font-size: 22rpx;
@@ -379,7 +433,7 @@ export default {
 }
 
 .location-status {
-  padding: 4rpx 12rpx;
+  padding: 6rpx 12rpx;
   background: #fee2e2;
   color: #ef4444;
   font-size: 22rpx;
@@ -394,9 +448,9 @@ export default {
 
 .location-desc {
   display: block;
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #6b7280;
-  line-height: 1.8;
+  line-height: 1.6;
   margin-bottom: 16rpx;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -407,7 +461,7 @@ export default {
 .location-info {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 8rpx;
   margin-bottom: 16rpx;
   padding: 16rpx;
   background: #f9fafb;
@@ -418,7 +472,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #374151;
 }
 
@@ -431,7 +485,7 @@ export default {
 }
 
 .location-price {
-  font-size: 28rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #f59e0b;
 }
@@ -440,6 +494,9 @@ export default {
   font-size: 26rpx;
   color: #6366f1;
   font-weight: 500;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  background: #eef2ff;
 }
 
 .load-more,

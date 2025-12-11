@@ -335,7 +335,11 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
+  pageSizes: [10, 20, 50, 100],
+  showQuickJumper: true,
+  // 添加以下属性以确保Naive UI正确计算分页
+  pageCount: 1,
+  prefix: ({ itemCount }) => `共 ${itemCount} 条`
 })
 
 const formRules = {
@@ -577,10 +581,21 @@ const loadData = async () => {
   try {
     loading.value = true
     const res = await getDramaPage(pagination.page, pagination.pageSize, searchForm.keyword)
+    console.log('分页响应数据:', res) // 添加调试日志
     if (res.code === 200) {
+<<<<<<< HEAD
+      dramaList.value = res.data || []
+      // 设置总数据量
+      pagination.itemCount = res.pagination?.totalItems || 0
+      // 自动计算总页数
+      pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
+      console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
+      console.log('自动计算总页数:', pagination.pageCount) // 添加调试日志
+=======
       dramaList.value = res.data?.records || res.data || []
       // 兼容多种API返回格式
       pagination.itemCount = res.data?.total || res.total || res.pagination?.totalItems || res.pagination?.total || 0
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   } catch (error) {
     console.error('加载电视剧列表失败:', error)

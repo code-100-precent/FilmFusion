@@ -179,11 +179,18 @@
                 <text>点击上传</text>
               </view>
               <view v-else class="file-preview">
-                <view class="file-info">
+                <view class="file-info" @click.stop="previewFile(form.shootPermit, '影视拍摄许可证')">
                   <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
                   <text class="file-name">已上传文件</text>
                 </view>
-                <uni-icons type="close" size="20" color="#ef4444" @click.stop="removeFile('permit')"></uni-icons>
+                <view class="file-actions">
+                  <view @click.stop="previewFile(form.shootPermit, '影视拍摄许可证')" style="padding: 8rpx;">
+                    <uni-icons type="eye" size="20" color="#6366f1"></uni-icons>
+                  </view>
+                  <view @click.stop="removeFile('permit')" style="padding: 8rpx;">
+                    <uni-icons type="close" size="20" color="#ef4444"></uni-icons>
+                  </view>
+                </view>
               </view>
             </view>
           </view>
@@ -196,11 +203,18 @@
                 <text>点击上传</text>
               </view>
               <view v-else class="file-preview">
-                <view class="file-info">
+                <view class="file-info" @click.stop="previewFile(form.approvalFile, '立项审批文件')">
                   <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
                   <text class="file-name">已上传文件</text>
                 </view>
-                <uni-icons type="close" size="20" color="#ef4444" @click.stop="removeFile('approval')"></uni-icons>
+                <view class="file-actions">
+                  <view @click.stop="previewFile(form.approvalFile, '立项审批文件')" style="padding: 8rpx;">
+                    <uni-icons type="eye" size="20" color="#6366f1"></uni-icons>
+                  </view>
+                  <view @click.stop="removeFile('approval')" style="padding: 8rpx;">
+                    <uni-icons type="close" size="20" color="#ef4444"></uni-icons>
+                  </view>
+                </view>
               </view>
             </view>
           </view>
@@ -213,11 +227,18 @@
                 <text>点击上传</text>
               </view>
               <view v-else class="file-preview">
-                <view class="file-info">
+                <view class="file-info" @click.stop="previewFile(form.shootApply, '协拍服务申请表')">
                   <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
                   <text class="file-name">已上传文件</text>
                 </view>
-                <uni-icons type="close" size="20" color="#ef4444" @click.stop="removeFile('application')"></uni-icons>
+                <view class="file-actions">
+                  <view @click.stop="previewFile(form.shootApply, '协拍服务申请表')" style="padding: 8rpx;">
+                    <uni-icons type="eye" size="20" color="#6366f1"></uni-icons>
+                  </view>
+                  <view @click.stop="removeFile('application')" style="padding: 8rpx;">
+                    <uni-icons type="close" size="20" color="#ef4444"></uni-icons>
+                  </view>
+                </view>
               </view>
             </view>
           </view>
@@ -245,6 +266,8 @@ import NavBar from '../../components/NavBar/NavBar.vue'
 // 使用真实后端API
 import { createReport, updateReport, getReportById, uploadFile as apiUploadFile } from '../../services/backend-api'
 import { mapGetters } from 'vuex'
+// 导入文件URL处理函数
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
@@ -413,147 +436,181 @@ export default {
         return
       }
       
-      try {
-        console.log('1. 开始选择文件...')
-        // 使用uni.chooseMessageFile确保在各平台的兼容性
-        const fileResult = await uni.chooseMessageFile({
-          count: 1,
-          type: 'file',
-          extension: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
-          showFileExtension: true
-        })
-        
-        console.log('2. 文件选择结果:', JSON.stringify(fileResult))
-        
-        // 兼容两种返回格式：tempFilePaths数组 或 tempFiles数组
-        let filePath = null
-        
-        // 检查是否有tempFilePaths数组
-        if (fileResult && fileResult.tempFilePaths && fileResult.tempFilePaths.length > 0) {
-          filePath = fileResult.tempFilePaths[0]
-          console.log('3. 选择的文件路径:', filePath)
-        } else if (fileResult && fileResult.tempFiles && fileResult.tempFiles.length > 0) {
-          // 从tempFiles数组中提取路径
-          filePath = fileResult.tempFiles[0].path
-          console.log('3. 从tempFiles中提取的文件路径:', filePath)
-          console.log('3.1 文件名称:', fileResult.tempFiles[0].name)
-          console.log('3.2 文件大小:', fileResult.tempFiles[0].size)
-            
-          if (filePath) {
-            uni.showLoading({ title: '上传中...' })
-              
-            try {
-              console.log('4. 开始调用上传API...')
-              console.log('4.1 上传目标URL:', 'http://localhost:8080/api/file')
-              
-              // 记录开始时间用于监控响应延迟
-              const startTime = Date.now()
-              // 调用后端API上传文件
-              const response = await apiUploadFile(filePath)
-              const endTime = Date.now()
-              
-              console.log(`5. API调用完成，响应 (耗时: ${endTime - startTime}ms):`, JSON.stringify(response))
-              
-              // 处理API响应
-              if (response) {
-                // 支持code为200或0的成功状态
-                const isSuccess = response.code === 200 || response.code === 0
-                
-                if (isSuccess) {
-                // 确保文件URL是字符串格式
-                let fileUrl = response.data
-                if (typeof fileUrl === 'object') {
-                  fileUrl = fileUrl.url || fileUrl.filename || fileUrl.path || JSON.stringify(fileUrl)
-                }
-                fileUrl = String(fileUrl)
-                
-                // 根据field类型设置对应的后端字段
-                if (field === 'permit') {
-                  this.form.shootPermit = fileUrl
-                  this.form.thumbShootPermit = fileUrl
-                } else if (field === 'approval') {
-                  this.form.approvalFile = fileUrl
-                  this.form.thumbApprovalFile = fileUrl
-                } else if (field === 'application') {
-                  this.form.shootApply = fileUrl
-                  this.form.thumbShootApply = fileUrl
-                }
-                
-                console.log(`6. 文件上传成功，文件名:`, fileUrl)
-                console.log(`6.1 文件存储路径:`, fileUrl)
-                uni.showToast({ 
-                  title: '上传成功', 
-                  icon: 'success' 
-                })
-              } else {
-                  const errorMsg = response.message || response.msg || '上传失败，请重试'
-                  console.error('7. API返回错误:', errorMsg, '完整响应:', JSON.stringify(response))
-                  uni.showToast({ 
-                    title: errorMsg, 
-                    icon: 'none',
-                    duration: 3000
-                  })
-                }
-              } else {
-                console.error('7. API未返回响应')
-                uni.showToast({ 
-                  title: '服务器未响应', 
-                  icon: 'none',
-                  duration: 3000
-                })
-              }
-            } catch (apiError) {
-              console.error('7. API调用异常:', apiError, '错误堆栈:', apiError?.stack || '无堆栈')
-              
-              // 详细的错误类型判断
-              let errorTitle = '上传请求失败'
-              if (apiError?.errMsg?.includes('request:fail')) {
-                errorTitle = '网络请求失败，请检查网络连接'
-              } else if (apiError?.errMsg?.includes('timeout')) {
-                errorTitle = '请求超时，请重试'
-              } else if (apiError?.code === 401) {
-                errorTitle = '登录已过期，请重新登录'
-              } else if (apiError?.code === 500) {
-                errorTitle = '服务器错误，请稍后重试'
-              }
-              
-              uni.showToast({ 
-                title: errorTitle, 
-                icon: 'none',
-                duration: 3000
+      // 显示选择方式弹窗
+      uni.showActionSheet({
+        itemList: ['从相册选择图片', '从文件选择'],
+        success: async (res) => {
+          console.log('选择了上传方式:', res.tapIndex)
+          
+          try {
+            if (res.tapIndex === 0) {
+              // 从相册选择图片
+              console.log('1. 开始从相册选择图片...')
+              const imageResult = await uni.chooseImage({
+                count: 1,
+                sizeType: ['compressed'], // 选择压缩图片
+                sourceType: ['album', 'camera'], // 可以从相册或相机选择
+                extension: ['jpg', 'jpeg', 'png']
               })
-            } finally {
-              // 安全地隐藏loading，避免"toast can't be found"错误
-              try {
-                uni.hideLoading()
-              } catch (e) {
-                console.warn('隐藏loading时出错:', e)
+              
+              console.log('2. 图片选择结果:', JSON.stringify(imageResult))
+              
+              if (!imageResult.tempFilePaths || imageResult.tempFilePaths.length === 0) {
+                console.log('未选择图片')
+                return
+              }
+              
+              // 使用选择的第一张图片
+              const tempFilePath = imageResult.tempFilePaths[0]
+              const fileName = `image_${Date.now()}.${tempFilePath.split('.').pop()}`
+              
+              console.log('3. 准备上传图片:', fileName)
+              
+              // 调用上传方法
+              await this.processFileUpload(tempFilePath, fileName, field)
+              
+            } else {
+              // 从文件选择
+              console.log('1. 开始选择文件...')
+              const fileResult = await uni.chooseMessageFile({
+                count: 1,
+                type: 'file',
+                extension: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+                showFileExtension: true
+              })
+              
+              console.log('2. 文件选择结果:', JSON.stringify(fileResult))
+              
+              // 兼容两种返回格式：tempFilePaths数组 或 tempFiles数组
+              let filePath = null
+              let fileName = null
+              
+              // 检查是否有tempFilePaths数组
+              if (fileResult && fileResult.tempFilePaths && fileResult.tempFilePaths.length > 0) {
+                filePath = fileResult.tempFilePaths[0]
+                fileName = `file_${Date.now()}.${filePath.split('.').pop()}`
+                console.log('3. 选择的文件路径:', filePath)
+              } else if (fileResult && fileResult.tempFiles && fileResult.tempFiles.length > 0) {
+                // 从tempFiles数组中提取路径和文件名
+                filePath = fileResult.tempFiles[0].path
+                fileName = fileResult.tempFiles[0].name || `file_${Date.now()}.${filePath.split('.').pop()}`
+                console.log('3. 从tempFiles中提取的文件路径:', filePath)
+                console.log('3.1 文件名称:', fileName)
+                console.log('3.2 文件大小:', fileResult.tempFiles[0].size)
+              }
+              
+              if (filePath) {
+                // 调用上传方法
+                await this.processFileUpload(filePath, fileName, field)
               }
             }
-          } else {
-            console.error('3. 文件路径未找到，无法上传')
+          } catch (error) {
+            console.error('文件选择或上传失败:', error)
             uni.showToast({
-              title: '文件读取失败，请重试',
+              title: '上传失败，请重试',
+              icon: 'none'
+            })
+          }
+        },
+        fail: (err) => {
+          console.log('取消选择文件')
+        }
+      })
+    },
+    
+    // 处理文件上传的通用方法
+    async processFileUpload(filePath, fileName, field) {
+      console.log('开始处理文件上传:', filePath, fileName, field)
+      
+      try {
+        uni.showLoading({ title: '上传中...' })
+        
+        console.log('4. 开始调用上传API...')
+        console.log('4.1 上传目标URL:', 'http://localhost:8080/api/file')
+        
+        // 记录开始时间用于监控响应延迟
+        const startTime = Date.now()
+        // 调用后端API上传文件
+        const response = await apiUploadFile(filePath)
+        const endTime = Date.now()
+        
+        console.log(`5. API调用完成，响应 (耗时: ${endTime - startTime}ms):`, JSON.stringify(response))
+        
+        // 处理API响应
+        if (response) {
+          // 支持code为200或0的成功状态
+          const isSuccess = response.code === 200 || response.code === 0
+          
+          if (isSuccess) {
+            // 确保文件URL是字符串格式
+            let fileUrl = response.data
+            if (typeof fileUrl === 'object') {
+              fileUrl = fileUrl.url || fileUrl.filename || fileUrl.path || JSON.stringify(fileUrl)
+            }
+            fileUrl = String(fileUrl)
+            
+            // 根据field类型设置对应的后端字段
+            if (field === 'permit') {
+              this.form.shootPermit = fileUrl
+              this.form.thumbShootPermit = fileUrl
+            } else if (field === 'approval') {
+              this.form.approvalFile = fileUrl
+              this.form.thumbApprovalFile = fileUrl
+            } else if (field === 'application') {
+              this.form.shootApply = fileUrl
+              this.form.thumbShootApply = fileUrl
+            }
+            
+            console.log(`6. 文件上传成功，文件名:`, fileUrl)
+            console.log(`6.1 文件存储路径:`, fileUrl)
+            uni.showToast({ 
+              title: '上传成功', 
+              icon: 'success' 
+            })
+          } else {
+            const errorMsg = response.message || response.msg || '上传失败，请重试'
+            console.error('7. API返回错误:', errorMsg, '完整响应:', JSON.stringify(response))
+            uni.showToast({ 
+              title: errorMsg, 
               icon: 'none',
               duration: 3000
             })
           }
-        }
-      } catch (error) {
-        console.error('8. 文件上传过程中发生错误:', error)
-        // 用户取消选择不显示错误提示
-        if (error && error.errMsg !== 'chooseMessageFile:fail cancel') {
-          const errorMsg = error.message || error.errMsg || '文件处理失败，请重试'
-          console.error('8. 文件选择/上传失败:', errorMsg)
+        } else {
+          console.error('7. API未返回响应')
           uni.showToast({ 
-            title: errorMsg, 
+            title: '服务器未响应', 
             icon: 'none',
             duration: 3000
           })
         }
+      } catch (apiError) {
+        console.error('7. API调用异常:', apiError, '错误堆栈:', apiError?.stack || '无堆栈')
+        
+        // 详细的错误类型判断
+        let errorTitle = '上传请求失败'
+        if (apiError?.errMsg?.includes('request:fail')) {
+          errorTitle = '网络请求失败，请检查网络连接'
+        } else if (apiError?.errMsg?.includes('timeout')) {
+          errorTitle = '请求超时，请重试'
+        } else if (apiError?.code === 401) {
+          errorTitle = '登录已过期，请重新登录'
+        } else if (apiError?.code === 500) {
+          errorTitle = '服务器错误，请稍后重试'
+        }
+        
+        uni.showToast({ 
+          title: errorTitle, 
+          icon: 'none',
+          duration: 3000
+        })
       } finally {
-        console.log('9. 上传流程结束')
-        uni.hideLoading()
+        // 安全地隐藏loading，避免"toast can't be found"错误
+        try {
+          uni.hideLoading()
+        } catch (e) {
+          console.warn('隐藏loading时出错:', e)
+        }
       }
     },
     
@@ -582,6 +639,247 @@ export default {
             })
           }
         }
+      })
+    },
+    
+    // 预览文件
+    previewFile(fileUrl, fileName) {
+      console.log('预览文件被点击:', fileUrl, fileName)
+      
+      if (!fileUrl) {
+        uni.showToast({
+          title: '文件不存在',
+          icon: 'none'
+        })
+        return
+      }
+      
+      // 处理JSON格式的文件URL
+      let actualFileUrl = fileUrl
+      try {
+        // 尝试解析JSON格式的URL
+        if (fileUrl.includes('originUrl')) {
+          // 处理可能被反引号包裹的JSON字符串
+          let jsonString = fileUrl
+          
+          // 去除可能的前缀和后缀
+          if (fileUrl.startsWith('`')) {
+            jsonString = fileUrl.replace(/^`+/, '').replace(/`+$/, '') // 去掉首尾的所有反引号
+          }
+          
+          // 处理可能包含的URL前缀
+          if (jsonString.includes('http://') || jsonString.includes('https://')) {
+            // 提取JSON部分
+            const jsonMatch = jsonString.match(/\{.*"originUrl".*\}/)
+            if (jsonMatch) {
+              jsonString = jsonMatch[0]
+            }
+          }
+          
+          console.log('处理前的JSON字符串:', jsonString)
+          
+          const urlObj = JSON.parse(jsonString)
+          actualFileUrl = urlObj.originUrl || urlObj.thumbUrl || fileUrl
+          console.log('解析后的实际文件URL:', actualFileUrl)
+        }
+      } catch (e) {
+        console.log('JSON解析失败，使用原始URL，错误信息:', e)
+        // 如果解析失败，尝试从字符串中提取originUrl
+        try {
+          const originUrlMatch = fileUrl.match(/"originUrl"\s*:\s*"([^"]+)"/)
+          if (originUrlMatch && originUrlMatch[1]) {
+            actualFileUrl = originUrlMatch[1]
+            console.log('通过正则提取的originUrl:', actualFileUrl)
+          }
+        } catch (regexError) {
+          console.log('正则提取也失败，使用原始URL:', regexError)
+        }
+      }
+      
+      // 处理文件URL
+      const processedUrl = getFileUrl(actualFileUrl)
+      console.log('处理后的URL:', processedUrl)
+      
+      // 获取文件扩展名
+      const fileExt = actualFileUrl.split('.').pop().toLowerCase()
+      console.log('文件扩展名:', fileExt)
+      
+      // 判断是否为图片文件
+      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+      
+      if (imageExts.includes(fileExt)) {
+        console.log('是图片文件，开始预览')
+        // 图片文件直接预览
+        uni.previewImage({
+          urls: [processedUrl],
+          current: processedUrl,
+          success: () => {
+            console.log('图片预览成功')
+          },
+          fail: (err) => {
+            console.error('图片预览失败:', err)
+            uni.showToast({
+              title: '预览失败',
+              icon: 'none'
+            })
+          }
+        })
+      } else {
+        console.log('非图片文件，直接下载')
+        // 非图片文件直接下载，传递原始URL以便downloadFile方法处理
+        this.downloadFile(fileUrl, fileName)
+      }
+    },
+    
+    // 下载文件
+    downloadFile(fileUrl, fileName) {
+      if (!fileUrl) {
+        uni.showToast({
+          title: '文件不存在',
+          icon: 'none'
+        })
+        return
+      }
+      
+      // 处理JSON格式的文件URL
+      let actualFileUrl = fileUrl
+      try {
+        // 尝试解析JSON格式的URL
+        if (fileUrl.includes('originUrl')) {
+          // 处理可能被反引号包裹的JSON字符串
+          let jsonString = fileUrl
+          
+          // 去除可能的前缀和后缀
+          if (fileUrl.startsWith('`')) {
+            jsonString = fileUrl.replace(/^`+/, '').replace(/`+$/, '') // 去掉首尾的所有反引号
+          }
+          
+          // 处理可能包含的URL前缀
+          if (jsonString.includes('http://') || jsonString.includes('https://')) {
+            // 提取JSON部分
+            const jsonMatch = jsonString.match(/\{.*"originUrl".*\}/)
+            if (jsonMatch) {
+              jsonString = jsonMatch[0]
+            }
+          }
+          
+          console.log('下载文件 - 处理前的JSON字符串:', jsonString)
+          
+          const urlObj = JSON.parse(jsonString)
+          actualFileUrl = urlObj.originUrl || urlObj.thumbUrl || fileUrl
+          console.log('下载文件 - 解析后的实际文件URL:', actualFileUrl)
+        }
+      } catch (e) {
+        console.log('下载文件 - JSON解析失败，使用原始URL，错误信息:', e)
+        // 如果解析失败，尝试从字符串中提取originUrl
+        try {
+          const originUrlMatch = fileUrl.match(/"originUrl"\s*:\s*"([^"]+)"/)
+          if (originUrlMatch && originUrlMatch[1]) {
+            actualFileUrl = originUrlMatch[1]
+            console.log('下载文件 - 通过正则提取的originUrl:', actualFileUrl)
+          }
+        } catch (regexError) {
+          console.log('下载文件 - 正则提取也失败，使用原始URL:', regexError)
+        }
+      }
+      
+      // 处理文件URL
+      const processedUrl = getFileUrl(actualFileUrl)
+      console.log('下载文件 - 最终处理后的URL:', processedUrl)
+      
+      // 显示下载提示
+      uni.showLoading({
+        title: '下载中...'
+      })
+      
+      // 添加下载进度监听
+      const downloadTask = uni.downloadFile({
+        url: processedUrl,
+        success: (res) => {
+          uni.hideLoading()
+          if (res.statusCode === 200) {
+            // 保存文件到本地
+            uni.saveFile({
+              tempFilePath: res.tempFilePath,
+              success: (saveRes) => {
+                uni.showToast({
+                  title: '下载成功',
+                  icon: 'success'
+                })
+                console.log('文件保存路径:', saveRes.savedFilePath)
+                
+                // 提示用户文件已保存，并提供打开选项
+                uni.showModal({
+                  title: '下载完成',
+                  content: '文件已保存到本地，是否立即打开？',
+                  confirmText: '打开',
+                  cancelText: '稍后',
+                  success: (modalRes) => {
+                    if (modalRes.confirm) {
+                      // 尝试打开文件
+                      uni.openDocument({
+                        filePath: saveRes.savedFilePath,
+                        showMenu: true,
+                        success: () => {
+                          console.log('文件打开成功')
+                        },
+                        fail: (err) => {
+                          console.error('文件打开失败:', err)
+                          uni.showToast({
+                            title: '无法打开该文件类型',
+                            icon: 'none'
+                          })
+                        }
+                      })
+                    }
+                  }
+                })
+              },
+              fail: (err) => {
+                console.error('文件保存失败:', err)
+                uni.showToast({
+                  title: '保存失败',
+                  icon: 'none'
+                })
+              }
+            })
+          } else {
+            console.error('下载失败，状态码:', res.statusCode)
+            uni.showToast({
+              title: '下载失败，请重试',
+              icon: 'none'
+            })
+          }
+        },
+        fail: (err) => {
+          uni.hideLoading()
+          console.error('文件下载失败:', err)
+          
+          // 根据错误类型提供不同的提示
+          let errorMsg = '下载失败'
+          if (err.errMsg && err.errMsg.includes('fail')) {
+            if (err.errMsg.includes('timeout')) {
+              errorMsg = '下载超时，请检查网络连接'
+            } else if (err.errMsg.includes('size')) {
+              errorMsg = '文件过大，无法下载'
+            } else {
+              errorMsg = '网络错误，请检查网络连接'
+            }
+          }
+          
+          uni.showToast({
+            title: errorMsg,
+            icon: 'none',
+            duration: 3000
+          })
+        }
+      })
+      
+      // 监听下载进度
+      downloadTask.onProgressUpdate((res) => {
+        console.log('下载进度', res.progress)
+        console.log('已经下载的数据长度', res.totalBytesWritten)
+        console.log('预期需要下载的数据总长度', res.totalBytesExpectedToWrite)
       })
     },
     
@@ -952,6 +1250,14 @@ export default {
   display: flex;
   align-items: center;
   gap: 12rpx;
+  flex: 1;
+  cursor: pointer;
+}
+
+.file-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
 }
 
 .file-name {

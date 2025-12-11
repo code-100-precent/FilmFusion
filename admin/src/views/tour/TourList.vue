@@ -225,6 +225,27 @@
         <!-- 详情图片上传 -->
         <n-form-item label="详情图片" path="detailImages">
           <n-upload
+<<<<<<< HEAD
+              :max="10"
+              multiple
+              :default-file-list="imageFileList"
+              @update:file-list="handleImageFileListChange"
+              :custom-request="handleImageUpload"
+              accept="image/*"
+          >
+            <n-button>上传详情图片（最多10张）</n-button>
+          </n-upload>
+          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
+            <n-image
+                v-for="(file, index) in imageFileList"
+                :key="index"
+                :src="file.url"
+                width="100"
+                height="100"
+                object-fit="cover"
+            />
+          </div>
+=======
               v-model:file-list="detailFileList"
               @update:file-list="handleDetailFileListChange"
               :custom-request="handleDetailUpload"
@@ -234,6 +255,7 @@
           >
             点击上传详情图
           </n-upload>
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
         </n-form-item>
       </n-form>
       <template #action>
@@ -321,7 +343,8 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
+  pageSizes: [10, 20, 50, 100],
+  showQuickJumper: true
 })
 
 // 文件列表
@@ -488,6 +511,17 @@ const loadData = async () => {
     const res = await getTourPage(pagination.page, pagination.pageSize, searchForm.keyword)
 
     if (res.code === 200) {
+<<<<<<< HEAD
+      // PageResponse的数据结构：data是数组，pagination包含分页信息
+      tourList.value = res.data || []
+      if (res.pagination) {
+        pagination.itemCount = res.pagination.totalItems || 0
+        // 自动计算总页数
+        pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
+        pagination.page = res.pagination.currentPage || 1
+        pagination.pageSize = res.pagination.pageSize || 10
+      }
+=======
       // PageResponse结构：data为数组，pagination包含分页信息
       const listData = res.data || []
       const totalItems = res.pagination?.totalItems || 0
@@ -512,6 +546,7 @@ const loadData = async () => {
 
       pagination.itemCount = totalItems
       pagination.pageCount = totalPages
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     } else {
       message.error(`获取体验游失败: ${res.message || '未知错误'}`)
     }
@@ -606,6 +641,11 @@ const handleEdit = async (row) => {
         dramaId: tour.dramaId ? String(tour.dramaId).split(',').map(Number) : []
       })
 
+<<<<<<< HEAD
+      // 设置封面图片文件列表
+      coverFileList.value = []
+      if (res.data.cover) {
+=======
       // 初始化文件列表
       const images = parseImages(tourForm.image)
       const thumbImages = parseImages(tourForm.thumb_image)
@@ -615,10 +655,29 @@ const handleEdit = async (row) => {
         const coverUrl = images[0]
         const coverThumbUrl = thumbImages.length > 0 ? thumbImages[0] : coverUrl
         
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
         coverFileList.value = [{
           id: 'cover',
           name: '封面图',
           status: 'finished',
+<<<<<<< HEAD
+          url: res.data.thumb_cover || res.data.cover
+        }]
+      }
+
+      // 设置详情图片文件列表
+      imageFileList.value = []
+      if (res.data.image) {
+        const imageUrls = res.data.image.split(',').filter(url => url.trim())
+        const thumbUrls = res.data.thumb_image ? res.data.thumb_image.split(',').filter(url => url.trim()) : []
+
+        imageFileList.value = imageUrls.map((url, index) => ({
+          id: `image-${index}`,
+          name: `image-${index}.jpg`,
+          status: 'finished',
+          url: thumbUrls[index] || url.trim()
+        }))
+=======
           url: getImageUrl(coverThumbUrl),
           originUrl: coverUrl,
           thumbUrl: coverThumbUrl
@@ -658,6 +717,7 @@ const handleEdit = async (row) => {
         })
       } else {
         detailFileList.value = []
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       }
     }
   } catch (error) {
@@ -668,6 +728,44 @@ const handleEdit = async (row) => {
   }
 }
 
+<<<<<<< HEAD
+const handleCoverFileListChange = (files) => {
+  coverFileList.value = files
+}
+
+const handleImageFileListChange = (files) => {
+  imageFileList.value = files
+
+  // 从文件列表中提取已上传的图片URL
+  const uploadedFiles = files.filter(f => f.status === 'finished' && f.url)
+  const imageUrls = uploadedFiles.map(f => f.url)
+
+  // 更新表单中的图片字段
+  if (imageUrls.length > 0) {
+    tourForm.image = imageUrls.join(',')
+  } else {
+    tourForm.image = ''
+    tourForm.thumb_image = ''
+  }
+}
+
+const handleUploadFinish = ({ file, event }) => {
+  if (event?.target?.response) {
+    try {
+      const res = JSON.parse(event.target.response)
+      if (res.code === 200) {
+        // 根据上传的文件类型更新对应字段
+        if (file.id === 'cover') {
+          tourForm.cover = res.data.url
+          tourForm.thumb_cover = res.data.thumbUrl || res.data.url
+        }
+      } else {
+        message.error('上传失败：' + res.message)
+      }
+    } catch (error) {
+      message.error('上传响应解析失败')
+    }
+=======
 // 获取文件信息的辅助函数
 const getFileInfo = (file) => {
   if (fileMapping[file.id]) {
@@ -676,6 +774,7 @@ const getFileInfo = (file) => {
   return {
     originUrl: file.originUrl || file.url,
     thumbUrl: file.thumbUrl || file.url
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   }
 }
 
@@ -683,6 +782,47 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
+<<<<<<< HEAD
+      const imageUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || imageUrl
+
+      tourForm.cover = imageUrl
+      tourForm.thumb_cover = thumbUrl
+
+      onFinish()
+      message.success('封面图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 详情图片上传处理
+const handleImageUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const imageUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || imageUrl
+
+      // 将新上传的图片添加到现有图片列表
+      const currentImages = tourForm.image ? tourForm.image.split(',').filter(url => url.trim()) : []
+      const currentThumbs = tourForm.thumb_image ? tourForm.thumb_image.split(',').filter(url => url.trim()) : []
+
+      currentImages.push(imageUrl)
+      currentThumbs.push(thumbUrl)
+
+      tourForm.image = currentImages.join(',')
+      tourForm.thumb_image = currentThumbs.join(',')
+
+      onFinish()
+      message.success('详情图片上传成功')
+=======
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
       
@@ -714,6 +854,7 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
       
       onFinish()
       message.success('封面图上传成功')
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     } else {
       onError()
       message.error('上传失败：' + (res.message || '未知错误'))

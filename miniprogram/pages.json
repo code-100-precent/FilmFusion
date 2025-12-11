@@ -113,6 +113,13 @@
 			}
 		},
 		{
+			"path": "pages/hotel/hotel",
+			"style": {
+				"navigationBarTitleText": "住宿服务",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/hotel/detail",
 			"style": {
 				"navigationBarTitleText": "住宿详情",
@@ -183,6 +190,13 @@
 			"path": "pages/policy/detail",
 			"style": {
 				"navigationBarTitleText": "政策详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/test/file-preview-test",
+			"style": {
+				"navigationBarTitleText": "文件预览测试",
 				"navigationStyle": "custom"
 			}
 		}

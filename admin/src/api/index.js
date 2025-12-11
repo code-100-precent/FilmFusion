@@ -131,14 +131,14 @@ export const verifyToken = () => {
 /**
  * 分页获取用户列表
  */
-export const getUserPage = (current = 1, size = 10, keyword = '') => {
+export const getUserPage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/user/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -187,15 +187,25 @@ export const deleteUser = (id) => {
 
 // ==================== 反馈管理 ====================
 
+<<<<<<< HEAD
+export const getFeedbackPage = (page = 1, size = 10, keyword = '') => {
+=======
 export const getFeedbackPage = (current = 1, size = 10, keyword = '', status = '') => {
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   return request({
     url: '/feedback/admin/page',
     method: 'get',
     params: {
+<<<<<<< HEAD
+      current: page,
+      size: size,
+      keyword: keyword
+=======
       current,
       size,
       keyword,
       status
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   })
 }
@@ -271,14 +281,14 @@ export const getArticleById = (id) => {
 /**
  * 获取文章列表
  */
-export const getArticlePage = (current = 1, size = 10, keyword = '') => {
+export const getArticlePage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/article/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -341,14 +351,14 @@ export const getDramaList = (params) => {
 /**
  * 分页获取电视剧
  */
-export const getDramaPage = (current = 1, size = 10, keyword = '') => {
+export const getDramaPage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/drama/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -411,14 +421,14 @@ export const getLocationList = (params) => {
 /**
  * 分页获取场地
  */
-export const getLocationPage = (current = 1, size = 10, keyword = '') => {
+export const getLocationPage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/location/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -481,14 +491,14 @@ export const getServiceList = (params) => {
 /**
  * 分页获取服务
  */
-export const getServicePage = (current = 1, size = 10, keyword = '') => {
+export const getServicePage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/shoot/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -564,14 +574,14 @@ export const getReportList = (params) => {
 /**
  * 分页获取报告
  */
-export const getReportPage = (current = 1, size = 10, keyword = '') => {
+export const getReportPage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/report/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -581,14 +591,14 @@ export const getReportPage = (current = 1, size = 10, keyword = '') => {
 /**
  * 分页获取Banner列表
  */
-export const getBannerPage = (current = 1, size = 10, keyword = '') => {
+export const getBannerPage = (page = 1, size = 10, keyword = '') => {
   return request({
-    url: '/banner/page',
+    url: '/banner/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -608,7 +618,7 @@ export const getBannerById = (id) => {
  */
 export const createBanner = (data) => {
   return request({
-    url: '/banner',
+    url: '/banner/admin/create',
     method: 'post',
     data
   })
@@ -619,7 +629,7 @@ export const createBanner = (data) => {
  */
 export const updateBanner = (id, data) => {
   return request({
-    url: `/banner/update/${id}`,
+    url: `/banner/admin/update/${id}`,
     method: 'put',
     data
   })
@@ -630,7 +640,7 @@ export const updateBanner = (id, data) => {
  */
 export const deleteBanner = (id) => {
   return request({
-    url: `/banner/delete/${id}`,
+    url: `/banner/admin/delete/${id}`,
     method: 'delete'
   })
 }
@@ -640,14 +650,14 @@ export const deleteBanner = (id) => {
 /**
  * 分页获取酒店列表
  */
-export const getHotelPage = (current = 1, size = 10, keyword = '') => {
+export const getHotelPage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/hotel/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -699,14 +709,14 @@ export const deleteHotel = (id) => {
 /**
  * 分页获取旅游线路列表
  */
-export const getTourPage = (current = 1, size = 10, keyword = '') => {
+export const getTourPage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/tour/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -758,14 +768,14 @@ export const deleteTour = (id) => {
 /**
  * 分页获取政策列表
  */
-export const getPolicyPage = (current = 1, size = 10, keyword = '') => {
+export const getPolicyPage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/policy/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -804,14 +814,14 @@ export const deletePolicy = (id) => {
 /**
  * 分页获取旅游线路列表
  */
-export const getTourRoutePage = (current = 1, size = 10, keyword = '') => {
+export const getTourRoutePage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/tour/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
@@ -863,14 +873,14 @@ export const deleteTourRoute = (id) => {
 /**
  * 分页获取操作日志列表
  */
-export const getLogPage = (current = 1, size = 10, keyword = '') => {
+export const getLogPage = (page = 1, size = 10, keyword = '') => {
   return request({
     url: '/operationlog/admin/page',
     method: 'get',
     params: {
-      current,
-      size,
-      keyword
+      current: page,
+      size: size,
+      keyword: keyword
     }
   })
 }
