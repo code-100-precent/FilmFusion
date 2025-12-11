@@ -1,9 +1,12 @@
 package cn.cxdproject.coder.model.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 
 /**
  * 创建文章DTO
@@ -18,6 +21,10 @@ public class CreateArticleDTO {
      */
     @NotBlank(message = "文章标题不能为空")
     private String title;
+
+    @NotNull
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
+    private LocalDateTime issueTime;
     
     /**
      * 发布单位

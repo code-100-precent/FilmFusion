@@ -17,9 +17,9 @@ public class UpdateDramaDTO {
     private String dramaDescription;
     private String cast;
     private String shootLocation;
-    private Long locationId;
+    private String locationId;
     private String service;
-    private Long serviceId;
+    private String serviceId;
     private String image;
     private String thumbImage;
 }

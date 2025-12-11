@@ -206,14 +206,7 @@
           </n-form-item>
         </div>
 
-        <div class="form-row">
-          <n-form-item label="经度" path="longitude">
-            <n-input v-model:value="tourForm.longitude" placeholder="请输入经度" />
-          </n-form-item>
-          <n-form-item label="纬度" path="latitude">
-            <n-input v-model:value="tourForm.latitude" placeholder="请输入纬度" />
-          </n-form-item>
-        </div>
+
 
         <!-- 封面图片上传 -->
         <n-form-item label="封面图片" path="cover">
@@ -308,9 +301,8 @@ const tourForm = reactive({
   deleted: 0,
   image: '',          // 对应 image (封面图 + 详情图)
   thumb_image: '',    // 对应 thumb_image (缩略图)
-  longitude: '',
-  latitude: '',
   locationId: [],
+
   dramaId: [],
   // 辅助字段
   cover: '',
@@ -385,12 +377,6 @@ const formRules = {
   description: [
     { required: true, message: '请输入介绍', trigger: 'blur' }
   ],
-  longitude: [
-    { required: true, message: '请输入经度', trigger: 'blur' }
-  ],
-  latitude: [
-    { required: true, message: '请输入纬度', trigger: 'blur' }
-  ],
   locationId: [
     { type: 'array', required: true, message: '请选择景点', trigger: ['blur', 'change'] }
   ],
@@ -431,8 +417,6 @@ const columns = [
   { title: '交通方式', key: 'transport', width: 150, ellipsis: { tooltip: true } },
   { title: '周边旅馆', key: 'hotel', width: 150, ellipsis: { tooltip: true } },
   { title: '美食推荐', key: 'food', width: 150, ellipsis: { tooltip: true } },
-  { title: '经度', key: 'longitude', width: 120 },
-  { title: '纬度', key: 'latitude', width: 120 },
   { title: '景点ID', key: 'locationId', width: 120 },
   { title: '关联影视ID', key: 'dramaId', width: 120 },
   {
@@ -574,8 +558,6 @@ const resetForm = () => {
     deleted: 0,
     image: '',
     thumb_image: '',
-    longitude: '',
-    latitude: '',
     locationId: [],
     dramaId: [],
     cover: '',
@@ -620,8 +602,6 @@ const handleEdit = async (row) => {
         deleted: tour.deleted || 0,
         image: tour.image || '',
         thumb_image: tour.thumb_image || tour.thumbImage || '',
-        longitude: tour.longitude || '',
-        latitude: tour.latitude || '',
         locationId: tour.locationId ? String(tour.locationId).split(',').map(Number) : [],
         dramaId: tour.dramaId ? String(tour.dramaId).split(',').map(Number) : []
       })
@@ -842,8 +822,6 @@ const handleDialogSave = async () => {
       hotel: tourForm.hotel,
       food: tourForm.food,
       deleted: tourForm.deleted,
-      longitude: tourForm.longitude,
-      latitude: tourForm.latitude,
       locationId: Array.isArray(tourForm.locationId) ? tourForm.locationId.join(',') : '',
       dramaId: Array.isArray(tourForm.dramaId) ? tourForm.dramaId.join(',') : '',
       image: allImages.join(','),

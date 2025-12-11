@@ -67,6 +67,9 @@ public class Policy extends BaseEntity implements Serializable {
     @TableField("thumb_image")
     private String thumbImage;
 
+    @TableField("status")
+    private String status;
+
 
     @Override
     public Location clone() {

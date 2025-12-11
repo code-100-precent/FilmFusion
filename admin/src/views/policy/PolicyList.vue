@@ -150,15 +150,16 @@
           <n-input v-model:value="policyForm.issueUnit" placeholder="请输入发布单位" />
         </n-form-item>
         <n-form-item label="发布时间" path="issueTime">
-          <n-date-picker
-              v-model:value="policyForm.issueTime"
-              type="datetime"
-              placeholder="请选择发布时间"
-              format="yyyy-MM-dd HH:mm:ss"
-              value-format="yyyy-MM-dd'T'HH:mm:ss"
-              clearable
-          />
-        </n-form-item>
+      <n-date-picker
+        v-model:value="policyForm.issueTime"
+        type="datetime"
+        placeholder="请选择发布时间"
+        format="yyyy-MM-dd HH:mm"
+        value-format="yyyy-MM-dd HH:mm"
+        :time-picker-props="{ format: 'HH:mm' }"
+        clearable
+      />
+    </n-form-item>
         <n-form-item label="政策内容" path="content">
           <n-input
               v-model:value="policyForm.content"
@@ -221,6 +222,8 @@ import {
 } from 'naive-ui'
 import dayjs from 'dayjs'
 import request from '@/utils/request'
+import { uploadFile } from '@/api'
+import config from '@/config'
 
 const message = useMessage()
 
@@ -429,25 +432,10 @@ const deletePolicy = (id) => {
       })
 }
 
-const uploadFile = (file) => {
-  // 模拟文件上传API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        code: 200,
-        data: {
-          originUrl: `https://example.com/uploads/${file.name}`,
-          thumbUrl: `https://example.com/uploads/thumb_${file.name}`
-        }
-      })
-    }, 1000)
-  })
-}
-
 const getImageUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http')) return url
-  return `${window.location.origin}/uploads/${url}`
+  return config.fileBaseURL + url
 }
 
 const columns = computed(() => [
@@ -545,7 +533,10 @@ onUnmounted(() => {
 const formatDate = (date) => {
   if (!date) return '-'
   if (typeof date === 'string' || typeof date === 'number') {
-    return dayjs(date).format('YYYY-MM-dd HH:mm:ss')
+    return dayjs(date).format('YYYY-MM-DD HH:mm')
+  }
+  if (Array.isArray(date)) {
+    return dayjs(date[0] + '-' + String(date[1]).padStart(2, '0') + '-' + String(date[2]).padStart(2, '0') + ' ' + String(date[3]).padStart(2, '0') + ':' + String(date[4]).padStart(2, '0')).format('YYYY-MM-DD HH:mm')
   }
   return '-'
 }
@@ -682,7 +673,7 @@ const handleDialogSave = async () => {
       title: policyForm.title,
       type: policyForm.type,
       issueUnit: policyForm.issueUnit,
-      issueTime: policyForm.issueTime ? dayjs(policyForm.issueTime).format('YYYY-MM-DDTHH:mm:ss') : null,
+      issueTime: policyForm.issueTime ? dayjs(policyForm.issueTime).format('YYYY-MM-DD HH:mm') : null,
       content: policyForm.content,
       image: policyForm.image,
       thumbImage: policyForm.thumbImage,

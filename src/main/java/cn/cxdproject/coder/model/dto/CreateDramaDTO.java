@@ -35,13 +35,13 @@ public class CreateDramaDTO {
     private String shootLocation;
     
     @NotNull(message = "拍摄地ID不能为空")
-    private Long locationId;
+    private String locationId;
     
     @NotBlank(message = "协拍服务不能为空")
     private String service;
     
     @NotNull(message = "协拍服务ID不能为空")
-    private Long serviceId;
+    private String serviceId;
 
     private String image;
 

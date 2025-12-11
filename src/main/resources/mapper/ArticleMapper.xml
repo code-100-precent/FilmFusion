@@ -67,8 +67,9 @@
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Article">
         SELECT *
         FROM fi_articles
+        WHERE deleted = 0
         ORDER BY create_time DESC
-            LIMIT 10
+            LIMIT 10;
     </select>
 
 
@@ -77,6 +78,9 @@
         <set>
             <if test="dto.title != null and dto.title != ''">
                 title = #{dto.title},
+            </if>
+            <if test="dto.issueTime != null">
+                issue_time = #{dto.issueTime},
             </if>
             <if test="dto.issueUnit != null and dto.issueUnit != ''">
                 issue_unit = #{dto.issueUnit},

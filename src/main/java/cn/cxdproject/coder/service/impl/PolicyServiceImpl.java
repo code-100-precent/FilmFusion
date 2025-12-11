@@ -70,6 +70,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .issueUnit(createDTO.getIssueUnit())
                 .image(createDTO.getImage())
                 .thumbImage(createDTO.getThumbImage())
+                .status(createDTO.getStatus())
                 .build();
 
         policy.setCreatedAt(LocalDateTime.now());
@@ -187,6 +188,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .thumbCover(policy.getThumbImage()) // 缩略封面，与thumbImage相同
                 .createdAt(policy.getCreatedAt())
                 .updatedAt(policy.getUpdatedAt())
+                .status(policy.getStatus())
                 .build();
     }
 

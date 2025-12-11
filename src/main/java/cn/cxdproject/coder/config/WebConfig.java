@@ -17,6 +17,14 @@ import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
+import java.util.List;
+import java.util.TimeZone;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 /**
  * 文档、拦截器注册配置
  *
@@ -148,6 +156,24 @@ public class WebConfig extends WebMvcConfigurationSupport {
         // 配置静态资源访问 - /api/files路径映射到本地存储
         registry.addResourceHandler("/api/files/**")
                 .addResourceLocations("file:" + basePath);
+    }
+
+    @Override
+    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+        for (HttpMessageConverter<?> converter : converters) {
+            if (converter instanceof MappingJackson2HttpMessageConverter) {
+                MappingJackson2HttpMessageConverter jacksonConverter = (MappingJackson2HttpMessageConverter) converter;
+                ObjectMapper objectMapper = jacksonConverter.getObjectMapper();
+                // 注册 JavaTimeModule 以支持 LocalDateTime
+                objectMapper.registerModule(new JavaTimeModule());
+                // 设置时区为 Asia/Shanghai
+                objectMapper.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
+                // 禁用日期作为时间戳
+                objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+                // 忽略空 Bean 错误
+                objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+            }
+        }
     }
 
 }

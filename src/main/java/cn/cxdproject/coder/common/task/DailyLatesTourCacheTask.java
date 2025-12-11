@@ -77,8 +77,6 @@ public class DailyLatesTourCacheTask {
                 .createdAt(tour.getCreatedAt())
                 .updatedAt(tour.getUpdatedAt())
                 .thumbImage(tour.getThumbImage())
-                .longitude(tour.getLongitude())
-                .latitude(tour.getLatitude())
                 .locationId(tour.getLocationId())
                 .build();
     }

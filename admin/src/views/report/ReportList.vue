@@ -110,6 +110,51 @@
               <n-input v-model:value="reportForm.crewPosition" placeholder="请输入剧组职务" />
             </n-form-item>
           </n-gi>
+          <n-gi>
+            <n-form-item label="拍摄许可" path="shootPermit">
+              <n-upload
+                :custom-request="handleShootPermitUpload"
+                :max="1"
+                :file-list="shootPermitFileList"
+                @update:file-list="(v) => shootPermitFileList = v"
+              >
+                <n-button>上传文件</n-button>
+              </n-upload>
+              <div v-if="reportForm.thumbShootPermit" style="margin-top: 8px;">
+                 <n-image :src="getImageUrl(reportForm.thumbShootPermit)" width="100" height="100" object-fit="cover" />
+              </div>
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="立项审批" path="approvalFile">
+              <n-upload
+                :custom-request="handleApprovalFileUpload"
+                :max="1"
+                :file-list="approvalFileList"
+                @update:file-list="(v) => approvalFileList = v"
+              >
+                <n-button>上传文件</n-button>
+              </n-upload>
+              <div v-if="reportForm.thumbApprovalFile" style="margin-top: 8px;">
+                 <n-image :src="getImageUrl(reportForm.thumbApprovalFile)" width="100" height="100" object-fit="cover" />
+              </div>
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="协拍服务许可" path="shootApply">
+              <n-upload
+                :custom-request="handleShootApplyUpload"
+                :max="1"
+                :file-list="shootApplyFileList"
+                @update:file-list="(v) => shootApplyFileList = v"
+              >
+                <n-button>上传文件</n-button>
+              </n-upload>
+              <div v-if="reportForm.thumbShootApply" style="margin-top: 8px;">
+                 <n-image :src="getImageUrl(reportForm.thumbShootApply)" width="100" height="100" object-fit="cover" />
+              </div>
+            </n-form-item>
+          </n-gi>
         </n-grid>
       </n-form>
       <template #action>
@@ -117,11 +162,29 @@
         <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
       </template>
     </n-modal>
+
+    <!-- 审核弹窗 -->
+    <n-modal v-model:show="auditDialogVisible" preset="dialog" title="审核报备" style="width: 400px">
+      <n-form :model="auditForm" label-placement="left" label-width="80">
+        <n-form-item label="当前状态">
+          <n-tag :type="auditForm.currentStatus === 'APPROVED' ? 'success' : auditForm.currentStatus === 'REJECTED' ? 'error' : 'warning'">
+            {{ statusOptions.find(o => o.value === auditForm.currentStatus)?.label || auditForm.currentStatus }}
+          </n-tag>
+        </n-form-item>
+        <n-form-item label="审核状态">
+          <n-select v-model:value="auditForm.status" :options="statusOptions" placeholder="请选择状态" />
+        </n-form-item>
+      </n-form>
+      <template #action>
+        <n-button @click="auditDialogVisible = false">取消</n-button>
+        <n-button type="primary" @click="handleAuditSave" :loading="auditLoading">确定</n-button>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted } from 'vue'
+import { ref, reactive, h, onMounted, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   NCard,
@@ -138,10 +201,13 @@ import {
   NGrid,
   NGi,
   NDatePicker,
+  NUpload,
+  NImage,
   useMessage
 } from 'naive-ui'
-import { getReportPage, addReport, updateReport, deleteReport, getReportById } from '@/api'
+import { getReportPage, addReport, updateReport, deleteReport, getReportById, uploadFile, updateReportStatus } from '@/api'
 import dayjs from 'dayjs'
+import config from '@/config'
 
 const message = useMessage()
 
@@ -151,6 +217,40 @@ const dialogVisible = ref(false)
 const dialogLoading = ref(false)
 const dialogTitle = ref('新增报备')
 const formRef = ref(null)
+
+const auditDialogVisible = ref(false)
+const auditLoading = ref(false)
+const auditForm = reactive({
+  id: null,
+  status: null,
+  currentStatus: null
+})
+
+// 文件列表状态
+const shootPermitFileList = ref([])
+const approvalFileList = ref([])
+const shootApplyFileList = ref([])
+
+watch(shootPermitFileList, (newVal) => {
+  if (newVal.length === 0) {
+    reportForm.shootPermit = ''
+    reportForm.thumbShootPermit = ''
+  }
+})
+
+watch(approvalFileList, (newVal) => {
+  if (newVal.length === 0) {
+    reportForm.approvalFile = ''
+    reportForm.thumbApprovalFile = ''
+  }
+})
+
+watch(shootApplyFileList, (newVal) => {
+  if (newVal.length === 0) {
+    reportForm.shootApply = ''
+    reportForm.thumbShootApply = ''
+  }
+})
 
 const searchForm = reactive({
   keyword: ''
@@ -171,7 +271,14 @@ const reportForm = reactive({
   crewScale: '',
   contact: '',
   phoneNumber: '',
-  crewPosition: ''
+  crewPosition: '',
+  shootPermit: '',
+  thumbShootPermit: '',
+  approvalFile: '',
+  thumbApprovalFile: '',
+  shootApply: '',
+  thumbShootApply: '',
+  status: 'PENDING'
 })
 
 const typeOptions = [
@@ -179,6 +286,13 @@ const typeOptions = [
   { label: '电影', value: 'MOVIE' },
   { label: '网络剧', value: 'WEB_SERIES' },
   { label: '其他', value: 'OTHER' }
+]
+
+const statusOptions = [
+  { label: '待审核', value: 'PENDING' },
+  { label: '已通过', value: 'APPROVED' },
+  { label: '已驳回', value: 'REJECTED' },
+  { label: '处理中', value: 'PROCESSING' }
 ]
 
 const pagination = reactive({
@@ -193,13 +307,13 @@ const formRules = {
   name: [{ required: true, message: '请输入剧名', trigger: 'blur' }],
   type: [{ required: true, message: '请选择类型', trigger: 'change' }],
   genre: [{ required: true, message: '请输入题材', trigger: 'blur' }],
-  episodes: [{ required: true, message: '请输入集数', trigger: 'blur' }],
-  investAmount: [{ required: true, message: '请输入投资金额', trigger: 'blur' }],
+  episodes: [{ required: true, type: 'number', message: '请输入集数', trigger: ['blur', 'change'] }],
+  investAmount: [{ required: true, type: 'number', message: '请输入投资金额', trigger: ['blur', 'change'] }],
   mainCreators: [{ required: true, message: '请输入主创人员', trigger: 'blur' }],
   leadProducer: [{ required: true, message: '请输入第一出品单位', trigger: 'blur' }],
   producerUnit: [{ required: true, message: '请输入制片单位', trigger: 'blur' }],
-  startDate: [{ required: true, message: '请选择拍摄开始日期', trigger: 'change' }],
-  endDate: [{ required: true, message: '请选择拍摄结束日期', trigger: 'change' }],
+  startDate: [{ required: true, type: 'number', message: '请选择拍摄开始日期', trigger: ['blur', 'change'] }],
+  endDate: [{ required: true, type: 'number', message: '请选择拍摄结束日期', trigger: ['blur', 'change'] }],
   crewScale: [{ required: true, message: '请输入剧组规模', trigger: 'blur' }],
   contact: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
   phoneNumber: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
@@ -226,6 +340,27 @@ const columns = [
   { title: '集数', key: 'episodes', width: 100 },
   { title: '投资金额', key: 'investAmount', width: 120, render: (row) => `¥${row.investAmount || 0}` },
   {
+    title: '状态',
+    key: 'status',
+    width: 100,
+    render: (row) => {
+      const statusMap = {
+        'PENDING': '待审核',
+        'APPROVED': '已通过',
+        'REJECTED': '已驳回',
+        'PROCESSING': '处理中'
+      }
+      return h(
+        NTag,
+        {
+          type: row.status === 'APPROVED' ? 'success' : row.status === 'REJECTED' ? 'error' : 'warning',
+          bordered: false
+        },
+        { default: () => statusMap[row.status] || row.status }
+      )
+    }
+  },
+  {
     title: '创建时间',
     key: 'createdAt',
     width: 180,
@@ -243,6 +378,7 @@ const columns = [
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [
+        h(NButton, { size: 'small', type: 'info', onClick: () => handleAudit(row) }, { default: () => '审核' }),
         h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
         h(
           NPopconfirm,
@@ -297,6 +433,48 @@ const handlePageSizeChange = (pageSize) => {
   loadData()
 }
 
+const getImageUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return config.fileBaseURL + url
+}
+
+const handleUpload = async ({ file, onFinish, onError, field, thumbField, fileListRef }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || '' // If doc, this might be empty
+
+      reportForm[field] = originUrl
+      reportForm[thumbField] = thumbUrl
+
+      fileListRef.value = [{
+        id: file.id,
+        name: file.name,
+        status: 'finished',
+        url: getImageUrl(originUrl),
+        originUrl: originUrl,
+        thumbUrl: thumbUrl
+      }]
+
+      onFinish()
+      message.success('上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+const handleShootPermitUpload = (options) => handleUpload({ ...options, field: 'shootPermit', thumbField: 'thumbShootPermit', fileListRef: shootPermitFileList })
+const handleApprovalFileUpload = (options) => handleUpload({ ...options, field: 'approvalFile', thumbField: 'thumbApprovalFile', fileListRef: approvalFileList })
+const handleShootApplyUpload = (options) => handleUpload({ ...options, field: 'shootApply', thumbField: 'thumbShootApply', fileListRef: shootApplyFileList })
+
 const handleAdd = () => {
   dialogTitle.value = '新增报备'
   Object.assign(reportForm, {
@@ -314,8 +492,17 @@ const handleAdd = () => {
     crewScale: '',
     contact: '',
     phoneNumber: '',
-    crewPosition: ''
+    crewPosition: '',
+    shootPermit: '',
+    thumbShootPermit: '',
+    approvalFile: '',
+    thumbApprovalFile: '',
+    shootApply: '',
+    thumbShootApply: ''
   })
+  shootPermitFileList.value = []
+  approvalFileList.value = []
+  shootApplyFileList.value = []
   dialogVisible.value = true
 }
 
@@ -339,12 +526,40 @@ const handleEdit = async (row) => {
         crewScale: res.data.crewScale,
         contact: res.data.contact,
         phoneNumber: res.data.phoneNumber,
-        crewPosition: res.data.crewPosition
+        crewPosition: res.data.crewPosition,
+        shootPermit: res.data.shootPermit,
+        thumbShootPermit: res.data.thumbShootPermit,
+        approvalFile: res.data.approvalFile,
+        thumbApprovalFile: res.data.thumbApprovalFile,
+        shootApply: res.data.shootApply,
+        thumbShootApply: res.data.thumbShootApply
       })
+
+      // Set file lists
+      const setFileList = (url, thumbUrl, listRef) => {
+        if (url) {
+          listRef.value = [{
+            id: 'existing',
+            name: '已上传文件',
+            status: 'finished',
+            url: getImageUrl(url),
+            originUrl: url,
+            thumbUrl: thumbUrl
+          }]
+        } else {
+          listRef.value = []
+        }
+      }
+
+      setFileList(res.data.shootPermit, res.data.thumbShootPermit, shootPermitFileList)
+      setFileList(res.data.approvalFile, res.data.thumbApprovalFile, approvalFileList)
+      setFileList(res.data.shootApply, res.data.thumbShootApply, shootApplyFileList)
+
       dialogVisible.value = true
     }
   } catch (error) {
-    console.error('获取报备详情失败:', error)
+    console.error('获取详情失败:', error)
+    message.error('获取详情失败')
   }
 }
 
@@ -372,7 +587,14 @@ const handleDialogSave = async () => {
       crewScale: reportForm.crewScale,
       contact: reportForm.contact,
       phoneNumber: reportForm.phoneNumber,
-      crewPosition: reportForm.crewPosition
+      crewPosition: reportForm.crewPosition,
+      shootPermit: reportForm.shootPermit,
+      thumbShootPermit: reportForm.thumbShootPermit,
+      approvalFile: reportForm.approvalFile,
+      thumbApprovalFile: reportForm.thumbApprovalFile,
+      shootApply: reportForm.shootApply,
+      thumbShootApply: reportForm.thumbShootApply,
+      status: reportForm.id ? undefined : 'PENDING'
     }
     
     let res
@@ -389,8 +611,42 @@ const handleDialogSave = async () => {
     }
   } catch (error) {
     console.error('保存失败:', error)
+    message.error('保存失败')
   } finally {
     dialogLoading.value = false
+  }
+}
+
+const handleAudit = (row) => {
+  auditForm.id = row.id
+  auditForm.currentStatus = row.status
+  auditForm.status = row.status
+  auditDialogVisible.value = true
+}
+
+const handleAuditSave = async () => {
+  if (!auditForm.id || !auditForm.status) {
+    message.warning('请选择状态')
+    return
+  }
+
+  try {
+    auditLoading.value = true
+    const res = await updateReportStatus({
+      id: auditForm.id,
+      status: auditForm.status
+    })
+
+    if (res.code === 200) {
+      message.success('审核成功')
+      auditDialogVisible.value = false
+      loadData()
+    }
+  } catch (error) {
+    console.error('审核失败:', error)
+    message.error('审核失败')
+  } finally {
+    auditLoading.value = false
   }
 }
 

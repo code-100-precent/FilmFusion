@@ -164,13 +164,13 @@
           <n-input v-model:value="dramaForm.cast" placeholder="请输入演员信息" />
         </n-form-item>
         <n-form-item label="拍摄场地" path="locationId">
-          <n-select v-model:value="dramaForm.locationId" :options="locationOptions" placeholder="请选择拍摄场地" filterable clearable @update:value="handleLocationChange" />
+          <n-select v-model:value="dramaForm.locationId" :options="locationOptions" placeholder="请选择拍摄场地" filterable clearable multiple @update:value="handleLocationUpdate" />
         </n-form-item>
         <n-form-item label="拍摄地描述" path="shootLocation">
           <n-input v-model:value="dramaForm.shootLocation" placeholder="请输入拍摄地描述" />
         </n-form-item>
         <n-form-item label="协拍服务" path="serviceId">
-          <n-select v-model:value="dramaForm.serviceId" :options="serviceOptions" placeholder="请选择协拍服务" filterable clearable @update:value="handleServiceChange" />
+          <n-select v-model:value="dramaForm.serviceId" :options="serviceOptions" placeholder="请选择协拍服务" filterable clearable multiple @update:value="handleServiceUpdate" />
         </n-form-item>
         <n-form-item label="服务描述" path="service">
           <n-input v-model:value="dramaForm.service" type="textarea" :rows="2" placeholder="请输入服务描述" />
@@ -320,9 +320,9 @@ const dramaForm = reactive({
   dramaDescription: '',
   cast: '',
   shootLocation: '',
-  locationId: null,
+  locationId: [],
   service: '',
-  serviceId: null,
+  serviceId: [],
   userId: null,
   cover: '',
   image: '',
@@ -346,6 +346,12 @@ const formRules = {
   prodCompany: [
     { required: true, message: '请输入出品公司', trigger: 'blur' },
     { min: 1, max: 100, message: '出品公司长度在 1 到 100 个字符', trigger: 'blur' }
+  ],
+  locationId: [
+    { type: 'array', required: true, message: '请选择拍摄场地', trigger: ['blur', 'change'] }
+  ],
+  serviceId: [
+    { type: 'array', required: true, message: '请选择协拍服务', trigger: ['blur', 'change'] }
   ]
 }
 
@@ -527,8 +533,10 @@ const handleDialogSave = async () => {
       image: finalImageStr,
       thumbImage: finalThumbImageStr,
       // 映射表单字段到后端字段
-      location_id: dramaForm.locationId,
-      service_id: dramaForm.serviceId,
+      locationId: Array.isArray(dramaForm.locationId) ? dramaForm.locationId.join(',') : dramaForm.locationId,
+      serviceId: Array.isArray(dramaForm.serviceId) ? dramaForm.serviceId.join(',') : dramaForm.serviceId,
+      location_id: Array.isArray(dramaForm.locationId) ? dramaForm.locationId.join(',') : dramaForm.locationId,
+      service_id: Array.isArray(dramaForm.serviceId) ? dramaForm.serviceId.join(',') : dramaForm.serviceId,
       user_id: dramaForm.userId
     }
 
@@ -604,15 +612,19 @@ const handlePageSizeChange = (pageSize) => {
   loadData()
 }
 
-const handleLocationChange = (value, option) => {
-  if (option && !dramaForm.shootLocation) {
-    dramaForm.shootLocation = option.label
+const handleLocationUpdate = (values, options) => {
+  if (options && options.length > 0) {
+    dramaForm.shootLocation = options.map(o => o.label).join(',')
+  } else {
+    dramaForm.shootLocation = ''
   }
 }
 
-const handleServiceChange = (value, option) => {
-  if (option && !dramaForm.service) {
-    dramaForm.service = option.label
+const handleServiceUpdate = (values, options) => {
+  if (options && options.length > 0) {
+    dramaForm.service = options.map(o => o.label).join(',')
+  } else {
+    dramaForm.service = ''
   }
 }
 
@@ -627,9 +639,9 @@ const handleAdd = () => {
     dramaDescription: '',
     cast: '',
     shootLocation: '',
-    locationId: null,
+    locationId: [],
     service: '',
-    serviceId: null,
+    serviceId: [],
     userId: userStore.userInfo?.id || null,
     cover: '',
     image: '',
@@ -666,9 +678,9 @@ const handleEdit = async (row) => {
         dramaDescription: res.data.dramaDescription || '',
         cast: res.data.cast || '',
         shootLocation: res.data.shootLocation || '',
-        locationId: res.data.locationId || res.data.location_id,
+        locationId: String(res.data.locationId || res.data.location_id || '').split(',').filter(id => id && id.trim()).map(Number),
         service: res.data.service || '',
-        serviceId: res.data.serviceId || res.data.service_id,
+        serviceId: String(res.data.serviceId || res.data.service_id || '').split(',').filter(id => id && id.trim()).map(Number),
         userId: res.data.userId || res.data.user_id,
         cover: coverUrl,
         image: detailUrls.join(','), // 详情图片字符串
