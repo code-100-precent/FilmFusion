@@ -28,6 +28,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,6 +71,9 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .image(createDTO.getImage())
                 .thumbImage(createDTO.getThumbImage())
                 .build();
+
+        policy.setCreatedAt(LocalDateTime.now());
+        policy.setUpdatedAt(LocalDateTime.now());
 
         this.save(policy);
         return toPolicyVO(policy);
@@ -234,15 +238,18 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         long size = page.getSize();
         long offset = (current - 1) * size;
 
-        List<Policy> policies = policyMapper.getAdminPage(keyword, offset, size);
+        // 获取当前页的数据和总记录数
+        List<Policy> policys = policyMapper.getAdminPage(keyword, offset, size);
+        Long total = policyMapper.getTotal(keyword);
 
-        List<PolicyVO> voList = policies.stream()
+        List<PolicyVO> voList = policys.stream()
                 .map(this::toPolicyVO)
                 .collect(Collectors.toList());
 
         return new Page<PolicyVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 }

@@ -67,4 +67,5 @@ public class CreateTourDTO {
 
     private String dramaId;
 
+    private Integer deleted;
 }

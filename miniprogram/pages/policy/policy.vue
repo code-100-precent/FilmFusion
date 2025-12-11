@@ -66,7 +66,7 @@
                 <view class="policy-type-badge" :class="policy.type === '省级' ? 'type-prov' : 'type-city'">
                   {{ policy.type }}
                 </view>
-                <text class="policy-title">{{ policy.title }}</text>
+                <text class="policy-title">{{ getTitlePreview(policy.title) }}</text>
               </view>
               <view class="policy-meta">
                 <text class="policy-unit">{{ policy.issueUnit }}</text>
@@ -210,6 +210,10 @@ export default {
       }
       
       return '-'
+    },
+    getTitlePreview(title) {
+      if (!title) return ''
+      return title.length > 35 ? title.substring(0, 35) + '...' : title
     }
   }
 }
@@ -336,7 +340,7 @@ export default {
 .policy-card {
   background: #fff;
   border-radius: 20rpx;
-  padding: 24rpx;
+  padding: 20rpx;
   margin-bottom: 16rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s;
@@ -358,8 +362,8 @@ export default {
 .policy-header {
   display: flex;
   align-items: flex-start;
-  gap: 16rpx;
-  margin-bottom: 16rpx;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
 }
 
 .policy-type-badge {
@@ -385,15 +389,19 @@ export default {
   font-size: 28rpx;
   font-weight: 700;
   color: #1f2937;
-  line-height: 1.5;
+  line-height: 1.4;
   flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .policy-meta {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: 16rpx;
   font-size: 24rpx;
   color: #9ca3af;
 }

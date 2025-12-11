@@ -50,4 +50,6 @@ public class TourVO {
 
     private String dramaId;
 
+    private Integer deleted;
+
 }

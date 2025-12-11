@@ -25,20 +25,33 @@
           </n-button>
         </div>
       </div>
-      
+
       <!-- 桌面端表格 -->
-      <n-data-table
-        v-if="!isMobile"
-        :columns="columns"
-        :data="dramaList"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="row => row.id"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-        :scroll-x="1400"
-      />
-      
+      <template v-if="!isMobile">
+        <n-data-table
+            :columns="columns"
+            :data="dramaList"
+            :loading="loading"
+            :row-key="row => row.id"
+            :scroll-x="1400"
+        />
+
+        <!-- 独立分页组件 -->
+        <div class="pagination-container" v-if="pagination.itemCount > 0">
+          <n-pagination
+              v-model:page="pagination.page"
+              v-model:page-size="pagination.pageSize"
+              :page-count="Math.ceil(pagination.itemCount / pagination.pageSize)"
+              :item-count="pagination.itemCount"
+              :page-sizes="pagination.pageSizes"
+              show-size-picker
+              show-quick-jumper
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+          />
+        </div>
+      </template>
+
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
         <n-spin :show="loading">
@@ -48,10 +61,10 @@
           </div>
           <div v-else class="card-list">
             <n-card
-              v-for="drama in dramaList"
-              :key="drama.id"
-              class="mobile-card"
-              hoverable
+                v-for="drama in dramaList"
+                :key="drama.id"
+                class="mobile-card"
+                hoverable
             >
               <div class="card-header">
                 <div class="drama-info">
@@ -60,12 +73,12 @@
                 </div>
                 <div class="drama-cover">
                   <n-image
-                    v-if="drama.cover"
-                    :src="drama.cover"
-                    width="80"
-                    height="60"
-                    object-fit="cover"
-                    preview-disabled
+                      v-if="drama.cover"
+                      :src="drama.cover"
+                      width="80"
+                      height="60"
+                      object-fit="cover"
+                      preview-disabled
                   />
                   <div v-else class="no-cover">
                     <Icon icon="mdi:film" :width="32" />
@@ -101,36 +114,36 @@
               </div>
             </n-card>
           </div>
-          
+
           <!-- 移动端分页 -->
-          <div class="mobile-pagination">
+          <div class="mobile-pagination" v-if="pagination.itemCount > 0">
             <n-pagination
-              :page="pagination.page"
-              :page-size="pagination.pageSize"
-              :item-count="pagination.itemCount"
-              :page-sizes="[10, 20, 50]"
-              show-size-picker
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
+                :page="pagination.page"
+                :page-size="pagination.pageSize"
+                :item-count="pagination.itemCount"
+                :page-sizes="[10, 20, 50]"
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange"
             />
           </div>
         </n-spin>
       </div>
     </n-card>
-    
-    <n-modal 
-      v-model:show="dialogVisible" 
-      preset="dialog" 
-      :title="dialogTitle" 
-      style="width: 90%; max-width: 900px"
-      :mask-closable="false"
+
+    <n-modal
+        v-model:show="dialogVisible"
+        preset="dialog"
+        :title="dialogTitle"
+        style="width: 90%; max-width: 900px"
+        :mask-closable="false"
     >
-      <n-form 
-        ref="formRef" 
-        :model="dramaForm" 
-        :rules="formRules" 
-        :label-placement="isMobile ? 'top' : 'left'"
-        :label-width="isMobile ? 'auto' : '120'"
+      <n-form
+          ref="formRef"
+          :model="dramaForm"
+          :rules="formRules"
+          :label-placement="isMobile ? 'top' : 'left'"
+          :label-width="isMobile ? 'auto' : '120'"
       >
         <n-form-item label="电视剧名称" path="name">
           <n-input v-model:value="dramaForm.name" placeholder="请输入电视剧名称" />
@@ -150,51 +163,57 @@
         <n-form-item label="演员" path="cast">
           <n-input v-model:value="dramaForm.cast" placeholder="请输入演员信息" />
         </n-form-item>
-        <n-form-item label="拍摄地" path="shootLocation">
-          <n-input v-model:value="dramaForm.shootLocation" placeholder="请输入拍摄地" />
+        <n-form-item label="拍摄场地" path="locationId">
+          <n-select v-model:value="dramaForm.locationId" :options="locationOptions" placeholder="请选择拍摄场地" filterable clearable @update:value="handleLocationChange" />
         </n-form-item>
-        <n-form-item label="服务" path="service">
-          <n-input v-model:value="dramaForm.service" type="textarea" :rows="2" placeholder="请输入服务信息" />
+        <n-form-item label="拍摄地描述" path="shootLocation">
+          <n-input v-model:value="dramaForm.shootLocation" placeholder="请输入拍摄地描述" />
+        </n-form-item>
+        <n-form-item label="协拍服务" path="serviceId">
+          <n-select v-model:value="dramaForm.serviceId" :options="serviceOptions" placeholder="请选择协拍服务" filterable clearable @update:value="handleServiceChange" />
+        </n-form-item>
+        <n-form-item label="服务描述" path="service">
+          <n-input v-model:value="dramaForm.service" type="textarea" :rows="2" placeholder="请输入服务描述" />
         </n-form-item>
         <n-form-item label="封面图片" path="cover">
           <n-upload
-            :max="1"
-            :file-list="coverFileList"
-            @update:file-list="handleCoverFileListChange"
-            :custom-request="handleCoverUpload"
-            accept="image/*"
+              :max="1"
+              :file-list="coverFileList"
+              @update:file-list="handleCoverFileListChange"
+              :custom-request="handleCoverUpload"
+              accept="image/*"
           >
             <n-button>上传封面图片</n-button>
           </n-upload>
           <div v-if="dramaForm.cover" style="margin-top: 12px;">
             <n-image
-              :src="dramaForm.thumbCover || dramaForm.cover"
-              width="200"
-              height="120"
-              object-fit="cover"
+                :src="getImageUrl(dramaForm.thumbCover || dramaForm.cover)"
+                width="200"
+                height="120"
+                object-fit="cover"
             />
           </div>
         </n-form-item>
         <n-form-item label="详情图片" path="image">
           <n-upload
-            :max="10"
-            :file-list="imageFileList"
-            @update:file-list="handleImageFileListChange"
-            :custom-request="handleImageUpload"
-            accept="image/*"
-            multiple
+              :max="10"
+              :file-list="imageFileList"
+              @update:file-list="handleImageFileListChange"
+              :custom-request="handleImageUpload"
+              accept="image/*"
+              multiple
           >
             <n-button>上传详情图片（可多张）</n-button>
           </n-upload>
           <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
             <n-image
-              v-for="(file, index) in imageFileList"
-              :key="index"
-              :src="file.url"
-              width="100"
-              height="75"
-              object-fit="cover"
-              style="border-radius: 4px;"
+                v-for="(file, index) in imageFileList"
+                :key="index"
+                :src="file.url"
+                width="100"
+                height="75"
+                object-fit="cover"
+                style="border-radius: 4px;"
             />
           </div>
         </n-form-item>
@@ -223,13 +242,26 @@ import {
   NSpin,
   NPagination,
   NUpload,
+  NSelect,
   useMessage
 } from 'naive-ui'
-import { getDramaPage, addDrama, updateDrama, deleteDrama, getDramaById, uploadFile } from '@/api'
+import { useUserStore } from '@/store/user'
+import { 
+  getDramaPage, 
+  addDrama, 
+  updateDrama, 
+  deleteDrama, 
+  getDramaById, 
+  uploadFile,
+  getLocationList,
+  getServiceList
+} from '@/api'
 import { getImageUrl } from '@/utils/image'
+import config from '@/config'
 import dayjs from 'dayjs'
 
 const message = useMessage()
+const userStore = useUserStore()
 
 const isMobile = ref(false)
 const loading = ref(false)
@@ -246,6 +278,34 @@ const dialogTitle = ref('新增电视剧')
 const formRef = ref(null)
 const coverFileList = ref([])
 const imageFileList = ref([])
+const locationOptions = ref([])
+const serviceOptions = ref([])
+
+const fetchOptions = async () => {
+  try {
+    // 获取场地列表
+    const locRes = await getLocationList({ current: 1, size: 100 })
+    if (locRes.code === 200) {
+      const list = locRes.data?.records || locRes.data || []
+      locationOptions.value = list.map(item => ({
+        label: item.name,
+        value: item.id
+      }))
+    }
+
+    // 获取服务列表 (分页接口，取前100条)
+    const servRes = await getServiceList({ current: 1, size: 100 })
+    if (servRes.code === 200) {
+      const list = servRes.data?.records || servRes.data || []
+      serviceOptions.value = list.map(item => ({
+        label: item.name,
+        value: item.id
+      }))
+    }
+  } catch (error) {
+    console.error('获取选项数据失败:', error)
+  }
+}
 
 const searchForm = reactive({
   keyword: ''
@@ -260,7 +320,10 @@ const dramaForm = reactive({
   dramaDescription: '',
   cast: '',
   shootLocation: '',
+  locationId: null,
   service: '',
+  serviceId: null,
+  userId: null,
   cover: '',
   image: '',
   thumbCover: '',
@@ -300,27 +363,64 @@ const columns = [
     key: 'cover',
     width: 100,
     render: (row) => {
-      // 优先使用缩略封面，如果没有则使用封面，最后使用详情图片
-      const coverUrl = row.thumbCover || row.cover || row.thumbImage || row.image
-      if (!coverUrl) return '-'
+      // 调试日志：检查特定ID的数据 (ID 20)
+      if (row.id == 20) {
+        console.log('--- Debug ID 20 ---')
+        console.log('Row Data:', row)
+        console.log('Fields:', {
+          thumbImage: row.thumbImage,
+          thumb_image: row.thumb_image,
+          image: row.image,
+          cover: row.cover,
+          thumbCover: row.thumbCover,
+          thumb_cover: row.thumb_cover
+        })
+      }
+
+      // 辅助函数：获取逗号分隔字符串中的第一个有效URL
+      const getFirstUrl = (str) => {
+        if (!str) return ''
+        // 确保 str 是字符串
+        if (typeof str !== 'string') {
+          // 如果是数组，尝试取第一个
+          if (Array.isArray(str) && str.length > 0) {
+             return str[0]
+          }
+          return ''
+        }
+        // 过滤掉空字符串，防止出现 ",url" 这种情况导致取到空值
+        const urls = str.split(',').filter(u => u && u.trim())
+        return urls.length > 0 ? urls[0] : ''
+      }
       
-      // 原图用于预览
-      const originalUrl = row.cover || row.image || coverUrl
+      // 兼容驼峰和下划线命名，并确保取到的是第一张图片
+      const thumbImage = getFirstUrl(row.thumbImage || row.thumb_image)
+      const image = getFirstUrl(row.image)
+      const cover = getFirstUrl(row.cover)
+      const thumbCover = getFirstUrl(row.thumbCover || row.thumb_cover)
       
+      // 优先级：封面缩略 -> 封面原图 -> 详情缩略 -> 详情原图
+      // 显示用的图片（优先缩略图）
+      const displayUrl = thumbCover || thumbImage || cover || image
+      
+      // 预览用的图片（优先原图）
+      const previewUrl = cover || image || displayUrl
+      
+      if (row.id == 20) {
+         console.log('Display URL (Thumb):', displayUrl)
+         console.log('Preview URL (Original):', previewUrl)
+      }
+
+      if (!displayUrl) return '-'
+
       return h(NImage, {
         width: 60,
         height: 45,
-        src: getImageUrl(coverUrl),
+        src: getImageUrl(displayUrl),
+        previewSrc: getImageUrl(previewUrl), // 点击预览时显示原图
         objectFit: 'cover',
         previewDisabled: false,
-        showToolbar: false,
-        // 配置预览功能，点击时显示原图
-        srcset: [
-          {
-            src: getImageUrl(originalUrl),
-            alt: '电视剧封面'
-          }
-        ],
+        showToolbar: true,
         fallbackSrc: '/placeholder.jpg'
       })
     }
@@ -337,11 +437,11 @@ const columns = [
       return h('div', { style: 'display: flex; gap: 8px;' }, [
         h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
         h(
-          NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
+            NPopconfirm,
+            { onPositiveClick: () => handleDelete(row.id) },
+            {
+              trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+            }
         )
       ])
     }
@@ -350,29 +450,99 @@ const columns = [
 
 const handleDialogSave = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
   } catch (error) {
     return
   }
-  
+
   try {
     dialogLoading.value = true
-    // 将 cover 映射到 image，thumbCover 映射到 thumbImage（后端只支持 image 和 thumbImage）
-    const data = {
-      ...dramaForm,
-      image: dramaForm.cover || dramaForm.image, // 优先使用 cover，如果没有则使用 image
-      thumbImage: dramaForm.thumbCover || dramaForm.thumbImage // 优先使用 thumbCover，如果没有则使用 thumbImage
+    
+    // 组合图片字段：封面 + 详情图
+    // 优先使用 fileList 中的 originUrl (相对路径)，如果没有则尝试从 url 解析
+    const detailOrigins = imageFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.originUrl) return f.originUrl
+          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+          return f.url
+        })
+        
+    const allImages = []
+    
+    // 获取封面原图（优先从文件列表获取）
+    let coverOrigin = dramaForm.cover
+    const coverFile = coverFileList.value.find(f => f.status === 'finished')
+    if (coverFile) {
+      if (coverFile.originUrl) {
+        coverOrigin = coverFile.originUrl
+      } else if (coverFile.url && coverFile.url.startsWith('http')) {
+        coverOrigin = coverFile.url.replace(config.fileBaseURL, '')
+      } else {
+        coverOrigin = coverFile.url
+      }
+    } else if (coverOrigin && coverOrigin.startsWith('http')) {
+      // 兜底：如果 dramaForm.cover 是完整路径
+      coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
+    }
+
+    if (coverOrigin) allImages.push(coverOrigin)
+    if (detailOrigins.length > 0) allImages.push(...detailOrigins)
+    
+    const finalImageStr = allImages.join(',')
+    
+    // 组合缩略图字段
+    // 优先使用 fileList 中的 thumbUrl (相对路径)，如果没有则回退到 originUrl 或 url
+    const detailThumbs = imageFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.thumbUrl) return f.thumbUrl
+          if (f.originUrl) return f.originUrl
+          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+          return f.url
+        })
+
+    const allThumbImages = []
+    
+    // 获取封面缩略图（优先从文件列表获取）
+    let coverThumb = dramaForm.thumbCover || dramaForm.cover
+    if (coverFile) {
+      if (coverFile.thumbUrl) {
+        coverThumb = coverFile.thumbUrl
+      } else if (coverFile.originUrl) {
+        coverThumb = coverFile.originUrl
+      }
     }
     
+    // 兜底处理
+    if (coverThumb && coverThumb.startsWith('http')) {
+       coverThumb = coverThumb.replace(config.fileBaseURL, '')
+    }
+
+    if (coverThumb) allThumbImages.push(coverThumb)
+    if (detailThumbs.length > 0) allThumbImages.push(...detailThumbs)
+    
+    const finalThumbImageStr = allThumbImages.join(',')
+
+    const data = {
+      ...dramaForm,
+      image: finalImageStr,
+      thumbImage: finalThumbImageStr,
+      // 映射表单字段到后端字段
+      location_id: dramaForm.locationId,
+      service_id: dramaForm.serviceId,
+      user_id: dramaForm.userId
+    }
+
     let res
     if (dramaForm.id) {
-      res = await updateDrama(dramaForm.id, data)
+      res = await updateDrama(data)
     } else {
       res = await addDrama(data)
     }
-    
+
     if (res.code === 200) {
       message.success(dramaForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
@@ -405,6 +575,7 @@ const loadData = async () => {
     const res = await getDramaPage(pagination.page, pagination.pageSize, searchForm.keyword)
     console.log('分页响应数据:', res) // 添加调试日志
     if (res.code === 200) {
+<<<<<<< HEAD
       dramaList.value = res.data || []
       // 设置总数据量
       pagination.itemCount = res.pagination?.totalItems || 0
@@ -412,6 +583,11 @@ const loadData = async () => {
       pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
       console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
       console.log('自动计算总页数:', pagination.pageCount) // 添加调试日志
+=======
+      dramaList.value = res.data?.records || res.data || []
+      // 兼容多种API返回格式
+      pagination.itemCount = res.data?.total || res.total || res.pagination?.totalItems || res.pagination?.total || 0
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   } catch (error) {
     console.error('加载电视剧列表失败:', error)
@@ -443,6 +619,18 @@ const handlePageSizeChange = (pageSize) => {
   loadData()
 }
 
+const handleLocationChange = (value, option) => {
+  if (option && !dramaForm.shootLocation) {
+    dramaForm.shootLocation = option.label
+  }
+}
+
+const handleServiceChange = (value, option) => {
+  if (option && !dramaForm.service) {
+    dramaForm.service = option.label
+  }
+}
+
 const handleAdd = () => {
   dialogTitle.value = '新增电视剧'
   Object.assign(dramaForm, {
@@ -454,7 +642,10 @@ const handleAdd = () => {
     dramaDescription: '',
     cast: '',
     shootLocation: '',
+    locationId: null,
     service: '',
+    serviceId: null,
+    userId: userStore.userInfo?.id || null,
     cover: '',
     image: '',
     thumbCover: '',
@@ -470,8 +661,17 @@ const handleEdit = async (row) => {
     const res = await getDramaById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑电视剧'
-      // 后端返回 cover 和 thumbCover（已添加），直接使用
-      // 后端现在返回 cover 和 thumbCover 字段（已添加），直接使用
+      
+      // 解析图片字段：第一个为封面，后面的是详情图
+      const allImages = (res.data.image || '').split(',').filter(url => url.trim())
+      const coverUrl = allImages[0] || ''
+      const detailUrls = allImages.slice(1)
+      
+      // 解析缩略图字段
+      const allThumbImages = (res.data.thumbImage || '').split(',').filter(url => url.trim())
+      const thumbCoverUrl = allThumbImages[0] || coverUrl
+      const detailThumbUrls = allThumbImages.slice(1)
+
       Object.assign(dramaForm, {
         id: res.data.id,
         name: res.data.name || '',
@@ -481,38 +681,41 @@ const handleEdit = async (row) => {
         dramaDescription: res.data.dramaDescription || '',
         cast: res.data.cast || '',
         shootLocation: res.data.shootLocation || '',
+        locationId: res.data.locationId || res.data.location_id,
         service: res.data.service || '',
-        cover: res.data.cover || res.data.image || '', // 优先使用 cover，如果没有则使用 image
-        image: res.data.image || '', // 详情图片
-        thumbCover: res.data.thumbCover || res.data.thumbImage || '', // 优先使用 thumbCover，如果没有则使用 thumbImage
-        thumbImage: res.data.thumbImage || '' // 缩略详情图
+        serviceId: res.data.serviceId || res.data.service_id,
+        userId: res.data.userId || res.data.user_id,
+        cover: coverUrl,
+        image: detailUrls.join(','), // 详情图片字符串
+        thumbCover: thumbCoverUrl,
+        thumbImage: '' 
       })
-      
+
       // 设置封面图片文件列表
-      if (res.data.cover) {
+      if (coverUrl) {
         coverFileList.value = [{
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: res.data.thumbCover || res.data.cover
+          url: getImageUrl(thumbCoverUrl || coverUrl),
+          originUrl: coverUrl,        // 封面原图相对路径
+          thumbUrl: thumbCoverUrl || coverUrl // 封面缩略图相对路径
         }]
       } else {
         coverFileList.value = []
       }
-      
-      // 设置详情图片文件列表（支持多张）
-      if (res.data.image) {
-        const imageUrls = res.data.image.split(',').filter(url => url.trim())
-        imageFileList.value = imageUrls.map((url, index) => ({
-          id: `image-${index}`,
-          name: `image-${index}.jpg`,
-          status: 'finished',
-          url: url.trim()
-        }))
-      } else {
-        imageFileList.value = []
-      }
-      
+
+      // 设置详情图片文件列表
+      // 同时保存原图和缩略图的相对路径到文件对象上
+      imageFileList.value = detailUrls.map((url, index) => ({
+        id: `image-${index}`,
+        name: `image-${index}.jpg`,
+        status: 'finished',
+        url: getImageUrl(url), // 显示用完整路径
+        originUrl: url,        // 原图相对路径
+        thumbUrl: detailThumbUrls[index] || url // 缩略图相对路径
+      }))
+
       dialogVisible.value = true
     }
   } catch (error) {
@@ -526,8 +729,26 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
-      dramaForm.cover = res.data.originUrl || res.data.url
-      dramaForm.thumbCover = res.data.thumbUrl || res.data.originUrl || res.data.url
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || originUrl
+      
+      dramaForm.cover = originUrl
+      dramaForm.thumbCover = thumbUrl
+      
+      // 更新文件列表中的URL，以便显示预览
+      // 使用 getImageUrl 转换为完整 URL
+      const fullUrl = getImageUrl(originUrl)
+      file.url = fullUrl
+      file.originUrl = originUrl
+      file.thumbUrl = thumbUrl
+      
+      const fileIndex = coverFileList.value.findIndex(f => f.id === file.id)
+      if (fileIndex !== -1) {
+        coverFileList.value[fileIndex].url = fullUrl
+        coverFileList.value[fileIndex].originUrl = originUrl
+        coverFileList.value[fileIndex].thumbUrl = thumbUrl
+      }
+
       onFinish()
       message.success('封面图片上传成功')
     } else {
@@ -546,11 +767,29 @@ const handleImageUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
-      const imageUrl = res.data.originUrl || res.data.url
-      // 添加到图片列表
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || originUrl // 获取缩略图路径
+      
+      // 更新文件列表中的URL，以便显示预览
+      // 使用 getImageUrl 转换为完整 URL
+      const fullUrl = getImageUrl(originUrl)
+      file.url = fullUrl
+      file.originUrl = originUrl // 保存原图相对路径
+      file.thumbUrl = thumbUrl   // 保存缩略图相对路径
+      
+      const fileIndex = imageFileList.value.findIndex(f => f.id === file.id)
+      if (fileIndex !== -1) {
+        imageFileList.value[fileIndex].url = fullUrl
+        imageFileList.value[fileIndex].originUrl = originUrl
+        imageFileList.value[fileIndex].thumbUrl = thumbUrl
+      }
+
+      // 添加到图片列表 (保持相对路径)
+      // 注意：这里只是为了更新 form 数据以便校验，最终保存时会从 imageFileList 重新读取
       const existingImages = dramaForm.image ? dramaForm.image.split(',').filter(url => url.trim()) : []
-      existingImages.push(imageUrl)
+      existingImages.push(originUrl)
       dramaForm.image = existingImages.join(',')
+      
       onFinish()
       message.success('详情图片上传成功')
     } else {
@@ -578,8 +817,14 @@ const handleImageFileListChange = (files) => {
   imageFileList.value = files
   // 更新image字段为逗号分隔的URL字符串
   const imageUrls = files
-    .filter(file => file.status === 'finished' && file.url)
-    .map(file => file.url)
+      .filter(file => file.status === 'finished' && file.url)
+      .map(file => {
+        // 如果是完整URL，移除基础URL部分以存储相对路径
+        if (file.url.startsWith('http')) {
+          return file.url.replace(config.fileBaseURL, '')
+        }
+        return file.url
+      })
   dramaForm.image = imageUrls.join(',')
 }
 
@@ -587,6 +832,7 @@ onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
   loadData()
+  fetchOptions()
 })
 
 onUnmounted(() => {
@@ -625,51 +871,58 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
+.pagination-container {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 // 移动端卡片列表
 .mobile-list {
   .empty-state {
     text-align: center;
     padding: 60px 20px;
   }
-  
+
   .card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .mobile-card {
     :deep(.n-card__content) {
       padding: 16px;
     }
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
-      
+
       .drama-info {
         flex: 1;
         margin-right: 12px;
-        
+
         .drama-name {
           font-size: 16px;
           font-weight: 600;
           color: #1f2937;
           margin: 0 0 4px 0;
         }
-        
+
         .drama-company {
           font-size: 14px;
           color: #6b7280;
           margin: 0;
         }
       }
-      
+
       .drama-cover {
         flex-shrink: 0;
-        
+
         .no-cover {
           width: 80px;
           height: 60px;
@@ -682,7 +935,7 @@ onUnmounted(() => {
         }
       }
     }
-    
+
     .card-content {
       display: flex;
       flex-direction: column;
@@ -691,17 +944,17 @@ onUnmounted(() => {
       padding: 12px;
       background: #f9fafb;
       border-radius: 8px;
-      
+
       .info-item {
         display: flex;
         font-size: 13px;
-        
+
         .label {
           color: #6b7280;
           min-width: 60px;
           flex-shrink: 0;
         }
-        
+
         .cast-info {
           color: #374151;
           overflow: hidden;
@@ -710,20 +963,20 @@ onUnmounted(() => {
         }
       }
     }
-    
+
     .card-actions {
       margin-top: 12px;
       padding-top: 12px;
       border-top: 1px solid #e5e7eb;
     }
   }
-  
+
   .mobile-pagination {
     margin-top: 16px;
     padding: 12px;
     background: #ffffff;
     border-radius: 8px;
-    
+
     :deep(.n-pagination) {
       justify-content: center;
     }
@@ -735,59 +988,59 @@ onUnmounted(() => {
   .search-header {
     flex-direction: column;
     gap: 12px;
-    
+
     .search-form {
       width: 100%;
       min-width: auto;
-      
+
       :deep(.n-form-item) {
         margin-bottom: 12px;
-        
+
         .n-form-item-label {
           width: auto !important;
           margin-bottom: 4px;
         }
       }
     }
-    
+
     .action-buttons {
       width: 100%;
-      
+
       button {
         flex: 1;
       }
     }
   }
-  
+
   .management-card {
     :deep(.n-card__content) {
       padding: 12px;
     }
   }
-  
+
   // 移动端表单优化
   :deep(.n-modal) {
     .n-dialog {
       margin: 20px auto;
     }
-    
+
     .n-form-item {
       margin-bottom: 16px;
-      
+
       .n-form-item-label {
         font-weight: 500;
         margin-bottom: 8px;
       }
-      
+
       .n-input,
       .n-select {
         width: 100%;
       }
     }
-    
+
     .n-dialog__action {
       padding: 12px 16px;
-      
+
       .n-button {
         flex: 1;
         margin: 0 4px;

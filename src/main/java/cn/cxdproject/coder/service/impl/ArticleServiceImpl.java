@@ -200,8 +200,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .updatedAt(article.getUpdatedAt())
                 .image(article.getImage())
                 .thumbImage(article.getThumbImage())
-                .cover(article.getImage()) // 封面图片，与image相同
-                .thumbCover(article.getThumbImage()) // 缩略封面，与thumbImage相同
                 .build();
     }
 
@@ -250,11 +248,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public Page<ArticleVO> getArticlePagAdmin(Page<Article> page, String keyword) {
-
         long current = page.getCurrent();
         long size = page.getSize();
         long offset = (current - 1) * size;
 
+        // 获取当前页的数据和总记录数
         List<Article> articles = articleMapper.getAdminPage(keyword, offset, size);
         Long total = articleMapper.getTotal(keyword);
 
@@ -266,6 +264,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .setCurrent(current)
                 .setSize(size)
                 .setRecords(voList)
+<<<<<<< HEAD
                 .setTotal(total);
+=======
+                .setTotal(total); // 设置总记录数
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
 }

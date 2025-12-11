@@ -27,17 +27,30 @@
       </div>
 
       <!-- 桌面端表格 -->
-      <n-data-table
-          v-if="!isMobile"
-          :columns="columns"
-          :data="hotelList"
-          :loading="loading"
-          :pagination="pagination"
-          :row-key="row => row.id"
-          @update:page="handlePageChange"
-          @update:page-size="handlePageSizeChange"
-          :scroll-x="1400"
-      />
+      <template v-if="!isMobile">
+        <n-data-table
+            :columns="columns"
+            :data="hotelList"
+            :loading="loading"
+            :row-key="row => row.id"
+            :scroll-x="1400"
+        />
+
+        <!-- 独立分页组件 -->
+        <div class="pagination-container" v-if="pagination.itemCount > 0">
+          <n-pagination
+              v-model:page="pagination.page"
+              v-model:page-size="pagination.pageSize"
+              :page-count="Math.ceil(pagination.itemCount / pagination.pageSize)"
+              :item-count="pagination.itemCount"
+              :page-sizes="pagination.pageSizes"
+              show-size-picker
+              show-quick-jumper
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+          />
+        </div>
+      </template>
 
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
@@ -58,18 +71,17 @@
                   <h3 class="hotel-name">{{ hotel.name }}</h3>
                   <p class="hotel-address">{{ hotel.address }}</p>
                 </div>
-                <div class="hotel-image">
+                <div class="hotel-cover">
                   <n-image
-                      v-if="hotel.thumbImage || hotel.imageUrl"
-                      :src="getImageUrl(hotel.thumbImage || hotel.imageUrl)"
-                      :preview-src="getImageUrl(hotel.imageUrl)"
+                      v-if="hotel.cover"
+                      :src="getImageUrl(hotel.thumbCover || hotel.cover)"
+                      :preview-src="getImageUrl(hotel.cover)"
                       width="80"
                       height="60"
                       object-fit="cover"
                       preview-disabled
-                      class="hotel-image-content"
                   />
-                  <div v-else class="no-image">
+                  <div v-else class="no-cover">
                     <Icon icon="mdi:hotel" :width="32" />
                   </div>
                 </div>
@@ -102,7 +114,7 @@
           </div>
 
           <!-- 移动端分页 -->
-          <div class="mobile-pagination">
+          <div class="mobile-pagination" v-if="pagination.itemCount > 0">
             <n-pagination
                 :page="pagination.page"
                 :page-size="pagination.pageSize"
@@ -153,6 +165,7 @@
         <n-form-item label="描述" path="description">
           <n-input v-model:value="hotelForm.description" type="textarea" :rows="4" placeholder="请输入酒店描述" />
         </n-form-item>
+        
         <!-- 封面图片上传 -->
         <n-form-item label="封面图片" path="cover">
           <n-upload
@@ -161,8 +174,27 @@
               @update:file-list="handleCoverFileListChange"
               :custom-request="handleCoverUpload"
               accept="image/*"
+              list-type="image-card"
           >
+<<<<<<< HEAD
             <n-button>上传封面图片</n-button>
+=======
+            点击上传封面
+          </n-upload>
+        </n-form-item>
+        
+        <!-- 详情图片上传 -->
+        <n-form-item label="详情图片" path="detailImages">
+          <n-upload
+              v-model:file-list="detailFileList"
+              @update:file-list="handleDetailFileListChange"
+              :custom-request="handleDetailUpload"
+              accept="image/*"
+              list-type="image-card"
+              multiple
+          >
+            点击上传详情图
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
           </n-upload>
           <div v-if="hotelForm.cover" style="margin-top: 12px;">
             <n-image
@@ -173,6 +205,7 @@
             />
           </div>
         </n-form-item>
+<<<<<<< HEAD
 
         <!-- 详情图片上传 -->
         <n-form-item label="详情图片" path="detailImages">
@@ -197,6 +230,8 @@
             />
           </div>
         </n-form-item>
+=======
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 
       </n-form>
       <template #action>
@@ -226,74 +261,20 @@ import {
   NUpload,
   useMessage
 } from 'naive-ui'
-import request from '@/utils/request'
+import { 
+  getHotelPage, 
+  createHotel, 
+  updateHotel, 
+  deleteHotel, 
+  getHotelById, 
+  uploadFile
+} from '@/api'
 import { getImageUrl } from '@/utils/image'
-
-// 💡 假设您的所有 API 函数 (getHotelPage, createHotel, uploadFile, etc.)
-// 都是从外部文件导入或在文件顶部定义。为了让代码在单个文件中运行，
-// 且便于理解，这里重新定义 uploadFile，并假设其他 API 已经在组件外部被导出。
-
-// 请确保您的实际项目中，以下 API 函数已从 '@/utils/request' 等文件中导入
-// 否则，请将它们完整地粘贴到 setup 外部（如果它们确实在同一个文件）。
-
-// --- API 模拟/重定义 (请根据您的项目实际情况导入) ---
-const uploadFile = (file) => {
-  const formData = new FormData()
-  formData.append('file', file)
-  return request({
-    url: '/file',
-    method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-}
-
-const getHotelPage = (currentPage = 1, pageSize = 10, keyword = '') => {
-  return request({
-    url: '/hotel/admin/page',
-    method: 'get',
-    params: {
-      current: currentPage,
-      size: pageSize,
-      keyword
-    }
-  })
-}
-
-const getHotelById = (id) => {
-  return request({
-    url: `/hotel/${id}`,
-    method: 'get'
-  })
-}
-
-const createHotel = (data) => {
-  return request({
-    url: '/hotel/admin/create',
-    method: 'post',
-    data
-  })
-}
-
-const updateHotel = (id, data) => {
-  return request({
-    url: `/hotel/admin/update/${id}`,
-    method: 'put',
-    data
-  })
-}
-
-const deleteHotel = (id) => {
-  return request({
-    url: `/hotel/admin/delete/${id}`,
-    method: 'delete'
-  })
-}
-// --- API 模拟/重定义 结束 ---
+import config from '@/config'
+import { useUserStore } from '@/store/user'
 
 const message = useMessage()
+const userStore = useUserStore()
 
 const isMobile = ref(false)
 const loading = ref(false)
@@ -317,15 +298,24 @@ const hotelForm = reactive({
   id: null,
   name: '',
   address: '',
-  manager_name: '',    // 对应 manager_name
-  manager_phone: '',   // 对应 manager_phone
+  manager_name: '',
+  manager_phone: '',
   description: '',
   longitude: '',
   latitude: '',
+<<<<<<< HEAD
   cover: '',           // 封面图片
   thumbCover: '',      // 封面缩略图
   image: '',           // 详情图片（逗号分隔）
   thumbImage: ''       // 详情图片缩略图（逗号分隔）
+=======
+  image: '',           // 对应 image (封面图 + 详情图)
+  thumbImage: '',      // 对应 thumb_image (缩略图)
+  userId: null,
+  // 辅助字段，不提交给后端，用于内部逻辑
+  cover: '',
+  thumbCover: ''
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 })
 
 const pagination = reactive({
@@ -342,9 +332,15 @@ const pagination = reactive({
 
 // 文件列表
 const coverFileList = ref([])
+<<<<<<< HEAD
 const imageFileList = ref([])
 // ✅ 删除缩略图文件列表
 // const thumbFileList = ref([])
+=======
+const detailFileList = ref([])
+// 存储上传文件的详细信息 (id -> { originUrl, thumbUrl })，解决 Naive UI 文件列表可能丢失自定义属性的问题
+const fileMapping = reactive({})
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 
 const formRules = {
   name: [
@@ -379,6 +375,7 @@ const columns = [
   {
     title: '酒店名称',
     key: 'name',
+    width: 150,
     render(row) {
       return h('span', row.name)
     }
@@ -386,7 +383,7 @@ const columns = [
   {
     title: '地址',
     key: 'address',
-    // 增加 flexGrow 以确保地址列能自动换行
+    width: 200,
     render(row) {
       return h('span', { style: { maxWidth: '200px', display: 'inline-block', wordBreak: 'break-all' } }, row.address)
     }
@@ -394,6 +391,7 @@ const columns = [
   {
     title: '负责人',
     key: 'manager_name',
+    width: 100,
     render(row) {
       return h('span', row.manager_name)
     }
@@ -401,17 +399,19 @@ const columns = [
   {
     title: '联系电话',
     key: 'manager_phone',
+    width: 120,
     render(row) {
       return h('span', row.manager_phone)
     }
   },
   {
     title: '封面图',
-    key: 'imageUrl',
+    key: 'cover',
     width: 120,
     render(row) {
-      const displayUrl = row.thumbImage || row.imageUrl;
-      const previewUrl = row.imageUrl; // 预览用原图
+      // 优先显示缩略图，预览显示原图
+      const displayUrl = row.thumbCover || row.thumbImage || row.cover || row.image;
+      const previewUrl = row.cover || row.image;
 
       if (displayUrl) {
         return h(NImage, {
@@ -420,7 +420,8 @@ const columns = [
           width: 80,
           height: 60,
           objectFit: 'cover',
-          previewDisabled: false
+          previewDisabled: false,
+          fallbackSrc: '/placeholder.jpg'
         })
       }
       return h('span', '无')
@@ -430,16 +431,13 @@ const columns = [
     title: '操作',
     key: 'actions',
     width: 180,
-    fixed: 'right', // 锁定操作列
+    fixed: 'right',
     render(row) {
-      return [
+      return h('div', { style: 'display: flex; gap: 8px;' }, [
         h(NButton, {
           size: 'small',
-          type: 'primary',
-          style: { marginRight: '8px' },
           onClick: () => handleEdit(row)
         }, { default: () => '编辑' }),
-        // ✅ 修正：使用 NPopconfirm 包裹删除按钮
         h(NPopconfirm, {
           onPositiveClick: () => handleDelete(row.id),
           placement: 'left'
@@ -447,11 +445,11 @@ const columns = [
           trigger: () => h(NButton, {
             size: 'small',
             type: 'error',
-            tertiary: true // 使用三级按钮更柔和
+            tertiary: true
           }, { default: () => '删除' }),
           default: () => '确定要删除这个酒店吗？'
         })
-      ]
+      ])
     }
   }
 ]
@@ -466,11 +464,16 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
 
-// ✅ loadData 方法 - 确保参数和映射正确
+// 辅助函数：解析图片字符串
+const parseImages = (imageStr) => {
+  if (!imageStr) return []
+  if (typeof imageStr !== 'string') return []
+  return imageStr.split(',').filter(url => url && url.trim())
+}
+
 const loadData = async () => {
   try {
     loading.value = true
-    // 确保传递给 API 的参数名与接口定义一致 (current, size)
     const res = await getHotelPage(pagination.page, pagination.pageSize, searchForm.keyword)
 
     if (res.code !== 200) {
@@ -478,18 +481,35 @@ const loadData = async () => {
       return
     }
 
+<<<<<<< HEAD
     // PageResponse 数据结构：{ data: [...], pagination: { totalItems, ... } }
     const listData = res.data || []
     const totalItems = res.pagination?.totalItems || 0
+=======
+    const listData = res.data?.list || res.data?.records || res.data || []
+    // 兼容多种API返回格式，特别是 PageResponse
+    const totalItems = res.data?.total || res.data?.totalItems || res.pagination?.totalItems || res.pagination?.total || 0
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 
-    // ✅ 修正：将 API 返回的驼峰字段 (managerName) 映射到前端使用的下划线字段 (manager_name)
-    hotelList.value = listData.map(hotel => ({
-      ...hotel,
-      manager_name: hotel.managerName || '',
-      manager_phone: hotel.managerPhone || '',
-      imageUrl: hotel.image || '',                // image 字段是封面图
-      thumbImage: hotel.thumbImage || '',         // thumbImage 字段是缩略图
-    }))
+    hotelList.value = listData.map(hotel => {
+      // 解析图片字段
+      // 假设 image 字段包含所有图片 (cover + details)，逗号分隔
+      const images = parseImages(hotel.image)
+      const thumbImages = parseImages(hotel.thumbImage || hotel.thumb_image)
+      
+      const cover = images.length > 0 ? images[0] : ''
+      const thumbCover = thumbImages.length > 0 ? thumbImages[0] : ''
+      
+      return {
+        ...hotel,
+        manager_name: hotel.managerName || hotel.manager_name || '',
+        manager_phone: hotel.managerPhone || hotel.manager_phone || '',
+        image: hotel.image || '',
+        thumbImage: hotel.thumbImage || hotel.thumb_image || '',
+        cover, // 供列表显示使用
+        thumbCover
+      }
+    })
 
     pagination.itemCount = totalItems
     // 自动计算总页数
@@ -526,7 +546,6 @@ const handlePageSizeChange = (pageSize) => {
 }
 
 const resetForm = () => {
-  // 重置表单逻辑
   Object.assign(hotelForm, {
     id: null,
     name: '',
@@ -539,10 +558,17 @@ const resetForm = () => {
     cover: '',
     thumbCover: '',
     image: '',
-    thumbImage: ''
+    thumbImage: '',
+    userId: userStore.userInfo?.id || null,
+    cover: '',
+    thumbCover: ''
   })
   coverFileList.value = []
+<<<<<<< HEAD
   imageFileList.value = []
+=======
+  detailFileList.value = []
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 
   if (formRef.value) {
     formRef.value.restoreValidation()
@@ -568,6 +594,7 @@ const handleEdit = async (row) => {
 
     const hotel = res.data
 
+<<<<<<< HEAD
     // ✅ 修正：将 API 返回的驼峰字段映射到表单的下划线字段
     // 分离封面图片和详情图片
     const imageUrls = hotel.image ? hotel.image.split(',').filter(url => url.trim()) : []
@@ -578,15 +605,19 @@ const handleEdit = async (row) => {
     const detailImages = imageUrls.slice(1)
     const detailThumbs = thumbUrls.slice(1)
 
+=======
+    // 映射 API 数据到表单
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     Object.assign(hotelForm, {
       id: hotel.id,
       name: hotel.name,
       address: hotel.address,
-      manager_name: hotel.managerName || '',
-      manager_phone: hotel.managerPhone || '',
+      manager_name: hotel.managerName || hotel.manager_name || '',
+      manager_phone: hotel.managerPhone || hotel.manager_phone || '',
       description: hotel.description,
       longitude: hotel.longitude,
       latitude: hotel.latitude,
+<<<<<<< HEAD
       cover: coverImage,
       thumbCover: coverThumb,
       image: detailImages.join(','),
@@ -614,6 +645,56 @@ const handleEdit = async (row) => {
         url: detailThumbs[index] || url
       }))
     }
+=======
+      image: hotel.image || '',
+      thumbImage: hotel.thumbImage || hotel.thumb_image || '',
+      userId: hotel.userId || hotel.user_id
+    })
+    
+    // 初始化文件列表
+    const images = parseImages(hotelForm.image)
+    const thumbImages = parseImages(hotelForm.thumbImage)
+    
+    // 封面图：取第一张
+    if (images.length > 0) {
+      const coverUrl = images[0]
+      const coverThumbUrl = thumbImages.length > 0 ? thumbImages[0] : coverUrl
+      
+      coverFileList.value = [{
+        id: 'cover',
+        name: '封面图',
+        status: 'finished',
+        url: getImageUrl(coverThumbUrl),
+        originUrl: coverUrl,
+        thumbUrl: coverThumbUrl
+      }]
+      
+      hotelForm.cover = coverUrl
+      hotelForm.thumbCover = coverThumbUrl
+    } else {
+      coverFileList.value = []
+      hotelForm.cover = ''
+      hotelForm.thumbCover = ''
+    }
+    
+    // 详情图：取剩余的
+    if (images.length > 1) {
+      const detailUrls = images.slice(1)
+      const detailThumbUrls = thumbImages.length > 1 ? thumbImages.slice(1) : detailUrls
+      
+      detailFileList.value = detailUrls.map((url, index) => ({
+        id: `detail-${index}`,
+        name: `详情图-${index + 1}`,
+        status: 'finished',
+        url: getImageUrl(detailThumbUrls[index] || url),
+        originUrl: url,
+        thumbUrl: detailThumbUrls[index] || url
+      }))
+    } else {
+      detailFileList.value = []
+    }
+
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   } catch (error) {
     console.error('获取酒店详情失败:', error)
     message.error('获取酒店详情失败')
@@ -625,6 +706,7 @@ const handleEdit = async (row) => {
 
 // --- 图片上传逻辑 ---
 
+<<<<<<< HEAD
 // 封面图片文件列表变化处理
 const handleCoverFileListChange = (fileList) => {
   coverFileList.value = fileList
@@ -635,18 +717,54 @@ const handleCoverFileListChange = (fileList) => {
 }
 
 // ✅ 封面图上传（新增/第一次上传）
+=======
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file);
 
     if (res.code === 200 && res.data) {
-      const originUrl = res.data.originUrl;
-      const thumbUrl = res.data.thumbUrl;
+      const originUrl = res.data.originUrl || res.data.url;
+      const thumbUrl = res.data.thumbUrl || originUrl;
+      
+      // 记录到映射表
+      fileMapping[file.id] = { originUrl, thumbUrl }
 
+<<<<<<< HEAD
       hotelForm.cover = originUrl;
       hotelForm.thumbCover = thumbUrl;
 
       await nextTick();
+=======
+      // 更新文件列表中的URL，用于预览显示
+      // 注意：这里我们查找并更新现有文件对象，而不是替换它
+      const fileIndex = coverFileList.value.findIndex(f => f.id === file.id)
+      if (fileIndex !== -1) {
+        const fileItem = coverFileList.value[fileIndex]
+        fileItem.url = getImageUrl(thumbUrl)
+        fileItem.originUrl = originUrl
+        fileItem.thumbUrl = thumbUrl
+        fileItem.status = 'finished' // 显式设置，虽然 onFinish 也会设置
+      } else {
+        // 如果没找到（理论上不应该），则创建一个新的
+        coverFileList.value = [{
+          id: file.id,
+          name: file.name,
+          status: 'finished',
+          url: getImageUrl(thumbUrl),
+          originUrl: originUrl,
+          thumbUrl: thumbUrl
+        }]
+      }
+      
+      // 更新表单辅助字段
+      hotelForm.cover = originUrl
+      hotelForm.thumbCover = thumbUrl
+      
+      // 强制更新 coverFileList 以确保视图刷新
+      coverFileList.value = [...coverFileList.value]
+
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       onFinish();
       message.success('封面图上传成功');
     } else {
@@ -660,12 +778,25 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
   }
 };
 
+<<<<<<< HEAD
 // 详情图片上传处理
 const handleImageUpload = async ({ file, onFinish, onError }) => {
+=======
+const handleCoverFileListChange = (newList) => {
+  coverFileList.value = newList
+  if (newList.length === 0) {
+    hotelForm.cover = ''
+    hotelForm.thumbCover = ''
+  }
+}
+
+const handleDetailUpload = async ({ file, onFinish, onError }) => {
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   try {
     const res = await uploadFile(file.file)
 
     if (res.code === 200 && res.data) {
+<<<<<<< HEAD
       // 将新上传的图片添加到现有图片列表
       const currentImages = hotelForm.image ? hotelForm.image.split(',').filter(url => url.trim()) : []
       const currentThumbs = hotelForm.thumbImage ? hotelForm.thumbImage.split(',').filter(url => url.trim()) : []
@@ -687,6 +818,46 @@ const handleImageUpload = async ({ file, onFinish, onError }) => {
     console.error('详情图片上传失败:', error)
     onError()
     message.error('详情图片上传失败')
+=======
+      const originUrl = res.data.originUrl || res.data.url;
+      const thumbUrl = res.data.thumbUrl || originUrl;
+      
+      // 记录到映射表
+      fileMapping[file.id] = { originUrl, thumbUrl }
+
+      // 查找并更新文件属性
+      const index = detailFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        const fileItem = detailFileList.value[index]
+        fileItem.url = getImageUrl(thumbUrl)
+        fileItem.originUrl = originUrl
+        fileItem.thumbUrl = thumbUrl
+        fileItem.status = 'finished'
+        // 强制触发更新
+        detailFileList.value = [...detailFileList.value]
+      } else {
+        // 如果文件列表中找不到（可能是 v-model 更新延迟），手动添加
+        const newItem = {
+          id: file.id,
+          name: file.name,
+          status: 'finished',
+          url: getImageUrl(thumbUrl),
+          originUrl: originUrl,
+          thumbUrl: thumbUrl
+        }
+        detailFileList.value = [...detailFileList.value, newItem]
+      }
+
+      onFinish();
+    } else {
+      onError();
+      message.error('上传失败：' + (res.message || '未知错误'));
+    }
+  } catch (error) {
+    console.error('上传失败:', error);
+    onError();
+    message.error('上传失败');
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   }
 }
 
@@ -706,10 +877,15 @@ const handleImageFileListChange = (fileList) => {
   }
 }
 
+const handleDetailFileListChange = (newList) => {
+  detailFileList.value = newList
+}
+
 // --- 图片上传逻辑结束 ---
 
 const handleDialogSave = async () => {
   if (!formRef.value) return
+
   try {
     await formRef.value.validate()
   } catch (error) {
@@ -718,6 +894,7 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
+<<<<<<< HEAD
 
     // ✅ 修正：将表单的下划线字段映射到 API 期望的驼峰字段
     // 合并封面和详情图片为逗号分隔的字符串
@@ -738,17 +915,126 @@ const handleDialogSave = async () => {
       allThumbs.push(...detailThumbs)
     }
 
+=======
+    
+    // 辅助函数：获取文件信息
+    const getFileInfo = (file) => {
+        // 1. 优先检查 fileMapping (本次会话上传的文件)
+        if (fileMapping[file.id]) {
+            return {
+                url: fileMapping[file.id].originUrl,
+                thumb: fileMapping[file.id].thumbUrl
+            }
+        }
+        // 2. 检查文件对象自带属性 (回显的文件)
+        if (file.originUrl) {
+            return {
+                url: file.originUrl,
+                thumb: file.thumbUrl || file.originUrl
+            }
+        }
+        // 3. 兜底：尝试解析 url
+        let url = file.url || ''
+        let thumb = file.thumbUrl || url
+        
+        if (url && url.startsWith('http')) {
+            url = url.replace(config.fileBaseURL, '')
+        }
+        if (thumb && thumb.startsWith('http')) {
+            thumb = thumb.replace(config.fileBaseURL, '')
+        }
+        
+        return { url, thumb }
+    }
+    
+    // 1. 提取封面图
+    let coverUrl = ''
+    let coverThumbUrl = ''
+    
+    // 优先从文件列表获取
+    // 只要有 url 就可以，不强制 status === 'finished'，防止状态同步问题
+    const coverFile = coverFileList.value.find(f => f.url || f.originUrl || fileMapping[f.id])
+    if (coverFile) {
+        const info = getFileInfo(coverFile)
+        coverUrl = info.url
+        coverThumbUrl = info.thumb
+    } else {
+      // 兜底：使用表单数据
+      if (hotelForm.cover) {
+        coverUrl = hotelForm.cover
+        if (coverUrl.startsWith('http')) {
+            coverUrl = coverUrl.replace(config.fileBaseURL, '')
+        }
+      }
+      if (hotelForm.thumbCover) {
+        coverThumbUrl = hotelForm.thumbCover
+        if (coverThumbUrl.startsWith('http')) {
+            coverThumbUrl = coverThumbUrl.replace(config.fileBaseURL, '')
+        }
+      }
+    }
+    
+    // 2. 提取详情图
+    const detailUrls = []
+    const detailThumbUrls = []
+    
+    // 同样放宽条件，只要有 url 即可
+    const validDetails = detailFileList.value.filter(f => f.url || f.originUrl || fileMapping[f.id])
+    
+    validDetails.forEach(file => {
+      const info = getFileInfo(file)
+      
+      if (info.url) {
+        detailUrls.push(info.url)
+        detailThumbUrls.push(info.thumb || info.url)
+      }
+    })
+    
+    // 3. 合并
+    const allImages = []
+    const allThumbImages = []
+    
+    if (coverUrl) {
+      allImages.push(coverUrl)
+      allThumbImages.push(coverThumbUrl || coverUrl)
+    }
+    
+    if (detailUrls.length > 0) {
+      allImages.push(...detailUrls)
+      allThumbImages.push(...detailThumbUrls)
+    }
+    
+    const finalImageStr = allImages.join(',')
+    const finalThumbImageStr = allThumbImages.join(',')
+    
+    console.log('Saving Hotel:', {
+        coverUrl,
+        detailUrls,
+        finalImageStr
+    })
+    
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     const data = {
       name: hotelForm.name,
       address: hotelForm.address,
-      managerName: hotelForm.manager_name,    // 驼峰
-      managerPhone: hotelForm.manager_phone,  // 驼峰
+      managerName: hotelForm.manager_name,
+      managerPhone: hotelForm.manager_phone,
       description: hotelForm.description,
+<<<<<<< HEAD
       image: allImages.join(','),
       thumbImage: allThumbs.join(','),
+=======
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       longitude: hotelForm.longitude,
-      latitude: hotelForm.latitude
+      latitude: hotelForm.latitude,
+      image: finalImageStr,
+      thumbImage: finalThumbImageStr,
+      userId: hotelForm.userId
     }
+    
+    // 兼容后端字段名
+    data.manager_name = hotelForm.manager_name
+    data.manager_phone = hotelForm.manager_phone
 
     let res
     if (hotelForm.id) {
@@ -777,10 +1063,6 @@ const handleDelete = async (id) => {
     const res = await deleteHotel(id)
     if (res.code === 200) {
       message.success('删除成功')
-      // 删除后回到第一页或重新加载当前页
-      if (hotelList.value.length === 1 && pagination.page > 1) {
-        pagination.page--
-      }
       loadData()
     } else {
       message.error(res.message || '删除失败')
@@ -792,267 +1074,154 @@ const handleDelete = async (id) => {
 }
 </script>
 
-<style scoped lang="scss">
-.hotel-management {
-  animation: fadeIn 0.3s ease;
-}
-
+<style scoped>
 .management-card {
-  :deep(.n-card__content) {
-    padding: 16px;
-  }
+  min-height: calc(100vh - 100px);
 }
 
 .search-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 16px;
+  flex-wrap: nowrap;
   gap: 16px;
-  flex-wrap: wrap;
 }
 
 .search-form {
   flex: 1;
-  min-width: 300px;
+  min-width: 0;
 }
 
 .action-buttons {
   display: flex;
-  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
 }
 
-// 移动端卡片列表
-.mobile-list {
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-  }
-
-  .card-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .mobile-card {
-    :deep(.n-card__content) {
-      padding: 16px;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 12px;
-
-      .hotel-info {
-        flex: 1;
-        margin-right: 12px;
-
-        .hotel-name {
-          font-size: 16px;
-          font-weight: 600;
-          color: #1f2937;
-          margin: 0 0 4px 0;
-        }
-
-        .hotel-address {
-          font-size: 14px;
-          color: #6b7280;
-          margin: 0;
-          word-break: break-all;
-        }
-      }
-
-      .hotel-image {
-        flex-shrink: 0;
-        width: 80px;
-        height: 60px;
-        overflow: hidden;
-        border-radius: 6px;
-
-        .hotel-image-content {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .no-image {
-          width: 100%;
-          height: 100%;
-          background: #f3f4f6;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #9ca3af;
-        }
-      }
-    }
-
-    .card-content {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
-      padding: 12px;
-      background: #f9fafb;
-      border-radius: 8px;
-
-      .info-item {
-        display: flex;
-        font-size: 13px;
-
-        .label {
-          color: #6b7280;
-          min-width: 60px;
-          flex-shrink: 0;
-        }
-      }
-    }
-
-    .card-actions {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e5e7eb;
-    }
-  }
-
-  .mobile-pagination {
-    margin-top: 16px;
-    padding: 12px;
-    background: #ffffff;
-    border-radius: 8px;
-
-    :deep(.n-pagination) {
-      justify-content: center;
-    }
-  }
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
 
-// 表格中的图片样式
-:deep(.n-data-table-td) .hotel-image-cell {
+/* 移动端样式 */
+.mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-card {
+  margin-bottom: 8px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.hotel-info {
+  flex: 1;
+  margin-right: 12px;
+}
+
+.hotel-name {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.hotel-address {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hotel-cover {
+  width: 80px;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.no-cover {
+  width: 100%;
+  height: 100%;
+  background-color: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-:deep(.n-data-table-td) .hotel-image-cell img {
-  object-fit: cover;
-  border-radius: 4px;
-}
-
-// 表单中的图片预览样式
-.form-image-preview {
-  object-fit: cover;
-  border-radius: 6px;
-  max-width: 100%;
-  height: auto;
-  max-height: 200px;
-}
-
-.image-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-// 移动端适配
-@media (max-width: 768px) {
-  .search-header {
-    flex-direction: column;
-    gap: 12px;
-
-    .search-form {
-      width: 100%;
-      min-width: auto;
-
-      :deep(.n-form-item) {
-        margin-bottom: 12px;
-
-        .n-form-item-label {
-          width: auto !important;
-          margin-bottom: 4px;
-        }
-      }
-    }
-
-    .action-buttons {
-      width: 100%;
-
-      button {
-        flex: 1;
-      }
-    }
-  }
-
-  .management-card {
-    :deep(.n-card__content) {
-      padding: 12px;
-    }
-  }
-
-  :deep(.n-modal) {
-    .n-dialog {
-      margin: 20px auto;
-    }
-
-    .n-form-item {
-      margin-bottom: 16px;
-
-      .n-form-item-label {
-        font-weight: 500;
-        margin-bottom: 8px;
-      }
-
-      .n-input,
-      .n-select {
-        width: 100%;
-      }
-    }
-
-    .n-dialog__action {
-      padding: 12px 16px;
-
-      .n-button {
-        flex: 1;
-        margin: 0 4px;
-      }
-    }
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  color: #9ca3af;
 }
 
 .card-content {
-  margin-top: 12px;
+  background-color: #f9fafb;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 12px;
 }
 
 .info-item {
   display: flex;
   font-size: 13px;
+  margin-bottom: 4px;
+}
 
-  .label {
-    color: #6b7280;
-    min-width: 60px;
-    flex-shrink: 0;
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-item .label {
+  color: #6b7280;
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.empty-state {
+  padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .search-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-form {
+    width: 100%;
+  }
+  
+  .action-buttons {
+    width: 100%;
+  }
+  
+  .action-buttons button {
+    flex: 1;
   }
 }
 </style>
-
-
-

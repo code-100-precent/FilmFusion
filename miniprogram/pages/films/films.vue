@@ -52,7 +52,7 @@
             @click="goToDetail(film.id)"
           >
             <view class="film-cover-wrapper">
-              <image :src="film.poster" class="film-cover" mode="aspectFill"></image>
+              <image :src="getPosterUrl(film.poster)" class="film-cover" mode="aspectFill"></image>
               <view class="film-type-badge">{{ film.type }}</view>
             </view>
             <view class="film-info">
@@ -73,13 +73,15 @@
 import NavBar from '../../components/NavBar/NavBar.vue'
 import Empty from '../../components/Empty/Empty.vue'
 import { getDramaPage } from '../../services/backend-api'
+// 导入文件URL处理函数
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
     NavBar,
     Empty
   },
-    data() {
+  data() {
     return {
       keyword: '',
       selectedCategory: '全部',
@@ -93,10 +95,11 @@ export default {
       nextCursor: null // 添加游标字段
     }
   },
-  onLoad() {
-    this.loadFilms()
-  },
   methods: {
+    // 处理海报URL
+    getPosterUrl(poster) {
+      return getFileUrl(poster)
+    },
     async loadFilms() {
       this.loading = true;
       try {

@@ -21,4 +21,6 @@ public interface BannerMapper extends BaseMapper<Banner> {
             @Param("size") long size
     );
 
+    Long getTotal(@Param("keyword") String keyword);
+
 }

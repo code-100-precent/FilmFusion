@@ -79,6 +79,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .thumbImage(createDTO.getThumbImage())
                 .build();
 
+        drama.setCreatedAt(LocalDateTime.now());
+        drama.setUpdatedAt(LocalDateTime.now());
+
         this.save(drama);
         return toDramaVO(drama);
     }
@@ -250,7 +253,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         long size = page.getSize();
         long offset = (current - 1) * size;
 
+        // 获取当前页的数据和总记录数
         List<Drama> dramas = dramaMapper.getAdminPage(keyword, offset, size);
+        Long total = dramaMapper.getTotal(keyword);
 
         List<DramaVO> voList = dramas.stream()
                 .map(this::toDramaVO)
@@ -259,6 +264,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         return new Page<DramaVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 }

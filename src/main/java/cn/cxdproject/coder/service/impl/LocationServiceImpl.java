@@ -29,6 +29,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,6 +83,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .longitude(createDTO.getLongitude())
                 .latitude(createDTO.getLatitude())
                 .build();
+
+        location.setCreatedAt(LocalDateTime.now());
+        location.setUpdatedAt(LocalDateTime.now());
 
         this.save(location);
         return toLocationVO(location);
@@ -254,7 +258,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         long size = page.getSize();
         long offset = (current - 1) * size;
 
+        // 获取当前页的数据和总记录数
         List<Location> locations = locationMapper.getAdminPage(keyword, offset, size);
+        Long total = locationMapper.getTotal(keyword);
 
         List<LocationVO> voList = locations.stream()
                 .map(this::toLocationVO)
@@ -263,6 +269,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         return new Page<LocationVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 }

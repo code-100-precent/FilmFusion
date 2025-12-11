@@ -27,17 +27,30 @@
       </div>
 
       <!-- 桌面端表格 -->
-      <n-data-table
-          v-if="!isMobile"
-          :columns="columns"
-          :data="tourList"
-          :loading="loading"
-          :pagination="pagination"
-          :row-key="row => row.id"
-          @update:page="handlePageChange"
-          @update:page-size="handlePageSizeChange"
-          :scroll-x="1600"
-      />
+      <template v-if="!isMobile">
+        <n-data-table
+            :columns="columns"
+            :data="tourList"
+            :loading="loading"
+            :row-key="row => row.id"
+            :scroll-x="1800"
+        />
+
+        <!-- 独立分页组件 -->
+        <div class="pagination-container" v-if="pagination.itemCount > 0">
+          <n-pagination
+              v-model:page="pagination.page"
+              v-model:page-size="pagination.pageSize"
+              :page-count="Math.ceil(pagination.itemCount / pagination.pageSize)"
+              :item-count="pagination.itemCount"
+              :page-sizes="pagination.pageSizes"
+              show-size-picker
+              show-quick-jumper
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+          />
+        </div>
+      </template>
 
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
@@ -56,35 +69,37 @@
               <div class="card-header">
                 <div class="tour-info">
                   <h3 class="tour-name">{{ tour.name }}</h3>
-                  <p class="tour-description">{{ tour.description }}</p>
+                  <p class="tour-theme">{{ tour.theme }}</p>
                 </div>
-                <div class="tour-image">
+                <div class="tour-cover">
                   <n-image
                       v-if="tour.cover"
-                      :src="getImageUrl(tour.thumb_cover || tour.cover)"
+                      :src="getImageUrl(tour.thumbCover || tour.cover)"
+                      :preview-src="getImageUrl(tour.cover)"
                       width="80"
                       height="60"
                       object-fit="cover"
                       preview-disabled
                   />
-                  <div v-else class="no-image">
+                  <div v-else class="no-cover">
                     <Icon icon="mdi:map" :width="32" />
                   </div>
                 </div>
               </div>
+
               <div class="card-content">
                 <div class="info-item">
-                  <span class="label">主题：</span>
-                  <span>{{ tour.theme || '-' }}</span>
+                  <span class="label">特点：</span>
+                  <span class="text-ellipsis">{{ tour.features || '-' }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">交通：</span>
-                  <span>{{ tour.transport || '-' }}</span>
+                  <span class="text-ellipsis">{{ tour.transport || '-' }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">状态：</span>
-                  <n-tag :type="tour.deleted === 0 ? 'success' : 'error'">
-                    {{ tour.deleted === 0 ? '启用' : '已删除' }}
+                  <n-tag :type="(tour.deleted === 0 || tour.deleted === false) ? 'success' : 'error'" size="small">
+                    {{ (tour.deleted === 0 || tour.deleted === false) ? '启用' : '禁用' }}
                   </n-tag>
                 </div>
               </div>
@@ -105,7 +120,7 @@
           </div>
 
           <!-- 移动端分页 -->
-          <div class="mobile-pagination">
+          <div class="mobile-pagination" v-if="pagination.itemCount > 0">
             <n-pagination
                 :page="pagination.page"
                 :page-size="pagination.pageSize"
@@ -146,54 +161,78 @@
         <n-form-item label="特点" path="features">
           <n-input v-model:value="tourForm.features" type="textarea" :rows="3" placeholder="请输入特点，多项用逗号分隔" />
         </n-form-item>
-        <n-form-item label="交通方式" path="transport">
-          <n-input v-model:value="tourForm.transport" placeholder="请输入交通方式" />
-        </n-form-item>
-        <n-form-item label="周边旅馆" path="hotel">
-          <n-input v-model:value="tourForm.hotel" placeholder="请输入周边旅馆信息" />
-        </n-form-item>
-        <n-form-item label="美食推荐" path="food">
-          <n-input v-model:value="tourForm.food" placeholder="请输入美食推荐" />
-        </n-form-item>
-        <n-form-item label="经度" path="longitude">
-          <n-input v-model:value="tourForm.longitude" placeholder="请输入经度" />
-        </n-form-item>
-        <n-form-item label="纬度" path="latitude">
-          <n-input v-model:value="tourForm.latitude" placeholder="请输入纬度" />
-        </n-form-item>
-        <n-form-item label="景点ID" path="location_id">
-          <n-input v-model:value="tourForm.location_id" placeholder="请输入景点ID" />
-        </n-form-item>
-        <n-form-item label="关联影视ID" path="drama_id">
-          <n-input v-model:value="tourForm.drama_id" placeholder="请输入关联影视ID" />
-        </n-form-item>
-        <n-form-item label="状态" path="deleted">
-          <n-switch v-model:value="statusSwitch" :checked-value="0" :unchecked-value="1">
-            <template #checked>启用</template>
-            <template #unchecked>禁用</template>
-          </n-switch>
-        </n-form-item>
+        
+        <div class="form-row">
+          <n-form-item label="交通方式" path="transport">
+            <n-input v-model:value="tourForm.transport" placeholder="请输入交通方式" />
+          </n-form-item>
+          <n-form-item label="周边旅馆" path="hotel">
+            <n-input v-model:value="tourForm.hotel" placeholder="请输入周边旅馆信息" />
+          </n-form-item>
+        </div>
+
+        <div class="form-row">
+          <n-form-item label="美食推荐" path="food">
+            <n-input v-model:value="tourForm.food" placeholder="请输入美食推荐" />
+          </n-form-item>
+          <n-form-item label="景点选择" path="locationId">
+            <n-select
+                v-model:value="tourForm.locationId"
+                :options="locationOptions"
+                placeholder="请选择景点"
+                filterable
+                clearable
+                multiple
+            />
+          </n-form-item>
+        </div>
+
+        <div class="form-row">
+          <n-form-item label="关联影视选择" path="dramaId">
+            <n-select
+                v-model:value="tourForm.dramaId"
+                :options="dramaOptions"
+                placeholder="请选择关联影视"
+                filterable
+                clearable
+                multiple
+            />
+          </n-form-item>
+          <n-form-item label="状态" path="deleted">
+            <n-switch v-model:value="statusSwitch">
+              <template #checked>启用</template>
+              <template #unchecked>禁用</template>
+            </n-switch>
+          </n-form-item>
+        </div>
+
+        <div class="form-row">
+          <n-form-item label="经度" path="longitude">
+            <n-input v-model:value="tourForm.longitude" placeholder="请输入经度" />
+          </n-form-item>
+          <n-form-item label="纬度" path="latitude">
+            <n-input v-model:value="tourForm.latitude" placeholder="请输入纬度" />
+          </n-form-item>
+        </div>
+
+        <!-- 封面图片上传 -->
         <n-form-item label="封面图片" path="cover">
           <n-upload
               :max="1"
-              :default-file-list="coverFileList"
+              :file-list="coverFileList"
               @update:file-list="handleCoverFileListChange"
-              @finish="handleUploadFinish"
-              :custom-request="handleUpload"
+              :custom-request="handleCoverUpload"
+              accept="image/*"
+              list-type="image-card"
           >
-            <n-button>上传封面图片</n-button>
+            点击上传封面
           </n-upload>
-          <div v-if="tourForm.cover" style="margin-top: 12px;">
-            <n-image
-                :src="getImageUrl(tourForm.thumb_cover || tourForm.cover)"
-                width="200"
-                height="120"
-                object-fit="cover"
-            />
-          </div>
         </n-form-item>
-        <n-form-item label="详情图片" path="image">
+
+        <!-- 详情图片上传 -->
+        <n-form-item label="详情图片" path="detailImages">
           <n-upload
+<<<<<<< HEAD
               :max="10"
               multiple
               :default-file-list="imageFileList"
@@ -213,6 +252,17 @@
                 object-fit="cover"
             />
           </div>
+=======
+              v-model:file-list="detailFileList"
+              @update:file-list="handleDetailFileListChange"
+              :custom-request="handleDetailUpload"
+              accept="image/*"
+              list-type="image-card"
+              multiple
+          >
+            点击上传详情图
+          </n-upload>
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
         </n-form-item>
       </n-form>
       <template #action>
@@ -224,7 +274,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, reactive, h, onMounted, onUnmounted, computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   NCard,
@@ -232,7 +282,6 @@ import {
   NForm,
   NFormItem,
   NInput,
-  NInputNumber,
   NDataTable,
   NPopconfirm,
   NModal,
@@ -242,9 +291,10 @@ import {
   NTag,
   NSwitch,
   NUpload,
-  useMessage
+  useMessage,
+  NSelect
 } from 'naive-ui'
-import { getTourPage, createTour, updateTour, deleteTour, getTourById, uploadFile } from '@/api'
+import { getTourPage, createTour, updateTour, deleteTour, getTourById, uploadFile, getLocationList, getDramaList } from '@/api'
 import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
@@ -263,8 +313,6 @@ const dialogVisible = ref(false)
 const dialogLoading = ref(false)
 const dialogTitle = ref('新增体验游')
 const formRef = ref(null)
-const coverFileList = ref([])
-const imageFileList = ref([])
 
 const searchForm = reactive({
   keyword: ''
@@ -276,24 +324,25 @@ const tourForm = reactive({
   description: '',
   theme: '',
   features: '',
-  cover: '',
   transport: '',
   hotel: '',
   food: '',
   deleted: 0,
-  image: '',
-  thumb_cover: '',
-  thumb_image: '',
+  image: '',          // 对应 image (封面图 + 详情图)
+  thumb_image: '',    // 对应 thumb_image (缩略图)
   longitude: '',
   latitude: '',
-  location_id: '',
-  drama_id: ''
+  locationId: [],
+  dramaId: [],
+  // 辅助字段
+  cover: '',
+  thumbCover: ''
 })
 
 const statusSwitch = computed({
-  get: () => tourForm.deleted === 0,
+  get: () => tourForm.deleted === 0, // 0表示启用，转换为true
   set: (val) => {
-    tourForm.deleted = val ? 0 : 1
+    tourForm.deleted = val ? 0 : 1 // true转换为0（启用），false转换为1（禁用）
   }
 })
 
@@ -306,18 +355,58 @@ const pagination = reactive({
   showQuickJumper: true
 })
 
+// 文件列表
+const coverFileList = ref([])
+const detailFileList = ref([])
+// 存储上传文件的详细信息
+const fileMapping = reactive({})
+
+// 下拉选项
+const locationOptions = ref([])
+const dramaOptions = ref([])
+
+// 加载选项数据
+const loadOptions = async () => {
+  try {
+    // 并行请求
+    const [locRes, dramaRes] = await Promise.all([
+      getLocationList({ current: 1, size: 1000 }), // 获取足够多的景点
+      getDramaList({ current: 1, size: 1000 })
+    ])
+
+    if (locRes.data) {
+      // 兼容分页结构
+      const records = Array.isArray(locRes.data) ? locRes.data : (locRes.data.records || [])
+      locationOptions.value = records.map(item => ({
+        label: item.name,
+        value: item.id
+      }))
+    }
+
+    if (dramaRes.data) {
+      const list = Array.isArray(dramaRes.data) ? dramaRes.data : (dramaRes.data.records || [])
+      dramaOptions.value = list.map(item => ({
+        label: item.name,
+        value: item.id
+      }))
+    }
+  } catch (error) {
+    console.error('加载选项失败:', error)
+  }
+}
+
+
 const formRules = {
   name: [
     { required: true, message: '请输入体验游名称', trigger: 'blur' },
-    { min: 1, max: 255, message: '体验游名称长度在 1 到 255 个字符', trigger: 'blur' }
+    { min: 1, max: 255, message: '名称长度在 1 到 255 个字符', trigger: 'blur' }
   ],
   theme: [
     { required: true, message: '请输入主题', trigger: 'blur' },
     { min: 1, max: 50, message: '主题长度在 1 到 50 个字符', trigger: 'blur' }
   ],
   description: [
-    { required: true, message: '请输入介绍', trigger: 'blur' },
-    { min: 1, max: 2550, message: '介绍长度在 1 到 2550 个字符', trigger: 'blur' }
+    { required: true, message: '请输入介绍', trigger: 'blur' }
   ],
   longitude: [
     { required: true, message: '请输入经度', trigger: 'blur' }
@@ -325,11 +414,11 @@ const formRules = {
   latitude: [
     { required: true, message: '请输入纬度', trigger: 'blur' }
   ],
-  location_id: [
-    { required: true, message: '请输入景点ID', trigger: 'blur' }
+  locationId: [
+    { type: 'array', required: true, message: '请选择景点', trigger: ['blur', 'change'] }
   ],
-  drama_id: [
-    { required: true, message: '请输入关联影视ID', trigger: 'blur' }
+  dramaId: [
+    { type: 'array', required: true, message: '请选择关联影视', trigger: ['blur', 'change'] }
   ]
 }
 
@@ -340,19 +429,22 @@ const columns = [
     key: 'cover',
     width: 100,
     render: (row) => {
-      const imgUrl = row.thumb_cover || row.cover;
-      const originalUrl = row.cover || imgUrl;
+      // 优先显示缩略图，预览显示原图
+      const displayUrl = row.thumbCover || row.thumbImage || row.cover || row.image;
+      const previewUrl = row.cover || row.image;
 
-      return h(NImage, {
-        width: 60,
-        height: 45,
-        src: getImageUrl(imgUrl), // 显示压缩后的图片
-        objectFit: 'cover',
-        previewDisabled: false, // 启用预览功能
-        fallbackSrc: '/placeholder.jpg',
-        // 配置预览功能，点击时显示原图
-        previewSrc: getImageUrl(originalUrl)
-      });
+      if (displayUrl) {
+        return h(NImage, {
+          width: 60,
+          height: 45,
+          src: getImageUrl(displayUrl),
+          objectFit: 'cover',
+          previewDisabled: false,
+          fallbackSrc: '/placeholder.jpg',
+          previewSrc: getImageUrl(previewUrl)
+        });
+      }
+      return h('span', '无')
     }
   },
   { title: '体验游名称', key: 'name', width: 200, ellipsis: { tooltip: true } },
@@ -364,17 +456,18 @@ const columns = [
   { title: '美食推荐', key: 'food', width: 150, ellipsis: { tooltip: true } },
   { title: '经度', key: 'longitude', width: 120 },
   { title: '纬度', key: 'latitude', width: 120 },
-  { title: '景点ID', key: 'location_id', width: 120 },
-  { title: '关联影视ID', key: 'drama_id', width: 120 },
+  { title: '景点ID', key: 'locationId', width: 120 },
+  { title: '关联影视ID', key: 'dramaId', width: 120 },
   {
     title: '状态',
     key: 'deleted',
     width: 100,
     render: (row) => {
+      const isEnabled = row.deleted === 0 || row.deleted === false
       return h(NTag, {
-        type: row.deleted === 0 ? 'success' : 'error'
+        type: isEnabled ? 'success' : 'error'
       }, {
-        default: () => row.deleted === 0 ? '启用' : '已删除'
+        default: () => isEnabled ? '启用' : '禁用'
       })
     }
   },
@@ -390,17 +483,6 @@ const columns = [
     }
   },
   {
-    title: '更新时间',
-    key: 'updated_at',
-    width: 180,
-    render: (row) => {
-      if (Array.isArray(row.updated_at)) {
-        return dayjs(row.updated_at[0] + '-' + String(row.updated_at[1]).padStart(2, '0') + '-' + String(row.updated_at[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
-      }
-      return row.updated_at ? dayjs(row.updated_at).format('YYYY-MM-DD HH:mm:ss') : '-'
-    }
-  },
-  {
     title: '操作',
     key: 'actions',
     width: 180,
@@ -412,7 +494,8 @@ const columns = [
             NPopconfirm,
             { onPositiveClick: () => handleDelete(row.id) },
             {
-              trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+              trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' }),
+              default: () => '确定要删除这个体验游吗？'
             }
         )
       ])
@@ -423,6 +506,7 @@ const columns = [
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  loadOptions()
   loadData()
 })
 
@@ -430,20 +514,20 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
 
+// 辅助函数：解析图片字符串
+const parseImages = (imageStr) => {
+  if (!imageStr) return []
+  if (typeof imageStr !== 'string') return []
+  return imageStr.split(',').filter(url => url && url.trim())
+}
+
 const loadData = async () => {
   try {
     loading.value = true
-    console.log('开始加载体验游数据:', {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      keyword: searchForm.keyword
-    })
-
-    // 直接调用后端API获取真实数据
     const res = await getTourPage(pagination.page, pagination.pageSize, searchForm.keyword)
-    console.log('后端API响应数据:', res)
 
     if (res.code === 200) {
+<<<<<<< HEAD
       // PageResponse的数据结构：data是数组，pagination包含分页信息
       tourList.value = res.data || []
       if (res.pagination) {
@@ -453,17 +537,40 @@ const loadData = async () => {
         pagination.page = res.pagination.currentPage || 1
         pagination.pageSize = res.pagination.pageSize || 10
       }
+=======
+      // PageResponse结构：data为数组，pagination包含分页信息
+      const listData = res.data || []
+      const totalItems = res.pagination?.totalItems || 0
+      const totalPages = res.pagination?.totalPages || 1
+
+      tourList.value = listData.map(tour => {
+        // 解析图片字段
+        const images = parseImages(tour.image)
+        const thumbImages = parseImages(tour.thumb_image || tour.thumbImage)
+        
+        const cover = images.length > 0 ? images[0] : ''
+        const thumbCover = thumbImages.length > 0 ? thumbImages[0] : ''
+        
+        return {
+          ...tour,
+          image: tour.image || '',
+          thumb_image: tour.thumb_image || tour.thumbImage || '',
+          cover,
+          thumbCover
+        }
+      })
+
+      pagination.itemCount = totalItems
+      pagination.pageCount = totalPages
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     } else {
-      console.warn('API返回非成功状态:', res.code)
       message.error(`获取体验游失败: ${res.message || '未知错误'}`)
     }
   } catch (error) {
     console.error('加载体验游列表失败:', error)
-    console.error('错误详情:', error.response || error.message)
     message.error('加载体验游列表失败')
   } finally {
     loading.value = false
-    console.log('加载完成，当前tourList数据量:', tourList.value.length)
   }
 }
 
@@ -489,64 +596,91 @@ const handlePageSizeChange = (pageSize) => {
   loadData()
 }
 
-const handleAdd = () => {
-  dialogTitle.value = '新增体验游'
+const resetForm = () => {
   Object.assign(tourForm, {
     id: null,
     name: '',
     description: '',
     theme: '',
     features: '',
-    cover: '',
     transport: '',
     hotel: '',
     food: '',
     deleted: 0,
     image: '',
-    thumb_cover: '',
     thumb_image: '',
     longitude: '',
     latitude: '',
-    location_id: '',
-    drama_id: ''
+    locationId: [],
+    dramaId: [],
+    cover: '',
+    thumbCover: ''
   })
   coverFileList.value = []
-  imageFileList.value = []
+  detailFileList.value = []
+  
+  // 清空映射
+  for (const key in fileMapping) {
+    delete fileMapping[key]
+  }
+
+  if (formRef.value) {
+    formRef.value.restoreValidation()
+  }
+}
+
+const handleAdd = () => {
+  dialogTitle.value = '新增体验游'
+  resetForm()
   dialogVisible.value = true
 }
 
 const handleEdit = async (row) => {
+  dialogTitle.value = '编辑体验游'
+  dialogVisible.value = true
   try {
+    dialogLoading.value = true
     const res = await getTourById(row.id)
     if (res.code === 200 && res.data) {
-      dialogTitle.value = '编辑体验游'
+      const tour = res.data
       Object.assign(tourForm, {
-        id: res.data.id,
-        name: res.data.name || '',
-        description: res.data.description || '',
-        theme: res.data.theme || '',
-        features: res.data.features || '',
-        cover: res.data.cover || '',
-        transport: res.data.transport || '',
-        hotel: res.data.hotel || '',
-        food: res.data.food || '',
-        deleted: res.data.deleted || 0,
-        image: res.data.image || '',
-        thumb_cover: res.data.thumb_cover || '',
-        thumb_image: res.data.thumb_image || '',
-        longitude: res.data.longitude || '',
-        latitude: res.data.latitude || '',
-        location_id: res.data.location_id || '',
-        drama_id: res.data.drama_id || ''
+        id: tour.id,
+        name: tour.name || '',
+        description: tour.description || '',
+        theme: tour.theme || '',
+        features: tour.features || '',
+        transport: tour.transport || '',
+        hotel: tour.hotel || '',
+        food: tour.food || '',
+        deleted: tour.deleted || 0,
+        image: tour.image || '',
+        thumb_image: tour.thumb_image || tour.thumbImage || '',
+        longitude: tour.longitude || '',
+        latitude: tour.latitude || '',
+        locationId: tour.locationId ? String(tour.locationId).split(',').map(Number) : [],
+        dramaId: tour.dramaId ? String(tour.dramaId).split(',').map(Number) : []
       })
 
+<<<<<<< HEAD
       // 设置封面图片文件列表
       coverFileList.value = []
       if (res.data.cover) {
+=======
+      // 初始化文件列表
+      const images = parseImages(tourForm.image)
+      const thumbImages = parseImages(tourForm.thumb_image)
+
+      // 封面图：取第一张
+      if (images.length > 0) {
+        const coverUrl = images[0]
+        const coverThumbUrl = thumbImages.length > 0 ? thumbImages[0] : coverUrl
+        
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
         coverFileList.value = [{
           id: 'cover',
-          name: 'cover.jpg',
+          name: '封面图',
           status: 'finished',
+<<<<<<< HEAD
           url: res.data.thumb_cover || res.data.cover
         }]
       }
@@ -563,16 +697,58 @@ const handleEdit = async (row) => {
           status: 'finished',
           url: thumbUrls[index] || url.trim()
         }))
+=======
+          url: getImageUrl(coverThumbUrl),
+          originUrl: coverUrl,
+          thumbUrl: coverThumbUrl
+        }]
+        
+        tourForm.cover = coverUrl
+        tourForm.thumbCover = coverThumbUrl
+        
+        // 记录到映射
+        fileMapping['cover'] = { originUrl: coverUrl, thumbUrl: coverThumbUrl }
+      } else {
+        coverFileList.value = []
+        tourForm.cover = ''
+        tourForm.thumbCover = ''
       }
 
-      dialogVisible.value = true
+      // 详情图：取剩余的
+      if (images.length > 1) {
+        const detailUrls = images.slice(1)
+        const detailThumbUrls = thumbImages.length > 1 ? thumbImages.slice(1) : detailUrls
+        
+        detailFileList.value = detailUrls.map((url, index) => {
+          const id = `detail-${index}`
+          const thumb = detailThumbUrls[index] || url
+          
+          // 记录到映射
+          fileMapping[id] = { originUrl: url, thumbUrl: thumb }
+          
+          return {
+            id: id,
+            name: `详情图-${index + 1}`,
+            status: 'finished',
+            url: getImageUrl(thumb),
+            originUrl: url,
+            thumbUrl: thumb
+          }
+        })
+      } else {
+        detailFileList.value = []
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
+      }
     }
   } catch (error) {
     console.error('获取体验游详情失败:', error)
     message.error('获取体验游详情失败')
+  } finally {
+    dialogLoading.value = false
   }
 }
 
+<<<<<<< HEAD
 const handleCoverFileListChange = (files) => {
   coverFileList.value = files
 }
@@ -609,13 +785,24 @@ const handleUploadFinish = ({ file, event }) => {
     } catch (error) {
       message.error('上传响应解析失败')
     }
+=======
+// 获取文件信息的辅助函数
+const getFileInfo = (file) => {
+  if (fileMapping[file.id]) {
+    return fileMapping[file.id]
+  }
+  return {
+    originUrl: file.originUrl || file.url,
+    thumbUrl: file.thumbUrl || file.url
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   }
 }
 
-const handleUpload = async ({ file, onFinish, onError }) => {
+const handleCoverUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
+<<<<<<< HEAD
       const imageUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || imageUrl
 
@@ -655,6 +842,39 @@ const handleImageUpload = async ({ file, onFinish, onError }) => {
 
       onFinish()
       message.success('详情图片上传成功')
+=======
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || originUrl
+      
+      fileMapping[file.id] = { originUrl, thumbUrl }
+
+      const fileIndex = coverFileList.value.findIndex(f => f.id === file.id)
+      if (fileIndex !== -1) {
+        const fileItem = coverFileList.value[fileIndex]
+        fileItem.url = getImageUrl(thumbUrl)
+        fileItem.originUrl = originUrl
+        fileItem.thumbUrl = thumbUrl
+        fileItem.status = 'finished'
+      } else {
+        coverFileList.value = [{
+          id: file.id,
+          name: file.name,
+          status: 'finished',
+          url: getImageUrl(thumbUrl),
+          originUrl: originUrl,
+          thumbUrl: thumbUrl
+        }]
+      }
+      
+      tourForm.cover = originUrl
+      tourForm.thumbCover = thumbUrl
+      
+      // 强制更新
+      coverFileList.value = [...coverFileList.value]
+      
+      onFinish()
+      message.success('封面图上传成功')
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     } else {
       onError()
       message.error('上传失败：' + (res.message || '未知错误'))
@@ -664,6 +884,58 @@ const handleImageUpload = async ({ file, onFinish, onError }) => {
     onError()
     message.error('上传失败')
   }
+}
+
+const handleCoverFileListChange = (files) => {
+  coverFileList.value = files
+  if (files.length === 0) {
+    tourForm.cover = ''
+    tourForm.thumbCover = ''
+  }
+}
+
+const handleDetailUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || originUrl
+      
+      fileMapping[file.id] = { originUrl, thumbUrl }
+
+      const index = detailFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        const fileItem = detailFileList.value[index]
+        fileItem.url = getImageUrl(thumbUrl)
+        fileItem.originUrl = originUrl
+        fileItem.thumbUrl = thumbUrl
+        fileItem.status = 'finished'
+        detailFileList.value = [...detailFileList.value]
+      } else {
+         const newItem = {
+          id: file.id,
+          name: file.name,
+          status: 'finished',
+          url: getImageUrl(thumbUrl),
+          originUrl: originUrl,
+          thumbUrl: thumbUrl
+        }
+        detailFileList.value = [...detailFileList.value, newItem]
+      }
+      onFinish()
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+const handleDetailFileListChange = (files) => {
+  detailFileList.value = files
 }
 
 const handleDialogSave = async () => {
@@ -676,36 +948,67 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
+    
+    // 合并图片
+    const allImages = []
+    const allThumbImages = []
+    
+    // 1. 封面图
+    if (coverFileList.value.length > 0) {
+      const coverFile = coverFileList.value[0]
+      const info = getFileInfo(coverFile)
+      if (info.originUrl) {
+        allImages.push(info.originUrl)
+        allThumbImages.push(info.thumbUrl || info.originUrl)
+      }
+    }
+    
+    // 2. 详情图
+    if (detailFileList.value.length > 0) {
+      detailFileList.value.forEach(file => {
+        const info = getFileInfo(file)
+        if (info.originUrl) {
+          allImages.push(info.originUrl)
+          allThumbImages.push(info.thumbUrl || info.originUrl)
+        }
+      })
+    }
+
     const data = {
       name: tourForm.name,
       description: tourForm.description,
       theme: tourForm.theme,
       features: tourForm.features,
-      cover: tourForm.cover,
       transport: tourForm.transport,
       hotel: tourForm.hotel,
       food: tourForm.food,
       deleted: tourForm.deleted,
-      image: tourForm.image,
-      thumb_cover: tourForm.thumb_cover,
-      thumb_image: tourForm.thumb_image,
       longitude: tourForm.longitude,
       latitude: tourForm.latitude,
-      location_id: tourForm.location_id,
-      drama_id: tourForm.drama_id
+      locationId: Array.isArray(tourForm.locationId) ? tourForm.locationId.join(',') : '',
+      dramaId: Array.isArray(tourForm.dramaId) ? tourForm.dramaId.join(',') : '',
+      image: allImages.join(','),
+      thumb_image: allThumbImages.join(',')
     }
 
-    let res
     if (tourForm.id) {
-      res = await updateTour(tourForm.id, data)
+      const res = await updateTour(tourForm.id, data)
+      if (res.code === 200) {
+        message.success('更新成功')
+        dialogVisible.value = false
+        loadData()
+      } else {
+        message.error(res.message || '更新失败')
+      }
     } else {
-      res = await createTour(data)
-    }
-
-    if (res.code === 200) {
-      message.success(tourForm.id ? '更新成功' : '创建成功')
-      dialogVisible.value = false
-      loadData()
+      const res = await createTour(data)
+      if (res.code === 200) {
+        message.success('创建成功')
+        dialogVisible.value = false
+        loadData()
+      } else {
+        message.error(res.message || '创建失败')
+      }
     }
   } catch (error) {
     console.error('保存失败:', error)
@@ -721,6 +1024,8 @@ const handleDelete = async (id) => {
     if (res.code === 200) {
       message.success('删除成功')
       loadData()
+    } else {
+      message.error(res.message || '删除失败')
     }
   } catch (error) {
     console.error('删除失败:', error)
@@ -729,15 +1034,13 @@ const handleDelete = async (id) => {
 }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .tour-management {
-  animation: fadeIn 0.3s ease;
+  padding: 16px;
 }
 
 .management-card {
-  :deep(.n-card__content) {
-    padding: 16px;
-  }
+  min-height: calc(100vh - 100px);
 }
 
 .search-header {
@@ -745,8 +1048,8 @@ const handleDelete = async (id) => {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
-  gap: 16px;
   flex-wrap: wrap;
+  gap: 16px;
 }
 
 .search-form {
@@ -754,194 +1057,145 @@ const handleDelete = async (id) => {
   min-width: 300px;
 }
 
-.action-buttons {
+.pagination-container {
   display: flex;
-  align-items: center;
-  flex-shrink: 0;
+  justify-content: center;
+  margin-top: 16px;
 }
 
-// 移动端卡片列表
-.mobile-list {
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row .n-form-item {
+  flex: 1;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .tour-management {
+    padding: 8px;
+  }
+  
+  .management-card {
+    border-radius: 8px;
   }
 
-  .card-list {
-    display: flex;
+  .search-header {
     flex-direction: column;
-    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .search-form {
+    width: 100%;
+  }
+  
+  .action-buttons {
+    width: 100%;
+  }
+  
+  .action-buttons button {
+    width: 100%;
   }
 
   .mobile-card {
-    :deep(.n-card__content) {
-      padding: 16px;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 12px;
-
-      .tour-info {
-        flex: 1;
-        margin-right: 12px;
-
-        .tour-name {
-          font-size: 16px;
-          font-weight: 600;
-          color: #1f2937;
-          margin: 0 0 4px 0;
-        }
-
-        .tour-description {
-          font-size: 14px;
-          color: #6b7280;
-          margin: 0;
-          word-break: break-all;
-        }
-      }
-
-      .tour-image {
-        flex-shrink: 0;
-
-        .no-image {
-          width: 80px;
-          height: 60px;
-          background: #f3f4f6;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #9ca3af;
-        }
-      }
-    }
-
-    .card-content {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
-      padding: 12px;
-      background: #f9fafb;
-      border-radius: 8px;
-
-      .info-item {
-        display: flex;
-        font-size: 13px;
-
-        .label {
-          color: #6b7280;
-          min-width: 60px;
-          flex-shrink: 0;
-        }
-
-        .price {
-          color: #dc2626;
-          font-weight: 600;
-        }
-      }
-    }
-
-    .card-actions {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e5e7eb;
-    }
-  }
-
-  .mobile-pagination {
-    margin-top: 16px;
-    padding: 12px;
-    background: #ffffff;
+    margin-bottom: 12px;
     border-radius: 8px;
-
-    :deep(.n-pagination) {
-      justify-content: center;
-    }
   }
-}
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  
+  .tour-info {
+    flex: 1;
+    margin-right: 12px;
+  }
+  
+  .tour-name {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  
+  .tour-theme {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .tour-cover {
+    width: 80px;
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  
+  .no-cover {
+    width: 100%;
+    height: 100%;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+  }
+  
+  .card-content {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #f9fafb;
+    border-radius: 6px;
+  }
+  
+  .info-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  
+  .info-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .info-item .label {
+    color: #6b7280;
+    flex-shrink: 0;
+  }
 
-// 移动端适配
-@media (max-width: 768px) {
-  .search-header {
+  .text-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 70%;
+  }
+  
+  .card-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .mobile-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+    padding-bottom: 16px;
+  }
+
+  .form-row {
     flex-direction: column;
-    gap: 12px;
-
-    .search-form {
-      width: 100%;
-      min-width: auto;
-
-      :deep(.n-form-item) {
-        margin-bottom: 12px;
-
-        .n-form-item-label {
-          width: auto !important;
-          margin-bottom: 4px;
-        }
-      }
-    }
-
-    .action-buttons {
-      width: 100%;
-
-      button {
-        flex: 1;
-      }
-    }
-  }
-
-  .management-card {
-    :deep(.n-card__content) {
-      padding: 12px;
-    }
-  }
-
-  // 移动端表单优化
-  :deep(.n-modal) {
-    .n-dialog {
-      margin: 20px auto;
-    }
-
-    .n-form-item {
-      margin-bottom: 16px;
-
-      .n-form-item-label {
-        font-weight: 500;
-        margin-bottom: 8px;
-      }
-
-      .n-input,
-      .n-select,
-      .n-input-number {
-        width: 100%;
-      }
-    }
-
-    .n-dialog__action {
-      padding: 12px 16px;
-
-      .n-button {
-        flex: 1;
-        margin: 0 4px;
-      }
-    }
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    gap: 0;
   }
 }
 </style>
-
-
-

@@ -13,7 +13,6 @@ public class CreateBannerDTO {
     @NotBlank(message = "图片地址不能为空")
     private String imageUrl;
 
-    @NotBlank(message = "目标模块不能为空")
     private String targetModule;
 
     @NotBlank(message = "序列号不能为空")

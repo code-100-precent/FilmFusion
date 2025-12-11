@@ -187,14 +187,25 @@ export const deleteUser = (id) => {
 
 // ==================== 反馈管理 ====================
 
+<<<<<<< HEAD
 export const getFeedbackPage = (page = 1, size = 10, keyword = '') => {
+=======
+export const getFeedbackPage = (current = 1, size = 10, keyword = '', status = '') => {
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   return request({
     url: '/feedback/admin/page',
     method: 'get',
     params: {
+<<<<<<< HEAD
       current: page,
       size: size,
       keyword: keyword
+=======
+      current,
+      size,
+      keyword,
+      status
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   })
 }
@@ -331,7 +342,7 @@ export const getDramaById = (id) => {
  */
 export const getDramaList = (params) => {
   return request({
-    url: '/drama/list',
+    url: '/drama/admin/page',
     method: 'get',
     params
   })
@@ -401,7 +412,7 @@ export const getLocationById = (id) => {
  */
 export const getLocationList = (params) => {
   return request({
-    url: '/location/list',
+    url: '/location/admin/page',
     method: 'get',
     params
   })
@@ -723,6 +734,7 @@ export const createTour = (data) => {
  */
 export const updateTour = (id, data) => {
   return request({
+    url: `/tour/admin/update/${id}`,
     method: 'put',
     data
   })

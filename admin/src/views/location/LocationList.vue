@@ -27,17 +27,30 @@
       </div>
       
       <!-- 桌面端表格 -->
-      <n-data-table
-        v-if="!isMobile"
-        :columns="columns"
-        :data="locationList"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="row => row.id"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-        :scroll-x="1500"
-      />
+      <template v-if="!isMobile">
+        <n-data-table
+          :columns="columns"
+          :data="locationList"
+          :loading="loading"
+          :row-key="row => row.id"
+          :scroll-x="1500"
+        />
+
+        <!-- 独立分页组件 -->
+        <div class="pagination-container" v-if="pagination.itemCount > 0">
+          <n-pagination
+              v-model:page="pagination.page"
+              v-model:page-size="pagination.pageSize"
+              :page-count="Math.ceil(pagination.itemCount / pagination.pageSize)"
+              :item-count="pagination.itemCount"
+              :page-sizes="pagination.pageSizes"
+              show-size-picker
+              show-quick-jumper
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+          />
+        </div>
+      </template>
       
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
@@ -89,6 +102,12 @@
                   <span class="label">价格：</span>
                   <span class="price">{{ location.price ? '¥' + location.price : '-' }}</span>
                 </div>
+                <div class="info-item">
+                  <span class="label">状态：</span>
+                  <span :class="(location.status === true || location.status === 1) ? 'status-available' : 'status-unavailable'">
+                    {{ (location.status === true || location.status === 1) ? '可用' : '不可用' }}
+                  </span>
+                </div>
               </div>
               <div class="card-actions">
                 <n-button size="small" @click="handleEdit(location)" block style="margin-bottom: 8px">
@@ -107,7 +126,7 @@
           </div>
           
           <!-- 移动端分页 -->
-          <div class="mobile-pagination">
+          <div class="mobile-pagination" v-if="pagination.itemCount > 0">
             <n-pagination
               :page="pagination.page"
               :page-size="pagination.pageSize"
@@ -124,7 +143,7 @@
     
     <n-modal 
       v-model:show="dialogVisible" 
-      preset="dialog" 
+      preset="card" 
       :title="dialogTitle" 
       style="width: 90%; max-width: 900px"
       :mask-closable="false"
@@ -150,8 +169,12 @@
             v-model:value="locationForm.price"
             placeholder="请输入价格"
             :min="0"
-          />
+            :show-button="false"
+          >
+            <template #prefix>￥</template>
+          </n-input-number>
         </n-form-item>
+<<<<<<< HEAD
         <n-form-item label="封面图片" path="cover">
           <n-upload
             :max="1"
@@ -193,12 +216,76 @@
             />
           </div>
         </n-form-item>
+=======
+        
+        <n-form-item label="封面图片">
+          <n-upload
+            v-model:file-list="coverFileList"
+            list-type="image-card"
+            :max="1"
+            :custom-request="handleCoverUpload"
+            accept="image/*"
+          >
+            点击上传
+          </n-upload>
+        </n-form-item>
+
+        <n-form-item label="场地图片">
+          <n-upload
+            v-model:file-list="imageFileList"
+            list-type="image-card"
+            :custom-request="handleImageUpload"
+            accept="image/*"
+            multiple
+          >
+            点击上传
+          </n-upload>
+          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <!-- 预览区域 -->
+          </div>
+        </n-form-item>
+
+        <n-form-item label="可用状态" path="status">
+          <n-switch v-model:value="locationForm.status" />
+        </n-form-item>
+        <n-form-item label="场地介绍" path="locationDescription">
+          <n-input v-model:value="locationForm.locationDescription" type="textarea" :rows="3" placeholder="请输入场地介绍" />
+        </n-form-item>
+        <div style="display: flex; gap: 16px;">
+          <n-form-item label="场地联系人" path="locationPrincipalName" style="flex: 1;">
+            <n-input v-model:value="locationForm.locationPrincipalName" placeholder="姓名" />
+          </n-form-item>
+          <n-form-item label="联系电话" path="locationPrincipalPhone" style="flex: 1;">
+            <n-input v-model:value="locationForm.locationPrincipalPhone" placeholder="电话" />
+          </n-form-item>
+        </div>
+        <div style="display: flex; gap: 16px;">
+          <n-form-item label="政府联系人" path="govPrincipalName" style="flex: 1;">
+            <n-input v-model:value="locationForm.govPrincipalName" placeholder="姓名" />
+          </n-form-item>
+          <n-form-item label="联系电话" path="govPrincipalPhone" style="flex: 1;">
+            <n-input v-model:value="locationForm.govPrincipalPhone" placeholder="电话" />
+          </n-form-item>
+        </div>
+        <div style="display: flex; gap: 16px;">
+          <n-form-item label="经度" path="longitude" style="flex: 1;">
+            <n-input v-model:value="locationForm.longitude" placeholder="经度" />
+          </n-form-item>
+          <n-form-item label="纬度" path="latitude" style="flex: 1;">
+            <n-input v-model:value="locationForm.latitude" placeholder="纬度" />
+          </n-form-item>
+        </div>
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       </n-form>
       <template #footer>
-        <n-space>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
           <n-button @click="dialogVisible = false">取消</n-button>
           <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
+<<<<<<< HEAD
         </n-space>
+=======
+        </div>
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       </template>
     </n-modal>
   </div>
@@ -228,9 +315,12 @@ import {
 } from 'naive-ui'
 import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById, uploadFile } from '@/api'
 import { getImageUrl } from '@/utils/image'
+import { useUserStore } from '@/store/user'
+import config from '@/config'
 import dayjs from 'dayjs'
 
 const message = useMessage()
+const userStore = useUserStore()
 
 const isMobile = ref(false)
 const loading = ref(false)
@@ -269,7 +359,8 @@ const locationForm = reactive({
   cover: '',
   image: '',
   thumbCover: '',
-  thumbImage: ''
+  thumbImage: '',
+  userId: null
 })
 
 const typeOptions = [
@@ -313,34 +404,140 @@ const formRules = {
   ]
 }
 
+const handleCoverUpload = async ({ file, fileList }) => {
+  try {
+    const res = await uploadFile(file.file)
+    
+    if (res.code === 200) {
+      const url = res.data.url || res.data
+      const originUrl = res.data.originUrl || url
+      const thumbUrl = res.data.thumbUrl || url
+      
+      // 更新文件列表状态和URL
+      const index = coverFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        coverFileList.value[index].status = 'finished'
+        coverFileList.value[index].url = getImageUrl(thumbUrl || originUrl) // 显示用完整路径
+        coverFileList.value[index].originUrl = originUrl // 保存相对路径
+        coverFileList.value[index].thumbUrl = thumbUrl   // 保存相对路径
+      }
+      
+      message.success('封面上传成功')
+      return url
+    } else {
+      message.error('封面上传失败')
+      const index = coverFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        coverFileList.value.splice(index, 1)
+      }
+      return false
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    message.error('封面上传失败')
+    const index = coverFileList.value.findIndex(f => f.id === file.id)
+    if (index !== -1) {
+      coverFileList.value.splice(index, 1)
+    }
+    return false
+  }
+}
+
+const handleImageUpload = async ({ file, fileList }) => {
+  try {
+    const res = await uploadFile(file.file)
+    
+    if (res.code === 200) {
+      const url = res.data.url || res.data
+      const originUrl = res.data.originUrl || url
+      const thumbUrl = res.data.thumbUrl || url
+      
+      const index = imageFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        imageFileList.value[index].status = 'finished'
+        imageFileList.value[index].url = getImageUrl(thumbUrl || originUrl) // 显示用完整路径
+        imageFileList.value[index].originUrl = originUrl
+        imageFileList.value[index].thumbUrl = thumbUrl
+      }
+      
+      message.success('图片上传成功')
+      return url
+    } else {
+      message.error('图片上传失败')
+      const index = imageFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        imageFileList.value.splice(index, 1)
+      }
+      return false
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    message.error('图片上传失败')
+    const index = imageFileList.value.findIndex(f => f.id === file.id)
+    if (index !== -1) {
+      imageFileList.value.splice(index, 1)
+    }
+    return false
+  }
+}
+
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
   { title: '场地名称', key: 'name', width: 150, ellipsis: { tooltip: true } },
   { title: '类型', key: 'type', width: 100 },
   {
+    title: '状态',
+    key: 'status',
+    width: 80,
+    render: (row) => {
+      // status是Boolean类型
+      const isActive = row.status === true || row.status === 1
+      return h(
+        'span',
+        { class: isActive ? 'status-available' : 'status-unavailable' },
+        isActive ? '可用' : '不可用'
+      )
+    }
+  },
+  {
     title: '封面',
     key: 'cover',
     width: 100,
     render: (row) => {
-      // 优先使用缩略图，如果没有则使用原图
-      const coverUrl = row.thumbImage || row.image || row.cover || row.thumbCover
-      if (!coverUrl) return '-'
+      // 辅助函数：获取逗号分隔字符串中的第一个有效URL
+      const getFirstUrl = (str) => {
+        if (!str) return ''
+        if (typeof str !== 'string') {
+          if (Array.isArray(str) && str.length > 0) return str[0]
+          return ''
+        }
+        const urls = str.split(',').filter(u => u && u.trim())
+        return urls.length > 0 ? urls[0] : ''
+      }
       
-      const originalUrl = row.image || row.cover || coverUrl
+      // 兼容驼峰和下划线命名
+      const thumbImage = getFirstUrl(row.thumbImage || row.thumb_image)
+      const image = getFirstUrl(row.image)
+      const cover = getFirstUrl(row.cover)
+      const thumbCover = getFirstUrl(row.thumbCover || row.thumb_cover)
+      
+      // 显示用的图片（优先缩略图）
+      const displayUrl = thumbCover || thumbImage || cover || image
+      
+      // 预览用的图片（优先原图）
+      const previewUrl = cover || image || displayUrl
+      
+      if (!displayUrl) return '-'
       
       return h(NImage, {
         width: 60,
         height: 45,
-        src: getImageUrl(coverUrl),
+        src: getImageUrl(displayUrl),
+        previewSrc: getImageUrl(previewUrl),
         objectFit: 'cover',
         previewDisabled: false,
-        showToolbar: false,
-        srcset: [
-          {
-            src: getImageUrl(originalUrl),
-            alt: '场地封面'
-          }
-        ]
+        showToolbar: true,
+        fallbackSrc: '/placeholder.jpg'
       })
     }
   },
@@ -461,11 +658,89 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
+<<<<<<< HEAD
     const data = { ...locationForm }
 
+=======
+    
+    // 组合图片字段：封面 + 详情图
+    // 优先使用 fileList 中的 originUrl (相对路径)，如果没有则尝试从 url 解析
+    const detailOrigins = imageFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.originUrl) return f.originUrl
+          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+          return f.url
+        })
+        
+    const allImages = []
+    
+    // 获取封面原图（优先从文件列表获取）
+    let coverOrigin = locationForm.cover
+    const coverFile = coverFileList.value.find(f => f.status === 'finished')
+    if (coverFile) {
+      if (coverFile.originUrl) {
+        coverOrigin = coverFile.originUrl
+      } else if (coverFile.url && coverFile.url.startsWith('http')) {
+        coverOrigin = coverFile.url.replace(config.fileBaseURL, '')
+      } else {
+        coverOrigin = coverFile.url
+      }
+    } else if (coverOrigin && coverOrigin.startsWith('http')) {
+      // 兜底：如果 locationForm.cover 是完整路径
+      coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
+    }
+
+    if (coverOrigin) allImages.push(coverOrigin)
+    if (detailOrigins.length > 0) allImages.push(...detailOrigins)
+    
+    const finalImageStr = allImages.join(',')
+    
+    // 组合缩略图字段
+    // 优先使用 fileList 中的 thumbUrl (相对路径)，如果没有则回退到 originUrl 或 url
+    const detailThumbs = imageFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.thumbUrl) return f.thumbUrl
+          if (f.originUrl) return f.originUrl
+          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+          return f.url
+        })
+
+    const allThumbImages = []
+    
+    // 获取封面缩略图（优先从文件列表获取）
+    let coverThumb = locationForm.thumbCover || locationForm.cover
+    if (coverFile) {
+      if (coverFile.thumbUrl) {
+        coverThumb = coverFile.thumbUrl
+      } else if (coverFile.originUrl) {
+        coverThumb = coverFile.originUrl
+      }
+    }
+    
+    // 兜底处理
+    if (coverThumb && coverThumb.startsWith('http')) {
+       coverThumb = coverThumb.replace(config.fileBaseURL, '')
+    }
+
+    if (coverThumb) allThumbImages.push(coverThumb)
+    if (detailThumbs.length > 0) allThumbImages.push(...detailThumbs)
+    
+    const finalThumbImageStr = allThumbImages.join(',')
+
+    const data = { 
+      ...locationForm,
+      status: locationForm.status, // 直接传递Boolean值
+      image: finalImageStr,
+      thumbImage: finalThumbImageStr,
+      user_id: locationForm.userId
+    }
+    
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     let res
     if (locationForm.id) {
-      res = await updateLocation(locationForm.id, data)
+      res = await updateLocation(data)
     } else {
       res = await addLocation(data)
     }
@@ -506,6 +781,7 @@ const loadData = async () => {
     console.log('API响应:', res)
 
     if (res.code === 200) {
+<<<<<<< HEAD
       locationList.value = res.data || []
 
       // 设置分页信息
@@ -519,6 +795,11 @@ const loadData = async () => {
 
       console.log(`成功加载数据，总数: ${pagination.itemCount}，总页数: ${pagination.pageCount}，当前页数据条数: ${locationList.value.length}`)
       console.log('当前 pagination 对象:', JSON.parse(JSON.stringify(pagination)))
+=======
+      locationList.value = res.data?.records || res.data || []
+      // 兼容多种API返回格式
+      pagination.itemCount = res.data?.total || res.total || res.pagination?.totalItems || res.pagination?.total || 0
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   } catch (error) {
     console.error('加载场地列表失败:', error)
@@ -569,7 +850,8 @@ const handleAdd = () => {
     cover: '',
     image: '',
     thumbCover: '',
-    thumbImage: ''
+    thumbImage: '',
+    userId: userStore.userInfo?.id || null
   })
   coverFileList.value = []
   imageFileList.value = []
@@ -581,13 +863,24 @@ const handleEdit = async (row) => {
     const res = await getLocationById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑场地'
+      
+      // 解析图片字段：第一个为封面，后面的是详情图
+      const allImages = (res.data.image || '').split(',').filter(url => url.trim())
+      const coverUrl = allImages[0] || ''
+      const detailUrls = allImages.slice(1)
+      
+      // 解析缩略图字段
+      const allThumbImages = (res.data.thumbImage || '').split(',').filter(url => url.trim())
+      const thumbCoverUrl = allThumbImages[0] || coverUrl
+      const detailThumbUrls = allThumbImages.slice(1)
+
       Object.assign(locationForm, {
         id: res.data.id,
         name: res.data.name || '',
         type: res.data.type || '',
         address: res.data.address || '',
         price: res.data.price || 0,
-        status: res.data.status !== false,
+        status: res.data.status === 1 || res.data.status === true,
         locationDescription: res.data.locationDescription || '',
         locationPrincipalName: res.data.locationPrincipalName || '',
         locationPrincipalPhone: res.data.locationPrincipalPhone || '',
@@ -595,19 +888,27 @@ const handleEdit = async (row) => {
         govPrincipalPhone: res.data.govPrincipalPhone || '',
         longitude: res.data.longitude || '',
         latitude: res.data.latitude || '',
-        cover: res.data.cover || '',
-        image: res.data.image || '',
-        thumbCover: res.data.thumbCover || '',
-        thumbImage: res.data.thumbImage || ''
+        cover: coverUrl,
+        image: detailUrls.join(','),
+        thumbCover: thumbCoverUrl,
+        thumbImage: '',
+        userId: res.data.userId || res.data.user_id
       })
+<<<<<<< HEAD
 
       // 设置封面图片文件列表
       coverFileList.value = []
       if (res.data.cover) {
+=======
+      
+      // 设置封面图片文件列表
+      if (coverUrl) {
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
         coverFileList.value = [{
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
+<<<<<<< HEAD
           url: res.data.thumbCover || res.data.cover
         }]
       }
@@ -626,6 +927,29 @@ const handleEdit = async (row) => {
         }))
       }
 
+=======
+          url: getImageUrl(thumbCoverUrl || coverUrl),
+          originUrl: coverUrl,
+          thumbUrl: thumbCoverUrl || coverUrl
+        }]
+      } else {
+        coverFileList.value = []
+      }
+
+      // 设置详情图片文件列表
+      imageFileList.value = detailUrls.map((url, index) => {
+        const thumbUrl = detailThumbUrls[index] || url
+        return {
+          id: `img-${index}`,
+          name: `image-${index}.jpg`,
+          status: 'finished',
+          url: getImageUrl(thumbUrl),
+          originUrl: url,
+          thumbUrl: thumbUrl
+        }
+      })
+      
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       dialogVisible.value = true
     }
   } catch (error) {
@@ -648,6 +972,12 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .location-management {
   animation: fadeIn 0.3s ease;
+}
+
+.pagination-container {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
 }
 
 .management-card {

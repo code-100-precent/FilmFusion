@@ -80,6 +80,9 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                 .thumbApprovalFile(createDTO.getThumbApprovalFile())
                 .build();
 
+        report.setCreatedAt(LocalDateTime.now());
+        report.setUpdatedAt(LocalDateTime.now());
+
         this.save(report);
         return toReportVO(report);
     }

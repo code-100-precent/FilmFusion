@@ -4,6 +4,8 @@ import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateBannerDTO;
 import cn.cxdproject.coder.model.dto.UpdateBannerDTO;
+import cn.cxdproject.coder.model.entity.Article;
+import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.BannerVO;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,6 +16,7 @@ import cn.cxdproject.coder.service.BannerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,6 +67,11 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         if (updateDTO.getImageUrl() != null) {
             banner.setImageUrl(updateDTO.getImageUrl());
         }
+        // 如果targetModule为空，设置为空字符串
+        if (updateDTO.getTargetModule() != null) {
+            String targetModule = updateDTO.getTargetModule().trim().isEmpty() ? "" : updateDTO.getTargetModule();
+            banner.setTargetModule(targetModule);
+        }
         if (updateDTO.getSort() != null) {
             banner.setSort(updateDTO.getSort());
         }
@@ -77,13 +85,22 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
 
     @Override
     public BannerVO createImage(CreateBannerDTO createDTO) {
+        // 如果targetModule为空，设置为空字符串
+        String targetModule = createDTO.getTargetModule();
+        if (targetModule == null || targetModule.trim().isEmpty()) {
+            targetModule = "";
+        }
+        
         Banner banner = Banner.builder()
                 .imageName(createDTO.getImageName())
                 .imageUrl(createDTO.getImageUrl())
-                .targetModule(createDTO.getTargetModule())
+                .targetModule(targetModule)
                 .sort(createDTO.getSort())
                 .status(true)
                 .build();
+
+        banner.setCreatedAt(LocalDateTime.now());
+        banner.setUpdatedAt(LocalDateTime.now());
 
         this.save(banner);
         return toBannerVO(banner);
@@ -95,8 +112,9 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         long size = page.getSize();
         long offset = (current - 1) * size;
 
-
+        // 获取当前页的数据和总记录数
         List<Banner> banners = bannerMapper.getPage(keyword, offset, size);
+        Long total = bannerMapper.getTotal(keyword);
 
         List<BannerVO> voList = banners.stream()
                 .map(this::toBannerVO)
@@ -105,7 +123,8 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         return new Page<BannerVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 
     @Override

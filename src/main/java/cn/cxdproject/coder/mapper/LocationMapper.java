@@ -34,4 +34,6 @@ public interface LocationMapper extends BaseMapper<Location> {
             @Param("id") Long id,
             @Param("dto") UpdateLocationDTO dto
     );
+
+    Long getTotal(@Param("keyword") String keyword);
 }

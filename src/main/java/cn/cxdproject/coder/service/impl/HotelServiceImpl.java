@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,6 +79,9 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .latitude(createDTO.getLatitude())
                 .longitude(createDTO.getLongitude())
                 .build();
+
+        hotel.setCreatedAt(LocalDateTime.now());
+        hotel.setUpdatedAt(LocalDateTime.now());
 
         this.save(hotel);
         return toHotelVO(hotel);
@@ -246,7 +250,9 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         long size = page.getSize();
         long offset = (current - 1) * size;
 
+        // 获取当前页的数据和总记录数
         List<Hotel> hotels = hotelMapper.getAdminPage(keyword, offset, size);
+        Long total = hotelMapper.getTotal(keyword);
 
         List<HotelVO> voList = hotels.stream()
                 .map(this::toHotelVO)
@@ -255,6 +261,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         return new Page<HotelVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 }

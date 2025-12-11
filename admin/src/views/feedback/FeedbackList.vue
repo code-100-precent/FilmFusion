@@ -7,10 +7,22 @@
             <n-input v-model:value="searchForm.keyword" placeholder="请输入反馈内容关键词" clearable @keyup.enter="handleSearch" />
           </n-form-item>
           <n-form-item label="状态">
-            <n-select v-model:value="searchForm.status" :options="statusOptions" placeholder="请选择状态" clearable />
+            <n-select 
+              v-model:value="searchForm.status" 
+              :options="statusOptions" 
+              placeholder="请选择状态" 
+              clearable 
+              style="min-width: 120px;"
+            />
           </n-form-item>
           <n-form-item label="类型">
-            <n-select v-model:value="searchForm.type" :options="typeOptions" placeholder="请选择类型" clearable />
+            <n-select 
+              v-model:value="searchForm.type" 
+              :options="typeOptions" 
+              placeholder="请选择类型" 
+              clearable 
+              style="min-width: 120px;"
+            />
           </n-form-item>
           <n-form-item>
             <n-button type="primary" @click="handleSearch">
@@ -82,9 +94,9 @@
                   @click="handleUpdateStatus(feedback)" 
                   block 
                   style="margin-bottom: 8px"
-                  :type="feedback.status === 'RESOLVED' ? 'warning' : 'success'"
+                  :type="feedback.status === '已解决' ? 'warning' : 'success'"
                 >
-                  {{ feedback.status === 'RESOLVED' ? '重新处理' : '标记为已解决' }}
+                  {{ feedback.status === '已解决' ? '重新处理' : '标记为已解决' }}
                 </n-button>
                 <n-popconfirm @positive-click="handleDelete(feedback.id)">
                   <template #trigger>
@@ -201,22 +213,22 @@ const pagination = reactive({
 })
 
 const statusOptions = [
-  { label: '待处理', value: 'PENDING' },
-  { label: '处理中', value: 'PROCESSING' },
-  { label: '已解决', value: 'RESOLVED' }
+  { label: '未处理', value: '未处理' },
+  { label: '处理中', value: '处理中' },
+  { label: '已解决', value: '已解决' }
 ]
 
 const statusOptionsForUpdate = [
-  { label: '待处理', value: 'PENDING' },
-  { label: '处理中', value: 'PROCESSING' },
-  { label: '已解决', value: 'RESOLVED' }
+  { label: '未处理', value: '未处理' },
+  { label: '处理中', value: '处理中' },
+  { label: '已解决', value: '已解决' }
 ]
 
 const typeOptions = [
-  { label: '建议', value: 'SUGGESTION' },
-  { label: '投诉', value: 'COMPLAINT' },
-  { label: '咨询', value: 'INQUIRY' },
-  { label: '其他', value: 'OTHER' }
+  { label: '建议', value: '建议' },
+  { label: '投诉', value: '投诉' },
+  { label: '咨询', value: '咨询' },
+  { label: '其他', value: '其他' }
 ]
 
 const statusFormRules = {
@@ -231,7 +243,7 @@ const columns = [
   {
     title: '反馈类型',
     key: 'type',
-    width: 120,
+    width: 100,
     render: (row) => {
       return h(NTag, { 
         type: getTypeTagType(row.type), 
@@ -283,10 +295,10 @@ const columns = [
       return h('div', { style: 'display: flex; gap: 8px; flex-wrap: wrap;' }, [
         h(NButton, { 
           size: 'small', 
-          type: row.status === 'RESOLVED' ? 'warning' : 'success',
+          type: row.status === '已解决' ? 'warning' : 'success',
           onClick: () => handleUpdateStatus(row) 
         }, { 
-          default: () => row.status === 'RESOLVED' ? '重新处理' : '标记解决' 
+          default: () => row.status === '已解决' ? '重新处理' : '标记解决' 
         }),
         h(
           NPopconfirm,
@@ -319,39 +331,30 @@ const formatDate = (date) => {
 }
 
 const getTypeLabel = (type) => {
-  const typeMap = {
-    'SUGGESTION': '建议',
-    'COMPLAINT': '投诉',
-    'INQUIRY': '咨询',
-    'OTHER': '其他'
-  }
-  return typeMap[type] || type
+  // 类型值已经是中文，直接返回
+  return type || '未知'
 }
 
 const getTypeTagType = (type) => {
   const typeMap = {
-    'SUGGESTION': 'info',
-    'COMPLAINT': 'error',
-    'INQUIRY': 'warning',
-    'OTHER': 'default'
+    '建议': 'info',
+    '投诉': 'error',
+    '咨询': 'warning',
+    '其他': 'default'
   }
   return typeMap[type] || 'default'
 }
 
 const getStatusLabel = (status) => {
-  const statusMap = {
-    'PENDING': '待处理',
-    'PROCESSING': '处理中',
-    'RESOLVED': '已解决'
-  }
-  return statusMap[status] || status
+  // 状态值已经是中文，直接返回
+  return status || '未知'
 }
 
 const getStatusTagType = (status) => {
   const statusMap = {
-    'PENDING': 'warning',
-    'PROCESSING': 'info',
-    'RESOLVED': 'success'
+    '未处理': 'warning',
+    '处理中': 'info',
+    '已解决': 'success'
   }
   return statusMap[status] || 'default'
 }
@@ -359,11 +362,22 @@ const getStatusTagType = (status) => {
 const loadData = async () => {
   try {
     loading.value = true
+<<<<<<< HEAD
     const res = await getFeedbackPage(pagination.page, pagination.pageSize, searchForm.keyword)
     console.log('分页响应数据:', res) // 添加调试日志
     if (res.code === 200) {
       feedbackList.value = res.data || []
       // 确保正确设置总数据量和总页数
+=======
+    const res = await getFeedbackPage(pagination.page, pagination.pageSize, searchForm.keyword, searchForm.status)
+    if (res.code === 200) {
+      let list = res.data || []
+      // 如果选择了类型，在前端过滤
+      if (searchForm.type) {
+        list = list.filter(item => item.type === searchForm.type)
+      }
+      feedbackList.value = list
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       pagination.itemCount = res.pagination?.totalItems || 0
       pagination.pageCount = res.pagination?.totalPages || 1
       console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
@@ -403,7 +417,8 @@ const handlePageSizeChange = (pageSize) => {
 
 const handleUpdateStatus = (feedback) => {
   currentFeedback.value = feedback
-  statusForm.status = feedback.status === 'RESOLVED' ? 'PROCESSING' : 'RESOLVED'
+  // 如果当前是已解决，则切换到处理中；否则切换到已解决
+  statusForm.status = feedback.status === '已解决' ? '处理中' : '已解决'
   statusDialogVisible.value = true
 }
 

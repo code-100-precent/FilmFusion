@@ -3,6 +3,21 @@
     <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y v-if="!loading && shoot">
+      <!-- 服务封面图片 -->
+      <view class="cover-section">
+        <image 
+          v-if="shoot.image || shoot.thumbImage"
+          :src="shoot.image || shoot.thumbImage" 
+          class="cover-image" 
+          mode="aspectFill" 
+          @click="previewImage"
+        ></image>
+        <view v-else class="cover-placeholder">
+          <uni-icons type="image" size="60" color="#d1d5db"></uni-icons>
+          <text class="placeholder-text">暂无封面图片</text>
+        </view>
+      </view>
+
       <!-- 服务基本信息 -->
       <view class="info-card">
         <view class="card-header">
@@ -105,6 +120,21 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    previewImage() {
+      if (!this.shoot || (!this.shoot.image && !this.shoot.thumbImage)) {
+        uni.showToast({
+          title: '暂无图片可预览',
+          icon: 'none'
+        })
+        return
+      }
+      
+      const imageUrl = this.shoot.image || this.shoot.thumbImage
+      uni.previewImage({
+        urls: [imageUrl],
+        current: imageUrl
+      })
     }
   }
 }
@@ -120,7 +150,7 @@ export default {
 
 .content {
   width: 100%;
-  padding: 32rpx;
+  padding: 0 32rpx 32rpx;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   
@@ -134,6 +164,41 @@ export default {
   -ms-overflow-style: none;
 }
 
+.cover-section {
+  width: 100%;
+  margin: 32rpx 0;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.cover-image {
+  width: 100%;
+  height: 400rpx;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.cover-image:active {
+  transform: scale(0.98);
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 400rpx;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.placeholder-text {
+  font-size: 28rpx;
+  color: #9ca3af;
+}
+
 .info-card {
   width: 100%;
   background: #fff;
@@ -141,6 +206,10 @@ export default {
   padding: 32rpx;
   margin-bottom: 24rpx;
   box-sizing: border-box;
+  
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
 .card-header {

@@ -25,23 +25,23 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-            `id`,
-            `name`,
-            `description`,
-            `theme`,
-            `features`,
-            `transport`,
-            `hotel`,
-            `food`,
-            `created_at`,
-            `updated_at`,
-            `deleted`,
-            `image`,
-            'thumb_image',
-            'longitude',
-            'latitude',
-            'locationId',
-            'dramaId'
+        `id`,
+        `name`,
+        `description`,
+        `theme`,
+        `features`,
+        `transport`,
+        `hotel`,
+        `food`,
+        `created_at`,
+        `updated_at`,
+        `deleted`,
+        `image`,
+        `thumb_image`,
+        `longitude`,
+        `latitude`,
+        `location_id`,
+        `drama_id`
     </sql>
 
     <select id="selectIds" resultType="long">
@@ -143,9 +143,21 @@
             <if test="dto.dramaId != null and dto.dramaId != ''">
                 drama_id = #{dto.dramaId},
             </if>
+            <if test="dto.deleted != null">
+                deleted = #{dto.deleted},
+            </if>
         </set>
         WHERE id = #{id}
         AND deleted = false
     </update>
+
+    <select id="getTotal" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM fi_tours
+        WHERE deleted = 0
+        AND (name LIKE CONCAT('%', #{keyword}, '%')
+           OR description LIKE CONCAT('%', #{keyword}, '%')
+           OR theme LIKE CONCAT('%', #{keyword}, '%'))
+    </select>
 
 </mapper>

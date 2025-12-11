@@ -26,4 +26,6 @@ public interface HotelMapper extends BaseMapper<Hotel> {
     int updateHotel(@Param("id") Long id,
                     @Param("dto") UpdateHotelDTO dto
     );
+
+    Long getTotal(@Param("keyword") String keyword);
 }

@@ -213,6 +213,7 @@ import {
   NPagination
 } from 'naive-ui'
 import dayjs from 'dayjs'
+import request from '@/utils/request'
 
 const message = useMessage()
 
@@ -243,8 +244,7 @@ const policyForm = reactive({
   issueTime: null,
   content: '',
   image: '',
-  thumbImage: '',
-  status: 1
+  thumbImage: ''
 })
 
 const imageFileList = ref([])
@@ -337,28 +337,23 @@ const getPolicyPage = (current = 1, size = 10, keyword = '') => {
       })
 }
 
-const getPolicyById = (id) => {
-  const token = getToken()
-  return fetch(`/api/policy/${id}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+const getPolicyById = async (id) => {
+  try {
+    // 使用统一的request工具，它会自动处理token
+    const res = await request({
+      url: `/policy/${id}`,
+      method: 'get'
+    })
+    return res
+  } catch (error) {
+    console.error('获取政策详情失败:', error)
+    // 如果请求失败，返回错误格式
+    return {
+      code: error.response?.status || 500,
+      message: error.message || '获取政策详情失败',
+      data: null
     }
-  })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .catch(error => {
-        console.error('API请求错误:', error)
-        return {
-          code: 500,
-          message: error.message || '网络请求失败'
-        }
-      })
+  }
 }
 
 const addPolicy = (data) => {
@@ -498,12 +493,23 @@ const columns = computed(() => [
     key: 'status',
     width: 100,
     render: (row) => {
-      const isActive = row.status === 1
+      // Policy表没有status字段，所有政策默认都是已发布状态
+      // 或者可以根据其他字段判断，比如deleted字段
+      const isDeleted = row.deleted === 1 || row.deleted === true
+      if (isDeleted) {
+        return h(NTag, {
+          type: 'error',
+          size: 'small'
+        }, {
+          default: () => '已删除'
+        })
+      }
+      // 默认显示为已发布
       return h(NTag, {
-        type: isActive ? 'success' : 'default',
+        type: 'success',
         size: 'small'
       }, {
-        default: () => isActive ? '发布' : '草稿'
+        default: () => '发布'
       })
     }
   },
@@ -607,8 +613,7 @@ const handleAdd = () => {
     issueTime: null,
     content: '',
     image: '',
-    thumbImage: '',
-    status: 1
+    thumbImage: ''
   })
   imageFileList.value = []
   dialogVisible.value = true
@@ -627,8 +632,7 @@ const handleEdit = async (row) => {
         issueTime: res.data.issueTime || null,
         content: res.data.content || '',
         image: res.data.image || '',
-        thumbImage: res.data.thumbImage || '',
-        status: res.data.status || 1
+        thumbImage: res.data.thumbImage || ''
       })
 
       // 设置封面图片文件列表

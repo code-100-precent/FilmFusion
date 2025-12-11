@@ -192,11 +192,6 @@ const menuOptions = [
     icon: 'mdi:map-outline'
   },
   {
-    label: '旅游线路管理',
-    key: '/tourroute',
-    icon: 'mdi:routes'
-  },
-  {
     label: '政策管理',
     key: '/policy',
     icon: 'mdi:file-document-multiple-outline'

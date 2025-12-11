@@ -137,8 +137,14 @@
         <n-form-item label="标题" path="title">
           <n-input v-model:value="bannerForm.title" placeholder="请输入Banner标题" />
         </n-form-item>
-        <n-form-item label="链接" path="link">
-          <n-input v-model:value="bannerForm.link" placeholder="请输入跳转链接" />
+        <n-form-item label="跳转模块" path="link">
+          <n-select 
+            v-model:value="bannerForm.link" 
+            :options="moduleOptions" 
+            placeholder="请选择跳转模块" 
+            clearable
+            style="width: 100%;"
+          />
         </n-form-item>
         <n-form-item label="图片" path="imageUrl">
           <n-upload
@@ -166,7 +172,7 @@
           <n-input-number v-model:value="bannerForm.sortOrder" placeholder="请输入排序值" :min="0" style="width: 100%;" />
         </n-form-item>
         <n-form-item label="状态" path="status">
-          <n-switch v-model:value="statusSwitch" :checked-value="1" :unchecked-value="0">
+          <n-switch v-model:value="statusSwitch">
             <template #checked>启用</template>
             <template #unchecked>禁用</template>
           </n-switch>
@@ -199,6 +205,7 @@ import {
   NTag,
   NSwitch,
   NUpload,
+  NSelect,
   useMessage,
   useDialog
 } from 'naive-ui'
@@ -300,6 +307,19 @@ const pagination = reactive({
   prefix: ({ itemCount }) => `共 ${itemCount} 条`
 })
 
+// 跳转模块选项
+const moduleOptions = [
+  { label: '首页', value: '首页' },
+  { label: '文章列表', value: '文章列表' },
+  { label: '电视剧列表', value: '电视剧列表' },
+  { label: '场地列表', value: '场地列表' },
+  { label: '服务列表', value: '服务列表' },
+  { label: '住宿列表', value: '住宿列表' },
+  { label: '旅游线路', value: '旅游线路' },
+  { label: '政策列表', value: '政策列表' },
+  { label: '反馈', value: '反馈' }
+]
+
 const formRules = {
   title: [
     { required: true, message: '请输入Banner标题', trigger: 'blur' },
@@ -377,8 +397,13 @@ const columns = [
         h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
         h(
           NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
+          { 
+            onPositiveClick: () => handleDelete(row.id),
+            positiveText: '确定',
+            negativeText: '取消'
+          },
           {
+            default: () => '确定要删除这个Banner吗？',
             trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
           }
         )
@@ -410,6 +435,7 @@ const loadData = async () => {
 
     if (res.code === 200) {
       bannerList.value = res.data || []
+<<<<<<< HEAD
       // 设置总数据量
       pagination.itemCount = res.pagination?.totalItems || 0
       // 自动计算总页数
@@ -417,6 +443,9 @@ const loadData = async () => {
       console.log('设置总数据量:', pagination.itemCount)
       console.log('自动计算总页数:', pagination.pageCount)
       console.log('当前 pagination 对象:', pagination)
+=======
+      pagination.itemCount = res.pagination?.totalItems || res.total || 0
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   } catch (error) {
     console.error('加载Banner列表失败:', error)
