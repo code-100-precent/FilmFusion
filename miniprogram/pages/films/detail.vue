@@ -5,9 +5,9 @@
     <view v-if="film" class="content">
       <!-- Poster & Header -->
       <view class="header-section">
-        <image :src="film.poster" class="poster-bg" mode="aspectFill"></image>
+        <image :src="posterUrl" class="poster-bg" mode="aspectFill"></image>
         <view class="header-content">
-          <image :src="film.poster" class="poster-img" mode="aspectFill"></image>
+          <image :src="posterUrl" class="poster-img" mode="aspectFill"></image>
           <view class="header-info">
             <text class="film-title">{{ film.name }}</text>
             <text class="film-type">{{ film.type }} / {{ film.genre }}</text>
@@ -55,6 +55,8 @@
 <script>
 import NavBar from '../../components/NavBar/NavBar.vue'
 import { getDramaById } from '../../services/backend-api'
+// 导入文件URL处理函数
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
@@ -64,6 +66,12 @@ export default {
     return {
       film: null,
       loading: true
+    }
+  },
+  computed: {
+    // 处理海报URL
+    posterUrl() {
+      return this.film ? getFileUrl(this.film.poster) : ''
     }
   },
   onLoad(options) {

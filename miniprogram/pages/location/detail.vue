@@ -3,6 +3,21 @@
     <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y v-if="!loading && location">
+      <!-- 场地封面图片 -->
+      <view class="cover-section">
+        <image 
+          v-if="location.image || location.thumbImage"
+          :src="coverImageUrl" 
+          class="cover-image" 
+          mode="aspectFill" 
+          @click="previewImage"
+        ></image>
+        <view v-else class="cover-placeholder">
+          <uni-icons type="image" size="60" color="#d1d5db"></uni-icons>
+          <text class="placeholder-text">暂无封面图片</text>
+        </view>
+      </view>
+
       <!-- 场地基本信息 -->
       <view class="info-card">
         <view class="card-header">
@@ -26,12 +41,12 @@
         <view class="info-item">
           <uni-icons type="person" size="18" color="#6b7280"></uni-icons>
           <text class="info-label">联系人：</text>
-          <text class="info-value">{{ location.contactName }}</text>
+          <text class="info-value">{{ location.locationPrincipalName }}</text>
         </view>
         <view class="info-item">
           <uni-icons type="phone" size="18" color="#6b7280"></uni-icons>
           <text class="info-label">联系电话：</text>
-          <text class="info-value">{{ location.contactPhone }}</text>
+          <text class="info-value">{{ location.locationPrincipalPhone }}</text>
         </view>
         <view class="info-item">
           <uni-icons type="location" size="18" color="#6b7280"></uni-icons>
@@ -71,11 +86,7 @@
         </view>
       </view>
 
-      <!-- 图片展示 -->
-      <view class="info-card" v-if="location.cover">
-        <view class="card-title">场地图片</view>
-        <image :src="location.cover" class="location-image" mode="aspectFill" @click="previewImage"></image>
-      </view>
+
     </scroll-view>
 
     <view v-if="loading" class="loading-wrapper">
@@ -93,6 +104,8 @@ import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 import { getLocationById } from '../../services/backend-api'
+// 导入文件URL处理函数
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
@@ -104,6 +117,13 @@ export default {
     return {
       location: null,
       loading: false
+    }
+  },
+  computed: {
+    // 处理封面图片URL
+    coverImageUrl() {
+      if (!this.location) return ''
+      return getFileUrl(this.location.image || this.location.thumbImage)
     }
   },
   onLoad(options) {
@@ -166,12 +186,19 @@ export default {
       });
     },
     previewImage() {
-      if (!this.location || !this.location.cover) return
+      if (!this.location || (!this.location.image && !this.location.thumbImage)) {
+        uni.showToast({
+          title: '暂无图片可预览',
+          icon: 'none'
+        })
+        return
+      }
       
+      // 使用处理过的URL进行预览
       uni.previewImage({
-        urls: [this.location.cover],
-        current: this.location.cover
-      })
+          urls: [this.coverImageUrl],
+          current: this.coverImageUrl
+        })
     }
   }
 }
@@ -187,7 +214,7 @@ export default {
 
 .content {
   width: 100%;
-  padding: 32rpx;
+  padding: 0 32rpx 32rpx;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   
@@ -201,6 +228,41 @@ export default {
   -ms-overflow-style: none;
 }
 
+.cover-section {
+  width: 100%;
+  margin: 32rpx 0;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.cover-image {
+  width: 100%;
+  height: 400rpx;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.cover-image:active {
+  transform: scale(0.98);
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 400rpx;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.placeholder-text {
+  font-size: 28rpx;
+  color: #9ca3af;
+}
+
 .info-card {
   width: 100%;
   background: #fff;
@@ -208,6 +270,10 @@ export default {
   padding: 32rpx;
   margin-bottom: 24rpx;
   box-sizing: border-box;
+  
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
 .card-header {
@@ -325,12 +391,7 @@ export default {
   padding: 100rpx 32rpx;
 }
 
-.location-image {
-  width: 100%;
-  height: 400rpx;
-  border-radius: 12rpx;
-  background: #f3f4f6;
-}
+
 
 .highlight {
   color: #f59e0b;

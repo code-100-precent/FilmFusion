@@ -121,6 +121,40 @@
                 <text class="info-value">{{ formatDateTime(selectedReport.updatedAt) }}</text>
               </view>
             </view>
+            
+            <view class="info-group" v-if="hasFiles(selectedReport)">
+              <text class="group-title">相关文件</text>
+              <view class="file-item" v-if="selectedReport.shootPermit">
+                <view class="file-info">
+                  <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
+                  <text class="file-name">影视拍摄许可证</text>
+                </view>
+                <view class="file-actions">
+                  <text class="action-btn preview-btn" @click="previewFile(selectedReport.shootPermit, '影视拍摄许可证')">预览</text>
+                  <text class="action-btn download-btn" @click="downloadFile(selectedReport.shootPermit, '影视拍摄许可证')">下载</text>
+                </view>
+              </view>
+              <view class="file-item" v-if="selectedReport.approvalFile">
+                <view class="file-info">
+                  <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
+                  <text class="file-name">立项审批文件</text>
+                </view>
+                <view class="file-actions">
+                  <text class="action-btn preview-btn" @click="previewFile(selectedReport.approvalFile, '立项审批文件')">预览</text>
+                  <text class="action-btn download-btn" @click="downloadFile(selectedReport.approvalFile, '立项审批文件')">下载</text>
+                </view>
+              </view>
+              <view class="file-item" v-if="selectedReport.shootApply">
+                <view class="file-info">
+                  <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
+                  <text class="file-name">协拍服务申请表</text>
+                </view>
+                <view class="file-actions">
+                  <text class="action-btn preview-btn" @click="previewFile(selectedReport.shootApply, '协拍服务申请表')">预览</text>
+                  <text class="action-btn download-btn" @click="downloadFile(selectedReport.shootApply, '协拍服务申请表')">下载</text>
+                </view>
+              </view>
+            </view>
           </view>
         </scroll-view>
         <view class="modal-footer">
@@ -137,6 +171,8 @@ import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 // 使用真实后端API
 import { getMyReportPage, deleteReport as apiDeleteReport } from '../../services/backend-api'
+// 导入文件URL处理函数
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
@@ -368,6 +404,195 @@ export default {
       uni.navigateTo({
         url: '/pages/filing/filing'
       })
+    },
+    // 检查是否有文件
+    hasFiles(report) {
+      if (!report) return false
+      return !!(report.shootPermit || report.approvalFile || report.shootApply)
+    },
+    // 预览文件
+    previewFile(fileUrl, fileName) {
+      console.log('预览文件被点击:', fileUrl, fileName)
+      
+      if (!fileUrl) {
+        uni.showToast({
+          title: '文件不存在',
+          icon: 'none'
+        })
+        return
+      }
+      
+      // 处理JSON格式的文件URL
+      let actualFileUrl = fileUrl
+      try {
+        // 尝试解析JSON格式的URL
+        if (fileUrl.includes('originUrl')) {
+          // 处理可能被反引号包裹的JSON字符串
+          let jsonString = fileUrl
+          
+          // 去除可能的前缀和后缀
+          if (fileUrl.startsWith('`')) {
+            jsonString = fileUrl.replace(/^`+/, '').replace(/`+$/, '') // 去掉首尾的所有反引号
+          }
+          
+          // 处理可能包含的URL前缀
+          if (jsonString.includes('http://') || jsonString.includes('https://')) {
+            // 提取JSON部分
+            const jsonMatch = jsonString.match(/\{.*"originUrl".*\}/)
+            if (jsonMatch) {
+              jsonString = jsonMatch[0]
+            }
+          }
+          
+          console.log('处理前的JSON字符串:', jsonString)
+          
+          const urlObj = JSON.parse(jsonString)
+          actualFileUrl = urlObj.originUrl || urlObj.thumbUrl || fileUrl
+          console.log('解析后的实际文件URL:', actualFileUrl)
+        }
+      } catch (e) {
+        console.log('JSON解析失败，使用原始URL，错误信息:', e)
+        // 如果解析失败，尝试从字符串中提取originUrl
+        try {
+          const originUrlMatch = fileUrl.match(/"originUrl"\s*:\s*"([^"]+)"/)
+          if (originUrlMatch && originUrlMatch[1]) {
+            actualFileUrl = originUrlMatch[1]
+            console.log('通过正则提取的originUrl:', actualFileUrl)
+          }
+        } catch (regexError) {
+          console.log('正则提取也失败，使用原始URL:', regexError)
+        }
+      }
+      
+      // 处理文件URL
+      const processedUrl = getFileUrl(actualFileUrl)
+      console.log('处理后的URL:', processedUrl)
+      
+      // 获取文件扩展名
+      const fileExt = actualFileUrl.split('.').pop().toLowerCase()
+      console.log('文件扩展名:', fileExt)
+      
+      // 判断是否为图片文件
+      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+      
+      if (imageExts.includes(fileExt)) {
+        console.log('是图片文件，开始预览')
+        // 图片文件直接预览
+        uni.previewImage({
+          urls: [processedUrl],
+          current: processedUrl,
+          success: () => {
+            console.log('图片预览成功')
+          },
+          fail: (err) => {
+            console.error('图片预览失败:', err)
+            uni.showToast({
+              title: '预览失败',
+              icon: 'none'
+            })
+          }
+        })
+      } else {
+        console.log('非图片文件，直接下载')
+        // 非图片文件直接下载，传递原始URL以便downloadFile方法处理
+        this.downloadFile(fileUrl, fileName)
+      }
+    },
+    // 下载文件
+    downloadFile(fileUrl, fileName) {
+      if (!fileUrl) {
+        uni.showToast({
+          title: '文件不存在',
+          icon: 'none'
+        })
+        return
+      }
+      
+      // 处理JSON格式的文件URL
+      let actualFileUrl = fileUrl
+      try {
+        // 尝试解析JSON格式的URL
+        if (fileUrl.includes('originUrl')) {
+          // 处理可能被反引号包裹的JSON字符串
+          let jsonString = fileUrl
+          
+          // 去除可能的前缀和后缀
+          if (fileUrl.startsWith('`')) {
+            jsonString = fileUrl.replace(/^`+/, '').replace(/`+$/, '') // 去掉首尾的所有反引号
+          }
+          
+          // 处理可能包含的URL前缀
+          if (jsonString.includes('http://') || jsonString.includes('https://')) {
+            // 提取JSON部分
+            const jsonMatch = jsonString.match(/\{.*"originUrl".*\}/)
+            if (jsonMatch) {
+              jsonString = jsonMatch[0]
+            }
+          }
+          
+          console.log('下载文件 - 处理前的JSON字符串:', jsonString)
+          
+          const urlObj = JSON.parse(jsonString)
+          actualFileUrl = urlObj.originUrl || urlObj.thumbUrl || fileUrl
+          console.log('下载文件 - 解析后的实际文件URL:', actualFileUrl)
+        }
+      } catch (e) {
+        console.log('下载文件 - JSON解析失败，使用原始URL，错误信息:', e)
+        // 如果解析失败，尝试从字符串中提取originUrl
+        try {
+          const originUrlMatch = fileUrl.match(/"originUrl"\s*:\s*"([^"]+)"/)
+          if (originUrlMatch && originUrlMatch[1]) {
+            actualFileUrl = originUrlMatch[1]
+            console.log('下载文件 - 通过正则提取的originUrl:', actualFileUrl)
+          }
+        } catch (regexError) {
+          console.log('下载文件 - 正则提取也失败，使用原始URL:', regexError)
+        }
+      }
+      
+      // 处理文件URL
+      const processedUrl = getFileUrl(actualFileUrl)
+      console.log('下载文件 - 最终处理后的URL:', processedUrl)
+      
+      // 显示下载提示
+      uni.showLoading({
+        title: '下载中...'
+      })
+      
+      uni.downloadFile({
+        url: processedUrl,
+        success: (res) => {
+          uni.hideLoading()
+          if (res.statusCode === 200) {
+            // 保存文件到本地
+            uni.saveFile({
+              tempFilePath: res.tempFilePath,
+              success: (saveRes) => {
+                uni.showToast({
+                  title: '下载成功',
+                  icon: 'success'
+                })
+                console.log('文件保存路径:', saveRes.savedFilePath)
+              },
+              fail: (err) => {
+                console.error('文件保存失败:', err)
+                uni.showToast({
+                  title: '保存失败',
+                  icon: 'none'
+                })
+              }
+            })
+          }
+        },
+        fail: (err) => {
+          uni.hideLoading()
+          console.error('文件下载失败:', err)
+          uni.showToast({
+            title: '下载失败',
+            icon: 'none'
+          })
+        }
+      })
     }
   }
 }
@@ -538,7 +763,59 @@ export default {
   font-weight: 600;
   color: #374151;
   margin-bottom: 16rpx;
-  display: block;
+  padding-bottom: 8rpx;
+  border-bottom: 2rpx solid #e5e7eb;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  margin-bottom: 16rpx;
+  background-color: #f9fafb;
+  border-radius: 12rpx;
+  border: 2rpx solid #e5e7eb;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.file-name {
+  font-size: 28rpx;
+  color: #374151;
+  margin-left: 12rpx;
+}
+
+.file-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.action-btn {
+  font-size: 24rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  cursor: pointer;
+  text-align: center;
+  min-width: 80rpx;
+}
+
+.preview-btn {
+  color: #6366f1;
+  background-color: #eef2ff;
+  border: 2rpx solid #c7d2fe;
+  font-weight: 500;
+}
+
+.download-btn {
+  color: #10b981;
+  background-color: #ecfdf5;
+  border: 2rpx solid #a7f3d0;
+  font-weight: 500;
 }
 
 .info-item {

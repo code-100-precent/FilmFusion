@@ -48,7 +48,7 @@
             </view>
             <view class="article-info">
               <view class="article-header">
-                <text class="article-title">{{ article.title }}</text>
+                <text class="article-title">{{ getTitlePreview(article.title) }}</text>
               </view>
               <view class="article-meta">
                 <text class="article-unit">{{ article.issueUnit }}</text>
@@ -192,7 +192,11 @@ export default {
     },
     getContentPreview(content) {
       if (!content) return ''
-      return content.length > 100 ? content.substring(0, 100) + '...' : content
+      return content.length > 60 ? content.substring(0, 60) + '...' : content
+    },
+    getTitlePreview(title) {
+      if (!title) return ''
+      return title.length > 40 ? title.substring(0, 40) + '...' : title
     }
   }
 }
@@ -287,14 +291,14 @@ export default {
 .article-card {
   background: #fff;
   border-radius: 20rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s;
   width: 100%;
   box-sizing: border-box;
   display: flex;
-  gap: 24rpx;
+  gap: 20rpx;
 }
 
 .article-card:active {
@@ -303,8 +307,8 @@ export default {
 }
 
 .article-cover-wrapper {
-  width: 200rpx;
-  height: 200rpx;
+  width: 180rpx;
+  height: 180rpx;
   border-radius: 16rpx;
   overflow: hidden;
   flex-shrink: 0;
@@ -325,31 +329,39 @@ export default {
 }
 
 .article-header {
-  margin-bottom: 16rpx;
+  margin-bottom: 12rpx;
 }
 
 .article-title {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 700;
   color: #1f2937;
-  line-height: 1.5;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .article-meta {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
   font-size: 24rpx;
   color: #9ca3af;
 }
 
 .article-content {
   display: block;
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #6b7280;
-  line-height: 1.8;
-  margin-bottom: 24rpx;
+  line-height: 1.6;
+  margin-bottom: 16rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .article-footer {

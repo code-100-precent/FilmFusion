@@ -13,7 +13,7 @@
             <image
               v-if="userInfo.avatar"
               class="avatar"
-              :src="userInfo.avatar"
+              :src="avatarUrl"
               mode="aspectFill"
             ></image>
             <view v-else class="avatar avatar--default">
@@ -125,6 +125,8 @@ import TabBar from '../../components/TabBar/TabBar.vue'
 // 使用真实后端API，使用别名避免与vuex action冲突
 import { getUserInfo, logout as apiLogout } from '../../services/backend-api'
 import { mapGetters, mapActions } from 'vuex'
+// 导入文件URL处理函数
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
@@ -144,6 +146,10 @@ export default {
     },
     roleClass() {
       return this.getRoleClass(this.userInfo.role)
+    },
+    // 处理头像URL
+    avatarUrl() {
+      return getFileUrl(this.userInfo.avatar)
     }
   },
   onLoad() {

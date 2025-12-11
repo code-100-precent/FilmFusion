@@ -3,7 +3,7 @@
  * 基于后端Controller实现的接口
  */
 
-import { http } from '../utils/http'
+import { http, httpWithFileUrl } from '../utils/http'
 import { baseURL } from '../utils/http'
 
 // ==================== 类型定义 ====================
@@ -34,25 +34,26 @@ interface ApiResponse<T> {
  * 获取影视作品列表（分页）
  */
 export const getDramaPage = (params: {
-    current?: number
+    cursor?: string
     size?: number
     keyword?: string
+    type?: string
 }) => {
-    return http<PageResponse<any>>({
+    return httpWithFileUrl<any>({
         url: '/drama/page',
         method: 'GET',
         data: params
-    })
+    }, ['poster', 'posterUrl', 'images', 'thumbs'])
 }
 
 /**
  * 获取影视作品详情
  */
 export const getDramaById = (id: number) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: `/drama/${id}`,
         method: 'GET'
-    })
+    }, ['poster', 'posterUrl', 'images', 'thumbs'])
 }
 
 // ==================== 2. 跟着影视游雅安 (Tour) ====================
@@ -67,11 +68,11 @@ export const getTourPage = async (params: {
 }) => {
     try {
         console.log('调用getTourPage API，URL: /tour/page, 参数:', params)
-        const result = await http<any>({
+        const result = await httpWithFileUrl<any>({
             url: '/tour/page',
             method: 'GET',
             data: params
-        })
+        }, ['cover', 'image', 'images', 'thumbImage'])
         console.log('getTourPage API调用成功，结果:', result)
         return result
     } catch (error) {
@@ -149,21 +150,26 @@ export const getLocationPage = (params: {
     keyword?: string
     category?: string
 }) => {
-    return http<PageResponse<any>>({
+    return httpWithFileUrl<any>({
         url: '/location/page',
         method: 'GET',
-        data: params
-    })
+        data: {
+            cursor: null, // 使用游标分页，第一页不传cursor
+            size: params.size || 5,
+            keyword: params.keyword,
+            category: params.category
+        }
+    }, ['image', 'thumbImage', 'images', 'thumbs'])
 }
 
 /**
  * 获取场地详情
  */
 export const getLocationById = (id: number) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: `/location/${id}`,
         method: 'GET'
-    })
+    }, ['image', 'thumbImage', 'images', 'thumbs'])
 }
 
 /**
@@ -198,10 +204,15 @@ export const getArticlePage = (params: {
     keyword?: string
     level?: string
 }) => {
-    return http<PageResponse<any>>({
+    return http<any>({
         url: '/article/page',
         method: 'GET',
-        data: params
+        data: {
+            cursor: null, // 使用游标分页，第一页不传cursor
+            size: params.size || 5,
+            keyword: params.keyword,
+            level: params.level
+        }
     })
 }
 
@@ -291,21 +302,21 @@ export const getMyReportPage = (params: {
     current?: number
     size?: number
 }) => {
-    return http<PageResponse<any>>({
+    return httpWithFileUrl<PageResponse<any>>({
         url: '/report/my',
         method: 'GET',
         data: params
-    })
+    }, ['shootPermit', 'approvalFile', 'shootApply'])
 }
 
 /**
  * 获取报备详情
  */
 export const getReportById = (id: number) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: `/report/${id}`,
         method: 'GET'
-    })
+    }, ['shootPermit', 'approvalFile', 'shootApply'])
 }
 
 /**
@@ -437,10 +448,10 @@ export const register = (data: {
  * 获取当前用户信息
  */
 export const getUserInfo = () => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: '/user/info',
         method: 'GET'
-    })
+    }, ['avatar', 'avatarUrl'])
 }
 
 /**
@@ -540,10 +551,14 @@ export const getBannerPage = (params: {
     size?: number
     keyword?: string
 }) => {
-    return http<PageResponse<any>>({
-        url: '/banner/page',
+    return http<any>({
+        url: '/banner/admin/page',
         method: 'GET',
-        data: params
+        data: {
+            current: params.current || 1,
+            size: params.size || 10,
+            keyword: params.keyword
+        }
     })
 }
 

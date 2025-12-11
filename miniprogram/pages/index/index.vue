@@ -1,130 +1,181 @@
 <template>
   <view class="index-page">
-    <!-- 渐变背景层 -->
-    <view class="gradient-bg"></view>
-    
-    <NavBar :show-back="false"></NavBar>
+    <!-- 顶部导航栏 -->
+    <view class="page-header">
+      <view class="nav-title">
+        <text class="nav-main">拍在雅安</text>
+        <text class="nav-sub">FILM IN YA'AN</text>
+      </view>
+    </view>
 
-    <scroll-view class="content" scroll-y @scrolltolower="onScrollToLower">
-      <!-- Banner轮播 -->
-      <view class="banner-section">
+    <scroll-view class="content" scroll-y @scrolltolower="onScrollToLower" enhanced :bounces="true">
+      <!-- 创意Banner区域 -->
+      <view class="creative-banner">
         <swiper
           class="banner-swiper"
           :indicator-dots="true"
           :autoplay="true"
-          :interval="4000"
-          :duration="500"
+          :interval="5000"
+          :duration="1000"
           :circular="true"
-          indicator-color="rgba(255,255,255,0.5)"
-          indicator-active-color="#fff"
+          indicator-color="rgba(255,255,255,0.3)"
+          indicator-active-color="#D4AF37"
+          @change="onBannerChange"
         >
           <swiper-item v-for="(item, index) in banners" :key="index">
-            <view class="banner-item" :style="{ background: item.bg }">
-              <text class="banner-title">{{ item.title }}</text>
-              <text class="banner-desc">{{ item.desc }}</text>
+            <view class="banner-item" @click="handleBannerClick(item)">
+              <image :src="item.imageUrl" class="banner-image" mode="cover"></image>
+              <view class="banner-overlay"></view>
+              <view class="banner-content">
+                <view class="banner-tag">{{ item.tag || '平台服务' }}</view>
+                <text class="banner-title">{{ item.title }}</text>
+                <text class="banner-desc">{{ item.desc }}</text>
+              </view>
             </view>
           </swiper-item>
         </swiper>
       </view>
 
-      <!-- 功能入口 -->
-      <view class="function-section">
-        <scroll-view class="function-scroll" scroll-x :show-scrollbar="false" :enable-flex="true">
-          <view class="function-grid">
-            <view
-              v-for="(item, index) in functions"
-              :key="index"
-              class="function-item"
-              @click="handleFunctionClick(item)"
-            >
-              <view class="function-icon" :style="{ background: item.bgColor }">
-                <uni-icons :type="item.icon" :color="item.color" size="30"></uni-icons>
-              </view>
-              <text class="function-text">{{ item.text }}</text>
+      <!-- 创意功能入口 -->
+      <view class="creative-functions">
+        <view class="section-header">
+          <text class="section-title">核心服务</text>
+        </view>
+        <view class="function-grid">
+          <view
+            v-for="(item, index) in functions"
+            :key="index"
+            class="function-card"
+            :style="{ '--card-index': index }"
+            @click="handleFunctionClick(item)"
+          >
+            <view class="function-icon" :style="{ background: item.bgColor, color: item.color }">
+              <uni-icons :type="item.icon" size="36"></uni-icons>
+            </view>
+            <view class="function-info">
+              <text class="function-title">{{ item.text }}</text>
               <text class="function-desc">{{ item.desc }}</text>
             </view>
+            <uni-icons type="arrowright" size="18" color="#999" class="function-arrow"></uni-icons>
           </view>
-        </scroll-view>
+        </view>
       </view>
 
-      <!-- 最新资讯 -->
-      <view class="news-section">
-        <view class="section-header">
-          <view class="section-title">最新资讯</view>
-          <text class="section-more" @click="goToNews">更多 ></text>
+      <!-- 影视资讯区域 -->
+      <view class="content-section news-section">
+        <view class="section-header small-header">
+          <text class="section-title">影视资讯</text>
+          <view class="section-more" @click="goToNews">
+            <text>查看全部</text>
+            <uni-icons type="arrowright" size="16" color="#D4AF37"></uni-icons>
+          </view>
         </view>
+
         <view v-if="loading" class="loading-wrapper">
           <Loading></Loading>
         </view>
         <view v-else-if="articles.length === 0" class="empty-wrapper">
           <Empty text="暂无资讯"></Empty>
         </view>
-        <view v-else class="article-list">
+        <view v-else class="news-cards">
           <view
-            v-for="article in articles"
+            v-for="article in articles.slice(0, 3)"
             :key="article.id"
-            class="article-item"
+            class="news-card"
             @click="goToArticleDetail(article.id)"
           >
-            <view class="article-cover">
-              <image :src="getArticleCover(article.cover)" class="cover-image" mode="aspectFill"></image>
+            <image :src="getArticleCover(article.cover)" class="news-card-image" mode="aspectFill"></image>
+            <view class="news-card-content">
+              <view class="news-card-header">
+                <text class="news-card-tag">{{ article.issueUnit || '官方发布' }}</text>
+                <text class="news-card-date">{{ formatDate(article.issueTime) }}</text>
+              </view>
+              <text class="news-card-title">{{ article.title }}</text>
             </view>
-            <view class="article-content">
-              <text class="article-title">{{ article.title }}</text>
-              <text class="article-meta">{{ article.issueUnit }} · {{ formatDate(article.issueTime) }}</text>
-            </view>
-            <uni-icons type="right" size="16" color="#9ca3af"></uni-icons>
           </view>
         </view>
       </view>
 
-      <!-- 推荐场地 -->
-      <view class="location-section">
-        <view class="section-header">
-          <view class="section-title">推荐场地</view>
-          <text class="section-more" @click="goToLocations">更多 ></text>
+      <!-- 热门取景地区域 -->
+      <view class="content-section location-section">
+        <view class="section-header small-header">
+          <text class="section-title">热门取景地</text>
+          <view class="section-more" @click="goToLocations">
+            <text>探索更多</text>
+            <uni-icons type="arrowright" size="16" color="#D4AF37"></uni-icons>
+          </view>
         </view>
+
         <view v-if="loading" class="loading-wrapper">
           <Loading></Loading>
         </view>
         <view v-else-if="locations.length === 0" class="empty-wrapper">
           <Empty text="暂无场地"></Empty>
         </view>
-        <scroll-view 
-          v-else 
-          class="location-scroll" 
-          scroll-x 
-          :show-scrollbar="false"
-          :enable-flex="true"
-        >
-          <view class="location-list">
-            <view
-              v-for="location in locations"
-              :key="location.id"
-              class="location-card"
-              @click="goToLocationDetail(location.id)"
-            >
-              <view v-if="location.cover" class="location-cover">
-                <image :src="location.cover" class="cover-image" mode="aspectFill"></image>
-              </view>
-              <view class="location-header">
-                <text class="location-name">{{ location.name }}</text>
-                <view class="location-badge">{{ location.type }}</view>
-              </view>
-              <text class="location-desc">{{ location.locationDescription }}</text>
-              <view class="location-footer">
-                <text class="location-price">¥{{ location.price }}/天</text>
-                <text class="location-address">{{ location.address }}</text>
-              </view>
+        <view v-else class="location-cards">
+          <view
+            v-for="location in locations.slice(0, 4)"
+            :key="location.id"
+            class="location-card"
+            @click="goToLocationDetail(location.id)"
+          >
+            <view class="location-card-image-box">
+              <image :src="location.cover" class="location-card-image" mode="cover"></image>
+              <view class="location-card-overlay"></view>
+              <view class="location-card-price" v-if="location.price">¥{{ location.price }}/天</view>
+            </view>
+            <view class="location-card-info">
+              <text class="location-card-name">{{ location.name }}</text>
+              <text class="location-card-type">{{ location.type }}</text>
             </view>
           </view>
-        </scroll-view>
+        </view>
+      </view>
+
+      <!-- 特色主题区域 -->
+      <view class="featured-section">
+        <view class="section-header">
+          <text class="section-title">雅安印象</text>
+        </view>
+        <view class="featured-grid">
+          <view class="featured-card nature" @click="goToNature">
+            <view class="featured-icon">
+              <uni-icons type="image-filled" size="40" color="#fff"></uni-icons>
+            </view>
+            <text class="featured-title">自然风光</text>
+            <text class="featured-desc">探索自然之美</text>
+          </view>
+          <view class="featured-card culture" @click="goToCulture">
+            <view class="featured-icon">
+              <uni-icons type="star-filled" size="40" color="#fff"></uni-icons>
+            </view>
+            <text class="featured-title">文化底蕴</text>
+            <text class="featured-desc">感受历史魅力</text>
+          </view>
+          <view class="featured-card modern" @click="goToModern">
+            <view class="featured-icon">
+              <uni-icons type="home-filled" size="40" color="#fff"></uni-icons>
+            </view>
+            <text class="featured-title">现代都市</text>
+            <text class="featured-desc">体验城市活力</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部区域 -->
+      <view class="footer-section">
+        <view class="footer-content">
+          <text class="footer-title">专业影视拍摄服务平台</text>
+          <text class="footer-subtitle">为您提供一站式影视拍摄解决方案</text>
+          <view class="footer-cta" @click="goToServices">
+            <text>联系我们</text>
+          </view>
+        </view>
       </view>
 
       <!-- 底部间距 -->
       <view class="bottom-spacer"></view>
     </scroll-view>
-  
 
     <!-- 底部导航栏 -->
     <TabBar :current="'index'"></TabBar>
@@ -136,9 +187,7 @@ import NavBar from '../../components/NavBar/NavBar.vue'
 import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
-// 使用真实后端API
 import { getArticlePage, getLocationPage, getBannerPage } from '../../services/backend-api'
-// 使用加载状态管理Mixin
 import { loadingMixin } from '../../utils/index'
 
 export default {
@@ -152,17 +201,29 @@ export default {
   data() {
     return {
       banners: [],
+      // targetModule值与页面路径的映射关系
+      modulePathMap: {
+        '文章列表': '/pages/news/news',
+        '电视剧列表': '/pages/films/films',
+        '场地列表': '/pages/scenes/scenes',
+        '服务列表': '/pages/services/services',
+        '住宿列表': '/pages/hotel/hotel',
+        '旅游线路': '/pages/tourroute/tourroute',
+        '政策列表': '/pages/policy/policy'
+      },
       functions: [
-        { icon: 'videocam', text: '光影雅安', desc: '影视作品展示', color: '#ef4444', bgColor: 'linear-gradient(135deg, #fecaca 0%, #fca5a5 100%)', path: '/pages/films/films' },
-        { icon: 'location', text: '拍摄场地', desc: '寻找完美取景地', color: '#f59e0b', bgColor: 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)', path: '/pages/scenes/scenes' },
-        { icon: 'calendar', text: '剧组报备', desc: '手续办理更便捷', color: '#8b5cf6', bgColor: 'linear-gradient(135deg, #f3e8ff 0%, #ddd6fe 100%)', path: '/pages/filing/filing' },
-        { icon: 'phone', text: '协拍服务', desc: '专业团队支持', color: '#ec4899', bgColor: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', path: '/pages/services/services' },
-        { icon: 'chatbubble', text: '影视资讯', desc: '掌握行业动态', color: '#06b6d4', bgColor: 'linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%)', path: '/pages/news/news' },
-        { icon: 'map', text: '跟着影视游', desc: '探寻影视足迹', color: '#10b981', bgColor: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', path: '/pages/tourroute/tourroute' },
-        { icon: 'info', text: '视听政策', desc: '了解扶持政策', color: '#3b82f6', bgColor: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', path: '/pages/policy/policy' }
+        { icon: 'videocam', text: '光影雅安', desc: '影视作品', color: '#D4AF37', bgColor: 'rgba(212, 175, 55, 0.15)', path: '/pages/films/films' },
+        { icon: 'location', text: '拍摄场地', desc: '完美取景', color: '#2E7D32', bgColor: 'rgba(46, 125, 50, 0.15)', path: '/pages/scenes/scenes' },
+        { icon: 'calendar', text: '剧组报备', desc: '便捷手续', color: '#1B3C35', bgColor: 'rgba(27, 60, 53, 0.15)', path: '/pages/filing/filing' },
+        { icon: 'phone', text: '协拍服务', desc: '专业支持', color: '#C62828', bgColor: 'rgba(198, 40, 40, 0.15)', path: '/pages/services/services' },
+        { icon: 'home', text: '住宿服务', desc: '舒适休息', color: '#7B1FA2', bgColor: 'rgba(123, 31, 162, 0.15)', path: '/pages/hotel/hotel' },
+        { icon: 'chatbubble', text: '影视资讯', desc: '行业动态', color: '#00838F', bgColor: 'rgba(0, 131, 143, 0.15)', path: '/pages/news/news' },
+        { icon: 'map', text: '影视游', desc: '探寻足迹', color: '#558B2F', bgColor: 'rgba(85, 139, 47, 0.15)', path: '/pages/tourroute/tourroute' },
+        { icon: 'info', text: '视听政策', desc: '扶持政策', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.15)', path: '/pages/policy/policy' }
       ],
       articles: [],
-      locations: []
+      locations: [],
+      currentBanner: 0
     }
   },
   onLoad() {
@@ -172,34 +233,76 @@ export default {
     async loadData() {
       try {
         await this.withLoading(async () => {
-          // 并行获取所有数据
           const [bannerRes, articleRes, locationRes] = await Promise.all([
-            getBannerPage({ current: 1, size: 10 }), // 获取最多10条轮播图数据
+            getBannerPage({ current: 1, size: 10 }),
             getArticlePage({ current: 1, size: 5 }),
             getLocationPage({ current: 1, size: 5 })
           ])
 
           // 处理轮播图数据
           if (bannerRes && bannerRes.data) {
-            // 将后端Banner数据转换为前端需要的格式
-            this.banners = bannerRes.data.map(banner => ({
-              title: banner.imageName || '',
-              desc: banner.targetModule || '',
-              bg: `url("${banner.imageUrl}") center/cover no-repeat`
+            this.banners = bannerRes.data.map((banner, index) => ({
+              title: banner.imageName || '雅安影视服务',
+              desc: '', // 不再显示任何描述文本
+              imageUrl: banner.imageUrl,
+              tag: index === 0 ? '平台服务' : index === 1 ? '取景胜地' : '专业支持',
+              targetModule: banner.targetModule, // 保存targetModule用于跳转
+              path: this.modulePathMap[banner.targetModule] || '/pages/services/services' // 根据targetModule获取对应路径
             }))
           }
 
-          // 处理文章数据 - 游标分页格式
-          if (articleRes && articleRes.records) {
-            this.articles = Array.isArray(articleRes.records) ? articleRes.records : []
+          // 处理文章数据（游标分页）
+          if (articleRes) {
+            // 游标分页响应格式: { records: [...], cursor: "xxx", hasMore: true/false }
+            if (articleRes.records) {
+              this.articles = Array.isArray(articleRes.records) ? articleRes.records : []
+            } else if (Array.isArray(articleRes)) {
+              // 如果直接返回数组，则使用数组
+              this.articles = articleRes
+            } else {
+              this.articles = []
+            }
           }
-          // 处理场地数据 - 游标分页格式
-          if (locationRes && locationRes.records) {
-            this.locations = Array.isArray(locationRes.records) ? locationRes.records : []
+          
+          // 处理取景地数据（游标分页）
+          if (locationRes) {
+            // 游标分页响应格式: { records: [...], cursor: "xxx", hasMore: true/false }
+            if (locationRes.records) {
+              this.locations = Array.isArray(locationRes.records) ? locationRes.records : []
+            } else if (Array.isArray(locationRes)) {
+              // 如果直接返回数组，则使用数组
+              this.locations = locationRes
+            } else {
+              this.locations = []
+            }
           }
         })
       } catch (error) {
         console.error('加载数据失败:', error)
+      }
+    },
+    onBannerChange(e) {
+      this.currentBanner = e.detail.current
+    },
+    handleBannerClick(item) {
+      // 优先使用根据targetModule映射的路径
+      if (item.path) {
+        // 判断是否为tabBar页面
+        const tabBarPages = ['/pages/index/index', '/pages/profile/profile'];
+        if (tabBarPages.includes(item.path)) {
+          uni.switchTab({
+            url: item.path
+          });
+        } else {
+          uni.navigateTo({
+            url: item.path
+          });
+        }
+      } else {
+        // 如果没有对应路径，则默认跳转到服务页面
+        uni.navigateTo({
+          url: '/pages/services/services'
+        });
       }
     },
     handleFunctionClick(item) {
@@ -235,16 +338,33 @@ export default {
         url: `/pages/location/detail?id=${id}`
       })
     },
+    goToNature() {
+      uni.navigateTo({
+        url: '/pages/scenes/scenes?type=自然风光'
+      })
+    },
+    goToCulture() {
+      uni.navigateTo({
+        url: '/pages/scenes/scenes?type=文化底蕴'
+      })
+    },
+    goToModern() {
+      uni.navigateTo({
+        url: '/pages/scenes/scenes?type=现代都市'
+      })
+    },
+    goToServices() {
+      uni.navigateTo({
+        url: '/pages/services/services'
+      })
+    },
     getArticleCover(cover) {
-      // 如果 cover 为 null、空或包含 example.com（测试URL），使用默认图片
       return (!cover || cover.includes('example.com')) ? 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png' : cover
     },
     formatDate(dateStr) {
       if (!dateStr) return ''
       let date
-      // 处理数组格式的日期（后端 LocalDateTime 序列化为数组）
       if (Array.isArray(dateStr)) {
-        // 数组格式: [2024, 12, 15, 10, 0, 0]
         if (dateStr.length >= 3) {
           date = new Date(dateStr[0], dateStr[1] - 1, dateStr[2])
         } else {
@@ -253,7 +373,7 @@ export default {
       } else {
         date = new Date(dateStr)
       }
-      
+
       const month = date.getMonth() + 1
       const day = date.getDate()
       return `${month}月${day}日`
@@ -268,233 +388,316 @@ export default {
 <style lang="scss" scoped>
 .index-page {
   min-height: 100vh;
-  background: #f5f7fa;
-  padding-top: 132rpx;
-  box-sizing: border-box;
+  background: linear-gradient(180deg, #F8FAFB 0%, #EDF3F5 100%);
   position: relative;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.gradient-bg {
-  position: absolute;
+/* 顶部导航栏样式 */
+.page-header {
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 33.33vh;
-  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
-  z-index: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #1B3C35 0%, #2E7D32 100%);
+  padding-top: calc(env(safe-area-inset-top) + 60rpx);
+  box-shadow: 0 4rpx 20rpx rgba(27, 60, 53, 0.25);
 }
 
-.content {
-  padding: 20rpx 32rpx;
-  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
-  box-sizing: border-box;
-  width: 100%;
-  position: relative;
-  z-index: 1;
-  padding-top: 20rpx;
-  
-  /* 隐藏滚动条 */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  /* 兼容火狐浏览器 */
-  scrollbar-width: none;
-  /* 兼容IE浏览器 */
-  -ms-overflow-style: none;
-}
-
-/* 页面标题样式 */
-.page-title {
-  padding: 32rpx 0 8rpx 0;
-  width: 100%;
-}
-
-.title-text {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #1f2937;
-  line-height: 1.2;
-}
-
-.banner-section {
-  margin: 24rpx 0 32rpx;
-  border-radius: 24rpx;
-  overflow: hidden;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.banner-swiper {
-  width: 100%;
-  height: 320rpx;
-  box-sizing: border-box;
-}
-
-.banner-item {
-  width: 100%;
-  height: 100%;
+.nav-title {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 0 auto;
   justify-content: center;
-  padding: 20rpx;  /* 减少内边距 */
-  position: relative;
+  padding: 16rpx 32rpx 20rpx;
+  margin: 0 auto;
 }
 
-.banner-item::before {
-  content: '';
+.nav-main {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 3rpx;
+  text-shadow: 0 3rpx 12rpx rgba(0, 0, 0, 0.4);
+}
+
+.nav-sub {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 5rpx;
+  margin-top: 2rpx;
+  font-weight: 600;
+  text-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
+}
+
+.content {
+  flex: 1;
+  position: relative;
+  margin-top: calc(env(safe-area-inset-top) + 160rpx);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 120rpx);
+  box-sizing: border-box;
+}
+
+/* 创意Banner样式 - 优化更紧凑 */
+.creative-banner {
+  margin: 0 0 28rpx;
+  overflow: hidden;
+}
+
+.banner-swiper {
+  height: 360rpx;
+}
+
+.banner-item {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+  transition: transform 3s ease;
+  filter: brightness(0.95);
+}
+
+.banner-swiper .swiper-item-active .banner-image {
+  transform: scale(1.08);
+  filter: brightness(1);
+}
+
+.banner-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 1;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.65) 100%);
 }
 
-.banner-title,
-.banner-desc {
-  position: relative;
+.banner-content {
+  position: absolute;
+  bottom: 48rpx;
+  left: 48rpx;
+  right: 48rpx;
   z-index: 2;
+  animation: bannerFadeIn 0.8s ease-out;
+}
+
+@keyframes bannerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(24rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.banner-tag {
+  display: inline-block;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.95), rgba(212, 175, 55, 0.85));
+  color: #1B3C35;
+  padding: 6rpx 18rpx;
+  border-radius: 18rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  margin-bottom: 12rpx;
+  backdrop-filter: blur(10rpx);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
 }
 
 .banner-title {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 16rpx;
-  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
-  text-align: center;
+  font-size: 42rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+  text-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.4);
+  display: block;
+  margin-bottom: 12rpx;
+  line-height: 1.3;
+  letter-spacing: 1rpx;
 }
 
 .banner-desc {
-  font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.9);
-  text-align: center;
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+  display: block;
+  line-height: 1.5;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
 }
 
-.function-section {
-  background: #fff;
+/* 创意功能入口 - 优化更紧凑 */
+.creative-functions {
+  margin: 0 24rpx 28rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 24rpx;
-  padding: 24rpx 16rpx;
-  border-radius: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
-  width: 100%;
-  box-sizing: border-box;
+  position: relative;
+}
+
+.small-header {
+  justify-content: space-between;
+  margin-bottom: 20rpx;
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #1f2937;
-  line-height: 1.2;
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #1B3C35;
+  position: relative;
+  padding: 0 28rpx;
+  letter-spacing: 1rpx;
 }
 
-/* 移除重复的样式定义 */
+.section-title::before,
+.section-title::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48rpx;
+  height: 3rpx;
+  background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+}
 
-.function-scroll {
-  width: 100%;
-  white-space: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.section-title::before {
+  left: 0;
+}
 
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.section-title::after {
+  right: 0;
+}
+
+.small-header .section-title {
+  font-size: 30rpx;
+  padding: 0;
+}
+
+.small-header .section-title::before,
+.small-header .section-title::after {
+  display: none;
+}
+
+.section-more {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.section-more:active {
+  color: #D4AF37;
 }
 
 .function-grid {
-  display: inline-flex;
-  gap: 12rpx;
-  padding: 0 16rpx;
-  white-space: nowrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
 }
 
-.function-item {
+.function-card {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
+  border-radius: 18rpx;
+  padding: 24rpx 20rpx;
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1rpx solid rgba(27, 60, 53, 0.08);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8rpx;
-  min-width: 140rpx;
-  width: 140rpx;
-  padding: 16rpx 8rpx;
-  border-radius: 16rpx;
-  transition: all 0.3s ease;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
-  border: 1rpx solid rgba(229, 231, 235, 0.5);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-  flex-shrink: 0;
-  white-space: normal;
+  gap: 16rpx;
+  position: relative;
+  overflow: hidden;
 }
 
-.function-item:active {
-  transform: translateY(-2rpx);
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+.function-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5rpx;
+  height: 100%;
+  background: linear-gradient(180deg, #D4AF37 0%, #2E7D32 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.function-card:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 4rpx 14rpx rgba(0, 0, 0, 0.08);
+}
+
+.function-card:active::before {
+  opacity: 1;
 }
 
 .function-icon {
   width: 72rpx;
   height: 72rpx;
-  border-radius: 20rpx;
+  border-radius: 18rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
-  margin-bottom: 4rpx;
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
-.function-text {
-  font-size: 24rpx;
-  color: #374151;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1.2;
+.function-card:active .function-icon {
+  transform: scale(1.08) rotate(5deg);
+}
+
+.function-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.function-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1B3C35;
+  display: block;
+  margin-bottom: 6rpx;
+  letter-spacing: 0.5rpx;
 }
 
 .function-desc {
-  font-size: 20rpx;
-  color: #6b7280;
-  text-align: center;
-  line-height: 1.2;
-  margin-top: 2rpx;
+  font-size: 22rpx;
+  color: #888;
+  display: block;
+  line-height: 1.4;
 }
 
-.news-section,
-.location-section {
-  background: #fff;
-  margin-bottom: 24rpx;
+.function-arrow {
+  opacity: 0.5;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.function-card:active .function-arrow {
+  transform: translateX(6rpx);
+  opacity: 1;
+  color: #D4AF37;
+}
+
+/* 内容区域通用样式 */
+.content-section {
+  margin: 0 24rpx 28rpx;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
+  border-radius: 20rpx;
   padding: 24rpx;
-  border-radius: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.news-section .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24rpx;
-  padding-bottom: 16rpx;
-  border-bottom: 1rpx solid #f3f4f6;
-}
-
-.location-section .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32rpx;
-}
-
-.section-more {
-  font-size: 24rpx;
-  color: #6366f1;
-  font-weight: 500;
-  line-height: 1.2;
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid rgba(27, 60, 53, 0.08);
 }
 
 .loading-wrapper,
@@ -502,201 +705,398 @@ export default {
   padding: 60rpx 0;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
-.article-list {
+/* 影视资讯区域 - 优化排版 */
+.news-cards {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 20rpx;
 }
 
-.article-item {
+.news-card {
   display: flex;
-  align-items: flex-start;
   gap: 16rpx;
-  padding: 16rpx;
-  background: #f9fafb;
-  border-radius: 12rpx;
-  transition: all 0.3s;
+  background: #FFFFFF;
+  border-radius: 16rpx;
   overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1rpx solid rgba(0, 0, 0, 0.04);
 }
 
-.article-item:active {
-  background: #f3f4f6;
-  transform: translateX(4rpx);
+.news-card:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 8rpx 24rpx rgba(212, 175, 55, 0.15);
 }
 
-.article-cover {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 10rpx;
-  overflow: hidden;
+.news-card-image {
+  width: 200rpx;
+  height: 140rpx;
   flex-shrink: 0;
-  background: #f3f4f6;
-}
-
-.article-cover .cover-image {
-  width: 100%;
-  height: 100%;
   object-fit: cover;
+  background: linear-gradient(135deg, #F5F7FA, #E8F0F2);
 }
 
-.article-content {
+.news-card-content {
   flex: 1;
+  padding: 16rpx 16rpx 16rpx 0;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  justify-content: space-between;
   min-width: 0;
-  justify-content: center;
 }
 
-.article-item > uni-icons {
-  flex-shrink: 0;
-  align-self: center;
-  margin-top: 0;
+.news-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+  gap: 8rpx;
 }
 
-.article-title {
+.news-card-tag {
+  font-size: 20rpx;
+  color: #1B3C35;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.1));
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.news-card-date {
+  font-size: 20rpx;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.news-card-title {
   font-size: 28rpx;
-  font-weight: 600;
-  color: #1f2937;
+  font-weight: 700;
+  color: #1B3C35;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  word-break: break-all;
+  letter-spacing: 0.5rpx;
 }
 
-.article-meta {
-  font-size: 22rpx;
-  color: #9ca3af;
-  line-height: 1.4;
-}
-
-.location-scroll {
-  width: 100%;
-  white-space: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  
-  /* 隐藏滚动条 */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  /* 兼容火狐浏览器 */
-  scrollbar-width: none;
-  /* 兼容IE浏览器 */
-  -ms-overflow-style: none;
-}
-
-.location-list {
-  display: inline-flex;
-  gap: 24rpx;
-  padding: 0 0 20rpx 0;
-  white-space: nowrap;
+/* 热门取景地区域 - 优化排版 */
+.location-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
 }
 
 .location-card {
-  width: 440rpx;
-  min-width: 440rpx;
-  padding: 0;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  border-radius: 20rpx;
-  border: 2rpx solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  background: #FFFFFF;
+  border-radius: 16rpx;
   overflow: hidden;
-  flex-shrink: 0;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1rpx solid rgba(0, 0, 0, 0.04);
 }
 
-.location-cover {
+.location-card:active {
+  transform: translateY(-4rpx);
+  box-shadow: 0 8rpx 24rpx rgba(46, 125, 50, 0.15);
+}
+
+.location-card-image-box {
+  position: relative;
   width: 100%;
-  height: 220rpx;
+  height: 180rpx;
   overflow: hidden;
+  background: linear-gradient(135deg, #F5F7FA, #E8F0F2);
 }
 
-.location-cover .cover-image {
+.location-card-image {
   width: 100%;
   height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   object-fit: cover;
 }
 
-.location-card > .location-header,
-.location-card > .location-desc,
-.location-card > .location-footer {
-  padding: 0 24rpx;
+.location-card:active .location-card-image {
+  transform: scale(1.1);
 }
 
-.location-card > .location-header {
-  padding-top: 16rpx;
-  padding-bottom: 8rpx;
+.location-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.location-card > .location-desc {
-  padding-bottom: 8rpx;
+.location-card:active .location-card-overlay {
+  opacity: 1;
 }
 
-.location-card > .location-footer {
-  padding-bottom: 16rpx;
-  padding-top: 8rpx;
-}
-
-.location-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.location-name {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.location-badge {
-  padding: 8rpx 16rpx;
-  background: #6366f1;
-  color: #fff;
+.location-card-price {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.98), rgba(212, 175, 55, 0.92));
+  color: #1B3C35;
   font-size: 22rpx;
-  border-radius: 8rpx;
+  font-weight: 800;
+  padding: 6rpx 14rpx;
+  border-radius: 16rpx;
+  backdrop-filter: blur(10rpx);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.25);
 }
 
-.location-desc {
+.location-card-info {
+  padding: 16rpx;
+  background: #FFFFFF;
+}
+
+.location-card-name {
   font-size: 26rpx;
-  color: #6b7280;
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  font-weight: 700;
+  color: #1B3C35;
+  display: block;
+  margin-bottom: 8rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.5rpx;
+}
+
+.location-card-type {
+  font-size: 20rpx;
+  color: #2E7D32;
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.12), rgba(46, 125, 50, 0.08));
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  display: inline-block;
+  font-weight: 700;
+}
+
+/* 特色主题区域 - 优化卡片设计 */
+.featured-section {
+  margin: 0 24rpx 28rpx;
+}
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14rpx;
+}
+
+.featured-card {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
+  border-radius: 18rpx;
+  padding: 28rpx 20rpx;
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border: 1rpx solid rgba(27, 60, 53, 0.08);
+}
+
+.featured-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5rpx;
+  background: linear-gradient(90deg, #D4AF37, #2E7D32, #00838F);
+  opacity: 0.8;
+}
+
+.featured-card:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 8rpx 28rpx rgba(0, 0, 0, 0.1);
+}
+
+.featured-card:active::before {
+  opacity: 1;
+}
+
+.featured-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16rpx;
+  background: linear-gradient(135deg, #D4AF37, #2E7D32);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4rpx 16rpx rgba(212, 175, 55, 0.3);
+}
+
+.featured-card:active .featured-icon {
+  transform: scale(1.12) rotate(10deg);
+  box-shadow: 0 6rpx 20rpx rgba(212, 175, 55, 0.4);
+}
+
+.featured-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #1B3C35;
+  display: block;
+  margin-bottom: 6rpx;
+  letter-spacing: 0.5rpx;
+}
+
+.featured-desc {
+  font-size: 22rpx;
+  color: #888;
+  display: block;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* 底部区域 - 优化渐变和间距 */
+.footer-section {
+  background: linear-gradient(135deg, #1B3C35 0%, #2E7D32 50%, #1B3C35 100%);
+  border-radius: 24rpx;
+  margin: 0 24rpx 32rpx;
+  padding: 36rpx 32rpx;
+  text-align: center;
+  box-shadow: 0 8rpx 28rpx rgba(27, 60, 53, 0.2);
+  position: relative;
   overflow: hidden;
 }
 
-.location-footer {
+.footer-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+  animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.footer-content {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-top: 8rpx;
+  gap: 12rpx;
+  position: relative;
+  z-index: 1;
 }
 
-.location-price {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #f59e0b;
+.footer-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 1rpx;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
 }
 
-.location-address {
+.footer-subtitle {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.footer-cta {
+  background: linear-gradient(135deg, #D4AF37, #C9A961);
+  color: #1B3C35;
+  padding: 12rpx 36rpx;
+  border-radius: 28rpx;
   font-size: 24rpx;
-  color: #9ca3af;
+  font-weight: 700;
+  margin-top: 8rpx;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6rpx 20rpx rgba(212, 175, 55, 0.4);
 }
 
+.footer-cta:active {
+  transform: scale(0.95);
+  box-shadow: 0 4rpx 14rpx rgba(212, 175, 55, 0.3);
+}
+
+/* 底部间距 - 增加高度避免被TabBar遮挡 */
 .bottom-spacer {
-  height: 40rpx;
+  height: 160rpx;
 }
 
+/* 响应式设计 - 优化适配 */
+@media screen and (max-width: 750rpx) {
+  .location-cards {
+    grid-template-columns: 1fr;
+  }
 
+  .featured-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16rpx;
+  }
 
+  .banner-swiper {
+    height: 340rpx;
+  }
+
+  .banner-content {
+    bottom: 36rpx;
+    left: 36rpx;
+    right: 36rpx;
+  }
+
+  .banner-title {
+    font-size: 38rpx;
+  }
+
+  .banner-desc {
+    font-size: 24rpx;
+  }
+
+  .section-title {
+    font-size: 32rpx;
+  }
+}
+
+@media screen and (max-width: 480rpx) {
+  .function-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .featured-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .banner-swiper {
+    height: 300rpx;
+  }
+
+  .banner-content {
+    bottom: 28rpx;
+    left: 28rpx;
+    right: 28rpx;
+  }
+
+  .banner-title {
+    font-size: 34rpx;
+  }
+}
 </style>
 
 

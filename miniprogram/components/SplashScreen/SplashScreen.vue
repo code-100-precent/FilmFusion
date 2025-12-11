@@ -3,7 +3,7 @@
 		<view class="splash-content">
 			<image 
 				class="splash-logo" 
-				src="https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E7%94%9F%E6%88%90%E6%B0%B4%E5%A2%A8%E9%A3%8E%E6%A0%BC%E5%9B%BE%E7%89%87.png"
+				src="https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png"
 				mode="aspectFit"
 			></image>
 			<text class="splash-text">雅安影视服务一站式平台</text>

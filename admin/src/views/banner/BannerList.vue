@@ -300,7 +300,11 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100]
+  pageSizes: [10, 20, 50, 100],
+  showQuickJumper: true,
+  // 添加以下属性以确保Naive UI正确计算分页
+  pageCount: 1,
+  prefix: ({ itemCount }) => `共 ${itemCount} 条`
 })
 
 // 跳转模块选项
@@ -422,9 +426,26 @@ const loadData = async () => {
   try {
     loading.value = true
     const res = await getBannerPage(pagination.page, pagination.pageSize, searchForm.keyword)
+    console.log('=== Banner API 响应数据 ===')
+    console.log('完整响应:', res)
+    console.log('res.code:', res.code)
+    console.log('res.data:', res.data)
+    console.log('res.pagination:', res.pagination)
+    console.log('res.pagination?.totalItems:', res.pagination?.totalItems)
+
     if (res.code === 200) {
       bannerList.value = res.data || []
+<<<<<<< HEAD
+      // 设置总数据量
+      pagination.itemCount = res.pagination?.totalItems || 0
+      // 自动计算总页数
+      pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
+      console.log('设置总数据量:', pagination.itemCount)
+      console.log('自动计算总页数:', pagination.pageCount)
+      console.log('当前 pagination 对象:', pagination)
+=======
       pagination.itemCount = res.pagination?.totalItems || res.total || 0
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   } catch (error) {
     console.error('加载Banner列表失败:', error)
@@ -446,11 +467,17 @@ const handleReset = () => {
 }
 
 const handlePageChange = (page) => {
+  console.log('=== handlePageChange 被调用 ===')
+  console.log('新页码:', page)
+  console.log('当前 pagination.page:', pagination.page)
   pagination.page = page
+  console.log('更新后 pagination.page:', pagination.page)
   loadData()
 }
 
 const handlePageSizeChange = (pageSize) => {
+  console.log('=== handlePageSizeChange 被调用 ===')
+  console.log('新每页条数:', pageSize)
   pagination.pageSize = pageSize
   pagination.page = 1
   loadData()

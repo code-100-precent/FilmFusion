@@ -95,6 +95,14 @@
         AND deleted = false
     </update>
 
+<<<<<<< HEAD
+        <select id="getTotal" resultType="long">
+            SELECT COUNT(1)
+            FROM fi_articles
+            WHERE title LIKE CONCAT('%', #{keyword}, '%')
+        </select>
+
+=======
     <select id="getTotal" resultType="java.lang.Long">
         SELECT COUNT(1)
         FROM fi_articles
@@ -103,4 +111,5 @@
             AND title LIKE CONCAT('%', #{keyword}, '%')
         </if>
     </select>
+>>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 </mapper>

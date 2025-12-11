@@ -128,10 +128,34 @@ export default {
           }
           
           this.nextCursor = res.nextCursor
-          this.hasMore = res.hasMore || false
+          this.hasMore = res.hasMore !== undefined ? res.hasMore : (res.nextCursor !== null)
+        } else if (res && res.code === 200 && res.data) {
+          // 兼容旧的响应格式
+          const routeRecords = res.data.records || res.data || [];
+          const newRoutes = routeRecords.map(item => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            theme: item.theme,
+            features: item.features,
+            cover: item.cover,
+            transport: item.transport,
+            hotel: item.hotel,
+            food: item.food,
+            image: item.image
+          }))
+
+          if (reset) {
+            this.routes = newRoutes
+          } else {
+            this.routes = [...this.routes, ...newRoutes]
+          }
+          
+          this.nextCursor = res.data.nextCursor
+          this.hasMore = res.data.hasMore !== undefined ? res.data.hasMore : (res.data.nextCursor !== null)
         } else {
           uni.showToast({
-            title: res.message || '加载失败',
+            title: res?.message || '加载失败',
             icon: 'none'
           })
         }

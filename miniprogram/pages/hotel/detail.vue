@@ -4,17 +4,18 @@
 
     <scroll-view class="content" scroll-y v-if="!loading && hotel">
       <!-- 封面图 -->
-      <view class="cover-wrapper">
-        <image :src="hotel.cover || defaultCover" class="cover" mode="aspectFill"></image>
+      <view class="cover-section">
+        <image :src="hotel.cover || defaultCover" class="cover-image" mode="aspectFill" @click="previewImage"></image>
       </view>
 
       <!-- 基本信息 -->
       <view class="info-card">
         <view class="card-header">
           <text class="hotel-name">{{ hotel.name }}</text>
-          <view class="hotel-status" :class="{ 'status-online': hotel.status === 1 }">
-            {{ hotel.status === 1 ? '营业中' : '暂停营业' }}
-          </view>
+          <view class="hotel-badge">住宿</view>
+        </view>
+        <view class="hotel-status" :class="{ 'status-available': hotel.status === 1 }">
+          {{ hotel.status === 1 ? '营业中' : '暂停营业' }}
         </view>
       </view>
 
@@ -41,12 +42,16 @@
           <uni-icons type="location" size="18" color="#6b7280"></uni-icons>
           <text class="info-label">地址：</text>
           <text class="info-value">{{ hotel.address || '暂无地址' }}</text>
+          <view class="nav-btn" @click="navigateToHotel">
+            <uni-icons type="paperplane" size="14" color="#fff"></uni-icons>
+            <text>导航</text>
+          </view>
         </view>
       </view>
 
       <!-- 价格信息 -->
       <view class="info-card" v-if="hotel.price">
-        <view class="card-title">参考价格</view>
+        <view class="card-title">价格信息</view>
         <view class="price-wrapper">
           <text class="price-value">¥{{ hotel.price }}</text>
           <text class="price-unit">/晚起</text>
@@ -55,25 +60,14 @@
 
       <!-- 设施服务 -->
       <view class="info-card" v-if="hotel.facilities">
-        <view class="card-title">设施服务</view>
-        <view class="facilities-wrapper">
-          <view 
-            v-for="(facility, index) in parseFacilities(hotel.facilities)" 
-            :key="index" 
-            class="facility-tag"
-          >
-            {{ facility }}
-          </view>
+        <view class="card-title">配套设施</view>
+        <view class="info-item">
+          <uni-icons type="gear" size="18" color="#10b981"></uni-icons>
+          <text class="info-value">{{ hotel.facilities }}</text>
         </view>
       </view>
 
-      <!-- 导航按钮 -->
-      <view class="action-section">
-        <button class="nav-button" @click="navigateToHotel">
-          <uni-icons type="paperplane" size="20" color="#fff"></uni-icons>
-          <text>导航到这里</text>
-        </button>
-      </view>
+
     </scroll-view>
 
     <view v-if="loading" class="loading-wrapper">
@@ -143,6 +137,21 @@ export default {
       return facilities
     },
     
+    previewImage() {
+      if (!this.hotel || !this.hotel.cover) {
+        uni.showToast({
+          title: '暂无图片可预览',
+          icon: 'none'
+        })
+        return
+      }
+      
+      uni.previewImage({
+        urls: [this.hotel.cover],
+        current: this.hotel.cover
+      })
+    },
+    
     navigateToHotel() {
       if (!this.hotel) return
       
@@ -189,6 +198,7 @@ export default {
 
 .content {
   width: 100%;
+  padding: 0 32rpx 32rpx;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   
@@ -196,19 +206,29 @@ export default {
   &::-webkit-scrollbar {
     display: none;
   }
+  /* 兼容火狐浏览器 */
   scrollbar-width: none;
+  /* 兼容IE浏览器 */
   -ms-overflow-style: none;
 }
 
-.cover-wrapper {
+.cover-section {
   width: 100%;
-  height: 400rpx;
+  margin: 32rpx 0;
+  border-radius: 16rpx;
   overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
-.cover {
+.cover-image {
   width: 100%;
-  height: 100%;
+  height: 400rpx;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.cover-image:active {
+  transform: scale(0.98);
 }
 
 .info-card {
@@ -216,14 +236,19 @@ export default {
   background: #fff;
   border-radius: 16rpx;
   padding: 32rpx;
-  margin: 24rpx 32rpx;
+  margin-bottom: 24rpx;
   box-sizing: border-box;
+  
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 16rpx;
 }
 
 .hotel-name {
@@ -231,6 +256,24 @@ export default {
   font-weight: 600;
   color: #1f2937;
   flex: 1;
+}
+
+.hotel-type {
+  background: #eef2ff;
+  color: #667eea;
+  font-size: 24rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  margin-left: 16rpx;
+}
+
+.hotel-badge {
+  background: #eef2ff;
+  color: #6366f1;
+  font-size: 24rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  margin-left: 16rpx;
 }
 
 .hotel-status {
@@ -241,7 +284,7 @@ export default {
   background: #fee2e2;
   color: #dc2626;
   
-  &.status-online {
+  &.status-available {
     background: #d1fae5;
     color: #059669;
   }
@@ -260,6 +303,7 @@ export default {
   line-height: 1.8;
   color: #374151;
   white-space: pre-wrap;
+  text-align: justify;
 }
 
 .info-item {
@@ -286,6 +330,23 @@ export default {
   word-break: break-all;
 }
 
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 16rpx;
+  background: #6366f1;
+  border-radius: 32rpx;
+  color: #fff;
+  font-size: 22rpx;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+
+.nav-btn:active {
+  opacity: 0.9;
+}
+
 .price-wrapper {
   display: flex;
   align-items: baseline;
@@ -303,48 +364,105 @@ export default {
   color: #6b7280;
 }
 
-.facilities-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-}
 
-.facility-tag {
-  padding: 12rpx 24rpx;
-  background: #f3f4f6;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  color: #6b7280;
-}
-
-.action-section {
-  padding: 32rpx;
-}
-
-.nav-button {
-  width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 16rpx;
-  padding: 28rpx;
-  font-size: 32rpx;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16rpx;
-  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
-  transition: all 0.3s;
-  
-  &:active {
-    transform: scale(0.98);
-    box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
-  }
-}
 
 .loading-wrapper,
 .empty-wrapper {
   padding: 100rpx 32rpx;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 750rpx) {
+  .hotel-detail-page {
+    padding-top: 120rpx;
+  }
+  
+  .cover-section {
+    height: 280rpx;
+  }
+  
+  .info-card {
+    width: calc(100% - 32rpx);
+    margin: 16rpx 16rpx;
+    padding: 20rpx;
+  }
+  
+  .hotel-name {
+    font-size: 32rpx;
+  }
+  
+  .card-title {
+    font-size: 28rpx;
+    margin-bottom: 16rpx;
+  }
+  
+  .card-content {
+    font-size: 26rpx;
+  }
+  
+  .info-item {
+    padding: 10rpx;
+    margin-bottom: 16rpx;
+  }
+  
+  .info-label,
+  .info-value {
+    font-size: 26rpx;
+  }
+  
+  .price-value {
+    font-size: 42rpx;
+  }
+  
+  .price-unit {
+    font-size: 26rpx;
+  }
+}
+
+@media screen and (min-width: 1200rpx) {
+  .hotel-detail-page {
+    padding-top: 140rpx;
+  }
+  
+  .cover-section {
+    height: 420rpx;
+  }
+  
+  .info-card {
+    width: calc(100% - 48rpx);
+    margin: 24rpx 24rpx;
+    padding: 32rpx;
+  }
+  
+  .hotel-name {
+    font-size: 40rpx;
+  }
+  
+  .card-title {
+    font-size: 36rpx;
+    margin-bottom: 24rpx;
+  }
+  
+  .card-content {
+    font-size: 30rpx;
+  }
+  
+  .info-item {
+    padding: 16rpx;
+    margin-bottom: 24rpx;
+  }
+  
+  .info-label,
+  .info-value {
+    font-size: 30rpx;
+  }
+  
+  .price-value {
+    font-size: 54rpx;
+  }
+  
+  .price-unit {
+    font-size: 30rpx;
+  }
 }
 </style>

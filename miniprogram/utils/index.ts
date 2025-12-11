@@ -22,6 +22,16 @@ export const formatDate = (date: Date, format = 'YYYY-MM-DD HH:mm:ss') => {
     .replace('ss', seconds)
 }
 
+// 导出文件URL处理函数
+export { getFileUrl, getFileUrls, processObjectFileUrls, processArrayFileUrls } from './fileUrl'
+
+// 导出API响应处理器
+export { 
+  processApiResponseFileUrls, 
+  createFileUrlProcessor, 
+  FILE_FIELDS_CONFIG 
+} from './apiProcessor'
+
 /**
  * 加载状态管理Mixin
  * 为所有页面提供统一的加载状态管理
