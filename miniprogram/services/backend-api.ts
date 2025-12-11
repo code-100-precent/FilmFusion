@@ -34,11 +34,12 @@ interface ApiResponse<T> {
  * 获取影视作品列表（分页）
  */
 export const getDramaPage = (params: {
-    current?: number
+    cursor?: string
     size?: number
     keyword?: string
+    type?: string
 }) => {
-    return httpWithFileUrl<PageResponse<any>>({
+    return httpWithFileUrl<any>({
         url: '/drama/page',
         method: 'GET',
         data: params
@@ -67,11 +68,11 @@ export const getTourPage = async (params: {
 }) => {
     try {
         console.log('调用getTourPage API，URL: /tour/page, 参数:', params)
-        const result = await http<any>({
+        const result = await httpWithFileUrl<any>({
             url: '/tour/page',
             method: 'GET',
             data: params
-        })
+        }, ['cover', 'image', 'images', 'thumbImage'])
         console.log('getTourPage API调用成功，结果:', result)
         return result
     } catch (error) {
@@ -149,11 +150,11 @@ export const getLocationPage = (params: {
     keyword?: string
     category?: string
 }) => {
-    return httpWithFileUrl<PageResponse<any>>({
+    return httpWithFileUrl<any>({
         url: '/location/page',
         method: 'GET',
         data: {
-            page: params.current || 1,
+            cursor: null, // 使用游标分页，第一页不传cursor
             size: params.size || 5,
             keyword: params.keyword,
             category: params.category
@@ -203,11 +204,11 @@ export const getArticlePage = (params: {
     keyword?: string
     level?: string
 }) => {
-    return http<PageResponse<any>>({
+    return http<any>({
         url: '/article/page',
         method: 'GET',
         data: {
-            page: params.current || 1,
+            cursor: null, // 使用游标分页，第一页不传cursor
             size: params.size || 5,
             keyword: params.keyword,
             level: params.level
@@ -550,18 +551,14 @@ export const getBannerPage = (params: {
     size?: number
     keyword?: string
 }) => {
-    const page = params.current || 1
-    const size = params.size || 10
-    const keyword = params.keyword || ''
-    
-    let url = `/banner/page?page=${page}&size=${size}`
-    if (keyword) {
-        url += `&keyword=${encodeURIComponent(keyword)}`
-    }
-    
-    return http<PageResponse<any>>({
-        url: url,
-        method: 'GET'
+    return http<any>({
+        url: '/banner/admin/page',
+        method: 'GET',
+        data: {
+            current: params.current || 1,
+            size: params.size || 10,
+            keyword: params.keyword
+        }
     })
 }
 

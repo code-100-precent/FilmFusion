@@ -23,8 +23,11 @@ export const getFileUrl = (url: string): string => {
   // 如果URL以/开头，去掉第一个/避免双斜杠
   const normalizedUrl = url.startsWith('/') ? url.substring(1) : url
   
+  // 如果URL以files开头，需要添加api前缀，因为后端配置的文件访问路径是/api/files/**
+  const finalUrl = normalizedUrl.startsWith('files/') ? `api/${normalizedUrl}` : normalizedUrl
+  
   // 拼接服务器基础地址
-  return `${FILE_BASE_URL}/${normalizedUrl}`
+  return `${FILE_BASE_URL}/${finalUrl}`
 }
 
 /**

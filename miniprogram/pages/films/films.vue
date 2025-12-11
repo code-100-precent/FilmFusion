@@ -95,16 +95,22 @@ export default {
       nextCursor: null // 添加游标字段
     }
   },
+  mounted() {
+    // 页面加载时初始化数据
+    this.loadFilms(true);
+  },
   methods: {
     // 处理海报URL
     getPosterUrl(poster) {
       return getFileUrl(poster)
     },
-    async loadFilms() {
+    async loadFilms(isRefresh = false) {
+      if (this.loading) return;
+      
       this.loading = true;
       try {
         const params = {
-          current: 1,
+          cursor: isRefresh ? null : this.nextCursor, // 使用游标而不是页码
           size: this.pageSize,
           keyword: this.keyword
         };
@@ -119,12 +125,14 @@ export default {
         console.log('API返回结果:', response);
         
         // 后端返回的是游标分页格式：{records, nextCursor, hasMore}
-        // http工具会直接返回这个对象（因为没有code字段）
         if (response.records) {
-          this.films = response.records;
-          this.currentPage = 1;
+          if (isRefresh) {
+            this.films = response.records;
+          } else {
+            this.films = [...this.films, ...response.records];
+          }
           this.nextCursor = response.nextCursor; // 保存游标
-          this.hasMore = response.hasMore || false;
+          this.hasMore = response.hasMore !== undefined ? response.hasMore : (response.nextCursor !== null);
           this.totalItems = this.films.length; // 游标分页不返回总数
           
           console.log('成功加载影视作品，数量:', this.films.length, '下一页游标:', this.nextCursor);
@@ -132,7 +140,11 @@ export default {
           // 如果是旧的PageResponse格式（有code字段）
           if (response.code === 200 && response.data) {
             const filmRecords = response.data.records || response.data || [];
-            this.films = filmRecords;
+            if (isRefresh) {
+              this.films = filmRecords;
+            } else {
+              this.films = [...this.films, ...filmRecords];
+            }
             this.totalItems = response.data.total || filmRecords.length;
             this.currentPage = 1;
             this.hasMore = response.data.hasMore !== undefined ? response.data.hasMore : (this.films.length < this.totalItems);
@@ -160,55 +172,19 @@ export default {
       }
     },
     handleSearch() {
-      this.loadFilms()
+      this.loadFilms(true) // 搜索时刷新数据
     },
     selectCategory(category) {
       this.selectedCategory = category
-      this.loadFilms()
+      this.loadFilms(true) // 切换分类时刷新数据
     },
     async loadMore() {
       if (this.loading || !this.hasMore) {
         return;
       }
       
-      this.loading = true;
-      try {
-        const params = {
-          cursor: this.nextCursor, // 使用游标而不是页码
-          size: this.pageSize,
-          keyword: this.keyword
-        };
-        
-        // 如果选择了分类且不是"全部"，添加类型筛选
-        if (this.selectedCategory !== '全部') {
-          params.type = this.selectedCategory;
-        }
-        
-        console.log('加载更多，参数:', params);
-        const response = await getDramaPage(params);
-        
-        // 处理游标分页格式
-        if (response.records) {
-          this.films = [...this.films, ...response.records];
-          this.nextCursor = response.nextCursor;
-          this.hasMore = response.hasMore || false;
-          console.log('成功加载更多，新增数量:', response.records.length, '下一页游标:', this.nextCursor);
-        } else if (response.code === 200 && response.data) {
-          // 兼容旧格式
-          const filmRecords = response.data.records || response.data || [];
-          this.films = [...this.films, ...filmRecords];
-          this.currentPage++;
-          this.hasMore = response.data.hasMore !== undefined ? response.data.hasMore : (this.films.length < this.totalItems);
-        }
-      } catch (error) {
-        console.error('加载更多失败:', error);
-        uni.showToast({
-          title: '加载更多失败',
-          icon: 'none'
-        });
-      } finally {
-        this.loading = false;
-      }
+      // 使用loadFilms方法加载更多数据
+      await this.loadFilms(false);
     },
     goToDetail(id) {
       uni.navigateTo({

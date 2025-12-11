@@ -23,7 +23,7 @@
           @change="onBannerChange"
         >
           <swiper-item v-for="(item, index) in banners" :key="index">
-            <view class="banner-item">
+            <view class="banner-item" @click="handleBannerClick(item)">
               <image :src="item.imageUrl" class="banner-image" mode="cover"></image>
               <view class="banner-overlay"></view>
               <view class="banner-content">
@@ -201,11 +201,22 @@ export default {
   data() {
     return {
       banners: [],
+      // targetModule值与页面路径的映射关系
+      modulePathMap: {
+        '文章列表': '/pages/news/news',
+        '电视剧列表': '/pages/films/films',
+        '场地列表': '/pages/scenes/scenes',
+        '服务列表': '/pages/services/services',
+        '住宿列表': '/pages/hotel/hotel',
+        '旅游线路': '/pages/tourroute/tourroute',
+        '政策列表': '/pages/policy/policy'
+      },
       functions: [
         { icon: 'videocam', text: '光影雅安', desc: '影视作品', color: '#D4AF37', bgColor: 'rgba(212, 175, 55, 0.15)', path: '/pages/films/films' },
         { icon: 'location', text: '拍摄场地', desc: '完美取景', color: '#2E7D32', bgColor: 'rgba(46, 125, 50, 0.15)', path: '/pages/scenes/scenes' },
         { icon: 'calendar', text: '剧组报备', desc: '便捷手续', color: '#1B3C35', bgColor: 'rgba(27, 60, 53, 0.15)', path: '/pages/filing/filing' },
         { icon: 'phone', text: '协拍服务', desc: '专业支持', color: '#C62828', bgColor: 'rgba(198, 40, 40, 0.15)', path: '/pages/services/services' },
+        { icon: 'home', text: '住宿服务', desc: '舒适休息', color: '#7B1FA2', bgColor: 'rgba(123, 31, 162, 0.15)', path: '/pages/hotel/hotel' },
         { icon: 'chatbubble', text: '影视资讯', desc: '行业动态', color: '#00838F', bgColor: 'rgba(0, 131, 143, 0.15)', path: '/pages/news/news' },
         { icon: 'map', text: '影视游', desc: '探寻足迹', color: '#558B2F', bgColor: 'rgba(85, 139, 47, 0.15)', path: '/pages/tourroute/tourroute' },
         { icon: 'info', text: '视听政策', desc: '扶持政策', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.15)', path: '/pages/policy/policy' }
@@ -232,18 +243,38 @@ export default {
           if (bannerRes && bannerRes.data) {
             this.banners = bannerRes.data.map((banner, index) => ({
               title: banner.imageName || '雅安影视服务',
-              desc: banner.targetModule || '专业影视拍摄一站式服务平台',
+              desc: '', // 不再显示任何描述文本
               imageUrl: banner.imageUrl,
               tag: index === 0 ? '平台服务' : index === 1 ? '取景胜地' : '专业支持',
-              path: '/pages/services/services'
+              targetModule: banner.targetModule, // 保存targetModule用于跳转
+              path: this.modulePathMap[banner.targetModule] || '/pages/services/services' // 根据targetModule获取对应路径
             }))
           }
 
-          if (articleRes && articleRes.records) {
-            this.articles = Array.isArray(articleRes.records) ? articleRes.records : []
+          // 处理文章数据（游标分页）
+          if (articleRes) {
+            // 游标分页响应格式: { records: [...], cursor: "xxx", hasMore: true/false }
+            if (articleRes.records) {
+              this.articles = Array.isArray(articleRes.records) ? articleRes.records : []
+            } else if (Array.isArray(articleRes)) {
+              // 如果直接返回数组，则使用数组
+              this.articles = articleRes
+            } else {
+              this.articles = []
+            }
           }
-          if (locationRes && locationRes.records) {
-            this.locations = Array.isArray(locationRes.records) ? locationRes.records : []
+          
+          // 处理取景地数据（游标分页）
+          if (locationRes) {
+            // 游标分页响应格式: { records: [...], cursor: "xxx", hasMore: true/false }
+            if (locationRes.records) {
+              this.locations = Array.isArray(locationRes.records) ? locationRes.records : []
+            } else if (Array.isArray(locationRes)) {
+              // 如果直接返回数组，则使用数组
+              this.locations = locationRes
+            } else {
+              this.locations = []
+            }
           }
         })
       } catch (error) {
@@ -254,10 +285,24 @@ export default {
       this.currentBanner = e.detail.current
     },
     handleBannerClick(item) {
+      // 优先使用根据targetModule映射的路径
       if (item.path) {
+        // 判断是否为tabBar页面
+        const tabBarPages = ['/pages/index/index', '/pages/profile/profile'];
+        if (tabBarPages.includes(item.path)) {
+          uni.switchTab({
+            url: item.path
+          });
+        } else {
+          uni.navigateTo({
+            url: item.path
+          });
+        }
+      } else {
+        // 如果没有对应路径，则默认跳转到服务页面
         uni.navigateTo({
-          url: item.path
-        })
+          url: '/pages/services/services'
+        });
       }
     },
     handleFunctionClick(item) {
@@ -560,11 +605,6 @@ export default {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16rpx;
-}
-
-/* 第7个功能卡片占满整行 */
-.function-card:nth-child(7) {
-  grid-column: 1 / -1;
 }
 
 .function-card {

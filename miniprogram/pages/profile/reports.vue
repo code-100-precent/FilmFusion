@@ -412,6 +412,8 @@ export default {
     },
     // 预览文件
     previewFile(fileUrl, fileName) {
+      console.log('预览文件被点击:', fileUrl, fileName)
+      
       if (!fileUrl) {
         uni.showToast({
           title: '文件不存在',
@@ -420,16 +422,61 @@ export default {
         return
       }
       
+      // 处理JSON格式的文件URL
+      let actualFileUrl = fileUrl
+      try {
+        // 尝试解析JSON格式的URL
+        if (fileUrl.includes('originUrl')) {
+          // 处理可能被反引号包裹的JSON字符串
+          let jsonString = fileUrl
+          
+          // 去除可能的前缀和后缀
+          if (fileUrl.startsWith('`')) {
+            jsonString = fileUrl.replace(/^`+/, '').replace(/`+$/, '') // 去掉首尾的所有反引号
+          }
+          
+          // 处理可能包含的URL前缀
+          if (jsonString.includes('http://') || jsonString.includes('https://')) {
+            // 提取JSON部分
+            const jsonMatch = jsonString.match(/\{.*"originUrl".*\}/)
+            if (jsonMatch) {
+              jsonString = jsonMatch[0]
+            }
+          }
+          
+          console.log('处理前的JSON字符串:', jsonString)
+          
+          const urlObj = JSON.parse(jsonString)
+          actualFileUrl = urlObj.originUrl || urlObj.thumbUrl || fileUrl
+          console.log('解析后的实际文件URL:', actualFileUrl)
+        }
+      } catch (e) {
+        console.log('JSON解析失败，使用原始URL，错误信息:', e)
+        // 如果解析失败，尝试从字符串中提取originUrl
+        try {
+          const originUrlMatch = fileUrl.match(/"originUrl"\s*:\s*"([^"]+)"/)
+          if (originUrlMatch && originUrlMatch[1]) {
+            actualFileUrl = originUrlMatch[1]
+            console.log('通过正则提取的originUrl:', actualFileUrl)
+          }
+        } catch (regexError) {
+          console.log('正则提取也失败，使用原始URL:', regexError)
+        }
+      }
+      
       // 处理文件URL
-      const processedUrl = getFileUrl(fileUrl)
+      const processedUrl = getFileUrl(actualFileUrl)
+      console.log('处理后的URL:', processedUrl)
       
       // 获取文件扩展名
-      const fileExt = fileUrl.split('.').pop().toLowerCase()
+      const fileExt = actualFileUrl.split('.').pop().toLowerCase()
+      console.log('文件扩展名:', fileExt)
       
       // 判断是否为图片文件
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
       
       if (imageExts.includes(fileExt)) {
+        console.log('是图片文件，开始预览')
         // 图片文件直接预览
         uni.previewImage({
           urls: [processedUrl],
@@ -446,35 +493,9 @@ export default {
           }
         })
       } else {
-        // 非图片文件，尝试使用uni.openDocument
-        uni.downloadFile({
-          url: processedUrl,
-          success: (res) => {
-            if (res.statusCode === 200) {
-              uni.openDocument({
-                filePath: res.tempFilePath,
-                showMenu: true,
-                success: () => {
-                  console.log('文档打开成功')
-                },
-                fail: (err) => {
-                  console.error('文档打开失败:', err)
-                  uni.showToast({
-                    title: '无法打开此文件类型',
-                    icon: 'none'
-                  })
-                }
-              })
-            }
-          },
-          fail: (err) => {
-            console.error('文件下载失败:', err)
-            uni.showToast({
-              title: '文件下载失败',
-              icon: 'none'
-            })
-          }
-        })
+        console.log('非图片文件，直接下载')
+        // 非图片文件直接下载，传递原始URL以便downloadFile方法处理
+        this.downloadFile(fileUrl, fileName)
       }
     },
     // 下载文件
@@ -487,8 +508,51 @@ export default {
         return
       }
       
+      // 处理JSON格式的文件URL
+      let actualFileUrl = fileUrl
+      try {
+        // 尝试解析JSON格式的URL
+        if (fileUrl.includes('originUrl')) {
+          // 处理可能被反引号包裹的JSON字符串
+          let jsonString = fileUrl
+          
+          // 去除可能的前缀和后缀
+          if (fileUrl.startsWith('`')) {
+            jsonString = fileUrl.replace(/^`+/, '').replace(/`+$/, '') // 去掉首尾的所有反引号
+          }
+          
+          // 处理可能包含的URL前缀
+          if (jsonString.includes('http://') || jsonString.includes('https://')) {
+            // 提取JSON部分
+            const jsonMatch = jsonString.match(/\{.*"originUrl".*\}/)
+            if (jsonMatch) {
+              jsonString = jsonMatch[0]
+            }
+          }
+          
+          console.log('下载文件 - 处理前的JSON字符串:', jsonString)
+          
+          const urlObj = JSON.parse(jsonString)
+          actualFileUrl = urlObj.originUrl || urlObj.thumbUrl || fileUrl
+          console.log('下载文件 - 解析后的实际文件URL:', actualFileUrl)
+        }
+      } catch (e) {
+        console.log('下载文件 - JSON解析失败，使用原始URL，错误信息:', e)
+        // 如果解析失败，尝试从字符串中提取originUrl
+        try {
+          const originUrlMatch = fileUrl.match(/"originUrl"\s*:\s*"([^"]+)"/)
+          if (originUrlMatch && originUrlMatch[1]) {
+            actualFileUrl = originUrlMatch[1]
+            console.log('下载文件 - 通过正则提取的originUrl:', actualFileUrl)
+          }
+        } catch (regexError) {
+          console.log('下载文件 - 正则提取也失败，使用原始URL:', regexError)
+        }
+      }
+      
       // 处理文件URL
-      const processedUrl = getFileUrl(fileUrl)
+      const processedUrl = getFileUrl(actualFileUrl)
+      console.log('下载文件 - 最终处理后的URL:', processedUrl)
       
       // 显示下载提示
       uni.showLoading({
