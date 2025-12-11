@@ -1,37 +1,39 @@
 package cn.cxdproject.coder.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
 public class UpdatePolicyDTO {
-    @NotBlank
+    @NotNull
     private String title;
 
     /**
      * 政策类型："省级" | "市级"
      */
-    @NotBlank
+    @NotNull
     private String type;
 
     /**
      * 发布单位
      */
-    @NotBlank
+    @NotNull
     private String issueUnit;
 
     /**
      * 发布时间
      */
-    @NotBlank
+    @NotNull
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime issueTime;
 
     /**
      * 内容
      */
-    @NotBlank
+    @NotNull
     private String content;
 
 
@@ -42,4 +44,6 @@ public class UpdatePolicyDTO {
      */
 
     private String thumbImage;
+
+    private String status;
 }

@@ -18,8 +18,6 @@
         <result column="deleted" property="deleted" />
         <result column="image" property="image" />
         <result column="thumb_image" property="thumbImage"/>
-        <result column="longitude" property="longitude"/>
-        <result column="latitude" property="latitude"/>
         <result column="location_id" property="locationId"/>
         <result column="drama_id" property="dramaId"/>
     </resultMap>
@@ -38,8 +36,6 @@
         `deleted`,
         `image`,
         `thumb_image`,
-        `longitude`,
-        `latitude`,
         `location_id`,
         `drama_id`
     </sql>
@@ -97,6 +93,7 @@
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Tour">
         SELECT *
         FROM fi_tours
+        WHERE deleted = 0
         ORDER BY created_at DESC
             LIMIT 10
     </select>
@@ -131,12 +128,7 @@
             <if test="dto.thumbImage != null and dto.thumbImage != ''">
                 thumb_image = #{dto.thumbImage},
             </if>
-            <if test="dto.longitude != null and dto.longitude != ''">
-                longitude = #{dto.longitude},
-            </if>
-            <if test="dto.latitude != null and dto.latitude != ''">
-                latitude = #{dto.latitude},
-            </if>
+
             <if test="dto.locationId != null and dto.locationId != ''">
                 location_id = #{dto.locationId},
             </if>
@@ -155,9 +147,13 @@
         SELECT COUNT(1)
         FROM fi_tours
         WHERE deleted = 0
-        AND (name LIKE CONCAT('%', #{keyword}, '%')
-           OR description LIKE CONCAT('%', #{keyword}, '%')
-           OR theme LIKE CONCAT('%', #{keyword}, '%'))
+        <if test="keyword != null and keyword != ''">
+            AND (
+            name LIKE CONCAT('%', #{keyword}, '%')
+            OR description LIKE CONCAT('%', #{keyword}, '%')
+            OR theme LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
     </select>
 
 </mapper>

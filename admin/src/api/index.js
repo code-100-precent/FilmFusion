@@ -506,24 +506,37 @@ export const getServicePage = (page = 1, size = 10, keyword = '') => {
 // ==================== 电视剧拍摄报告管理 ====================
 
 /**
- * 添加报告
+ * 添加报告（使用用户创建接口）
  */
 export const addReport = (data) => {
   return request({
-    url: '/report/admin/create',
+    url: '/report/create',
     method: 'post',
     data
   })
 }
 
 /**
- * 更新报告
+ * 更新报告（用户更新接口）
  */
 export const updateReport = (data) => {
   return request({
-    url: `/report/admin/${data.id}`,
+    url: `/report/update/${data.id}`,
     method: 'put',
     data
+  })
+}
+
+/**
+ * 管理员更新报告状态
+ */
+export const updateReportStatus = (data) => {
+  return request({
+    url: `/report/admin/update/${data.id}`,
+    method: 'put',
+    data: {
+      status: data.status
+    }
   })
 }
 

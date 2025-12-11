@@ -41,8 +41,8 @@ spring:
     active: dev
   servlet:
     multipart:
-      max-file-size: 5MB
-      max-request-size: 5MB
+      max-file-size: 50MB
+      max-request-size: 50MB
       # location: D:/  # 移除此配置，使用默认临时目录
   datasource:
     url: jdbc:mysql://162.14.106.139:3306/film_fusion?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=10000&socketTimeout=30000

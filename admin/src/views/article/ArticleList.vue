@@ -148,7 +148,15 @@
           <n-input v-model:value="articleForm.issueUnit" placeholder="请输入发布单位" />
         </n-form-item>
         <n-form-item label="发布时间" path="issueTime">
-          <n-date-picker v-model:value="articleForm.issueTime" type="datetime" clearable style="width: 100%" />
+          <n-date-picker
+              v-model:value="articleForm.issueTime"
+              type="datetime"
+              clearable
+              style="width: 100%"
+              format="yyyy-MM-dd HH:mm"
+              value-format="yyyy-MM-dd HH:mm"
+              :time-picker-props="{ format: 'HH:mm' }"
+          />
         </n-form-item>
         <n-form-item label="文章内容" path="content">
           <n-input v-model:value="articleForm.content" type="textarea" :rows="10" placeholder="请输入文章内容" />
@@ -261,7 +269,14 @@ const pagination = reactive({
 const formRules = {
   title: [{ required: true, message: '请输入文章标题', trigger: 'blur' }],
   issueUnit: [{ required: true, message: '请输入发布单位', trigger: 'blur' }],
-  issueTime: [{ required: true, message: '请选择发布时间', trigger: 'change', type: 'number' }],
+  issueTime: [{
+    required: true,
+    validator: (rule, value) => {
+      if (!value) return new Error('请选择发布时间')
+      return true
+    },
+    trigger: ['blur', 'change']
+  }],
   content: [{ required: true, message: '请输入文章内容', trigger: 'blur' }]
 }
 
@@ -273,9 +288,9 @@ const checkMobile = () => {
 const formatDate = (date) => {
   if (!date) return '-'
   if (Array.isArray(date)) {
-    return dayjs(date[0] + '-' + String(date[1]).padStart(2, '0') + '-' + String(date[2]).padStart(2, '0')).format('YYYY-MM-DD HH:mm:ss')
+    return dayjs(date[0] + '-' + String(date[1]).padStart(2, '0') + '-' + String(date[2]).padStart(2, '0') + ' ' + String(date[3]).padStart(2, '0') + ':' + String(date[4]).padStart(2, '0')).format('YYYY-MM-DD HH:mm')
   }
-  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+  return dayjs(date).format('YYYY-MM-DD HH:mm')
 }
 
 const getCover = (article, type = 'thumb') => {
@@ -422,7 +437,7 @@ const handleAdd = () => {
     id: null,
     title: '',
     issueUnit: '',
-    issueTime: Date.now(),
+    issueTime: dayjs().format('YYYY-MM-DD HH:mm'),
     content: '',
     image: '',
     thumbImage: '',
@@ -456,7 +471,7 @@ const handleEdit = async (row) => {
         id: data.id,
         title: data.title,
         issueUnit: data.issueUnit || data.issue_unit,
-        issueTime: data.issueTime ? new Date(data.issueTime).getTime() : (data.issue_time ? new Date(data.issue_time).getTime() : Date.now()),
+        issueTime: (data.issueTime || data.issue_time) ? formatDate(data.issueTime || data.issue_time) : dayjs().format('YYYY-MM-DD HH:mm'),
         content: data.content,
         image: detailUrls.join(','), // 详情图片字符串
         thumbImage: '', // 暂时置空，保存时重新计算
@@ -673,7 +688,7 @@ const handleDialogSave = async () => {
     const data = {
       title: articleForm.title,
       issueUnit: articleForm.issueUnit,
-      issueTime: dayjs(articleForm.issueTime).format('YYYY-MM-DD HH:mm:ss'),
+      issueTime: dayjs(articleForm.issueTime).format('YYYY-MM-DD HH:mm'),
       content: articleForm.content,
       image: finalImageStr,
       thumbImage: finalThumbImageStr,

@@ -74,6 +74,7 @@
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Hotel">
         SELECT *
         FROM fi_hotel
+        WHERE deleted = 0
         ORDER BY created_time DESC
             LIMIT 10
     </select>
@@ -117,8 +118,12 @@
         SELECT COUNT(1)
         FROM fi_hotel
         WHERE deleted = 0
-        AND (name LIKE CONCAT('%', #{keyword}, '%')
-           OR description LIKE CONCAT('%', #{keyword}, '%'))
+        <if test="keyword != null and keyword != ''">
+            AND (
+            name LIKE CONCAT('%', #{keyword}, '%')
+            OR description LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
     </select>
 
 </mapper>

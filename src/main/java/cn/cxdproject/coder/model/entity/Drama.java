@@ -76,7 +76,7 @@ public class Drama extends BaseEntity implements Serializable, Cloneable {
      * 拍摄地ID，关联locations表
      */
     @TableField("location_id")
-    private Long locationId;
+    private String locationId;
 
     /**
      * 协拍服务
@@ -88,7 +88,7 @@ public class Drama extends BaseEntity implements Serializable, Cloneable {
      * 协拍服务ID，关联shoot表
      */
     @TableField("service_id")
-    private Long serviceId;
+    private String serviceId;
 
     /**
      * 用户ID，关联到用户表

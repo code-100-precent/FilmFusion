@@ -82,6 +82,7 @@
     <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Drama">
         SELECT *
         FROM fi_dramas
+        WHERE deleted = 0
         ORDER BY created_time DESC
             LIMIT 10
     </select>
@@ -133,7 +134,12 @@
     <select id="getTotal" resultType="java.lang.Long">
         SELECT COUNT(1)
         FROM fi_dramas
-        WHERE name LIKE CONCAT('%', #{keyword}, '%')
-           OR drama_description LIKE CONCAT('%', #{keyword}, '%')
+        WHERE deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (
+            name LIKE CONCAT('%', #{keyword}, '%')
+            OR drama_description LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
     </select>
 </mapper>

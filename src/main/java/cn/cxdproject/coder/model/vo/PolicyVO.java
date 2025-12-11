@@ -40,7 +40,7 @@ public class PolicyVO {
     /**
      * 发布时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime issueTime;
 
     /**
@@ -81,6 +81,8 @@ public class PolicyVO {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    private String status;
 
 
 }

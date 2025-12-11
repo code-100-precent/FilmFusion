@@ -71,8 +71,6 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .transport(createDTO.getTransport())
                 .image(createDTO.getImage())
                 .thumbImage(createDTO.getThumbImage())
-                .latitude(createDTO.getLatitude())
-                .longitude(createDTO.getLongitude())
                 .locationId(createDTO.getLocationId())
                 .dramaId(createDTO.getDramaId())
                 .build();
@@ -197,8 +195,6 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .createdAt(tour.getCreatedAt())
                 .updatedAt(tour.getUpdatedAt())
                 .thumbImage(tour.getThumbImage())
-                .longitude(tour.getLongitude())
-                .latitude(tour.getLatitude())
                 .locationId(tour.getLocationId())
                 .dramaId(tour.getDramaId())
                 .deleted(tour.getDeleted() != null ? (tour.getDeleted() ? 1 : 0) : 0)

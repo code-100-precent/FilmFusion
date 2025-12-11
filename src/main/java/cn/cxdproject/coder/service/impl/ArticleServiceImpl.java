@@ -117,7 +117,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .title(createDTO.getTitle())
                 .issueUnit(createDTO.getIssueUnit())
                 .content(createDTO.getContent())
-                .issueTime(LocalDateTime.now())
+                .issueTime(createDTO.getIssueTime())
                 .userId(currentUser.getId())
                 .image(createDTO.getImage())
                 .thumbImage(createDTO.getThumbImage())
