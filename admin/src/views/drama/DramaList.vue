@@ -163,11 +163,17 @@
         <n-form-item label="演员" path="cast">
           <n-input v-model:value="dramaForm.cast" placeholder="请输入演员信息" />
         </n-form-item>
-        <n-form-item label="拍摄地" path="shootLocation">
-          <n-input v-model:value="dramaForm.shootLocation" placeholder="请输入拍摄地" />
+        <n-form-item label="拍摄场地" path="locationId">
+          <n-select v-model:value="dramaForm.locationId" :options="locationOptions" placeholder="请选择拍摄场地" filterable clearable @update:value="handleLocationChange" />
         </n-form-item>
-        <n-form-item label="服务" path="service">
-          <n-input v-model:value="dramaForm.service" type="textarea" :rows="2" placeholder="请输入服务信息" />
+        <n-form-item label="拍摄地描述" path="shootLocation">
+          <n-input v-model:value="dramaForm.shootLocation" placeholder="请输入拍摄地描述" />
+        </n-form-item>
+        <n-form-item label="协拍服务" path="serviceId">
+          <n-select v-model:value="dramaForm.serviceId" :options="serviceOptions" placeholder="请选择协拍服务" filterable clearable @update:value="handleServiceChange" />
+        </n-form-item>
+        <n-form-item label="服务描述" path="service">
+          <n-input v-model:value="dramaForm.service" type="textarea" :rows="2" placeholder="请输入服务描述" />
         </n-form-item>
         <n-form-item label="封面图片" path="cover">
           <n-upload
@@ -236,14 +242,26 @@ import {
   NSpin,
   NPagination,
   NUpload,
+  NSelect,
   useMessage
 } from 'naive-ui'
-import { getDramaPage, addDrama, updateDrama, deleteDrama, getDramaById, uploadFile } from '@/api'
+import { useUserStore } from '@/store/user'
+import { 
+  getDramaPage, 
+  addDrama, 
+  updateDrama, 
+  deleteDrama, 
+  getDramaById, 
+  uploadFile,
+  getLocationList,
+  getServiceList
+} from '@/api'
 import { getImageUrl } from '@/utils/image'
 import config from '@/config'
 import dayjs from 'dayjs'
 
 const message = useMessage()
+const userStore = useUserStore()
 
 const isMobile = ref(false)
 const loading = ref(false)
@@ -260,6 +278,34 @@ const dialogTitle = ref('新增电视剧')
 const formRef = ref(null)
 const coverFileList = ref([])
 const imageFileList = ref([])
+const locationOptions = ref([])
+const serviceOptions = ref([])
+
+const fetchOptions = async () => {
+  try {
+    // 获取场地列表
+    const locRes = await getLocationList({ current: 1, size: 100 })
+    if (locRes.code === 200) {
+      const list = locRes.data?.records || locRes.data || []
+      locationOptions.value = list.map(item => ({
+        label: item.name,
+        value: item.id
+      }))
+    }
+
+    // 获取服务列表 (分页接口，取前100条)
+    const servRes = await getServiceList({ current: 1, size: 100 })
+    if (servRes.code === 200) {
+      const list = servRes.data?.records || servRes.data || []
+      serviceOptions.value = list.map(item => ({
+        label: item.name,
+        value: item.id
+      }))
+    }
+  } catch (error) {
+    console.error('获取选项数据失败:', error)
+  }
+}
 
 const searchForm = reactive({
   keyword: ''
@@ -274,7 +320,10 @@ const dramaForm = reactive({
   dramaDescription: '',
   cast: '',
   shootLocation: '',
+  locationId: null,
   service: '',
+  serviceId: null,
+  userId: null,
   cover: '',
   image: '',
   thumbCover: '',
@@ -477,10 +526,10 @@ const handleDialogSave = async () => {
       ...dramaForm,
       image: finalImageStr,
       thumbImage: finalThumbImageStr,
-      // 确保ID是数字类型，如果为空则设为null
-      location_id: 1, // 暂时硬编码为1，后端需要关联ID
-      service_id: 1, // 暂时硬编码为1，后端需要关联ID
-      user_id: 1, // 暂时硬编码为1，后端需要关联ID
+      // 映射表单字段到后端字段
+      location_id: dramaForm.locationId,
+      service_id: dramaForm.serviceId,
+      user_id: dramaForm.userId
     }
 
     let res
@@ -555,6 +604,18 @@ const handlePageSizeChange = (pageSize) => {
   loadData()
 }
 
+const handleLocationChange = (value, option) => {
+  if (option && !dramaForm.shootLocation) {
+    dramaForm.shootLocation = option.label
+  }
+}
+
+const handleServiceChange = (value, option) => {
+  if (option && !dramaForm.service) {
+    dramaForm.service = option.label
+  }
+}
+
 const handleAdd = () => {
   dialogTitle.value = '新增电视剧'
   Object.assign(dramaForm, {
@@ -566,7 +627,10 @@ const handleAdd = () => {
     dramaDescription: '',
     cast: '',
     shootLocation: '',
+    locationId: null,
     service: '',
+    serviceId: null,
+    userId: userStore.userInfo?.id || null,
     cover: '',
     image: '',
     thumbCover: '',
@@ -602,7 +666,10 @@ const handleEdit = async (row) => {
         dramaDescription: res.data.dramaDescription || '',
         cast: res.data.cast || '',
         shootLocation: res.data.shootLocation || '',
+        locationId: res.data.locationId || res.data.location_id,
         service: res.data.service || '',
+        serviceId: res.data.serviceId || res.data.service_id,
+        userId: res.data.userId || res.data.user_id,
         cover: coverUrl,
         image: detailUrls.join(','), // 详情图片字符串
         thumbCover: thumbCoverUrl,
@@ -750,6 +817,7 @@ onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
   loadData()
+  fetchOptions()
 })
 
 onUnmounted(() => {

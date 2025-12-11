@@ -259,10 +259,12 @@ import {
 } from 'naive-ui'
 import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById, uploadFile } from '@/api'
 import { getImageUrl } from '@/utils/image'
+import { useUserStore } from '@/store/user'
 import config from '@/config'
 import dayjs from 'dayjs'
 
 const message = useMessage()
+const userStore = useUserStore()
 
 const isMobile = ref(false)
 const loading = ref(false)
@@ -301,7 +303,8 @@ const locationForm = reactive({
   cover: '',
   image: '',
   thumbCover: '',
-  thumbImage: ''
+  thumbImage: '',
+  userId: null
 })
 
 const typeOptions = [
@@ -585,7 +588,7 @@ const handleDialogSave = async () => {
       status: locationForm.status ? 1 : 0,
       image: finalImageStr,
       thumbImage: finalThumbImageStr,
-      user_id: 1 // 暂时硬编码为1，后端需要关联ID
+      user_id: locationForm.userId
     }
     
     let res
@@ -679,7 +682,8 @@ const handleAdd = () => {
     cover: '',
     image: '',
     thumbCover: '',
-    thumbImage: ''
+    thumbImage: '',
+    userId: userStore.userInfo?.id || null
   })
   coverFileList.value = []
   imageFileList.value = []
@@ -719,7 +723,8 @@ const handleEdit = async (row) => {
         cover: coverUrl,
         image: detailUrls.join(','),
         thumbCover: thumbCoverUrl,
-        thumbImage: ''
+        thumbImage: '',
+        userId: res.data.userId || res.data.user_id
       })
       
       // 设置封面图片文件列表
