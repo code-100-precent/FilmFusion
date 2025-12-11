@@ -153,21 +153,23 @@
         <n-form-item label="文章内容" path="content">
           <n-input v-model:value="articleForm.content" type="textarea" :rows="10" placeholder="请输入文章内容" />
         </n-form-item>
-        <n-form-item label="封面图片" path="image">
+        <n-form-item label="封面图片" path="cover">
           <n-upload
               :max="1"
-              v-model:file-list="coverFileList"
-              :custom-request="(options) => handleImageUpload(options, 'cover')"
+              :file-list="coverFileList"
+              @update:file-list="handleCoverFileListChange"
+              :custom-request="handleCoverUpload"
               accept="image/*"
               list-type="image-card"
           >
             点击上传封面
           </n-upload>
         </n-form-item>
-        <n-form-item label="详情图片" path="detailImages">
+        <n-form-item label="详情图片" path="image">
           <n-upload
               v-model:file-list="detailFileList"
-              :custom-request="(options) => handleImageUpload(options, 'detail')"
+              @update:file-list="handleDetailFileListChange"
+              :custom-request="handleDetailUpload"
               accept="image/*"
               list-type="image-card"
               multiple
@@ -230,8 +232,10 @@ const articleForm = reactive({
   issueUnit: '',
   issueTime: null,
   content: '',
-  image: '',
+  image: '', // 存储详情图片
   thumbImage: '',
+  cover: '', // 存储封面图片
+  thumbCover: '',
   userId: null
 })
 
@@ -400,6 +404,8 @@ const handleAdd = () => {
     content: '',
     image: '',
     thumbImage: '',
+    cover: '',
+    thumbCover: '',
     userId: userStore.userInfo?.id || null
   })
   coverFileList.value = []
@@ -413,46 +419,53 @@ const handleEdit = async (row) => {
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑文章'
       const data = res.data
+
+      // 解析图片字段：第一个为封面，后面的是详情图
+      const allImages = (data.image || '').split(',').filter(url => url.trim())
+      const coverUrl = allImages[0] || ''
+      const detailUrls = allImages.slice(1)
+      
+      // 解析缩略图字段
+      const allThumbImages = (data.thumbImage || '').split(',').filter(url => url.trim())
+      const thumbCoverUrl = allThumbImages[0] || coverUrl
+      const detailThumbUrls = allThumbImages.slice(1)
+
       Object.assign(articleForm, {
         id: data.id,
         title: data.title,
         issueUnit: data.issueUnit || data.issue_unit,
         issueTime: data.issueTime ? new Date(data.issueTime).getTime() : (data.issue_time ? new Date(data.issue_time).getTime() : Date.now()),
         content: data.content,
-        image: data.image,
-        thumbImage: data.thumbImage || data.thumb_image,
+        image: detailUrls.join(','), // 详情图片字符串
+        thumbImage: '', // 暂时置空，保存时重新计算
+        cover: coverUrl,
+        thumbCover: thumbCoverUrl,
         userId: data.userId || data.user_id
       })
 
-      // 图片回显
-      const imgs = (articleForm.image || '').split(',').filter(Boolean)
-      const thumbs = (articleForm.thumbImage || '').split(',').filter(Boolean)
-
       // 封面
-      if (imgs.length > 0) {
-        const coverImg = imgs[0]
-        const coverThumb = thumbs[0] || coverImg
+      if (coverUrl) {
         coverFileList.value = [{
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: getImageUrl(coverThumb),
-          originUrl: coverImg,
-          thumbUrl: coverThumb
+          url: getImageUrl(thumbCoverUrl || coverUrl),
+          originUrl: coverUrl,
+          thumbUrl: thumbCoverUrl || coverUrl
         }]
       } else {
         coverFileList.value = []
       }
 
       // 详情
-      detailFileList.value = imgs.slice(1).map((img, index) => {
-        const thumb = thumbs[index + 1] || img
+      detailFileList.value = detailUrls.map((url, index) => {
+        const thumb = detailThumbUrls[index] || url
         return {
           id: `detail-${index}`,
           name: `detail-${index}.jpg`,
           status: 'finished',
           url: getImageUrl(thumb),
-          originUrl: img,
+          originUrl: url,
           thumbUrl: thumb
         }
       })
@@ -464,40 +477,98 @@ const handleEdit = async (row) => {
   }
 }
 
-const handleImageUpload = async ({ file, onFinish, onError }, type) => {
+const handleCoverUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
-
-      // 更新文件列表中的文件信息
-      const list = type === 'cover' ? coverFileList : detailFileList
-      let fileIndex = list.value.findIndex(f => f.id === file.id)
       
-      // Fallback: 如果通过id找不到，尝试通过file对象引用查找
-      if (fileIndex === -1) {
-        fileIndex = list.value.findIndex(f => f.file === file.file)
-      }
-
+      articleForm.cover = originUrl
+      articleForm.thumbCover = thumbUrl
+      
+      const fullUrl = getImageUrl(originUrl)
+      file.url = fullUrl
+      file.originUrl = originUrl
+      file.thumbUrl = thumbUrl
+      
+      const fileIndex = coverFileList.value.findIndex(f => f.id === file.id)
       if (fileIndex !== -1) {
-        list.value[fileIndex].url = getImageUrl(thumbUrl)
-        list.value[fileIndex].status = 'finished'
-        list.value[fileIndex].originUrl = originUrl.startsWith('http') ? originUrl.replace(config.fileBaseURL, '') : originUrl
-        list.value[fileIndex].thumbUrl = thumbUrl.startsWith('http') ? thumbUrl.replace(config.fileBaseURL, '') : thumbUrl
+        coverFileList.value[fileIndex].url = fullUrl
+        coverFileList.value[fileIndex].originUrl = originUrl
+        coverFileList.value[fileIndex].thumbUrl = thumbUrl
       }
 
-      onFinish({ url: thumbUrl })
-      message.success('图片上传成功')
+      onFinish()
+      message.success('封面图片上传成功')
     } else {
       onError()
       message.error('上传失败：' + (res.message || '未知错误'))
     }
   } catch (error) {
-    console.error('上传图片失败:', error)
+    console.error('上传封面图片失败:', error)
     onError()
     message.error('上传失败')
   }
+}
+
+const handleDetailUpload = async ({ file, onFinish, onError }) => {
+  try {
+    const res = await uploadFile(file.file)
+    if (res.code === 200 && res.data) {
+      const originUrl = res.data.originUrl || res.data.url
+      const thumbUrl = res.data.thumbUrl || originUrl
+      
+      const fullUrl = getImageUrl(originUrl)
+      file.url = fullUrl
+      file.originUrl = originUrl
+      file.thumbUrl = thumbUrl
+      
+      const fileIndex = detailFileList.value.findIndex(f => f.id === file.id)
+      if (fileIndex !== -1) {
+        detailFileList.value[fileIndex].url = fullUrl
+        detailFileList.value[fileIndex].originUrl = originUrl
+        detailFileList.value[fileIndex].thumbUrl = thumbUrl
+      }
+
+      const existingImages = articleForm.image ? articleForm.image.split(',').filter(url => url.trim()) : []
+      existingImages.push(originUrl)
+      articleForm.image = existingImages.join(',')
+      
+      onFinish()
+      message.success('详情图片上传成功')
+    } else {
+      onError()
+      message.error('上传失败：' + (res.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('上传详情图片失败:', error)
+    onError()
+    message.error('上传失败')
+  }
+}
+
+// 处理封面文件列表变化
+const handleCoverFileListChange = (files) => {
+  coverFileList.value = files
+  if (files.length === 0) {
+    articleForm.cover = ''
+    articleForm.thumbCover = ''
+  }
+}
+
+// 处理详情图片文件列表变化
+const handleDetailFileListChange = (files) => {
+  detailFileList.value = files
+  const imageUrls = files
+      .filter(file => file.status === 'finished' && file.url)
+      .map(file => {
+        if (file.url.startsWith('http')) {
+          return file.url.replace(config.fileBaseURL, '')
+        }
+        return file.url
+      })
+  articleForm.image = imageUrls.join(',')
 }
 
 const handleDialogSave = async () => {
@@ -511,22 +582,80 @@ const handleDialogSave = async () => {
   try {
     dialogLoading.value = true
     
-    // 整理图片数据
-    const allFiles = [...coverFileList.value, ...detailFileList.value]
-    // 过滤掉未上传成功的文件（防止出错）
-    const validFiles = allFiles.filter(f => f.status === 'finished' && (f.originUrl || f.url))
+    // 组合图片字段：封面 + 详情图
+    // 优先使用 fileList 中的 originUrl (相对路径)，如果没有则尝试从 url 解析
+    const detailOrigins = detailFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.originUrl) return f.originUrl
+          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+          return f.url
+        })
+        
+    const allImages = []
     
-    const originUrls = validFiles.map(f => f.originUrl || f.url.replace(config.fileBaseURL, '')).join(',')
-    const thumbUrls = validFiles.map(f => f.thumbUrl || f.url.replace(config.fileBaseURL, '')).join(',')
+    // 获取封面原图（优先从文件列表获取）
+    let coverOrigin = articleForm.cover
+    const coverFile = coverFileList.value.find(f => f.status === 'finished')
+    if (coverFile) {
+      if (coverFile.originUrl) {
+        coverOrigin = coverFile.originUrl
+      } else if (coverFile.url && coverFile.url.startsWith('http')) {
+        coverOrigin = coverFile.url.replace(config.fileBaseURL, '')
+      } else {
+        coverOrigin = coverFile.url
+      }
+    } else if (coverOrigin && coverOrigin.startsWith('http')) {
+      // 兜底：如果 articleForm.cover 是完整路径
+      coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
+    }
+
+    if (coverOrigin) allImages.push(coverOrigin)
+    if (detailOrigins.length > 0) allImages.push(...detailOrigins)
+    
+    const finalImageStr = allImages.join(',')
+    
+    // 组合缩略图字段
+    // 优先使用 fileList 中的 thumbUrl (相对路径)，如果没有则回退到 originUrl 或 url
+    const detailThumbs = detailFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.thumbUrl) return f.thumbUrl
+          if (f.originUrl) return f.originUrl
+          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+          return f.url
+        })
+
+    const allThumbImages = []
+    
+    // 获取封面缩略图（优先从文件列表获取）
+    let coverThumb = articleForm.thumbCover || articleForm.cover
+    if (coverFile) {
+      if (coverFile.thumbUrl) {
+        coverThumb = coverFile.thumbUrl
+      } else if (coverFile.originUrl) {
+        coverThumb = coverFile.originUrl
+      }
+    }
+    
+    // 兜底处理
+    if (coverThumb && coverThumb.startsWith('http')) {
+       coverThumb = coverThumb.replace(config.fileBaseURL, '')
+    }
+
+    if (coverThumb) allThumbImages.push(coverThumb)
+    if (detailThumbs.length > 0) allThumbImages.push(...detailThumbs)
+    
+    const finalThumbImageStr = allThumbImages.join(',')
     
     const data = {
       title: articleForm.title,
-      issue_unit: articleForm.issueUnit,
-      issue_time: dayjs(articleForm.issueTime).format('YYYY-MM-DD HH:mm:ss'),
+      issueUnit: articleForm.issueUnit,
+      issueTime: dayjs(articleForm.issueTime).format('YYYY-MM-DD HH:mm:ss'),
       content: articleForm.content,
-      image: originUrls,
-      thumb_image: thumbUrls,
-      user_id: articleForm.userId
+      image: finalImageStr,
+      thumbImage: finalThumbImageStr,
+      userId: articleForm.userId
     }
 
     let res

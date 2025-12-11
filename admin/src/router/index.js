@@ -105,15 +105,6 @@ const routes = [
         }
       },
       {
-        path: 'tourroute',
-        name: 'tourroute',
-        component: () => import('../views/tourroute/TourRouteList.vue'),
-        meta: {
-          title: '旅游线路管理',
-          icon: 'Guide'
-        }
-      },
-      {
         path: 'policy',
         name: 'policy',
         component: () => import('../views/policy/PolicyList.vue'),
