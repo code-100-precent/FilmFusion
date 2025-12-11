@@ -155,7 +155,7 @@
               type="datetime"
               placeholder="请选择发布时间"
               format="yyyy-MM-dd HH:mm:ss"
-              value-format="yyyy-MM-dd HH:mm:ss"
+              value-format="yyyy-MM-dd'T'HH:mm:ss"
               clearable
           />
         </n-form-item>
@@ -682,7 +682,7 @@ const handleDialogSave = async () => {
       title: policyForm.title,
       type: policyForm.type,
       issueUnit: policyForm.issueUnit,
-      issueTime: policyForm.issueTime,
+      issueTime: policyForm.issueTime ? dayjs(policyForm.issueTime).format('YYYY-MM-DDTHH:mm:ss') : null,
       content: policyForm.content,
       image: policyForm.image,
       thumbImage: policyForm.thumbImage,

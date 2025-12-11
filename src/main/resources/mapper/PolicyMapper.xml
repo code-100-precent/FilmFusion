@@ -85,7 +85,7 @@
             <if test="dto.issueUnit != null and dto.issueUnit != ''">
                 issue_unit = #{dto.issueUnit},
             </if>
-            <if test="dto.issueTime != null and dto.issueTime != ''">
+            <if test="dto.issueTime != null">
                 issue_time = #{dto.issueTime},
             </if>
             <if test="dto.content != null and dto.content != ''">
