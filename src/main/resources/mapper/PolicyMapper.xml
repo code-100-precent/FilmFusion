@@ -73,7 +73,7 @@
         SELECT *
         FROM fi_policy
         WHERE deleted = 0
-          AND status = 'published'
+          AND status = '发布'
         ORDER BY issue_time DESC
             LIMIT 10
     </select>
