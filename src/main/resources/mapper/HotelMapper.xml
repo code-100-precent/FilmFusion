@@ -113,4 +113,11 @@
         AND deleted = false
     </update>
 
+    <select id="getTotal" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM fi_hotel
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+           OR description LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+
 </mapper>

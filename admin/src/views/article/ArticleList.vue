@@ -43,6 +43,7 @@
             :item-count="pagination.totalItems"
             :page-sizes="pagination.pageSizes"
             show-size-picker
+            show-quick-jumper
             @update:page="handlePageChange"
             @update:page-size="handlePageSizeChange"
         />

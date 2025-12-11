@@ -37,5 +37,7 @@ public interface ReportMapper extends BaseMapper<Report> {
                 @Param("status") String status
         );
 
+        Long getTotal(@Param("keyword") String keyword);
+
 
 }

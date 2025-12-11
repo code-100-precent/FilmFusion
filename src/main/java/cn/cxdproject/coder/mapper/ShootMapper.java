@@ -35,4 +35,6 @@ public interface ShootMapper extends BaseMapper<Shoot> {
             @Param("dto") UpdateShootDTO dto
     );
 
+    Long getTotal(@Param("keyword") String keyword);
+
 }

@@ -102,5 +102,12 @@
         AND deleted = false
     </update>
 
+    <select id="getTotal" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM fi_policy
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+           OR type LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+
 
 </mapper>

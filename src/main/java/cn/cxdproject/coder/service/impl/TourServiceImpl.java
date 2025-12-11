@@ -8,8 +8,10 @@ import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateTourDTO;
 import cn.cxdproject.coder.model.dto.UpdateTourDTO;
 import cn.cxdproject.coder.model.entity.Drama;
+import cn.cxdproject.coder.model.entity.Policy;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
+import cn.cxdproject.coder.model.vo.PolicyVO;
 import cn.cxdproject.coder.model.vo.TourVO;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
@@ -249,17 +251,18 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         long size = page.getSize();
         long offset = (current - 1) * size;
 
+        // 获取当前页的数据和总记录数
         List<Tour> tours = tourMapper.getAdminPage(keyword, offset, size);
-        long total = tourMapper.countAdminPage(keyword);
+        Long total = tourMapper.getTotal(keyword);
 
-        List<TourVO> voList = tours.stream()
+        List<TourVO> voList =tours.stream()
                 .map(this::toTourVO)
                 .collect(Collectors.toList());
 
         return new Page<TourVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setTotal(total)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 }

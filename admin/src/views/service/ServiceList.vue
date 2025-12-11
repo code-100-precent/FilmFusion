@@ -27,17 +27,30 @@
       </div>
       
       <!-- 桌面端表格 -->
-      <n-data-table
-        v-if="!isMobile"
-        :columns="columns"
-        :data="serviceList"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="row => row.id"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-        :scroll-x="1400"
-      />
+      <template v-if="!isMobile">
+        <n-data-table
+          :columns="columns"
+          :data="serviceList"
+          :loading="loading"
+          :row-key="row => row.id"
+          :scroll-x="1400"
+        />
+
+        <!-- 独立分页组件 -->
+        <div class="pagination-container" v-if="pagination.itemCount > 0">
+          <n-pagination
+            v-model:page="pagination.page"
+            v-model:page-size="pagination.pageSize"
+            :page-count="Math.ceil(pagination.itemCount / pagination.pageSize)"
+            :item-count="pagination.itemCount"
+            :page-sizes="pagination.pageSizes"
+            show-size-picker
+            show-quick-jumper
+            @update:page="handlePageChange"
+            @update:page-size="handlePageSizeChange"
+          />
+        </div>
+      </template>
       
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
@@ -133,7 +146,7 @@
     
     <n-modal 
       v-model:show="dialogVisible" 
-      preset="dialog" 
+      preset="card" 
       :title="dialogTitle" 
       style="width: 90%; max-width: 900px"
       :mask-closable="false"
@@ -148,30 +161,70 @@
         <n-form-item label="服务名称" path="name">
           <n-input v-model:value="serviceForm.name" placeholder="请输入服务名称" />
         </n-form-item>
+        
         <n-form-item label="价格" path="price">
           <n-input-number 
             v-model:value="serviceForm.price" 
-            placeholder="请输入价格（元）" 
-            :precision="2"
+            placeholder="请输入价格" 
             :min="0"
+            :show-button="false"
             style="width: 100%"
-          />
+          >
+            <template #prefix>￥</template>
+          </n-input-number>
         </n-form-item>
-        <n-form-item label="联系人" path="contactName">
-          <n-input v-model:value="serviceForm.contactName" placeholder="请输入联系人姓名" />
+
+        <n-form-item label="封面图片">
+          <n-upload
+            v-model:file-list="coverFileList"
+            list-type="image-card"
+            :custom-request="handleCoverUpload"
+            accept="image/*"
+            :max="1"
+          >
+            点击上传
+          </n-upload>
         </n-form-item>
-        <n-form-item label="联系电话" path="phone">
-          <n-input v-model:value="serviceForm.phone" placeholder="请输入联系电话" />
+
+        <n-form-item label="详情图片">
+          <n-upload
+            v-model:file-list="imageFileList"
+            list-type="image-card"
+            :custom-request="handleImageUpload"
+            accept="image/*"
+            multiple
+            :max="9"
+          >
+            点击上传
+          </n-upload>
         </n-form-item>
+
+        <n-form-item label="可用状态" path="status">
+          <n-switch v-model:value="serviceForm.status" />
+        </n-form-item>
+
+        <n-form-item label="服务简介" path="description">
+          <n-input v-model:value="serviceForm.description" type="textarea" :rows="3" placeholder="请输入服务简介" />
+        </n-form-item>
+
+        <div style="display: flex; gap: 16px;">
+          <n-form-item label="联系人" path="contactName" style="flex: 1;">
+            <n-input v-model:value="serviceForm.contactName" placeholder="姓名" />
+          </n-form-item>
+          <n-form-item label="联系电话" path="phone" style="flex: 1;">
+            <n-input v-model:value="serviceForm.phone" placeholder="电话" />
+          </n-form-item>
+        </div>
+
         <n-form-item label="服务地址" path="address">
           <n-input v-model:value="serviceForm.address" placeholder="请输入服务地址" />
         </n-form-item>
       </n-form>
       <template #footer>
-        <n-space>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
           <n-button @click="dialogVisible = false">取消</n-button>
-          <n-button type="primary" @click="handleDialogSave">保存</n-button>
-        </n-space>
+          <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
+        </div>
       </template>
     </n-modal>
     
@@ -179,26 +232,258 @@
   </template>
   
   <script setup>
-  import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
-  import { NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, NModal, NDataTable, NPagination, NSpace, NSpin, useMessage, NTag, NPopconfirm } from 'naive-ui'
-  import { Icon } from '@iconify/vue'
-  import { deleteService, updateService, addService, getServiceList } from '@/api/index'
-  
-  const message = useMessage()
-  
-  const isMobile = ref(false)
-  const loading = ref(false)
-  const serviceList = ref([])
-  const dialogVisible = ref(false)
-  const dialogLoading = ref(false)
-  const dialogTitle = ref('新增服务')
-  const formRef = ref(null)
-  
-  const searchForm = reactive({
-    keyword: ''
-  })
-  
-  const serviceForm = reactive({
+import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
+import { 
+  NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, 
+  NModal, NDataTable, NPagination, NSpace, NSpin, useMessage, 
+  NTag, NPopconfirm, NUpload, NImage, NSwitch 
+} from 'naive-ui'
+import { Icon } from '@iconify/vue'
+import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile } from '@/api/index'
+import { getImageUrl } from '@/utils/image'
+import config from '@/config'
+
+const message = useMessage()
+
+const isMobile = ref(false)
+const loading = ref(false)
+const serviceList = ref([])
+const dialogVisible = ref(false)
+const dialogLoading = ref(false)
+const dialogTitle = ref('新增服务')
+const formRef = ref(null)
+const coverFileList = ref([])
+const imageFileList = ref([])
+
+const searchForm = reactive({
+  keyword: ''
+})
+
+const serviceForm = reactive({
+  id: null,
+  name: '',
+  price: 0,
+  contactName: '',
+  phone: '',
+  address: '',
+  description: '',
+  status: true,
+  image: '',
+  thumbImage: ''
+})
+
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  itemCount: 0,
+  showSizePicker: true,
+  pageSizes: [10, 20, 50, 100]
+})
+
+const formRules = {
+  name: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
+  contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
+  phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+  price: [{ required: true, type: 'number', message: '请输入价格', trigger: 'blur' }],
+  address: [{ required: true, message: '请输入服务地址', trigger: 'blur' }]
+}
+
+const handleCoverUpload = async ({ file, fileList }) => {
+  try {
+    const res = await uploadFile(file.file)
+    
+    if (res.code === 200) {
+      const url = res.data.url || res.data
+      const originUrl = res.data.originUrl || url
+      const thumbUrl = res.data.thumbUrl || url
+      
+      const index = coverFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        coverFileList.value[index].status = 'finished'
+        coverFileList.value[index].url = getImageUrl(thumbUrl || originUrl)
+        coverFileList.value[index].originUrl = originUrl
+        coverFileList.value[index].thumbUrl = thumbUrl
+      }
+      
+      message.success('封面上传成功')
+      return url
+    } else {
+      message.error('封面上传失败')
+      const index = coverFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        coverFileList.value.splice(index, 1)
+      }
+      return false
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    message.error('封面上传失败')
+    const index = coverFileList.value.findIndex(f => f.id === file.id)
+    if (index !== -1) {
+      coverFileList.value.splice(index, 1)
+    }
+    return false
+  }
+}
+
+const handleImageUpload = async ({ file, fileList }) => {
+  try {
+    const res = await uploadFile(file.file)
+    
+    if (res.code === 200) {
+      const url = res.data.url || res.data
+      const originUrl = res.data.originUrl || url
+      const thumbUrl = res.data.thumbUrl || url
+      
+      const index = imageFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        imageFileList.value[index].status = 'finished'
+        imageFileList.value[index].url = getImageUrl(thumbUrl || originUrl)
+        imageFileList.value[index].originUrl = originUrl
+        imageFileList.value[index].thumbUrl = thumbUrl
+      }
+      
+      message.success('图片上传成功')
+      return url
+    } else {
+      message.error('图片上传失败')
+      const index = imageFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        imageFileList.value.splice(index, 1)
+      }
+      return false
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    message.error('图片上传失败')
+    const index = imageFileList.value.findIndex(f => f.id === file.id)
+    if (index !== -1) {
+      imageFileList.value.splice(index, 1)
+    }
+    return false
+  }
+}
+
+const columns = [
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '服务名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+  {
+    title: '图片',
+    key: 'image',
+    width: 100,
+    render: (row) => {
+      const images = (row.image || '').split(',').filter(u => u)
+      const thumbs = (row.thumbImage || '').split(',').filter(u => u)
+      const displayUrl = thumbs[0] || images[0]
+      const previewUrl = images[0] || displayUrl
+      
+      if (!displayUrl) return '-'
+      
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: getImageUrl(displayUrl),
+        previewSrc: getImageUrl(previewUrl),
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
+    }
+  },
+  { title: '价格', key: 'price', width: 120, render: (row) => row.price ? `¥${row.price}` : '-' },
+  { title: '联系人', key: 'contactName', width: 120 },
+  { title: '联系电话', key: 'phone', width: 150 },
+  { title: '服务地址', key: 'address', width: 250, ellipsis: { tooltip: true } },
+  { title: '简介', key: 'description', width: 200, ellipsis: { tooltip: true } },
+  {
+    title: '状态',
+    key: 'status',
+    width: 100,
+    render: (row) => {
+      const isActive = row.status === 1 || row.status === true
+      return h(
+        'span',
+        { class: isActive ? 'status-available' : 'status-unavailable' },
+        isActive ? '上线' : '下线'
+      )
+    }
+  },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 150,
+    fixed: 'right',
+    render: (row) => {
+      return h('div', { style: 'display: flex; gap: 8px;' }, [
+        h(NButton, {
+          size: 'small',
+          onClick: () => handleEdit(row)
+        }, { default: () => '编辑' }),
+        h(NPopconfirm, {
+          onPositiveClick: () => handleDelete(row.id)
+        }, {
+          trigger: () => h(NButton, {
+            size: 'small',
+            type: 'error',
+            quaternary: true
+          }, { default: () => '删除' }),
+          default: () => '确定要删除这个服务吗？'
+        })
+      ])
+    }
+  }
+]
+
+// 检测移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+const loadData = async () => {
+  try {
+    loading.value = true
+    const res = await getServiceList({
+      current: pagination.page,
+      size: pagination.pageSize,
+      keyword: searchForm.keyword
+    })
+    if (res.code === 200) {
+      serviceList.value = res.data || []
+      // 兼容多种API返回格式
+      pagination.itemCount = res.pagination?.totalItems || res.data?.total || res.total || 0
+    }
+  } catch (error) {
+    console.error('加载服务列表失败:', error)
+    message.error('加载服务列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSearch = () => {
+  pagination.page = 1
+  loadData()
+}
+
+const handleReset = () => {
+  searchForm.keyword = ''
+  pagination.page = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  pagination.page = page
+  loadData()
+}
+
+const handlePageSizeChange = (pageSize) => {
+  pagination.pageSize = pageSize
+  pagination.page = 1
+  loadData()
+}
+
+const handleAdd = () => {
+  dialogTitle.value = '新增服务'
+  Object.assign(serviceForm, {
     id: null,
     name: '',
     price: 0,
@@ -206,155 +491,140 @@
     phone: '',
     address: '',
     description: '',
-    status: true
+    status: true,
+    image: '',
+    thumbImage: ''
   })
-  
-  const pagination = reactive({
-    page: 1,
-    pageSize: 10,
-    itemCount: 0,
-    showSizePicker: true,
-    pageSizes: [10, 20, 50, 100]
-  })
-  
-  const formRules = {
-    name: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
-    contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-    phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
-  }
-  
-  const columns = [
-    { title: 'ID', key: 'id', width: 80, fixed: 'left' },
-    { title: '服务名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
-    { title: '价格', key: 'price', width: 120, render: (row) => row.price ? `¥${row.price}` : '-' },
-    { title: '联系人', key: 'contactName', width: 120 },
-    { title: '联系电话', key: 'phone', width: 150 },
-    { title: '服务地址', key: 'address', width: 250, ellipsis: { tooltip: true } },
-    { title: '简介', key: 'description', width: 200, ellipsis: { tooltip: true } },
-    {
-      title: '状态',
-      key: 'status',
-      width: 100,
-      render: (row) => {
-        const isActive = row.status !== false
-        return h(NTag, { 
-          type: isActive ? 'success' : 'default', 
-          size: 'small' 
-        }, { 
-          default: () => isActive ? '上线' : '下线' 
+  coverFileList.value = []
+  imageFileList.value = []
+  dialogVisible.value = true
+}
+
+const handleEdit = async (row) => {
+  try {
+    const res = await getServiceById(row.id)
+    if (res.code === 200 && res.data) {
+        dialogTitle.value = '编辑服务'
+        const data = res.data
+        
+        Object.assign(serviceForm, {
+          id: data.id,
+          name: data.name || '',
+          price: data.price || 0,
+          contactName: data.contactName || '',
+          phone: data.phone || '',
+          address: data.address || '',
+          description: data.description || '',
+          status: data.status === 1 || data.status === true,
+          image: data.image || '',
+          thumbImage: data.thumbImage || ''
         })
-      }
-    },
-    {
-      title: '操作',
-      key: 'actions',
-      width: 150,
-      fixed: 'right',
-      render: (row) => {
-        return h('div', { style: 'display: flex; gap: 8px;' }, [
-          h(NButton, {
-            size: 'small',
-            onClick: () => handleEdit(row)
-          }, { default: () => '编辑' }),
-          h(NPopconfirm, {
-            onPositiveClick: () => handleDelete(row.id)
-          }, {
-            trigger: () => h(NButton, {
-              size: 'small',
-              type: 'error',
-              quaternary: true
-            }, { default: () => '删除' }),
-            default: () => '确定要删除这个服务吗？'
-          })
-        ])
-      }
+
+        const urls = (data.image || '').split(',').filter(u => u.trim())
+        const thumbUrls = (data.thumbImage || '').split(',').filter(u => u.trim())
+        
+        // 封面图 (第一张)
+        if (urls.length > 0) {
+          const coverUrl = urls[0]
+          const coverThumb = thumbUrls[0] || coverUrl
+          coverFileList.value = [{
+            id: 'cover-img',
+            name: 'cover.jpg',
+            status: 'finished',
+            url: getImageUrl(coverThumb || coverUrl),
+            originUrl: coverUrl,
+            thumbUrl: coverThumb
+          }]
+        } else {
+          coverFileList.value = []
+        }
+
+        // 详情图 (第二张开始)
+        const detailUrls = urls.slice(1)
+        const detailThumbUrls = thumbUrls.slice(1)
+        
+        imageFileList.value = detailUrls.map((url, index) => ({
+            id: `img-${index}`,
+            name: `image-${index}.jpg`,
+            status: 'finished',
+            url: getImageUrl(detailThumbUrls[index] || url),
+            originUrl: url,
+            thumbUrl: detailThumbUrls[index] || url
+        }))
+        
+        dialogVisible.value = true
     }
-  ]
-  
-  // 检测移动端
-  const checkMobile = () => {
-    isMobile.value = window.innerWidth <= 768
+  } catch (e) {
+      console.error(e)
+      message.error('获取详情失败')
   }
-  
-  const loadData = async () => {
-    try {
-      loading.value = true
-      const res = await getServiceList({
-        current: pagination.page,
-        size: pagination.pageSize,
-        keyword: searchForm.keyword
+}
+
+const handleDialogSave = async () => {
+  if (!formRef.value) return
+  try {
+    await formRef.value.validate()
+  } catch (error) {
+    return
+  }
+
+  try {
+    dialogLoading.value = true
+    
+    // 处理封面图
+    const coverFile = coverFileList.value.find(f => f.status === 'finished')
+    let coverUrl = ''
+    let coverThumb = ''
+    
+    if (coverFile) {
+      if (coverFile.originUrl) coverUrl = coverFile.originUrl
+      else if (coverFile.url && coverFile.url.startsWith('http')) coverUrl = coverFile.url.replace(config.fileBaseURL, '')
+      else coverUrl = coverFile.url
+      
+      if (coverFile.thumbUrl) coverThumb = coverFile.thumbUrl
+      else if (coverFile.originUrl) coverThumb = coverFile.originUrl
+      else if (coverFile.url && coverFile.url.startsWith('http')) coverThumb = coverFile.url.replace(config.fileBaseURL, '')
+      else coverThumb = coverFile.url
+    }
+
+    // 处理详情图
+    const detailImages = imageFileList.value
+      .filter(f => f.status === 'finished')
+      .map(f => {
+         if (f.originUrl) return f.originUrl
+         if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+         return f.url
       })
-      if (res.code === 200) {
-        serviceList.value = res.data?.records || res.data || []
-        pagination.itemCount = res.data?.total || res.total || 0
-      }
-    } catch (error) {
-      console.error('加载服务列表失败:', error)
-      message.error('加载服务列表失败')
-    } finally {
-      loading.value = false
+      
+    const detailThumbImages = imageFileList.value
+      .filter(f => f.status === 'finished')
+      .map(f => {
+         if (f.thumbUrl) return f.thumbUrl
+         if (f.originUrl) return f.originUrl
+         if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+         return f.url
+      })
+
+    // 组合图片 (封面 + 详情)
+    const allImages = []
+    if (coverUrl) allImages.push(coverUrl)
+    if (detailImages.length > 0) allImages.push(...detailImages)
+    
+    const allThumbImages = []
+    if (coverThumb) allThumbImages.push(coverThumb)
+    if (detailThumbImages.length > 0) allThumbImages.push(...detailThumbImages)
+
+    const data = {
+      ...serviceForm,
+      status: serviceForm.status ? 1 : 0,
+      image: allImages.join(','),
+      thumbImage: allThumbImages.join(','),
+      user_id: 1 
     }
-  }
-  
-  const handleSearch = () => {
-    pagination.page = 1
-    loadData()
-  }
-  
-  const handleReset = () => {
-    searchForm.keyword = ''
-    pagination.page = 1
-    loadData()
-  }
-  
-  const handlePageChange = (page) => {
-    pagination.page = page
-    loadData()
-  }
-  
-  const handlePageSizeChange = (pageSize) => {
-    pagination.pageSize = pageSize
-    pagination.page = 1
-    loadData()
-  }
-  
-  const handleAdd = () => {
-    dialogTitle.value = '新增服务'
-    Object.assign(serviceForm, {
-      id: null,
-      name: '',
-      price: 0,
-      contactName: '',
-      phone: '',
-      address: '',
-      description: '',
-      status: true
-    })
-    dialogVisible.value = true
-  }
-  
-  const handleEdit = (service) => {
-    dialogTitle.value = '编辑服务'
-    Object.assign(serviceForm, {
-      id: service.id,
-      name: service.name || '',
-      price: service.price || 0,
-      contactName: service.contactName || '',
-      phone: service.phone || '',
-      address: service.address || '',
-      description: service.description || '',
-      status: service.status !== false
-    })
-    dialogVisible.value = true
-  }
-  
-  const handleDialogSave = async () => {
-    try {
-      dialogLoading.value = true
-      const data = { ...serviceForm }
-      let res
-      if (data.id) {
-        res = await updateService(data)
+
+    let res
+    if (data.id) {
+      res = await updateService(data)
     } else {
       res = await addService(data)
     }
@@ -425,6 +695,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+.pagination-container {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
 }
 
 .status-available {
