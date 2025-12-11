@@ -238,15 +238,18 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         long size = page.getSize();
         long offset = (current - 1) * size;
 
-        List<Policy> policies = policyMapper.getAdminPage(keyword, offset, size);
+        // 获取当前页的数据和总记录数
+        List<Policy> policys = policyMapper.getAdminPage(keyword, offset, size);
+        Long total = policyMapper.getTotal(keyword);
 
-        List<PolicyVO> voList = policies.stream()
+        List<PolicyVO> voList = policys.stream()
                 .map(this::toPolicyVO)
                 .collect(Collectors.toList());
 
         return new Page<PolicyVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 }

@@ -4,6 +4,8 @@ import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateBannerDTO;
 import cn.cxdproject.coder.model.dto.UpdateBannerDTO;
+import cn.cxdproject.coder.model.entity.Article;
+import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.BannerVO;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -99,8 +101,9 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         long size = page.getSize();
         long offset = (current - 1) * size;
 
-
+        // 获取当前页的数据和总记录数
         List<Banner> banners = bannerMapper.getPage(keyword, offset, size);
+        Long total = bannerMapper.getTotal(keyword);
 
         List<BannerVO> voList = banners.stream()
                 .map(this::toBannerVO)
@@ -109,7 +112,8 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         return new Page<BannerVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 
     @Override

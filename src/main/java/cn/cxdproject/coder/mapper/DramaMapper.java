@@ -35,5 +35,6 @@ public interface DramaMapper extends BaseMapper<Drama> {
             @Param("dto") UpdateDramaDTO dto
     );
 
+    Long getTotal(@Param("keyword") String keyword);
 
 }

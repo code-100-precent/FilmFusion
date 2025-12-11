@@ -33,4 +33,6 @@ public interface PolicyMapper extends BaseMapper<Policy> {
             @Param("dto") UpdatePolicyDTO dto
     );
 
+    Long getTotal(@Param("keyword") String keyword);
+
 }

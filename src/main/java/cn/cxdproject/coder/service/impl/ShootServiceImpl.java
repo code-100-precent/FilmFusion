@@ -246,7 +246,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         long size = page.getSize();
         long offset = (current - 1) * size;
 
+        // 获取当前页的数据和总记录数
         List<Shoot> shoots = shootMapper.getAdminPage(keyword, offset, size);
+        Long total = shootMapper.getTotal(keyword);
 
         List<ShootVO> voList = shoots.stream()
                 .map(this::toShootVO)
@@ -255,6 +257,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         return new Page<ShootVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 }

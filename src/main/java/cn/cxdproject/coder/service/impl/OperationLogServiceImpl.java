@@ -3,7 +3,9 @@ package cn.cxdproject.coder.service.impl;
 import cn.cxdproject.coder.common.constants.ResponseConstants;
 import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.entity.Banner;
+import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.vo.BannerVO;
+import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.OperationLogVO;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -64,8 +66,9 @@ public class OperationLogServiceImpl extends ServiceImpl<OperationLogMapper, Ope
         long size = page.getSize();
         long offset = (current - 1) * size;
 
-
+        // 获取当前页的数据和总记录数
         List<OperationLog> operationLogs = operationLogMapper.getPage(keyword, offset, size);
+        Long total = operationLogMapper.getTotal(keyword);
 
         List<OperationLogVO> voList = operationLogs.stream()
                 .map(this::toOperationVO)
@@ -74,7 +77,8 @@ public class OperationLogServiceImpl extends ServiceImpl<OperationLogMapper, Ope
         return new Page<OperationLogVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 
     @Override

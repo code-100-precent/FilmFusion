@@ -21,4 +21,6 @@ public interface OperationLogMapper extends BaseMapper<OperationLog> {
             @Param("size") long size
     );
 
+    Long getTotal(@Param("keyword") String keyword);
+
 }

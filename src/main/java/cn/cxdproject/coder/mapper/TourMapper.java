@@ -36,4 +36,6 @@ public interface TourMapper extends BaseMapper<Tour> {
             @Param("dto") UpdateTourDTO dto
     );
 
+    Long getTotal(@Param("keyword") String keyword);
+
 }

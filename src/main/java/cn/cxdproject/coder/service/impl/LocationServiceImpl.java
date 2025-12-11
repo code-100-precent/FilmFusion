@@ -258,7 +258,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         long size = page.getSize();
         long offset = (current - 1) * size;
 
+        // 获取当前页的数据和总记录数
         List<Location> locations = locationMapper.getAdminPage(keyword, offset, size);
+        Long total = locationMapper.getTotal(keyword);
 
         List<LocationVO> voList = locations.stream()
                 .map(this::toLocationVO)
@@ -267,6 +269,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         return new Page<LocationVO>()
                 .setCurrent(current)
                 .setSize(size)
-                .setRecords(voList);
+                .setRecords(voList)
+                .setTotal(total);
     }
 }

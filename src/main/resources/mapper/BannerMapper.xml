@@ -43,4 +43,10 @@
         ) tmp ON a.id = tmp.id
     </select>
 
+    <select id="getTotal" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM fi_banner
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+
 </mapper>

@@ -47,4 +47,10 @@
         LIMIT #{offset}, #{size}
     </select>
 
+    <select id="getTotal" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM fi_operation_logs
+        WHERE type LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+
 </mapper>
