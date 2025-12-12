@@ -435,17 +435,7 @@ const loadData = async () => {
 
     if (res.code === 200) {
       bannerList.value = res.data || []
-<<<<<<< HEAD
-      // 设置总数据量
-      pagination.itemCount = res.pagination?.totalItems || 0
-      // 自动计算总页数
-      pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
-      console.log('设置总数据量:', pagination.itemCount)
-      console.log('自动计算总页数:', pagination.pageCount)
-      console.log('当前 pagination 对象:', pagination)
-=======
       pagination.itemCount = res.pagination?.totalItems || res.total || 0
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   } catch (error) {
     console.error('加载Banner列表失败:', error)

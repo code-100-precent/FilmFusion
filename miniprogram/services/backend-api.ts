@@ -412,7 +412,44 @@ export const uploadFile = (filePath: string) => {
     })
 }
 
-// ==================== 8. 用户认证 (User) ====================
+// ==================== 8. 用户反馈 (Feedback) ====================
+
+/**
+ * 创建反馈
+ */
+export const createFeedback = (data: any) => {
+    return http<any>({
+        url: '/feedback/create',
+        method: 'POST',
+        data
+    })
+}
+
+/**
+ * 获取我的反馈列表
+ */
+export const getMyFeedbackPage = (params: {
+    current?: number
+    size?: number
+}) => {
+    return http<PageResponse<any>>({
+        url: '/feedback/my',
+        method: 'GET',
+        data: params
+    })
+}
+
+/**
+ * 获取反馈详情
+ */
+export const getFeedbackById = (id: number) => {
+    return http<any>({
+        url: `/feedback/${id}`,
+        method: 'GET'
+    })
+}
+
+// ==================== 9. 用户认证 (User) ====================
 
 /**
  * 用户登录
@@ -486,7 +523,7 @@ export const uploadAvatar = (filePath: string) => {
     return new Promise<ApiResponse<string>>((resolve, reject) => {
         const token = uni.getStorageSync('token')
         const baseURL = process.env.NODE_ENV === 'development'
-            ? 'http://localhost:8080/api'
+            ? 'http://162.14.106.139:8080/api'
             : 'https://your-production-domain.com/api'
 
         uni.uploadFile({
@@ -608,6 +645,11 @@ export default {
     getReportById,
     updateReport,
     deleteReport,
+
+    // 用户反馈
+    createFeedback,
+    getMyFeedbackPage,
+    getFeedbackById,
 
     // 文件上传
     uploadFile,

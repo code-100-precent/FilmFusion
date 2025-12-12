@@ -362,13 +362,6 @@ const getStatusTagType = (status) => {
 const loadData = async () => {
   try {
     loading.value = true
-<<<<<<< HEAD
-    const res = await getFeedbackPage(pagination.page, pagination.pageSize, searchForm.keyword)
-    console.log('分页响应数据:', res) // 添加调试日志
-    if (res.code === 200) {
-      feedbackList.value = res.data || []
-      // 确保正确设置总数据量和总页数
-=======
     const res = await getFeedbackPage(pagination.page, pagination.pageSize, searchForm.keyword, searchForm.status)
     if (res.code === 200) {
       let list = res.data || []
@@ -377,7 +370,6 @@ const loadData = async () => {
         list = list.filter(item => item.type === searchForm.type)
       }
       feedbackList.value = list
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       pagination.itemCount = res.pagination?.totalItems || 0
       pagination.pageCount = res.pagination?.totalPages || 1
       console.log('设置总数据量:', pagination.itemCount) // 添加调试日志

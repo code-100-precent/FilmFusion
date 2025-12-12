@@ -174,49 +174,6 @@
             <template #prefix>￥</template>
           </n-input-number>
         </n-form-item>
-<<<<<<< HEAD
-        <n-form-item label="封面图片" path="cover">
-          <n-upload
-            :max="1"
-            :file-list="coverFileList"
-            @update:file-list="handleCoverFileListChange"
-            :custom-request="handleCoverUpload"
-            accept="image/*"
-          >
-            <n-button>上传封面图片</n-button>
-          </n-upload>
-          <div v-if="locationForm.cover" style="margin-top: 12px;">
-            <n-image
-              :src="getImageUrl(locationForm.thumbCover || locationForm.cover)"
-              width="200"
-              height="120"
-              object-fit="cover"
-            />
-          </div>
-        </n-form-item>
-        <n-form-item label="详情图片" path="image">
-          <n-upload
-            :max="10"
-            multiple
-            :file-list="imageFileList"
-            @update:file-list="handleImageFileListChange"
-            :custom-request="handleImageUpload"
-            accept="image/*"
-          >
-            <n-button>上传详情图片（最多10张）</n-button>
-          </n-upload>
-          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
-            <n-image
-              v-for="(file, index) in imageFileList"
-              :key="index"
-              :src="file.url"
-              width="100"
-              height="100"
-              object-fit="cover"
-            />
-          </div>
-        </n-form-item>
-=======
         
         <n-form-item label="封面图片">
           <n-upload
@@ -275,17 +232,12 @@
             <n-input v-model:value="locationForm.latitude" placeholder="纬度" />
           </n-form-item>
         </div>
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       </n-form>
       <template #footer>
         <div style="display: flex; justify-content: flex-end; gap: 12px;">
           <n-button @click="dialogVisible = false">取消</n-button>
           <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
-<<<<<<< HEAD
-        </n-space>
-=======
         </div>
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       </template>
     </n-modal>
   </div>
@@ -658,10 +610,6 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
-<<<<<<< HEAD
-    const data = { ...locationForm }
-
-=======
     
     // 组合图片字段：封面 + 详情图
     // 优先使用 fileList 中的 originUrl (相对路径)，如果没有则尝试从 url 解析
@@ -737,7 +685,6 @@ const handleDialogSave = async () => {
       user_id: locationForm.userId
     }
     
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     let res
     if (locationForm.id) {
       res = await updateLocation(data)
@@ -781,25 +728,9 @@ const loadData = async () => {
     console.log('API响应:', res)
 
     if (res.code === 200) {
-<<<<<<< HEAD
-      locationList.value = res.data || []
-
-      // 设置分页信息
-      if (res.pagination) {
-        pagination.itemCount = res.pagination.totalItems || 0
-        // 自动计算总页数
-        pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
-        pagination.page = res.pagination.currentPage || 1
-        pagination.pageSize = res.pagination.pageSize || 10
-      }
-
-      console.log(`成功加载数据，总数: ${pagination.itemCount}，总页数: ${pagination.pageCount}，当前页数据条数: ${locationList.value.length}`)
-      console.log('当前 pagination 对象:', JSON.parse(JSON.stringify(pagination)))
-=======
       locationList.value = res.data?.records || res.data || []
       // 兼容多种API返回格式
       pagination.itemCount = res.data?.total || res.total || res.pagination?.totalItems || res.pagination?.total || 0
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   } catch (error) {
     console.error('加载场地列表失败:', error)
@@ -894,40 +825,13 @@ const handleEdit = async (row) => {
         thumbImage: '',
         userId: res.data.userId || res.data.user_id
       })
-<<<<<<< HEAD
-
-      // 设置封面图片文件列表
-      coverFileList.value = []
-      if (res.data.cover) {
-=======
       
       // 设置封面图片文件列表
       if (coverUrl) {
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
         coverFileList.value = [{
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-<<<<<<< HEAD
-          url: res.data.thumbCover || res.data.cover
-        }]
-      }
-
-      // 设置详情图片文件列表
-      imageFileList.value = []
-      if (res.data.image) {
-        const imageUrls = res.data.image.split(',').filter(url => url.trim())
-        const thumbUrls = res.data.thumbImage ? res.data.thumbImage.split(',').filter(url => url.trim()) : []
-
-        imageFileList.value = imageUrls.map((url, index) => ({
-          id: `image-${index}`,
-          name: `image-${index}.jpg`,
-          status: 'finished',
-          url: thumbUrls[index] || url.trim()
-        }))
-      }
-
-=======
           url: getImageUrl(thumbCoverUrl || coverUrl),
           originUrl: coverUrl,
           thumbUrl: thumbCoverUrl || coverUrl
@@ -949,7 +853,6 @@ const handleEdit = async (row) => {
         }
       })
       
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       dialogVisible.value = true
     }
   } catch (error) {

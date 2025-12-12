@@ -131,7 +131,7 @@
 	.navbar__title {
 		flex: 1;
 		text-align: left;
-		font-size: 20rpx;
+		font-size: 36rpx;
 		font-weight: 600;
 		color: #1f2937;
 		letter-spacing: 0.5rpx;

@@ -176,9 +176,6 @@
               accept="image/*"
               list-type="image-card"
           >
-<<<<<<< HEAD
-            <n-button>上传封面图片</n-button>
-=======
             点击上传封面
           </n-upload>
         </n-form-item>
@@ -194,7 +191,6 @@
               multiple
           >
             点击上传详情图
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
           </n-upload>
           <div v-if="hotelForm.cover" style="margin-top: 12px;">
             <n-image
@@ -205,33 +201,6 @@
             />
           </div>
         </n-form-item>
-<<<<<<< HEAD
-
-        <!-- 详情图片上传 -->
-        <n-form-item label="详情图片" path="detailImages">
-          <n-upload
-            :max="10"
-            multiple
-            :file-list="imageFileList"
-            @update:file-list="handleImageFileListChange"
-            :custom-request="handleImageUpload"
-            accept="image/*"
-          >
-            <n-button>上传详情图片（最多10张）</n-button>
-          </n-upload>
-          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
-            <n-image
-              v-for="(file, index) in imageFileList"
-              :key="index"
-              :src="file.url"
-              width="100"
-              height="100"
-              object-fit="cover"
-            />
-          </div>
-        </n-form-item>
-=======
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 
       </n-form>
       <template #action>
@@ -303,19 +272,12 @@ const hotelForm = reactive({
   description: '',
   longitude: '',
   latitude: '',
-<<<<<<< HEAD
-  cover: '',           // 封面图片
-  thumbCover: '',      // 封面缩略图
-  image: '',           // 详情图片（逗号分隔）
-  thumbImage: ''       // 详情图片缩略图（逗号分隔）
-=======
   image: '',           // 对应 image (封面图 + 详情图)
   thumbImage: '',      // 对应 thumb_image (缩略图)
   userId: null,
   // 辅助字段，不提交给后端，用于内部逻辑
   cover: '',
   thumbCover: ''
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 })
 
 const pagination = reactive({
@@ -332,15 +294,9 @@ const pagination = reactive({
 
 // 文件列表
 const coverFileList = ref([])
-<<<<<<< HEAD
-const imageFileList = ref([])
-// ✅ 删除缩略图文件列表
-// const thumbFileList = ref([])
-=======
 const detailFileList = ref([])
 // 存储上传文件的详细信息 (id -> { originUrl, thumbUrl })，解决 Naive UI 文件列表可能丢失自定义属性的问题
 const fileMapping = reactive({})
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 
 const formRules = {
   name: [
@@ -481,15 +437,9 @@ const loadData = async () => {
       return
     }
 
-<<<<<<< HEAD
-    // PageResponse 数据结构：{ data: [...], pagination: { totalItems, ... } }
-    const listData = res.data || []
-    const totalItems = res.pagination?.totalItems || 0
-=======
     const listData = res.data?.list || res.data?.records || res.data || []
     // 兼容多种API返回格式，特别是 PageResponse
     const totalItems = res.data?.total || res.data?.totalItems || res.pagination?.totalItems || res.pagination?.total || 0
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 
     hotelList.value = listData.map(hotel => {
       // 解析图片字段
@@ -564,11 +514,7 @@ const resetForm = () => {
     thumbCover: ''
   })
   coverFileList.value = []
-<<<<<<< HEAD
-  imageFileList.value = []
-=======
   detailFileList.value = []
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 
   if (formRef.value) {
     formRef.value.restoreValidation()
@@ -594,20 +540,7 @@ const handleEdit = async (row) => {
 
     const hotel = res.data
 
-<<<<<<< HEAD
-    // ✅ 修正：将 API 返回的驼峰字段映射到表单的下划线字段
-    // 分离封面图片和详情图片
-    const imageUrls = hotel.image ? hotel.image.split(',').filter(url => url.trim()) : []
-    const thumbUrls = hotel.thumbImage ? hotel.thumbImage.split(',').filter(url => url.trim()) : []
-
-    const coverImage = imageUrls.length > 0 ? imageUrls[0] : ''
-    const coverThumb = thumbUrls.length > 0 ? thumbUrls[0] : ''
-    const detailImages = imageUrls.slice(1)
-    const detailThumbs = thumbUrls.slice(1)
-
-=======
     // 映射 API 数据到表单
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     Object.assign(hotelForm, {
       id: hotel.id,
       name: hotel.name,
@@ -617,35 +550,6 @@ const handleEdit = async (row) => {
       description: hotel.description,
       longitude: hotel.longitude,
       latitude: hotel.latitude,
-<<<<<<< HEAD
-      cover: coverImage,
-      thumbCover: coverThumb,
-      image: detailImages.join(','),
-      thumbImage: detailThumbs.join(',')
-    })
-
-    // 设置封面图文件列表
-    coverFileList.value = []
-    if (coverImage) {
-      coverFileList.value = [{
-        id: 'cover',
-        name: 'cover.jpg',
-        status: 'finished',
-        url: coverThumb || coverImage
-      }]
-    }
-
-    // 设置详情图片文件列表
-    imageFileList.value = []
-    if (detailImages.length > 0) {
-      imageFileList.value = detailImages.map((url, index) => ({
-        id: `image-${index}`,
-        name: `image-${index}.jpg`,
-        status: 'finished',
-        url: detailThumbs[index] || url
-      }))
-    }
-=======
       image: hotel.image || '',
       thumbImage: hotel.thumbImage || hotel.thumb_image || '',
       userId: hotel.userId || hotel.user_id
@@ -694,7 +598,6 @@ const handleEdit = async (row) => {
       detailFileList.value = []
     }
 
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   } catch (error) {
     console.error('获取酒店详情失败:', error)
     message.error('获取酒店详情失败')
@@ -706,19 +609,6 @@ const handleEdit = async (row) => {
 
 // --- 图片上传逻辑 ---
 
-<<<<<<< HEAD
-// 封面图片文件列表变化处理
-const handleCoverFileListChange = (fileList) => {
-  coverFileList.value = fileList
-  if (fileList.length === 0) {
-    hotelForm.cover = ''
-    hotelForm.thumbCover = ''
-  }
-}
-
-// ✅ 封面图上传（新增/第一次上传）
-=======
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file);
@@ -730,12 +620,6 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
       // 记录到映射表
       fileMapping[file.id] = { originUrl, thumbUrl }
 
-<<<<<<< HEAD
-      hotelForm.cover = originUrl;
-      hotelForm.thumbCover = thumbUrl;
-
-      await nextTick();
-=======
       // 更新文件列表中的URL，用于预览显示
       // 注意：这里我们查找并更新现有文件对象，而不是替换它
       const fileIndex = coverFileList.value.findIndex(f => f.id === file.id)
@@ -764,7 +648,6 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
       // 强制更新 coverFileList 以确保视图刷新
       coverFileList.value = [...coverFileList.value]
 
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       onFinish();
       message.success('封面图上传成功');
     } else {
@@ -778,10 +661,6 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
   }
 };
 
-<<<<<<< HEAD
-// 详情图片上传处理
-const handleImageUpload = async ({ file, onFinish, onError }) => {
-=======
 const handleCoverFileListChange = (newList) => {
   coverFileList.value = newList
   if (newList.length === 0) {
@@ -791,34 +670,10 @@ const handleCoverFileListChange = (newList) => {
 }
 
 const handleDetailUpload = async ({ file, onFinish, onError }) => {
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   try {
     const res = await uploadFile(file.file)
 
     if (res.code === 200 && res.data) {
-<<<<<<< HEAD
-      // 将新上传的图片添加到现有图片列表
-      const currentImages = hotelForm.image ? hotelForm.image.split(',').filter(url => url.trim()) : []
-      const currentThumbs = hotelForm.thumbImage ? hotelForm.thumbImage.split(',').filter(url => url.trim()) : []
-
-      currentImages.push(res.data.originUrl)
-      currentThumbs.push(res.data.thumbUrl)
-
-      hotelForm.image = currentImages.join(',')
-      hotelForm.thumbImage = currentThumbs.join(',')
-
-      await nextTick()
-      onFinish()
-      message.success('详情图片上传成功')
-    } else {
-      onError()
-      message.error('详情图片上传失败：' + (res.message || '未知错误'))
-    }
-  } catch (error) {
-    console.error('详情图片上传失败:', error)
-    onError()
-    message.error('详情图片上传失败')
-=======
       const originUrl = res.data.originUrl || res.data.url;
       const thumbUrl = res.data.thumbUrl || originUrl;
       
@@ -857,7 +712,6 @@ const handleDetailUpload = async ({ file, onFinish, onError }) => {
     console.error('上传失败:', error);
     onError();
     message.error('上传失败');
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
   }
 }
 
@@ -894,28 +748,6 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
-<<<<<<< HEAD
-
-    // ✅ 修正：将表单的下划线字段映射到 API 期望的驼峰字段
-    // 合并封面和详情图片为逗号分隔的字符串
-    const allImages = []
-    const allThumbs = []
-
-    // 先添加封面图片
-    if (hotelForm.cover) {
-      allImages.push(hotelForm.cover)
-      allThumbs.push(hotelForm.thumbCover || hotelForm.cover)
-    }
-
-    // 再添加详情图片
-    if (hotelForm.image) {
-      const detailImages = hotelForm.image.split(',').filter(url => url.trim())
-      const detailThumbs = hotelForm.thumbImage ? hotelForm.thumbImage.split(',').filter(url => url.trim()) : []
-      allImages.push(...detailImages)
-      allThumbs.push(...detailThumbs)
-    }
-
-=======
     
     // 辅助函数：获取文件信息
     const getFileInfo = (file) => {
@@ -1013,18 +845,12 @@ const handleDialogSave = async () => {
         finalImageStr
     })
     
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     const data = {
       name: hotelForm.name,
       address: hotelForm.address,
       managerName: hotelForm.manager_name,
       managerPhone: hotelForm.manager_phone,
       description: hotelForm.description,
-<<<<<<< HEAD
-      image: allImages.join(','),
-      thumbImage: allThumbs.join(','),
-=======
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       longitude: hotelForm.longitude,
       latitude: hotelForm.latitude,
       image: finalImageStr,

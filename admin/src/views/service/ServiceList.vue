@@ -273,29 +273,6 @@
   </template>
   
   <script setup>
-<<<<<<< HEAD
-  import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
-  import { NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, NModal, NDataTable, NPagination, NSpace, NSpin, useMessage, NTag, NPopconfirm, NUpload, NImage, NCard } from 'naive-ui'
-  import { Icon } from '@iconify/vue'
-  import { deleteService, updateService, addService, getServiceList, uploadFile } from '@/api/index'
-  import { getImageUrl } from '@/utils/image'
-  
-  const message = useMessage()
-  
-  const isMobile = ref(false)
-  const loading = ref(false)
-  const serviceList = ref([])
-  const dialogVisible = ref(false)
-  const dialogLoading = ref(false)
-  const dialogTitle = ref('新增服务')
-  const formRef = ref(null)
-  
-  const searchForm = reactive({
-    keyword: ''
-  })
-  
-  const serviceForm = reactive({
-=======
 import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
 import { 
   NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, 
@@ -552,7 +529,6 @@ const handlePageSizeChange = (pageSize) => {
 const handleAdd = () => {
   dialogTitle.value = '新增服务'
   Object.assign(serviceForm, {
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     id: null,
     name: '',
     price: 0,
@@ -560,55 +536,6 @@ const handleAdd = () => {
     phone: '',
     address: '',
     description: '',
-<<<<<<< HEAD
-    cover: '',
-    thumbCover: '',
-    image: '',
-    thumbImage: '',
-    status: true
-  })
-
-  const coverFileList = ref([])
-  const imageFileList = ref([])
-  
-  const pagination = reactive({
-  page: 1,
-  pageSize: 10,
-  itemCount: 0,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true,
-  // 添加以下属性以确保Naive UI正确计算分页
-  pageCount: 1,
-  prefix: ({ itemCount }) => `共 ${itemCount} 条`
-})
-  
-  const formRules = {
-    name: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
-    contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-    phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
-  }
-  
-  const columns = [
-    { title: 'ID', key: 'id', width: 80, fixed: 'left' },
-    { title: '服务名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
-    { title: '价格', key: 'price', width: 120, render: (row) => row.price ? `¥${row.price}` : '-' },
-    { title: '联系人', key: 'contactName', width: 120 },
-    { title: '联系电话', key: 'phone', width: 150 },
-    { title: '服务地址', key: 'address', width: 250, ellipsis: { tooltip: true } },
-    { title: '简介', key: 'description', width: 200, ellipsis: { tooltip: true } },
-    {
-      title: '状态',
-      key: 'status',
-      width: 100,
-      render: (row) => {
-        const isActive = row.status !== false
-        return h(NTag, { 
-          type: isActive ? 'success' : 'default', 
-          size: 'small' 
-        }, { 
-          default: () => isActive ? '上线' : '下线' 
-=======
     status: true,
     image: '',
     thumbImage: '',
@@ -638,7 +565,6 @@ const handleEdit = async (row) => {
           image: data.image || '',
           thumbImage: data.thumbImage || '',
           userId: data.userId || data.user_id
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
         })
 
         const urls = (data.image || '').split(',').filter(u => u.trim())
@@ -679,175 +605,6 @@ const handleEdit = async (row) => {
       console.error(e)
       message.error('获取详情失败')
   }
-<<<<<<< HEAD
-  
-  const loadData = async () => {
-  try {
-    loading.value = true
-    const res = await getServicePage(pagination.page, pagination.pageSize, searchForm.keyword)
-    console.log('分页响应数据:', res) // 添加调试日志
-    if (res.code === 200) {
-      serviceList.value = res.data || []
-      // 设置总数据量
-      pagination.itemCount = res.pagination?.totalItems || 0
-      // 自动计算总页数
-      pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
-      console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
-      console.log('自动计算总页数:', pagination.pageCount) // 添加调试日志
-    }
-  } catch (error) {
-    console.error('加载服务列表失败:', error)
-    message.error('加载服务列表失败')
-  } finally {
-    loading.value = false
-  }
-}
-  
-  const handleSearch = () => {
-    pagination.page = 1
-    loadData()
-  }
-  
-  const handleReset = () => {
-    searchForm.keyword = ''
-    pagination.page = 1
-    loadData()
-  }
-  
-  const handlePageChange = (page) => {
-    pagination.page = page
-    loadData()
-  }
-  
-  const handlePageSizeChange = (pageSize) => {
-    pagination.pageSize = pageSize
-    pagination.page = 1
-    loadData()
-  }
-  
-  const handleAdd = () => {
-    dialogTitle.value = '新增服务'
-    Object.assign(serviceForm, {
-      id: null,
-      name: '',
-      price: 0,
-      contactName: '',
-      phone: '',
-      address: '',
-      description: '',
-      cover: '',
-      thumbCover: '',
-      image: '',
-      thumbImage: '',
-      status: true
-    })
-    coverFileList.value = []
-    imageFileList.value = []
-    dialogVisible.value = true
-  }
-
-  const handleEdit = (service) => {
-    dialogTitle.value = '编辑服务'
-
-    // 分离封面图片和详情图片
-    const imageUrls = service.image ? service.image.split(',').filter(url => url.trim()) : []
-    const thumbUrls = service.thumbImage ? service.thumbImage.split(',').filter(url => url.trim()) : []
-
-    const coverImage = imageUrls.length > 0 ? imageUrls[0] : ''
-    const coverThumb = thumbUrls.length > 0 ? thumbUrls[0] : ''
-    const detailImages = imageUrls.slice(1)
-    const detailThumbs = thumbUrls.slice(1)
-
-    Object.assign(serviceForm, {
-      id: service.id,
-      name: service.name || '',
-      price: service.price || 0,
-      contactName: service.contactName || '',
-      phone: service.phone || '',
-      address: service.address || '',
-      description: service.description || '',
-      cover: coverImage,
-      thumbCover: coverThumb,
-      image: detailImages.join(','),
-      thumbImage: detailThumbs.join(','),
-      status: service.status !== false
-    })
-
-    // 设置封面图片文件列表
-    coverFileList.value = []
-    if (coverImage) {
-      coverFileList.value = [{
-        id: 'cover',
-        name: 'cover.jpg',
-        status: 'finished',
-        url: coverThumb || coverImage
-      }]
-    }
-
-    // 设置详情图片文件列表
-    imageFileList.value = []
-    if (detailImages.length > 0) {
-      imageFileList.value = detailImages.map((url, index) => ({
-        id: `image-${index}`,
-        name: `image-${index}.jpg`,
-        status: 'finished',
-        url: detailThumbs[index] || url
-      }))
-    }
-
-    dialogVisible.value = true
-  }
-  
-  const handleDialogSave = async () => {
-    try {
-      dialogLoading.value = true
-
-      // 合并封面和详情图片为逗号分隔的字符串
-      const allImages = []
-      const allThumbs = []
-
-      // 先添加封面图片
-      if (serviceForm.cover) {
-        allImages.push(serviceForm.cover)
-        allThumbs.push(serviceForm.thumbCover || serviceForm.cover)
-      }
-
-      // 再添加详情图片
-      if (serviceForm.image) {
-        const detailImages = serviceForm.image.split(',').filter(url => url.trim())
-        const detailThumbs = serviceForm.thumbImage ? serviceForm.thumbImage.split(',').filter(url => url.trim()) : []
-        allImages.push(...detailImages)
-        allThumbs.push(...detailThumbs)
-      }
-
-      const data = {
-        ...serviceForm,
-        image: allImages.join(','),
-        thumbImage: allThumbs.join(',')
-      }
-
-      // 删除前端专用字段
-      delete data.cover
-      delete data.thumbCover
-
-      let res
-      if (data.id) {
-        res = await updateService(data)
-      } else {
-        res = await addService(data)
-      }
-
-      if (res.code === 200) {
-        message.success(serviceForm.id ? '更新成功' : '创建成功')
-        dialogVisible.value = false
-        loadData()
-      }
-    } catch (error) {
-      console.error('保存失败:', error)
-      message.error('保存失败')
-    } finally {
-      dialogLoading.value = false
-=======
 }
 
 const handleDialogSave = async () => {
@@ -917,7 +674,6 @@ const handleDialogSave = async () => {
       res = await updateService(data)
     } else {
       res = await addService(data)
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   }
 

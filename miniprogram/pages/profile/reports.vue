@@ -17,7 +17,7 @@
         <Empty text="暂无报备记录"></Empty>
         <button class="add-btn" @click="goToFiling">新增报备</button>
       </view>
-      <view v-else>
+      <view v-else-if="reports.length > 0">
         <view
           v-for="report in reports"
           :key="report.id"
@@ -194,6 +194,7 @@ export default {
     }
   },
   onLoad() {
+    console.log('报备列表页面加载')
     this.loadReports()
   },
   computed: {
@@ -222,9 +223,31 @@ export default {
           size: this.size
         })
 
-        if (res.code === 200 && res.data) {
-          const dataList = Array.isArray(res.data) ? res.data : []
-          const pagination = res.pagination || { totalItems: 0 }
+        if (res && (res.code === 200 || res.code === undefined)) {
+          // 处理响应数据 - 兼容多种数据格式
+          let dataList = []
+          let pagination = {}
+          
+          // 情况1: 标准格式 { code: 200, data: [], pagination: {} }
+          if (res.data && Array.isArray(res.data)) {
+            dataList = res.data
+            pagination = res.pagination || {}
+          }
+          // 情况2: 数据直接在data字段中但不是数组
+          else if (res.data && !Array.isArray(res.data)) {
+            dataList = [res.data]
+            pagination = res.pagination || {}
+          }
+          // 情况3: 没有code字段，直接是数据
+          else if (res.code === undefined) {
+            // 可能是游标分页格式或其他格式
+            if (res.records && Array.isArray(res.records)) {
+              dataList = res.records
+            } else if (Array.isArray(res)) {
+              dataList = res
+            }
+            pagination = res.pagination || {}
+          }
           
           // 预处理每个报备项，添加状态文本和类名
           const processedList = dataList.map(report => ({
@@ -238,8 +261,18 @@ export default {
           } else {
             this.reports = [...this.reports, ...processedList]
           }
-          this.total = pagination.totalItems || 0
+          this.total = pagination.totalItems || (pagination.total || 0)
           this.hasMore = this.reports.length < this.total
+        } else {
+          console.warn('响应格式异常:', res)
+          if (reset) {
+            this.reports = []
+          }
+          // 显示错误提示，但不要让页面一直处于加载状态
+          uni.showToast({
+            title: '数据加载失败',
+            icon: 'none'
+          })
         }
       } catch (error) {
         console.error('加载报备失败:', error)
