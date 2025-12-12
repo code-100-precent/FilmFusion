@@ -221,8 +221,7 @@ import {
   NPagination
 } from 'naive-ui'
 import dayjs from 'dayjs'
-import request from '@/utils/request'
-import { uploadFile } from '@/api'
+import { uploadFile, getPolicyPage, getPolicyById, createPolicy, updatePolicy, deletePolicy } from '@/api'
 import config from '@/config'
 
 const message = useMessage()
@@ -293,144 +292,9 @@ const formRules = {
   ]
 }
 
-// 从localStorage获取token
-const getToken = () => {
-  return localStorage.getItem('token') || sessionStorage.getItem('token')
-}
+// 使用封装的 API，不再需要本地的 getPolicyPage 函数
 
-// 简化API调用，只传递关键词
-const getPolicyPage = (current = 1, size = 10, keyword = '') => {
-  const token = getToken()
-
-  // 构建URL参数，只包含关键词搜索
-  const params = new URLSearchParams({
-    current: current.toString(),
-    size: size.toString(),
-    keyword: keyword
-  })
-
-  const url = `/api/policy/admin/page?${params.toString()}`
-
-  console.log('请求URL:', url)
-
-  return fetch(url, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .then(data => {
-        console.log('API响应数据:', data)
-        return data
-      })
-      .catch(error => {
-        console.error('API请求错误:', error)
-        return {
-          code: 500,
-          message: error.message || '网络请求失败'
-        }
-      })
-}
-
-const getPolicyById = async (id) => {
-  try {
-    // 使用统一的request工具，它会自动处理token
-    const res = await request({
-      url: `/policy/${id}`,
-      method: 'get'
-    })
-    return res
-  } catch (error) {
-    console.error('获取政策详情失败:', error)
-    // 如果请求失败，返回错误格式
-    return {
-      code: error.response?.status || 500,
-      message: error.message || '获取政策详情失败',
-      data: null
-    }
-  }
-}
-
-const addPolicy = (data) => {
-  const token = getToken()
-  return fetch('/api/policy/admin/create', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .catch(error => {
-        console.error('API请求错误:', error)
-        return {
-          code: 500,
-          message: error.message || '网络请求失败'
-        }
-      })
-}
-
-const updatePolicy = (id, data) => {
-  const token = getToken()
-  return fetch(`/api/policy/admin/update/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .catch(error => {
-        console.error('API请求错误:', error)
-        return {
-          code: 500,
-          message: error.message || '网络请求失败'
-        }
-      })
-}
-
-const deletePolicy = (id) => {
-  const token = getToken()
-  return fetch(`/api/policy/admin/delete/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .catch(error => {
-        console.error('API请求错误:', error)
-        return {
-          code: 500,
-          message: error.message || '网络请求失败'
-        }
-      })
-}
+// 使用封装的 API，不再需要本地的 API 函数
 
 const getImageUrl = (url) => {
   if (!url) return ''
@@ -684,7 +548,7 @@ const handleDialogSave = async () => {
     if (policyForm.id) {
       res = await updatePolicy(policyForm.id, data)
     } else {
-      res = await addPolicy(data)
+      res = await createPolicy(data)
     }
 
     if (res.code === 200) {

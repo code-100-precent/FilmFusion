@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.UNAUTHORIZED;
+import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SYSTEM_ERROR;
 
 
 /**
@@ -75,10 +76,15 @@ public class GlobalExceptionHandler {
 
     /**
      * Handling abnormal operation
+     * 注意：这里不应该返回 401，因为 RuntimeExceptions 通常是系统错误，不是认证错误
+     * 但为了安全，我们只记录日志，不暴露详细错误信息
      */
     @ExceptionHandler(RuntimeException.class)
     public ApiResponse<?> handleRuntimeException(RuntimeException e) {
-        return ApiResponse.error(UNAUTHORIZED.code(),  e.getMessage());
+        // 记录详细错误日志
+        e.printStackTrace();
+        // 返回系统错误，而不是认证错误
+        return ApiResponse.error(SYSTEM_ERROR.code(), e.getMessage() != null ? e.getMessage() : "系统内部错误");
     }
 
     /**

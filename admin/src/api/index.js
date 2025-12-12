@@ -70,10 +70,8 @@ export const uploadAvatar = (file) => {
   return request({
     url: '/user/avatar',
     method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    data: formData
+    // 不手动设置 Content-Type，让浏览器自动设置（包括 boundary）
   })
 }
 
@@ -187,6 +185,10 @@ export const deleteUser = (id) => {
 
 // ==================== 反馈管理 ====================
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
 export const getFeedbackPage = (current = 1, size = 10, keyword = '', status = '') => {
   return request({
     url: '/feedback/admin/page',
@@ -772,14 +774,14 @@ export const getPolicyPage = (current = 1, size = 10, keyword = '') => {
 
 export const getPolicyById = (id) => {
   return request({
-    url: `/api/policy/${id}`, // ← 加上 /api
+    url: `/policy/${id}`,
     method: 'get'
   })
 }
 
 export const createPolicy = (data) => {
   return request({
-    url: '/api/policy/admin/create', // ← 加上 /api
+    url: '/policy/admin/create',
     method: 'post',
     data
   })
@@ -787,7 +789,7 @@ export const createPolicy = (data) => {
 
 export const updatePolicy = (id, data) => {
   return request({
-    url: `/api/policy/admin/update/${id}`, // ← 注意：这里应该是 id，不是 data.id
+    url: `/policy/admin/update/${id}`,
     method: 'put',
     data
   })
@@ -795,7 +797,7 @@ export const updatePolicy = (id, data) => {
 
 export const deletePolicy = (id) => {
   return request({
-    url: `/api/policy/admin/delete/${id}`, // ← 加上 /api
+    url: `/policy/admin/delete/${id}`,
     method: 'delete'
   })
 }

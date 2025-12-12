@@ -25,15 +25,15 @@
           </n-button>
         </div>
       </div>
-      
+
       <!-- 桌面端表格 -->
       <template v-if="!isMobile">
         <n-data-table
-          :columns="columns"
-          :data="locationList"
-          :loading="loading"
-          :row-key="row => row.id"
-          :scroll-x="1500"
+            :columns="columns"
+            :data="locationList"
+            :loading="loading"
+            :row-key="row => row.id"
+            :scroll-x="1500"
         />
 
         <!-- 独立分页组件 -->
@@ -51,7 +51,7 @@
           />
         </div>
       </template>
-      
+
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
         <n-spin :show="loading">
@@ -61,10 +61,10 @@
           </div>
           <div v-else class="card-list">
             <n-card
-              v-for="location in locationList"
-              :key="location.id"
-              class="mobile-card"
-              hoverable
+                v-for="location in locationList"
+                :key="location.id"
+                class="mobile-card"
+                hoverable
             >
               <div class="card-header">
                 <div class="location-info">
@@ -73,12 +73,12 @@
                 </div>
                 <div class="location-cover">
                   <n-image
-                    v-if="location.cover"
-                    :src="location.cover"
-                    width="80"
-                    height="60"
-                    object-fit="cover"
-                    preview-disabled
+                      v-if="location.cover"
+                      :src="location.cover"
+                      width="80"
+                      height="60"
+                      object-fit="cover"
+                      preview-disabled
                   />
                   <div v-else class="no-cover">
                     <Icon icon="mdi:image" :width="32" />
@@ -124,36 +124,36 @@
               </div>
             </n-card>
           </div>
-          
+
           <!-- 移动端分页 -->
           <div class="mobile-pagination" v-if="pagination.itemCount > 0">
             <n-pagination
-              :page="pagination.page"
-              :page-size="pagination.pageSize"
-              :item-count="pagination.itemCount"
-              :page-sizes="[10, 20, 50]"
-              show-size-picker
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
+                :page="pagination.page"
+                :page-size="pagination.pageSize"
+                :item-count="pagination.itemCount"
+                :page-sizes="[10, 20, 50]"
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange"
             />
           </div>
         </n-spin>
       </div>
     </n-card>
-    
-    <n-modal 
-      v-model:show="dialogVisible" 
-      preset="card" 
-      :title="dialogTitle" 
-      style="width: 90%; max-width: 900px"
-      :mask-closable="false"
+
+    <n-modal
+        v-model:show="dialogVisible"
+        preset="card"
+        :title="dialogTitle"
+        style="width: 90%; max-width: 900px"
+        :mask-closable="false"
     >
-      <n-form 
-        ref="formRef" 
-        :model="locationForm" 
-        :rules="formRules" 
-        :label-placement="isMobile ? 'top' : 'left'"
-        :label-width="isMobile ? 'auto' : '120'"
+      <n-form
+          ref="formRef"
+          :model="locationForm"
+          :rules="formRules"
+          :label-placement="isMobile ? 'top' : 'left'"
+          :label-width="isMobile ? 'auto' : '120'"
       >
         <n-form-item label="场地名称" path="name">
           <n-input v-model:value="locationForm.name" placeholder="请输入场地名称" />
@@ -165,23 +165,35 @@
           <n-input v-model:value="locationForm.address" placeholder="请输入详细地址" />
         </n-form-item>
         <n-form-item label="价格" path="price">
+<<<<<<< HEAD
           <n-input-number 
             v-model:value="locationForm.price" 
             placeholder="请输入价格" 
             :min="0"
             :show-button="false"
+=======
+          <n-input-number
+              v-model:value="locationForm.price"
+              placeholder="请输入价格"
+              :min="0"
+              :show-button="false"
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
           >
             <template #prefix>￥</template>
           </n-input-number>
         </n-form-item>
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
         <n-form-item label="封面图片">
           <n-upload
-            v-model:file-list="coverFileList"
-            list-type="image-card"
-            :max="1"
-            :custom-request="handleCoverUpload"
-            accept="image/*"
+              v-model:file-list="coverFileList"
+              list-type="image-card"
+              :max="1"
+              :custom-request="handleCoverUpload"
+              accept="image/*"
           >
             点击上传
           </n-upload>
@@ -189,11 +201,11 @@
 
         <n-form-item label="场地图片">
           <n-upload
-            v-model:file-list="imageFileList"
-            list-type="image-card"
-            :custom-request="handleImageUpload"
-            accept="image/*"
-            multiple
+              v-model:file-list="imageFileList"
+              list-type="image-card"
+              :custom-request="handleImageUpload"
+              accept="image/*"
+              multiple
           >
             点击上传
           </n-upload>
@@ -341,24 +353,18 @@ const formRules = {
   address: [
     { required: true, message: '请输入地址', trigger: 'blur' },
     { min: 1, max: 200, message: '地址长度在 1 到 200 个字符', trigger: 'blur' }
-  ],
-  locationPrincipalPhone: [
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
-  ],
-  govPrincipalPhone: [
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ]
 }
 
 const handleCoverUpload = async ({ file, fileList }) => {
   try {
     const res = await uploadFile(file.file)
-    
+
     if (res.code === 200) {
       const url = res.data.url || res.data
       const originUrl = res.data.originUrl || url
       const thumbUrl = res.data.thumbUrl || url
-      
+
       // 更新文件列表状态和URL
       const index = coverFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
@@ -367,7 +373,7 @@ const handleCoverUpload = async ({ file, fileList }) => {
         coverFileList.value[index].originUrl = originUrl // 保存相对路径
         coverFileList.value[index].thumbUrl = thumbUrl   // 保存相对路径
       }
-      
+
       message.success('封面上传成功')
       return url
     } else {
@@ -392,12 +398,12 @@ const handleCoverUpload = async ({ file, fileList }) => {
 const handleImageUpload = async ({ file, fileList }) => {
   try {
     const res = await uploadFile(file.file)
-    
+
     if (res.code === 200) {
       const url = res.data.url || res.data
       const originUrl = res.data.originUrl || url
       const thumbUrl = res.data.thumbUrl || url
-      
+
       const index = imageFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         imageFileList.value[index].status = 'finished'
@@ -405,7 +411,7 @@ const handleImageUpload = async ({ file, fileList }) => {
         imageFileList.value[index].originUrl = originUrl
         imageFileList.value[index].thumbUrl = thumbUrl
       }
-      
+
       message.success('图片上传成功')
       return url
     } else {
@@ -439,9 +445,9 @@ const columns = [
       // status是Boolean类型
       const isActive = row.status === true || row.status === 1
       return h(
-        'span',
-        { class: isActive ? 'status-available' : 'status-unavailable' },
-        isActive ? '可用' : '不可用'
+          'span',
+          { class: isActive ? 'status-available' : 'status-unavailable' },
+          isActive ? '可用' : '不可用'
       )
     }
   },
@@ -460,21 +466,21 @@ const columns = [
         const urls = str.split(',').filter(u => u && u.trim())
         return urls.length > 0 ? urls[0] : ''
       }
-      
+
       // 兼容驼峰和下划线命名
       const thumbImage = getFirstUrl(row.thumbImage || row.thumb_image)
       const image = getFirstUrl(row.image)
       const cover = getFirstUrl(row.cover)
       const thumbCover = getFirstUrl(row.thumbCover || row.thumb_cover)
-      
+
       // 显示用的图片（优先缩略图）
       const displayUrl = thumbCover || thumbImage || cover || image
-      
+
       // 预览用的图片（优先原图）
       const previewUrl = cover || image || displayUrl
-      
+
       if (!displayUrl) return '-'
-      
+
       return h(NImage, {
         width: 60,
         height: 45,
@@ -500,11 +506,11 @@ const columns = [
       return h('div', { style: 'display: flex; gap: 8px;' }, [
         h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
         h(
-          NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
+            NPopconfirm,
+            { onPositiveClick: () => handleDelete(row.id) },
+            {
+              trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+            }
         )
       ])
     }
@@ -522,7 +528,11 @@ const handleDialogSave = async () => {
   
   try {
     dialogLoading.value = true
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     // 组合图片字段：封面 + 详情图
     // 优先使用 fileList 中的 originUrl (相对路径)，如果没有则尝试从 url 解析
     const detailOrigins = imageFileList.value
@@ -532,9 +542,9 @@ const handleDialogSave = async () => {
           if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
           return f.url
         })
-        
+
     const allImages = []
-    
+
     // 获取封面原图（优先从文件列表获取）
     let coverOrigin = locationForm.cover
     const coverFile = coverFileList.value.find(f => f.status === 'finished')
@@ -553,9 +563,9 @@ const handleDialogSave = async () => {
 
     if (coverOrigin) allImages.push(coverOrigin)
     if (detailOrigins.length > 0) allImages.push(...detailOrigins)
-    
+
     const finalImageStr = allImages.join(',')
-    
+
     // 组合缩略图字段
     // 优先使用 fileList 中的 thumbUrl (相对路径)，如果没有则回退到 originUrl 或 url
     const detailThumbs = imageFileList.value
@@ -568,7 +578,7 @@ const handleDialogSave = async () => {
         })
 
     const allThumbImages = []
-    
+
     // 获取封面缩略图（优先从文件列表获取）
     let coverThumb = locationForm.thumbCover || locationForm.cover
     if (coverFile) {
@@ -578,25 +588,29 @@ const handleDialogSave = async () => {
         coverThumb = coverFile.originUrl
       }
     }
-    
+
     // 兜底处理
     if (coverThumb && coverThumb.startsWith('http')) {
-       coverThumb = coverThumb.replace(config.fileBaseURL, '')
+      coverThumb = coverThumb.replace(config.fileBaseURL, '')
     }
 
     if (coverThumb) allThumbImages.push(coverThumb)
     if (detailThumbs.length > 0) allThumbImages.push(...detailThumbs)
-    
+
     const finalThumbImageStr = allThumbImages.join(',')
 
-    const data = { 
+    const data = {
       ...locationForm,
       status: locationForm.status, // 直接传递Boolean值
       image: finalImageStr,
       thumbImage: finalThumbImageStr,
       user_id: locationForm.userId
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     let res
     if (locationForm.id) {
       res = await updateLocation(data)
@@ -701,12 +715,12 @@ const handleEdit = async (row) => {
     const res = await getLocationById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑场地'
-      
+
       // 解析图片字段：第一个为封面，后面的是详情图
       const allImages = (res.data.image || '').split(',').filter(url => url.trim())
       const coverUrl = allImages[0] || ''
       const detailUrls = allImages.slice(1)
-      
+
       // 解析缩略图字段
       const allThumbImages = (res.data.thumbImage || '').split(',').filter(url => url.trim())
       const thumbCoverUrl = allThumbImages[0] || coverUrl
@@ -732,7 +746,11 @@ const handleEdit = async (row) => {
         thumbImage: '',
         userId: res.data.userId || res.data.user_id
       })
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
       // 设置封面图片文件列表
       if (coverUrl) {
         coverFileList.value = [{
@@ -759,7 +777,11 @@ const handleEdit = async (row) => {
           thumbUrl: thumbUrl
         }
       })
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
       dialogVisible.value = true
     }
   } catch (error) {
@@ -832,45 +854,45 @@ onUnmounted(() => {
     text-align: center;
     padding: 60px 20px;
   }
-  
+
   .card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .mobile-card {
     :deep(.n-card__content) {
       padding: 16px;
     }
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
-      
+
       .location-info {
         flex: 1;
         margin-right: 12px;
-        
+
         .location-name {
           font-size: 16px;
           font-weight: 600;
           color: #1f2937;
           margin: 0 0 4px 0;
         }
-        
+
         .location-type {
           font-size: 14px;
           color: #6b7280;
           margin: 0;
         }
       }
-      
+
       .location-cover {
         flex-shrink: 0;
-        
+
         .no-cover {
           width: 80px;
           height: 60px;
@@ -883,7 +905,7 @@ onUnmounted(() => {
         }
       }
     }
-    
+
     .card-content {
       display: flex;
       flex-direction: column;
@@ -892,37 +914,37 @@ onUnmounted(() => {
       padding: 12px;
       background: #f9fafb;
       border-radius: 8px;
-      
+
       .info-item {
         display: flex;
         font-size: 13px;
-        
+
         .label {
           color: #6b7280;
           min-width: 80px;
           flex-shrink: 0;
         }
-        
+
         .price {
           color: #f56c6c;
           font-weight: 500;
         }
       }
     }
-    
+
     .card-actions {
       margin-top: 12px;
       padding-top: 12px;
       border-top: 1px solid #e5e7eb;
     }
   }
-  
+
   .mobile-pagination {
     margin-top: 16px;
     padding: 12px;
     background: #ffffff;
     border-radius: 8px;
-    
+
     :deep(.n-pagination) {
       justify-content: center;
     }
@@ -934,59 +956,59 @@ onUnmounted(() => {
   .search-header {
     flex-direction: column;
     gap: 12px;
-    
+
     .search-form {
       width: 100%;
       min-width: auto;
-      
+
       :deep(.n-form-item) {
         margin-bottom: 12px;
-        
+
         .n-form-item-label {
           width: auto !important;
           margin-bottom: 4px;
         }
       }
     }
-    
+
     .action-buttons {
       width: 100%;
-      
+
       button {
         flex: 1;
       }
     }
   }
-  
+
   .management-card {
     :deep(.n-card__content) {
       padding: 12px;
     }
   }
-  
+
   // 移动端表单优化
   :deep(.n-modal) {
     .n-dialog {
       margin: 20px auto;
     }
-    
+
     .n-form-item {
       margin-bottom: 16px;
-      
+
       .n-form-item-label {
         font-weight: 500;
         margin-bottom: 8px;
       }
-      
+
       .n-input,
       .n-select {
         width: 100%;
       }
     }
-    
+
     .n-dialog__action {
       padding: 12px 16px;
-      
+
       .n-button {
         flex: 1;
         margin: 0 4px;
@@ -994,6 +1016,7 @@ onUnmounted(() => {
     }
   }
 }
+
 @keyframes fadeIn {
   from {
     opacity: 0;

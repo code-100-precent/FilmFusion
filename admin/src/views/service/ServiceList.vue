@@ -25,33 +25,33 @@
           </n-button>
         </div>
       </div>
-      
+
       <!-- 桌面端表格 -->
       <template v-if="!isMobile">
         <n-data-table
-          :columns="columns"
-          :data="serviceList"
-          :loading="loading"
-          :row-key="row => row.id"
-          :scroll-x="1400"
+            :columns="columns"
+            :data="serviceList"
+            :loading="loading"
+            :row-key="row => row.id"
+            :scroll-x="1400"
         />
 
         <!-- 独立分页组件 -->
         <div class="pagination-container" v-if="pagination.itemCount > 0">
           <n-pagination
-            v-model:page="pagination.page"
-            v-model:page-size="pagination.pageSize"
-            :page-count="Math.ceil(pagination.itemCount / pagination.pageSize)"
-            :item-count="pagination.itemCount"
-            :page-sizes="pagination.pageSizes"
-            show-size-picker
-            show-quick-jumper
-            @update:page="handlePageChange"
-            @update:page-size="handlePageSizeChange"
+              v-model:page="pagination.page"
+              v-model:page-size="pagination.pageSize"
+              :page-count="Math.ceil(pagination.itemCount / pagination.pageSize)"
+              :item-count="pagination.itemCount"
+              :page-sizes="pagination.pageSizes"
+              show-size-picker
+              show-quick-jumper
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
           />
         </div>
       </template>
-      
+
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
         <n-spin :show="loading">
@@ -61,10 +61,10 @@
           </div>
           <div v-else class="card-list">
             <n-card
-              v-for="service in serviceList"
-              :key="service.id"
-              class="mobile-card"
-              hoverable
+                v-for="service in serviceList"
+                :key="service.id"
+                class="mobile-card"
+                hoverable
             >
               <div class="card-header">
                 <div class="service-info">
@@ -72,12 +72,12 @@
                 </div>
                 <div class="service-cover">
                   <n-image
-                    v-if="service.cover"
-                    :src="service.cover"
-                    width="80"
-                    height="60"
-                    object-fit="cover"
-                    preview-disabled
+                      v-if="service.cover"
+                      :src="service.cover"
+                      width="80"
+                      height="60"
+                      object-fit="cover"
+                      preview-disabled
                   />
                   <div v-else class="no-cover">
                     <Icon icon="mdi:services" :width="32" />
@@ -127,48 +127,48 @@
               </div>
             </n-card>
           </div>
-          
+
           <!-- 移动端分页 -->
           <div class="mobile-pagination">
             <n-pagination
-              :page="pagination.page"
-              :page-size="pagination.pageSize"
-              :item-count="pagination.itemCount"
-              :page-sizes="[10, 20, 50]"
-              show-size-picker
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
+                :page="pagination.page"
+                :page-size="pagination.pageSize"
+                :item-count="pagination.itemCount"
+                :page-sizes="[10, 20, 50]"
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange"
             />
           </div>
         </n-spin>
       </div>
     </n-card>
-    
-    <n-modal 
-      v-model:show="dialogVisible" 
-      preset="card" 
-      :title="dialogTitle" 
-      style="width: 90%; max-width: 900px"
-      :mask-closable="false"
+
+    <n-modal
+        v-model:show="dialogVisible"
+        preset="card"
+        :title="dialogTitle"
+        style="width: 90%; max-width: 900px"
+        :mask-closable="false"
     >
-      <n-form 
-        ref="formRef" 
-        :model="serviceForm" 
-        :rules="formRules" 
-        :label-placement="isMobile ? 'top' : 'left'"
-        :label-width="isMobile ? 'auto' : '120'"
+      <n-form
+          ref="formRef"
+          :model="serviceForm"
+          :rules="formRules"
+          :label-placement="isMobile ? 'top' : 'left'"
+          :label-width="isMobile ? 'auto' : '120'"
       >
         <n-form-item label="服务名称" path="name">
           <n-input v-model:value="serviceForm.name" placeholder="请输入服务名称" />
         </n-form-item>
-        
+
         <n-form-item label="价格" path="price">
-          <n-input-number 
-            v-model:value="serviceForm.price" 
-            placeholder="请输入价格" 
-            :min="0"
-            :show-button="false"
-            style="width: 100%"
+          <n-input-number
+              v-model:value="serviceForm.price"
+              placeholder="请输入价格"
+              :min="0"
+              :show-button="false"
+              style="width: 100%"
           >
             <template #prefix>￥</template>
           </n-input-number>
@@ -176,11 +176,11 @@
 
         <n-form-item label="封面图片">
           <n-upload
-            v-model:file-list="coverFileList"
-            list-type="image-card"
-            :custom-request="handleCoverUpload"
-            accept="image/*"
-            :max="1"
+              v-model:file-list="coverFileList"
+              list-type="image-card"
+              :custom-request="handleCoverUpload"
+              accept="image/*"
+              :max="1"
           >
             点击上传
           </n-upload>
@@ -188,12 +188,12 @@
 
         <n-form-item label="详情图片">
           <n-upload
-            v-model:file-list="imageFileList"
-            list-type="image-card"
-            :custom-request="handleImageUpload"
-            accept="image/*"
-            multiple
-            :max="9"
+              v-model:file-list="imageFileList"
+              list-type="image-card"
+              :custom-request="handleImageUpload"
+              accept="image/*"
+              multiple
+              :max="9"
           >
             点击上传
           </n-upload>
@@ -227,16 +227,24 @@
         </div>
       </template>
     </n-modal>
+<<<<<<< HEAD
     
     </div>
   </template>
   
   <script setup>
+=======
+
+  </div>
+</template>
+
+<script setup>
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
 import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
-import { 
-  NButton, NForm, NFormItem, NInput, NSelect, NInputNumber, 
-  NModal, NDataTable, NPagination, NSpace, NSpin, useMessage, 
-  NTag, NPopconfirm, NUpload, NImage, NSwitch 
+import {
+  NButton, NForm, NFormItem, NInput, NSelect, NInputNumber,
+  NModal, NDataTable, NPagination, NSpace, NSpin, useMessage,
+  NTag, NPopconfirm, NUpload, NImage, NSwitch
 } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile } from '@/api/index'
@@ -294,12 +302,12 @@ const formRules = {
 const handleCoverUpload = async ({ file, fileList }) => {
   try {
     const res = await uploadFile(file.file)
-    
+
     if (res.code === 200) {
       const url = res.data.url || res.data
       const originUrl = res.data.originUrl || url
       const thumbUrl = res.data.thumbUrl || url
-      
+
       const index = coverFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         coverFileList.value[index].status = 'finished'
@@ -307,7 +315,7 @@ const handleCoverUpload = async ({ file, fileList }) => {
         coverFileList.value[index].originUrl = originUrl
         coverFileList.value[index].thumbUrl = thumbUrl
       }
-      
+
       message.success('封面上传成功')
       return url
     } else {
@@ -332,12 +340,12 @@ const handleCoverUpload = async ({ file, fileList }) => {
 const handleImageUpload = async ({ file, fileList }) => {
   try {
     const res = await uploadFile(file.file)
-    
+
     if (res.code === 200) {
       const url = res.data.url || res.data
       const originUrl = res.data.originUrl || url
       const thumbUrl = res.data.thumbUrl || url
-      
+
       const index = imageFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         imageFileList.value[index].status = 'finished'
@@ -345,7 +353,7 @@ const handleImageUpload = async ({ file, fileList }) => {
         imageFileList.value[index].originUrl = originUrl
         imageFileList.value[index].thumbUrl = thumbUrl
       }
-      
+
       message.success('图片上传成功')
       return url
     } else {
@@ -379,9 +387,9 @@ const columns = [
       const thumbs = (row.thumbImage || '').split(',').filter(u => u)
       const displayUrl = thumbs[0] || images[0]
       const previewUrl = images[0] || displayUrl
-      
+
       if (!displayUrl) return '-'
-      
+
       return h(NImage, {
         width: 60,
         height: 45,
@@ -405,9 +413,9 @@ const columns = [
       // status是Boolean类型
       const isActive = row.status === true || row.status === 1
       return h(
-        'span',
-        { class: isActive ? 'status-available' : 'status-unavailable' },
-        isActive ? '上线' : '下线'
+          'span',
+          { class: isActive ? 'status-available' : 'status-unavailable' },
+          isActive ? '上线' : '下线'
       )
     }
   },
@@ -509,6 +517,7 @@ const handleEdit = async (row) => {
   try {
     const res = await getServiceById(row.id)
     if (res.code === 200 && res.data) {
+<<<<<<< HEAD
         dialogTitle.value = '编辑服务'
         const data = res.data
         
@@ -525,26 +534,26 @@ const handleEdit = async (row) => {
           thumbImage: data.thumbImage || '',
           userId: data.userId || data.user_id
         })
+=======
+      dialogTitle.value = '编辑服务'
+      const data = res.data
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
 
-        const urls = (data.image || '').split(',').filter(u => u.trim())
-        const thumbUrls = (data.thumbImage || '').split(',').filter(u => u.trim())
-        
-        // 封面图 (第一张)
-        if (urls.length > 0) {
-          const coverUrl = urls[0]
-          const coverThumb = thumbUrls[0] || coverUrl
-          coverFileList.value = [{
-            id: 'cover-img',
-            name: 'cover.jpg',
-            status: 'finished',
-            url: getImageUrl(coverThumb || coverUrl),
-            originUrl: coverUrl,
-            thumbUrl: coverThumb
-          }]
-        } else {
-          coverFileList.value = []
-        }
+      Object.assign(serviceForm, {
+        id: data.id,
+        name: data.name || '',
+        price: data.price || 0,
+        contactName: data.contactName || '',
+        phone: data.phone || '',
+        address: data.address || '',
+        description: data.description || '',
+        status: data.status === 1 || data.status === true,
+        image: data.image || '',
+        thumbImage: data.thumbImage || '',
+        userId: data.userId || data.user_id
+      })
 
+<<<<<<< HEAD
         // 详情图 (第二张开始)
         const detailUrls = urls.slice(1)
         const detailThumbUrls = thumbUrls.slice(1)
@@ -563,6 +572,45 @@ const handleEdit = async (row) => {
   } catch (e) {
       console.error(e)
       message.error('获取详情失败')
+=======
+      const urls = (data.image || '').split(',').filter(u => u.trim())
+      const thumbUrls = (data.thumbImage || '').split(',').filter(u => u.trim())
+
+      // 封面图 (第一张)
+      if (urls.length > 0) {
+        const coverUrl = urls[0]
+        const coverThumb = thumbUrls[0] || coverUrl
+        coverFileList.value = [{
+          id: 'cover-img',
+          name: 'cover.jpg',
+          status: 'finished',
+          url: getImageUrl(coverThumb || coverUrl),
+          originUrl: coverUrl,
+          thumbUrl: coverThumb
+        }]
+      } else {
+        coverFileList.value = []
+      }
+
+      // 详情图 (第二张开始)
+      const detailUrls = urls.slice(1)
+      const detailThumbUrls = thumbUrls.slice(1)
+
+      imageFileList.value = detailUrls.map((url, index) => ({
+        id: `img-${index}`,
+        name: `image-${index}.jpg`,
+        status: 'finished',
+        url: getImageUrl(detailThumbUrls[index] || url),
+        originUrl: url,
+        thumbUrl: detailThumbUrls[index] || url
+      }))
+
+      dialogVisible.value = true
+    }
+  } catch (e) {
+    console.error(e)
+    message.error('获取详情失败')
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
   }
 }
 
@@ -576,17 +624,17 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
-    
+
     // 处理封面图
     const coverFile = coverFileList.value.find(f => f.status === 'finished')
     let coverUrl = ''
     let coverThumb = ''
-    
+
     if (coverFile) {
       if (coverFile.originUrl) coverUrl = coverFile.originUrl
       else if (coverFile.url && coverFile.url.startsWith('http')) coverUrl = coverFile.url.replace(config.fileBaseURL, '')
       else coverUrl = coverFile.url
-      
+
       if (coverFile.thumbUrl) coverThumb = coverFile.thumbUrl
       else if (coverFile.originUrl) coverThumb = coverFile.originUrl
       else if (coverFile.url && coverFile.url.startsWith('http')) coverThumb = coverFile.url.replace(config.fileBaseURL, '')
@@ -595,27 +643,27 @@ const handleDialogSave = async () => {
 
     // 处理详情图
     const detailImages = imageFileList.value
-      .filter(f => f.status === 'finished')
-      .map(f => {
-         if (f.originUrl) return f.originUrl
-         if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
-         return f.url
-      })
-      
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.originUrl) return f.originUrl
+          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+          return f.url
+        })
+
     const detailThumbImages = imageFileList.value
-      .filter(f => f.status === 'finished')
-      .map(f => {
-         if (f.thumbUrl) return f.thumbUrl
-         if (f.originUrl) return f.originUrl
-         if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
-         return f.url
-      })
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.thumbUrl) return f.thumbUrl
+          if (f.originUrl) return f.originUrl
+          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+          return f.url
+        })
 
     // 组合图片 (封面 + 详情)
     const allImages = []
     if (coverUrl) allImages.push(coverUrl)
     if (detailImages.length > 0) allImages.push(...detailImages)
-    
+
     const allThumbImages = []
     if (coverThumb) allThumbImages.push(coverThumb)
     if (detailThumbImages.length > 0) allThumbImages.push(...detailThumbImages)
@@ -634,7 +682,11 @@ const handleDialogSave = async () => {
     } else {
       res = await addService(data)
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     if (res.code === 200) {
       message.success(serviceForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
@@ -725,28 +777,28 @@ onUnmounted(() => {
     text-align: center;
     padding: 60px 20px;
   }
-  
+
   .card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .mobile-card {
     :deep(.n-card__content) {
       padding: 16px;
     }
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
-      
+
       .service-info {
         flex: 1;
         margin-right: 12px;
-        
+
         .service-name {
           font-size: 16px;
           font-weight: 600;
@@ -754,10 +806,10 @@ onUnmounted(() => {
           margin: 0 0 4px 0;
         }
       }
-      
+
       .service-cover {
         flex-shrink: 0;
-        
+
         .no-cover {
           width: 80px;
           height: 60px;
@@ -770,7 +822,7 @@ onUnmounted(() => {
         }
       }
     }
-    
+
     .card-content {
       display: flex;
       flex-direction: column;
@@ -779,22 +831,22 @@ onUnmounted(() => {
       padding: 12px;
       background: #f9fafb;
       border-radius: 8px;
-      
+
       .info-item {
         display: flex;
         font-size: 13px;
-        
+
         .label {
           color: #6b7280;
           min-width: 80px;
           flex-shrink: 0;
         }
-        
+
         .price {
           color: #f56c6c;
           font-weight: 500;
         }
-        
+
         .service-desc {
           color: #374151;
           overflow: hidden;
@@ -803,20 +855,20 @@ onUnmounted(() => {
         }
       }
     }
-    
+
     .card-actions {
       margin-top: 12px;
       padding-top: 12px;
       border-top: 1px solid #e5e7eb;
     }
   }
-  
+
   .mobile-pagination {
     margin-top: 16px;
     padding: 12px;
     background: #ffffff;
     border-radius: 8px;
-    
+
     :deep(.n-pagination) {
       justify-content: center;
     }
@@ -828,59 +880,59 @@ onUnmounted(() => {
   .search-header {
     flex-direction: column;
     gap: 12px;
-    
+
     .search-form {
       width: 100%;
       min-width: auto;
-      
+
       :deep(.n-form-item) {
         margin-bottom: 12px;
-        
+
         .n-form-item-label {
           width: auto !important;
           margin-bottom: 4px;
         }
       }
     }
-    
+
     .action-buttons {
       width: 100%;
-      
+
       button {
         flex: 1;
       }
     }
   }
-  
+
   .management-card {
     :deep(.n-card__content) {
       padding: 12px;
     }
   }
-  
+
   // 移动端表单优化
   :deep(.n-modal) {
     .n-dialog {
       margin: 20px auto;
     }
-    
+
     .n-form-item {
       margin-bottom: 16px;
-      
+
       .n-form-item-label {
         font-weight: 500;
         margin-bottom: 8px;
       }
-      
+
       .n-input,
       .n-select {
         width: 100%;
       }
     }
-    
+
     .n-dialog__action {
       padding: 12px 16px;
-      
+
       .n-button {
         flex: 1;
         margin: 0 4px;

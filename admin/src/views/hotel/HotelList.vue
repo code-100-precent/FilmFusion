@@ -165,7 +165,7 @@
         <n-form-item label="描述" path="description">
           <n-input v-model:value="hotelForm.description" type="textarea" :rows="4" placeholder="请输入酒店描述" />
         </n-form-item>
-        
+
         <!-- 封面图片上传 -->
         <n-form-item label="封面图片" path="cover">
           <n-upload
@@ -179,7 +179,7 @@
             点击上传封面
           </n-upload>
         </n-form-item>
-        
+
         <!-- 详情图片上传 -->
         <n-form-item label="详情图片" path="detailImages">
           <n-upload
@@ -222,12 +222,12 @@ import {
   NUpload,
   useMessage
 } from 'naive-ui'
-import { 
-  getHotelPage, 
-  createHotel, 
-  updateHotel, 
-  deleteHotel, 
-  getHotelById, 
+import {
+  getHotelPage,
+  createHotel,
+  updateHotel,
+  deleteHotel,
+  getHotelById,
   uploadFile
 } from '@/api'
 import { getImageUrl } from '@/utils/image'
@@ -434,10 +434,10 @@ const loadData = async () => {
       // 假设 image 字段包含所有图片 (cover + details)，逗号分隔
       const images = parseImages(hotel.image)
       const thumbImages = parseImages(hotel.thumbImage || hotel.thumb_image)
-      
+
       const cover = images.length > 0 ? images[0] : ''
       const thumbCover = thumbImages.length > 0 ? thumbImages[0] : ''
-      
+
       return {
         ...hotel,
         manager_name: hotel.managerName || hotel.manager_name || '',
@@ -538,16 +538,16 @@ const handleEdit = async (row) => {
       thumbImage: hotel.thumbImage || hotel.thumb_image || '',
       userId: hotel.userId || hotel.user_id
     })
-    
+
     // 初始化文件列表
     const images = parseImages(hotelForm.image)
     const thumbImages = parseImages(hotelForm.thumbImage)
-    
+
     // 封面图：取第一张
     if (images.length > 0) {
       const coverUrl = images[0]
       const coverThumbUrl = thumbImages.length > 0 ? thumbImages[0] : coverUrl
-      
+
       coverFileList.value = [{
         id: 'cover',
         name: '封面图',
@@ -556,7 +556,7 @@ const handleEdit = async (row) => {
         originUrl: coverUrl,
         thumbUrl: coverThumbUrl
       }]
-      
+
       hotelForm.cover = coverUrl
       hotelForm.thumbCover = coverThumbUrl
     } else {
@@ -564,12 +564,12 @@ const handleEdit = async (row) => {
       hotelForm.cover = ''
       hotelForm.thumbCover = ''
     }
-    
+
     // 详情图：取剩余的
     if (images.length > 1) {
       const detailUrls = images.slice(1)
       const detailThumbUrls = thumbImages.length > 1 ? thumbImages.slice(1) : detailUrls
-      
+
       detailFileList.value = detailUrls.map((url, index) => ({
         id: `detail-${index}`,
         name: `详情图-${index + 1}`,
@@ -593,16 +593,20 @@ const handleEdit = async (row) => {
 
 // --- 图片上传逻辑 ---
 
+<<<<<<< HEAD
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
+=======
+const handleCoverUpload = async ({file, onFinish, onError}) => {
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
   try {
     const res = await uploadFile(file.file);
 
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url;
       const thumbUrl = res.data.thumbUrl || originUrl;
-      
+
       // 记录到映射表
-      fileMapping[file.id] = { originUrl, thumbUrl }
+      fileMapping[file.id] = {originUrl, thumbUrl}
 
       // 更新文件列表中的URL，用于预览显示
       // 注意：这里我们查找并更新现有文件对象，而不是替换它
@@ -624,11 +628,11 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
           thumbUrl: thumbUrl
         }]
       }
-      
+
       // 更新表单辅助字段
       hotelForm.cover = originUrl
       hotelForm.thumbCover = thumbUrl
-      
+
       // 强制更新 coverFileList 以确保视图刷新
       coverFileList.value = [...coverFileList.value]
 
@@ -653,16 +657,20 @@ const handleCoverFileListChange = (newList) => {
   }
 }
 
+<<<<<<< HEAD
 const handleDetailUpload = async ({ file, onFinish, onError }) => {
+=======
+const handleDetailUpload = async ({file, onFinish, onError}) => {
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
   try {
     const res = await uploadFile(file.file);
 
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url;
       const thumbUrl = res.data.thumbUrl || originUrl;
-      
+
       // 记录到映射表
-      fileMapping[file.id] = { originUrl, thumbUrl }
+      fileMapping[file.id] = {originUrl, thumbUrl}
 
       // 查找并更新文件属性
       const index = detailFileList.value.findIndex(f => f.id === file.id)
@@ -716,103 +724,111 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     // 辅助函数：获取文件信息
     const getFileInfo = (file) => {
-        // 1. 优先检查 fileMapping (本次会话上传的文件)
-        if (fileMapping[file.id]) {
-            return {
-                url: fileMapping[file.id].originUrl,
-                thumb: fileMapping[file.id].thumbUrl
-            }
+      // 1. 优先检查 fileMapping (本次会话上传的文件)
+      if (fileMapping[file.id]) {
+        return {
+          url: fileMapping[file.id].originUrl,
+          thumb: fileMapping[file.id].thumbUrl
         }
-        // 2. 检查文件对象自带属性 (回显的文件)
-        if (file.originUrl) {
-            return {
-                url: file.originUrl,
-                thumb: file.thumbUrl || file.originUrl
-            }
+      }
+      // 2. 检查文件对象自带属性 (回显的文件)
+      if (file.originUrl) {
+        return {
+          url: file.originUrl,
+          thumb: file.thumbUrl || file.originUrl
         }
-        // 3. 兜底：尝试解析 url
-        let url = file.url || ''
-        let thumb = file.thumbUrl || url
-        
-        if (url && url.startsWith('http')) {
-            url = url.replace(config.fileBaseURL, '')
-        }
-        if (thumb && thumb.startsWith('http')) {
-            thumb = thumb.replace(config.fileBaseURL, '')
-        }
-        
-        return { url, thumb }
+      }
+      // 3. 兜底：尝试解析 url
+      let url = file.url || ''
+      let thumb = file.thumbUrl || url
+
+      if (url && url.startsWith('http')) {
+        url = url.replace(config.fileBaseURL, '')
+      }
+      if (thumb && thumb.startsWith('http')) {
+        thumb = thumb.replace(config.fileBaseURL, '')
+      }
+
+      return {url, thumb}
     }
-    
+
     // 1. 提取封面图
     let coverUrl = ''
     let coverThumbUrl = ''
-    
+
     // 优先从文件列表获取
     // 只要有 url 就可以，不强制 status === 'finished'，防止状态同步问题
     const coverFile = coverFileList.value.find(f => f.url || f.originUrl || fileMapping[f.id])
     if (coverFile) {
-        const info = getFileInfo(coverFile)
-        coverUrl = info.url
-        coverThumbUrl = info.thumb
+      const info = getFileInfo(coverFile)
+      coverUrl = info.url
+      coverThumbUrl = info.thumb
     } else {
       // 兜底：使用表单数据
       if (hotelForm.cover) {
         coverUrl = hotelForm.cover
         if (coverUrl.startsWith('http')) {
-            coverUrl = coverUrl.replace(config.fileBaseURL, '')
+          coverUrl = coverUrl.replace(config.fileBaseURL, '')
         }
       }
       if (hotelForm.thumbCover) {
         coverThumbUrl = hotelForm.thumbCover
         if (coverThumbUrl.startsWith('http')) {
-            coverThumbUrl = coverThumbUrl.replace(config.fileBaseURL, '')
+          coverThumbUrl = coverThumbUrl.replace(config.fileBaseURL, '')
         }
       }
     }
-    
+
     // 2. 提取详情图
     const detailUrls = []
     const detailThumbUrls = []
-    
+
     // 同样放宽条件，只要有 url 即可
     const validDetails = detailFileList.value.filter(f => f.url || f.originUrl || fileMapping[f.id])
-    
+
     validDetails.forEach(file => {
       const info = getFileInfo(file)
-      
+
       if (info.url) {
         detailUrls.push(info.url)
         detailThumbUrls.push(info.thumb || info.url)
       }
     })
-    
+
     // 3. 合并
     const allImages = []
     const allThumbImages = []
-    
+
     if (coverUrl) {
       allImages.push(coverUrl)
       allThumbImages.push(coverThumbUrl || coverUrl)
     }
-    
+
     if (detailUrls.length > 0) {
       allImages.push(...detailUrls)
       allThumbImages.push(...detailThumbUrls)
     }
-    
+
     const finalImageStr = allImages.join(',')
     const finalThumbImageStr = allThumbImages.join(',')
-    
+
     console.log('Saving Hotel:', {
-        coverUrl,
-        detailUrls,
-        finalImageStr
+      coverUrl,
+      detailUrls,
+      finalImageStr
     })
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     const data = {
       name: hotelForm.name,
       address: hotelForm.address,
@@ -825,7 +841,7 @@ const handleDialogSave = async () => {
       thumbImage: finalThumbImageStr,
       userId: hotelForm.userId
     }
-    
+
     // 兼容后端字段名
     data.manager_name = hotelForm.manager_name
     data.manager_phone = hotelForm.manager_phone
@@ -1005,15 +1021,15 @@ const handleDelete = async (id) => {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-form {
     width: 100%;
   }
-  
+
   .action-buttons {
     width: 100%;
   }
-  
+
   .action-buttons button {
     flex: 1;
   }

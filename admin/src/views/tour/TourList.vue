@@ -161,7 +161,7 @@
         <n-form-item label="特点" path="features">
           <n-input v-model:value="tourForm.features" type="textarea" :rows="3" placeholder="请输入特点，多项用逗号分隔" />
         </n-form-item>
-        
+
         <div class="form-row">
           <n-form-item label="交通方式" path="transport">
             <n-input v-model:value="tourForm.transport" placeholder="请输入交通方式" />
@@ -497,10 +497,10 @@ const loadData = async () => {
         // 解析图片字段
         const images = parseImages(tour.image)
         const thumbImages = parseImages(tour.thumb_image || tour.thumbImage)
-        
+
         const cover = images.length > 0 ? images[0] : ''
         const thumbCover = thumbImages.length > 0 ? thumbImages[0] : ''
-        
+
         return {
           ...tour,
           image: tour.image || '',
@@ -565,7 +565,7 @@ const resetForm = () => {
   })
   coverFileList.value = []
   detailFileList.value = []
-  
+
   // 清空映射
   for (const key in fileMapping) {
     delete fileMapping[key]
@@ -614,7 +614,11 @@ const handleEdit = async (row) => {
       if (images.length > 0) {
         const coverUrl = images[0]
         const coverThumbUrl = thumbImages.length > 0 ? thumbImages[0] : coverUrl
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
         coverFileList.value = [{
           id: 'cover',
           name: '封面图',
@@ -623,10 +627,10 @@ const handleEdit = async (row) => {
           originUrl: coverUrl,
           thumbUrl: coverThumbUrl
         }]
-        
+
         tourForm.cover = coverUrl
         tourForm.thumbCover = coverThumbUrl
-        
+
         // 记录到映射
         fileMapping['cover'] = { originUrl: coverUrl, thumbUrl: coverThumbUrl }
       } else {
@@ -639,14 +643,14 @@ const handleEdit = async (row) => {
       if (images.length > 1) {
         const detailUrls = images.slice(1)
         const detailThumbUrls = thumbImages.length > 1 ? thumbImages.slice(1) : detailUrls
-        
+
         detailFileList.value = detailUrls.map((url, index) => {
           const id = `detail-${index}`
           const thumb = detailThumbUrls[index] || url
-          
+
           // 记录到映射
           fileMapping[id] = { originUrl: url, thumbUrl: thumb }
-          
+
           return {
             id: id,
             name: `详情图-${index + 1}`,
@@ -685,7 +689,7 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
-      
+
       fileMapping[file.id] = { originUrl, thumbUrl }
 
       const fileIndex = coverFileList.value.findIndex(f => f.id === file.id)
@@ -705,13 +709,13 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
           thumbUrl: thumbUrl
         }]
       }
-      
+
       tourForm.cover = originUrl
       tourForm.thumbCover = thumbUrl
-      
+
       // 强制更新
       coverFileList.value = [...coverFileList.value]
-      
+
       onFinish()
       message.success('封面图上传成功')
     } else {
@@ -739,7 +743,7 @@ const handleDetailUpload = async ({ file, onFinish, onError }) => {
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
-      
+
       fileMapping[file.id] = { originUrl, thumbUrl }
 
       const index = detailFileList.value.findIndex(f => f.id === file.id)
@@ -751,7 +755,7 @@ const handleDetailUpload = async ({ file, onFinish, onError }) => {
         fileItem.status = 'finished'
         detailFileList.value = [...detailFileList.value]
       } else {
-         const newItem = {
+        const newItem = {
           id: file.id,
           name: file.name,
           status: 'finished',
@@ -787,11 +791,11 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
-    
+
     // 合并图片
     const allImages = []
     const allThumbImages = []
-    
+
     // 1. 封面图
     if (coverFileList.value.length > 0) {
       const coverFile = coverFileList.value[0]
@@ -801,7 +805,7 @@ const handleDialogSave = async () => {
         allThumbImages.push(info.thumbUrl || info.originUrl)
       }
     }
-    
+
     // 2. 详情图
     if (detailFileList.value.length > 0) {
       detailFileList.value.forEach(file => {
@@ -914,7 +918,7 @@ const handleDelete = async (id) => {
   .tour-management {
     padding: 8px;
   }
-  
+
   .management-card {
     border-radius: 8px;
   }
@@ -923,15 +927,15 @@ const handleDelete = async (id) => {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-form {
     width: 100%;
   }
-  
+
   .action-buttons {
     width: 100%;
   }
-  
+
   .action-buttons button {
     width: 100%;
   }
@@ -940,26 +944,26 @@ const handleDelete = async (id) => {
     margin-bottom: 12px;
     border-radius: 8px;
   }
-  
+
   .card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 12px;
   }
-  
+
   .tour-info {
     flex: 1;
     margin-right: 12px;
   }
-  
+
   .tour-name {
     margin: 0 0 4px 0;
     font-size: 16px;
     font-weight: 600;
     color: #1f2937;
   }
-  
+
   .tour-theme {
     margin: 0;
     font-size: 13px;
@@ -969,7 +973,7 @@ const handleDelete = async (id) => {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  
+
   .tour-cover {
     width: 80px;
     height: 60px;
@@ -977,7 +981,7 @@ const handleDelete = async (id) => {
     overflow: hidden;
     flex-shrink: 0;
   }
-  
+
   .no-cover {
     width: 100%;
     height: 100%;
@@ -987,25 +991,25 @@ const handleDelete = async (id) => {
     justify-content: center;
     color: #9ca3af;
   }
-  
+
   .card-content {
     margin-bottom: 16px;
     padding: 12px;
     background-color: #f9fafb;
     border-radius: 6px;
   }
-  
+
   .info-item {
     display: flex;
     justify-content: space-between;
     margin-bottom: 8px;
     font-size: 13px;
   }
-  
+
   .info-item:last-child {
     margin-bottom: 0;
   }
-  
+
   .info-item .label {
     color: #6b7280;
     flex-shrink: 0;
@@ -1017,12 +1021,12 @@ const handleDelete = async (id) => {
     white-space: nowrap;
     max-width: 70%;
   }
-  
+
   .card-actions {
     display: flex;
     gap: 8px;
   }
-  
+
   .mobile-pagination {
     display: flex;
     justify-content: center;

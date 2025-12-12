@@ -246,12 +246,12 @@ import {
   useMessage
 } from 'naive-ui'
 import { useUserStore } from '@/store/user'
-import { 
-  getDramaPage, 
-  addDrama, 
-  updateDrama, 
-  deleteDrama, 
-  getDramaById, 
+import {
+  getDramaPage,
+  addDrama,
+  updateDrama,
+  deleteDrama,
+  getDramaById,
   uploadFile,
   getLocationList,
   getServiceList
@@ -386,7 +386,7 @@ const columns = [
         if (typeof str !== 'string') {
           // 如果是数组，尝试取第一个
           if (Array.isArray(str) && str.length > 0) {
-             return str[0]
+            return str[0]
           }
           return ''
         }
@@ -394,23 +394,23 @@ const columns = [
         const urls = str.split(',').filter(u => u && u.trim())
         return urls.length > 0 ? urls[0] : ''
       }
-      
+
       // 兼容驼峰和下划线命名，并确保取到的是第一张图片
       const thumbImage = getFirstUrl(row.thumbImage || row.thumb_image)
       const image = getFirstUrl(row.image)
       const cover = getFirstUrl(row.cover)
       const thumbCover = getFirstUrl(row.thumbCover || row.thumb_cover)
-      
+
       // 优先级：封面缩略 -> 封面原图 -> 详情缩略 -> 详情原图
       // 显示用的图片（优先缩略图）
       const displayUrl = thumbCover || thumbImage || cover || image
-      
+
       // 预览用的图片（优先原图）
       const previewUrl = cover || image || displayUrl
-      
+
       if (row.id == 20) {
-         console.log('Display URL (Thumb):', displayUrl)
-         console.log('Preview URL (Original):', previewUrl)
+        console.log('Display URL (Thumb):', displayUrl)
+        console.log('Preview URL (Original):', previewUrl)
       }
 
       if (!displayUrl) return '-'
@@ -461,7 +461,7 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
-    
+
     // 组合图片字段：封面 + 详情图
     // 优先使用 fileList 中的 originUrl (相对路径)，如果没有则尝试从 url 解析
     const detailOrigins = imageFileList.value
@@ -471,9 +471,9 @@ const handleDialogSave = async () => {
           if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
           return f.url
         })
-        
+
     const allImages = []
-    
+
     // 获取封面原图（优先从文件列表获取）
     let coverOrigin = dramaForm.cover
     const coverFile = coverFileList.value.find(f => f.status === 'finished')
@@ -492,9 +492,9 @@ const handleDialogSave = async () => {
 
     if (coverOrigin) allImages.push(coverOrigin)
     if (detailOrigins.length > 0) allImages.push(...detailOrigins)
-    
+
     const finalImageStr = allImages.join(',')
-    
+
     // 组合缩略图字段
     // 优先使用 fileList 中的 thumbUrl (相对路径)，如果没有则回退到 originUrl 或 url
     const detailThumbs = imageFileList.value
@@ -507,7 +507,7 @@ const handleDialogSave = async () => {
         })
 
     const allThumbImages = []
-    
+
     // 获取封面缩略图（优先从文件列表获取）
     let coverThumb = dramaForm.thumbCover || dramaForm.cover
     if (coverFile) {
@@ -517,15 +517,15 @@ const handleDialogSave = async () => {
         coverThumb = coverFile.originUrl
       }
     }
-    
+
     // 兜底处理
     if (coverThumb && coverThumb.startsWith('http')) {
-       coverThumb = coverThumb.replace(config.fileBaseURL, '')
+      coverThumb = coverThumb.replace(config.fileBaseURL, '')
     }
 
     if (coverThumb) allThumbImages.push(coverThumb)
     if (detailThumbs.length > 0) allThumbImages.push(...detailThumbs)
-    
+
     const finalThumbImageStr = allThumbImages.join(',')
 
     const data = {
@@ -658,12 +658,12 @@ const handleEdit = async (row) => {
     const res = await getDramaById(row.id)
     if (res.code === 200 && res.data) {
       dialogTitle.value = '编辑电视剧'
-      
+
       // 解析图片字段：第一个为封面，后面的是详情图
       const allImages = (res.data.image || '').split(',').filter(url => url.trim())
       const coverUrl = allImages[0] || ''
       const detailUrls = allImages.slice(1)
-      
+
       // 解析缩略图字段
       const allThumbImages = (res.data.thumbImage || '').split(',').filter(url => url.trim())
       const thumbCoverUrl = allThumbImages[0] || coverUrl
@@ -685,7 +685,7 @@ const handleEdit = async (row) => {
         cover: coverUrl,
         image: detailUrls.join(','), // 详情图片字符串
         thumbCover: thumbCoverUrl,
-        thumbImage: '' 
+        thumbImage: ''
       })
 
       // 设置封面图片文件列表
@@ -722,23 +722,23 @@ const handleEdit = async (row) => {
 }
 
 // 处理封面图片上传
-const handleCoverUpload = async ({ file, onFinish, onError }) => {
+const handleCoverUpload = async ({file, onFinish, onError}) => {
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
-      
+
       dramaForm.cover = originUrl
       dramaForm.thumbCover = thumbUrl
-      
+
       // 更新文件列表中的URL，以便显示预览
       // 使用 getImageUrl 转换为完整 URL
       const fullUrl = getImageUrl(originUrl)
       file.url = fullUrl
       file.originUrl = originUrl
       file.thumbUrl = thumbUrl
-      
+
       const fileIndex = coverFileList.value.findIndex(f => f.id === file.id)
       if (fileIndex !== -1) {
         coverFileList.value[fileIndex].url = fullUrl
@@ -760,20 +760,20 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
 }
 
 // 处理详情图片上传
-const handleImageUpload = async ({ file, onFinish, onError }) => {
+const handleImageUpload = async ({file, onFinish, onError}) => {
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl // 获取缩略图路径
-      
+
       // 更新文件列表中的URL，以便显示预览
       // 使用 getImageUrl 转换为完整 URL
       const fullUrl = getImageUrl(originUrl)
       file.url = fullUrl
       file.originUrl = originUrl // 保存原图相对路径
       file.thumbUrl = thumbUrl   // 保存缩略图相对路径
-      
+
       const fileIndex = imageFileList.value.findIndex(f => f.id === file.id)
       if (fileIndex !== -1) {
         imageFileList.value[fileIndex].url = fullUrl
@@ -786,7 +786,7 @@ const handleImageUpload = async ({ file, onFinish, onError }) => {
       const existingImages = dramaForm.image ? dramaForm.image.split(',').filter(url => url.trim()) : []
       existingImages.push(originUrl)
       dramaForm.image = existingImages.join(',')
-      
+
       onFinish()
       message.success('详情图片上传成功')
     } else {
@@ -1045,6 +1045,7 @@ onUnmounted(() => {
     }
   }
 }
+
 @keyframes fadeIn {
   from {
     opacity: 0;
