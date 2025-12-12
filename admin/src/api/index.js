@@ -534,7 +534,7 @@ export const updateReportStatus = (data) => {
  */
 export const deleteReport = (id) => {
   return request({
-    url: `/report/admin/${id}`,
+    url: `/report/admin/delete/${id}`,
     method: 'delete'
   })
 }

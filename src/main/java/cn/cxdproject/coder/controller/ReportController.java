@@ -158,4 +158,13 @@ public class ReportController {
         ReportVO reportVO = reportService.getReportByIdByAdmin(id);
         return ApiResponse.success(reportVO);
     }
+
+    /**
+     * 管理员删除影视剧备案
+     */
+    @DeleteMapping("/admin/delete/{id}")
+    public ApiResponse<Void> deleteReportByAdmin(@PathVariable @NotNull(message = "ID不能为空") Long id) {
+        reportService.deleteReportByAdmin(id);
+        return ApiResponse.success();
+    }
 }
