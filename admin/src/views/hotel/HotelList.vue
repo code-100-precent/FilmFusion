@@ -192,14 +192,6 @@
           >
             点击上传详情图
           </n-upload>
-          <div v-if="hotelForm.cover" style="margin-top: 12px;">
-            <n-image
-                :src="getImageUrl(hotelForm.thumbCover || hotelForm.cover)"
-                width="200"
-                height="120"
-                object-fit="cover"
-            />
-          </div>
         </n-form-item>
 
       </n-form>
@@ -285,11 +277,7 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true,
-  // 添加以下属性以确保Naive UI正确计算分页
-  pageCount: 1,
-  prefix: ({ itemCount }) => `共 ${itemCount} 条`
+  pageSizes: [10, 20, 50, 100]
 })
 
 // 文件列表
@@ -462,8 +450,6 @@ const loadData = async () => {
     })
 
     pagination.itemCount = totalItems
-    // 自动计算总页数
-    pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
 
   } catch (error) {
     console.error('加载酒店列表失败:', error)
@@ -505,8 +491,6 @@ const resetForm = () => {
     description: '',
     longitude: '',
     latitude: '',
-    cover: '',
-    thumbCover: '',
     image: '',
     thumbImage: '',
     userId: userStore.userInfo?.id || null,
@@ -671,7 +655,7 @@ const handleCoverFileListChange = (newList) => {
 
 const handleDetailUpload = async ({ file, onFinish, onError }) => {
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadFile(file.file);
 
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url;
@@ -713,23 +697,7 @@ const handleDetailUpload = async ({ file, onFinish, onError }) => {
     onError();
     message.error('上传失败');
   }
-}
-
-const handleImageFileListChange = (fileList) => {
-  imageFileList.value = fileList
-
-  // 从文件列表中提取已上传的图片URL
-  const uploadedFiles = fileList.filter(f => f.status === 'finished' && f.url)
-  const imageUrls = uploadedFiles.map(f => f.url)
-
-  // 更新表单中的图片字段
-  if (imageUrls.length > 0) {
-    hotelForm.image = imageUrls.join(',')
-  } else {
-    hotelForm.image = ''
-    hotelForm.thumbImage = ''
-  }
-}
+};
 
 const handleDetailFileListChange = (newList) => {
   detailFileList.value = newList

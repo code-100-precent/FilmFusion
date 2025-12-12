@@ -32,10 +32,17 @@
           :columns="columns"
           :data="policyList"
           :loading="loading"
-          :pagination="pagination"
+          :pagination="{
+            page: currentPage,
+            pageSize: pageSize,
+            itemCount: totalItems,
+            showSizePicker: true,
+            pageSizes: [5, 10, 20, 50],
+            onUpdatePage: handlePageChange,
+            onUpdatePageSize: handlePageSizeChange,
+            prefix: (info) => `共 ${info.itemCount} 条`
+          }"
           :row-key="row => row.id"
-          @update:page="handlePageChange"
-          @update:page-size="handlePageSizeChange"
           :scroll-x="1500"
       />
 
@@ -106,9 +113,9 @@
           <!-- 移动端分页 -->
           <div class="mobile-pagination">
             <n-pagination
-                :page="pagination.page"
-                :page-size="pagination.pageSize"
-                :item-count="pagination.itemCount"
+                :page="currentPage"
+                :page-size="pageSize"
+                :item-count="totalItems"
                 :page-sizes="[5, 10, 20, 50]"
                 show-size-picker
                 @update:page="handlePageChange"
@@ -264,17 +271,9 @@ const statusOptions = [
 ]
 
 // 分页相关状态
-const pagination = reactive({
-  page: 1,
-  pageSize: 10,
-  itemCount: 0,
-  showSizePicker: true,
-  pageSizes: [5, 10, 20, 50],
-  showQuickJumper: true,
-  // 添加以下属性以确保Naive UI正确计算分页
-  pageCount: 1,
-  prefix: ({ itemCount }) => `共 ${itemCount} 条`
-})
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalItems = ref(0)
 
 const formRules = {
   title: [
@@ -545,18 +544,28 @@ const formatDate = (date) => {
 const loadData = async () => {
   try {
     loading.value = true
-    const res = await getPolicyPage(pagination.page, pagination.pageSize, searchForm.keyword)
-    console.log('分页响应数据:', res) // 添加调试日志
+    console.log(`加载第 ${currentPage.value} 页，每页 ${pageSize.value} 条，关键词: ${searchForm.keyword}`)
+
+    const res = await getPolicyPage(currentPage.value, pageSize.value, searchForm.keyword)
+
+    console.log('API响应:', res)
+
     if (res.code === 200) {
       policyList.value = res.data || []
-      // 设置总数据量
-      pagination.itemCount = res.pagination?.totalItems || 0
-      // 自动计算总页数
-      pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
-      console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
-      console.log('自动计算总页数:', pagination.pageCount) // 添加调试日志
 
-      console.log(`成功加载数据，总数: ${pagination.itemCount}，当前页数据条数: ${policyList.value.length}`)
+      // 设置总数 - 尝试多种可能的字段名
+      if (res.pagination && res.pagination.totalItems !== undefined) {
+        totalItems.value = res.pagination.totalItems
+      } else if (res.pagination && res.pagination.total !== undefined) {
+        totalItems.value = res.pagination.total
+      } else if (res.total !== undefined) {
+        totalItems.value = res.total
+      } else if (Array.isArray(res.data)) {
+        totalItems.value = res.data.length
+        console.warn('警告：未找到总数，使用当前页数据长度。请检查后端API是否返回总数信息。')
+      }
+
+      console.log(`成功加载数据，总数: ${totalItems.value}，当前页数据条数: ${policyList.value.length}`)
     } else if (res.code === 401 || res.code === 403) {
       message.error('未登录或权限不足，请重新登录')
     } else {
@@ -571,26 +580,26 @@ const loadData = async () => {
 }
 
 const handleSearch = () => {
-  pagination.page = 1
+  currentPage.value = 1
   loadData()
 }
 
 const handleReset = () => {
   searchForm.keyword = ''
-  pagination.page = 1
+  currentPage.value = 1
   loadData()
 }
 
 const handlePageChange = (page) => {
   console.log('页码变化到:', page)
-  pagination.page = page
+  currentPage.value = page
   loadData()
 }
 
 const handlePageSizeChange = (newPageSize) => {
   console.log('每页大小变化到:', newPageSize)
-  pagination.pageSize = newPageSize
-  pagination.page = 1  // 页大小改变时回到第一页
+  pageSize.value = newPageSize
+  currentPage.value = 1  // 页大小改变时回到第一页
   loadData()
 }
 

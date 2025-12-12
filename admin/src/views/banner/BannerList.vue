@@ -300,11 +300,7 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true,
-  // 添加以下属性以确保Naive UI正确计算分页
-  pageCount: 1,
-  prefix: ({ itemCount }) => `共 ${itemCount} 条`
+  pageSizes: [10, 20, 50, 100]
 })
 
 // 跳转模块选项
@@ -426,13 +422,6 @@ const loadData = async () => {
   try {
     loading.value = true
     const res = await getBannerPage(pagination.page, pagination.pageSize, searchForm.keyword)
-    console.log('=== Banner API 响应数据 ===')
-    console.log('完整响应:', res)
-    console.log('res.code:', res.code)
-    console.log('res.data:', res.data)
-    console.log('res.pagination:', res.pagination)
-    console.log('res.pagination?.totalItems:', res.pagination?.totalItems)
-
     if (res.code === 200) {
       bannerList.value = res.data || []
       pagination.itemCount = res.pagination?.totalItems || res.total || 0
@@ -457,17 +446,11 @@ const handleReset = () => {
 }
 
 const handlePageChange = (page) => {
-  console.log('=== handlePageChange 被调用 ===')
-  console.log('新页码:', page)
-  console.log('当前 pagination.page:', pagination.page)
   pagination.page = page
-  console.log('更新后 pagination.page:', pagination.page)
   loadData()
 }
 
 const handlePageSizeChange = (pageSize) => {
-  console.log('=== handlePageSizeChange 被调用 ===')
-  console.log('新每页条数:', pageSize)
   pagination.pageSize = pageSize
   pagination.page = 1
   loadData()

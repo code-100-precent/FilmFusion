@@ -165,9 +165,9 @@
           <n-input v-model:value="locationForm.address" placeholder="请输入详细地址" />
         </n-form-item>
         <n-form-item label="价格" path="price">
-          <n-input-number
-            v-model:value="locationForm.price"
-            placeholder="请输入价格"
+          <n-input-number 
+            v-model:value="locationForm.price" 
+            placeholder="请输入价格" 
             :min="0"
             :show-button="false"
           >
@@ -261,8 +261,6 @@ import {
   NImage,
   NSpin,
   NPagination,
-  NUpload,
-  NSpace,
   useMessage
 } from 'naive-ui'
 import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById, uploadFile } from '@/api'
@@ -329,11 +327,7 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true,
-  // 添加以下属性以确保Naive UI正确计算分页
-  pageCount: 1,
-  prefix: ({ itemCount }) => `共 ${itemCount} 条`
+  pageSizes: [10, 20, 50, 100]
 })
 
 const formRules = {
@@ -517,97 +511,15 @@ const columns = [
   }
 ]
 
-// 封面图片上传处理
-const handleCoverUpload = async ({ file, onFinish, onError }) => {
-  try {
-    const formData = new FormData()
-    formData.append('file', file.file)
-
-    const res = await uploadFile(formData)
-    if (res.code === 200 && res.data) {
-      locationForm.cover = res.data.originUrl
-      locationForm.thumbCover = res.data.thumbUrl
-      message.success('封面图片上传成功')
-      onFinish()
-    } else {
-      message.error('封面图片上传失败')
-      onError()
-    }
-  } catch (error) {
-    console.error('封面图片上传失败:', error)
-    message.error('封面图片上传失败')
-    onError()
-  }
-}
-
-const handleCoverFileListChange = (fileList) => {
-  coverFileList.value = fileList
-  if (fileList.length === 0) {
-    locationForm.cover = ''
-    locationForm.thumbCover = ''
-  }
-}
-
-// 详情图片上传处理
-const handleImageUpload = async ({ file, onFinish, onError }) => {
-  try {
-    const formData = new FormData()
-    formData.append('file', file.file)
-
-    const res = await uploadFile(formData)
-    if (res.code === 200 && res.data) {
-      // 将新上传的图片添加到现有图片列表
-      const currentImages = locationForm.image ? locationForm.image.split(',').filter(url => url.trim()) : []
-      const currentThumbs = locationForm.thumbImage ? locationForm.thumbImage.split(',').filter(url => url.trim()) : []
-
-      currentImages.push(res.data.originUrl)
-      currentThumbs.push(res.data.thumbUrl)
-
-      locationForm.image = currentImages.join(',')
-      locationForm.thumbImage = currentThumbs.join(',')
-
-      message.success('详情图片上传成功')
-      onFinish()
-    } else {
-      message.error('详情图片上传失败')
-      onError()
-    }
-  } catch (error) {
-    console.error('详情图片上传失败:', error)
-    message.error('详情图片上传失败')
-    onError()
-  }
-}
-
-const handleImageFileListChange = (fileList) => {
-  imageFileList.value = fileList
-
-  // 从文件列表中提取已上传的图片URL
-  const uploadedFiles = fileList.filter(f => f.status === 'finished' && f.url)
-  const imageUrls = uploadedFiles.map(f => {
-    // 如果URL包含thumbUrl，则提取原始URL
-    const url = f.url
-    return url
-  })
-
-  // 更新表单中的图片字段
-  if (imageUrls.length > 0) {
-    locationForm.image = imageUrls.join(',')
-  } else {
-    locationForm.image = ''
-    locationForm.thumbImage = ''
-  }
-}
-
 const handleDialogSave = async () => {
   if (!formRef.value) return
-
+  
   try {
     await formRef.value.validate()
   } catch (error) {
     return
   }
-
+  
   try {
     dialogLoading.value = true
     
@@ -691,7 +603,7 @@ const handleDialogSave = async () => {
     } else {
       res = await addLocation(data)
     }
-
+    
     if (res.code === 200) {
       message.success(locationForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
@@ -721,12 +633,7 @@ const handleDelete = async (id) => {
 const loadData = async () => {
   try {
     loading.value = true
-    console.log(`加载第 ${pagination.page} 页，每页 ${pagination.pageSize} 条，关键词: ${searchForm.keyword}`)
-
     const res = await getLocationPage(pagination.page, pagination.pageSize, searchForm.keyword)
-
-    console.log('API响应:', res)
-
     if (res.code === 200) {
       locationList.value = res.data?.records || res.data || []
       // 兼容多种API返回格式

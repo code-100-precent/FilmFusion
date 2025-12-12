@@ -321,8 +321,7 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true
+  pageSizes: [10, 20, 50, 100]
 })
 
 // 文件列表
@@ -626,7 +625,7 @@ const handleEdit = async (row) => {
         }]
         
         tourForm.cover = coverUrl
-        tourForm.thumbCover = coverThumbUrlHEAD
+        tourForm.thumbCover = coverThumbUrl
         
         // 记录到映射
         fileMapping['cover'] = { originUrl: coverUrl, thumbUrl: coverThumbUrl }

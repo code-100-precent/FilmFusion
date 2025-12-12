@@ -205,11 +205,7 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true,
-  // 添加以下属性以确保Naive UI正确计算分页
-  pageCount: 1,
-  prefix: ({ itemCount }) => `共 ${itemCount} 条`
+  pageSizes: [10, 20, 50, 100]
 })
 
 const statusOptions = [
@@ -371,9 +367,6 @@ const loadData = async () => {
       }
       feedbackList.value = list
       pagination.itemCount = res.pagination?.totalItems || 0
-      pagination.pageCount = res.pagination?.totalPages || 1
-      console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
-      console.log('设置总页数:', pagination.pageCount) // 添加调试日志
     }
   } catch (error) {
     console.error('加载反馈列表失败:', error)
