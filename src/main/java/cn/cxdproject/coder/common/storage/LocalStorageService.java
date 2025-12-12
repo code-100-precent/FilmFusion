@@ -1,7 +1,9 @@
 package cn.cxdproject.coder.common.storage;
 
 
+import cn.cxdproject.coder.exception.SystemException;
 import cn.cxdproject.coder.model.vo.FileVO;
+import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,9 +14,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SYSTEM_ERROR;
+
 /**
  * 本地文件存储服务
  */
+@Slf4j
 @Service
 public class LocalStorageService implements FileStorageAdapter {
 
@@ -59,23 +64,36 @@ public class LocalStorageService implements FileStorageAdapter {
 
             return new FileVO(originalUrl, thumbnailUrl);
         } catch (IOException e) {
-            throw new RuntimeException("本地文件上传失败", e);
+            throw new SystemException(SYSTEM_ERROR.code(), "本地文件上传失败", e);
         }
     }
 
     @Override
     public FileVO upload(String prefix, MultipartFile file) {
-
+        String localBasePath = null;
+        String safeFilename = null;
+        
         try {
             // 清理文件名，移除路径分隔符，防止路径遍历攻击
-            String safeFilename = file.getOriginalFilename() != null 
+            safeFilename = file.getOriginalFilename() != null 
                 ? file.getOriginalFilename().replaceAll("[/\\\\]", "_") 
                 : "file";
             String baseName = System.currentTimeMillis() + "_" + safeFilename;
 
+            // 获取基础路径，如果是相对路径则基于项目根目录
+            localBasePath = properties.getLocalBasePath();
+            if (localBasePath == null || localBasePath.isEmpty()) {
+                localBasePath = System.getProperty("user.dir") + "/app_uploads";
+            } else if (!Paths.get(localBasePath).isAbsolute()) {
+                // 相对路径，基于项目根目录
+                localBasePath = System.getProperty("user.dir") + "/" + localBasePath;
+            }
+            
             // 构造本地存储路径，prefix作为子目录
-            Path originDir = Paths.get(properties.getLocalBasePath(), prefix, "origin");
-            Path thumbDir = Paths.get(properties.getLocalBasePath(), prefix, "thumb");
+            Path originDir = Paths.get(localBasePath, prefix, "origin").toAbsolutePath().normalize();
+            Path thumbDir = Paths.get(localBasePath, prefix, "thumb").toAbsolutePath().normalize();
+            
+            // 创建目录（幂等操作，存在也不报错）
             Files.createDirectories(originDir);
             Files.createDirectories(thumbDir);
 
@@ -98,7 +116,18 @@ public class LocalStorageService implements FileStorageAdapter {
 
             return new FileVO(originalUrl, thumbnailUrl);
         } catch (IOException e) {
-            throw new RuntimeException("本地文件上传失败", e);
+            // 记录详细错误日志
+            log.error("文件上传失败 - 存储路径: {}, prefix: {}, 文件名: {}, 错误: {}", 
+                localBasePath != null ? localBasePath : properties.getLocalBasePath(), 
+                prefix, 
+                safeFilename != null ? safeFilename : (file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown"), 
+                e.getMessage(), e);
+            
+            // 添加更详细的错误信息
+            String errorMsg = String.format("本地文件上传失败: %s (存储路径: %s)", 
+                e.getMessage(), 
+                localBasePath != null ? localBasePath : properties.getLocalBasePath());
+            throw new SystemException(SYSTEM_ERROR.code(), errorMsg, e);
         }
     }
 
@@ -267,7 +296,7 @@ public class LocalStorageService implements FileStorageAdapter {
             // 返回访问URL路径
             return "/files/" + filename;
         } catch (IOException e) {
-            throw new RuntimeException("本地文件上传失败", e);
+            throw new SystemException(SYSTEM_ERROR.code(), "本地文件上传失败", e);
         }
     }
 
