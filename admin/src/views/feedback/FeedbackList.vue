@@ -7,21 +7,21 @@
             <n-input v-model:value="searchForm.keyword" placeholder="请输入反馈内容关键词" clearable @keyup.enter="handleSearch" />
           </n-form-item>
           <n-form-item label="状态">
-            <n-select 
-              v-model:value="searchForm.status" 
-              :options="statusOptions" 
-              placeholder="请选择状态" 
-              clearable 
-              style="min-width: 120px;"
+            <n-select
+                v-model:value="searchForm.status"
+                :options="statusOptions"
+                placeholder="请选择状态"
+                clearable
+                style="min-width: 120px;"
             />
           </n-form-item>
           <n-form-item label="类型">
-            <n-select 
-              v-model:value="searchForm.type" 
-              :options="typeOptions" 
-              placeholder="请选择类型" 
-              clearable 
-              style="min-width: 120px;"
+            <n-select
+                v-model:value="searchForm.type"
+                :options="typeOptions"
+                placeholder="请选择类型"
+                clearable
+                style="min-width: 120px;"
             />
           </n-form-item>
           <n-form-item>
@@ -35,20 +35,20 @@
           </n-form-item>
         </n-form>
       </div>
-      
+
       <!-- 桌面端表格 -->
       <n-data-table
-        v-if="!isMobile"
-        :columns="columns"
-        :data="feedbackList"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="row => row.id"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-        :scroll-x="1200"
+          v-if="!isMobile"
+          :columns="columns"
+          :data="feedbackList"
+          :loading="loading"
+          :pagination="pagination"
+          :row-key="row => row.id"
+          @update:page="handlePageChange"
+          @update:page-size="handlePageSizeChange"
+          :scroll-x="1200"
       />
-      
+
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
         <n-spin :show="loading">
@@ -58,10 +58,10 @@
           </div>
           <div v-else class="card-list">
             <n-card
-              v-for="feedback in feedbackList"
-              :key="feedback.id"
-              class="mobile-card"
-              hoverable
+                v-for="feedback in feedbackList"
+                :key="feedback.id"
+                class="mobile-card"
+                hoverable
             >
               <div class="card-header">
                 <div class="feedback-info">
@@ -89,12 +89,12 @@
                 </div>
               </div>
               <div class="card-actions">
-                <n-button 
-                  size="small" 
-                  @click="handleUpdateStatus(feedback)" 
-                  block 
-                  style="margin-bottom: 8px"
-                  :type="feedback.status === '已解决' ? 'warning' : 'success'"
+                <n-button
+                    size="small"
+                    @click="handleUpdateStatus(feedback)"
+                    block
+                    style="margin-bottom: 8px"
+                    :type="feedback.status === '已解决' ? 'warning' : 'success'"
                 >
                   {{ feedback.status === '已解决' ? '重新处理' : '标记为已解决' }}
                 </n-button>
@@ -109,17 +109,17 @@
               </div>
             </n-card>
           </div>
-          
+
           <!-- 移动端分页 -->
           <div class="mobile-pagination">
             <n-pagination
-              :page="pagination.page"
-              :page-size="pagination.pageSize"
-              :item-count="pagination.itemCount"
-              :page-sizes="[10, 20, 50]"
-              show-size-picker
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
+                :page="pagination.page"
+                :page-size="pagination.pageSize"
+                :item-count="pagination.itemCount"
+                :page-sizes="[10, 20, 50]"
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange"
             />
           </div>
         </n-spin>
@@ -127,12 +127,12 @@
     </n-card>
 
     <!-- 状态更新对话框 -->
-    <n-modal 
-      v-model:show="statusDialogVisible" 
-      preset="dialog" 
-      title="更新反馈状态" 
-      style="width: 90%; max-width: 500px"
-      :mask-closable="false"
+    <n-modal
+        v-model:show="statusDialogVisible"
+        preset="dialog"
+        title="更新反馈状态"
+        style="width: 90%; max-width: 500px"
+        :mask-closable="false"
     >
       <n-form ref="statusFormRef" :model="statusForm" :rules="statusFormRules" label-placement="left" label-width="80">
         <n-form-item label="当前状态">
@@ -205,11 +205,7 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true,
-  // 添加以下属性以确保Naive UI正确计算分页
-  pageCount: 1,
-  prefix: ({ itemCount }) => `共 ${itemCount} 条`
+  pageSizes: [10, 20, 50, 100]
 })
 
 const statusOptions = [
@@ -245,11 +241,11 @@ const columns = [
     key: 'type',
     width: 100,
     render: (row) => {
-      return h(NTag, { 
-        type: getTypeTagType(row.type), 
-        size: 'small' 
-      }, { 
-        default: () => getTypeLabel(row.type) 
+      return h(NTag, {
+        type: getTypeTagType(row.type),
+        size: 'small'
+      }, {
+        default: () => getTypeLabel(row.type)
       })
     }
   },
@@ -257,7 +253,7 @@ const columns = [
     title: '反馈内容',
     key: 'content',
     width: 300,
-    ellipsis: { 
+    ellipsis: {
       tooltip: true,
       line: 2
     }
@@ -267,11 +263,11 @@ const columns = [
     key: 'status',
     width: 120,
     render: (row) => {
-      return h(NTag, { 
-        type: getStatusTagType(row.status), 
-        size: 'small' 
-      }, { 
-        default: () => getStatusLabel(row.status) 
+      return h(NTag, {
+        type: getStatusTagType(row.status),
+        size: 'small'
+      }, {
+        default: () => getStatusLabel(row.status)
       })
     }
   },
@@ -293,19 +289,19 @@ const columns = [
     fixed: 'right',
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px; flex-wrap: wrap;' }, [
-        h(NButton, { 
-          size: 'small', 
+        h(NButton, {
+          size: 'small',
           type: row.status === '已解决' ? 'warning' : 'success',
-          onClick: () => handleUpdateStatus(row) 
-        }, { 
-          default: () => row.status === '已解决' ? '重新处理' : '标记解决' 
+          onClick: () => handleUpdateStatus(row)
+        }, {
+          default: () => row.status === '已解决' ? '重新处理' : '标记解决'
         }),
         h(
-          NPopconfirm,
-          { onPositiveClick: () => handleDelete(row.id) },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
+            NPopconfirm,
+            { onPositiveClick: () => handleDelete(row.id) },
+            {
+              trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+            }
         )
       ])
     }
@@ -362,13 +358,6 @@ const getStatusTagType = (status) => {
 const loadData = async () => {
   try {
     loading.value = true
-<<<<<<< HEAD
-    const res = await getFeedbackPage(pagination.page, pagination.pageSize, searchForm.keyword)
-    console.log('分页响应数据:', res) // 添加调试日志
-    if (res.code === 200) {
-      feedbackList.value = res.data || []
-      // 确保正确设置总数据量和总页数
-=======
     const res = await getFeedbackPage(pagination.page, pagination.pageSize, searchForm.keyword, searchForm.status)
     if (res.code === 200) {
       let list = res.data || []
@@ -377,11 +366,7 @@ const loadData = async () => {
         list = list.filter(item => item.type === searchForm.type)
       }
       feedbackList.value = list
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
       pagination.itemCount = res.pagination?.totalItems || 0
-      pagination.pageCount = res.pagination?.totalPages || 1
-      console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
-      console.log('设置总页数:', pagination.pageCount) // 添加调试日志
     }
   } catch (error) {
     console.error('加载反馈列表失败:', error)
@@ -429,11 +414,11 @@ const handleStatusSave = async () => {
   } catch (error) {
     return
   }
-  
+
   try {
     statusLoading.value = true
     const res = await updateFeedbackStatus(currentFeedback.value.id, statusForm.status)
-    
+
     if (res.code === 200) {
       message.success('状态更新成功')
       statusDialogVisible.value = false
@@ -492,35 +477,35 @@ const handleDelete = async (id) => {
     text-align: center;
     padding: 60px 20px;
   }
-  
+
   .card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .mobile-card {
     :deep(.n-card__content) {
       padding: 16px;
     }
-    
+
     .card-header {
       margin-bottom: 12px;
-      
+
       .feedback-info {
         .feedback-meta {
           display: flex;
           gap: 8px;
           margin-bottom: 8px;
         }
-        
+
         .feedback-time {
           font-size: 12px;
           color: #9ca3af;
         }
       }
     }
-    
+
     .card-content {
       display: flex;
       flex-direction: column;
@@ -529,7 +514,7 @@ const handleDelete = async (id) => {
       padding: 12px;
       background: #f9fafb;
       border-radius: 8px;
-      
+
       .content-item {
         .feedback-content {
           margin: 8px 0 0 0;
@@ -537,11 +522,11 @@ const handleDelete = async (id) => {
           line-height: 1.5;
         }
       }
-      
+
       .info-item {
         display: flex;
         font-size: 13px;
-        
+
         .label {
           color: #6b7280;
           min-width: 60px;
@@ -549,20 +534,20 @@ const handleDelete = async (id) => {
         }
       }
     }
-    
+
     .card-actions {
       margin-top: 12px;
       padding-top: 12px;
       border-top: 1px solid #e5e7eb;
     }
   }
-  
+
   .mobile-pagination {
     margin-top: 16px;
     padding: 12px;
     background: #ffffff;
     border-radius: 8px;
-    
+
     :deep(.n-pagination) {
       justify-content: center;
     }
@@ -574,14 +559,14 @@ const handleDelete = async (id) => {
   .search-header {
     flex-direction: column;
     gap: 12px;
-    
+
     .search-form {
       width: 100%;
       min-width: auto;
-      
+
       :deep(.n-form-item) {
         margin-bottom: 12px;
-        
+
         .n-form-item-label {
           width: auto !important;
           margin-bottom: 4px;
@@ -589,36 +574,36 @@ const handleDelete = async (id) => {
       }
     }
   }
-  
+
   .management-card {
     :deep(.n-card__content) {
       padding: 12px;
     }
   }
-  
+
   // 移动端表单优化
   :deep(.n-modal) {
     .n-dialog {
       margin: 20px auto;
     }
-    
+
     .n-form-item {
       margin-bottom: 16px;
-      
+
       .n-form-item-label {
         font-weight: 500;
         margin-bottom: 8px;
       }
-      
+
       .n-input,
       .n-select {
         width: 100%;
       }
     }
-    
+
     .n-dialog__action {
       padding: 12px 16px;
-      
+
       .n-button {
         flex: 1;
         margin: 0 4px;
