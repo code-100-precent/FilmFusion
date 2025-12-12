@@ -100,13 +100,6 @@
     </update>
 
 
-        <select id="getTotal" resultType="long">
-            SELECT COUNT(1)
-            FROM fi_articles
-            WHERE title LIKE CONCAT('%', #{keyword}, '%')
-        </select>
-
-
     <select id="getTotal" resultType="java.lang.Long">
         SELECT COUNT(1)
         FROM fi_articles
@@ -115,5 +108,4 @@
             AND title LIKE CONCAT('%', #{keyword}, '%')
         </if>
     </select>
-
 </mapper>

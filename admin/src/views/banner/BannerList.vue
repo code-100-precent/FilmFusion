@@ -25,20 +25,20 @@
           </n-button>
         </div>
       </div>
-      
+
       <!-- 桌面端表格 -->
       <n-data-table
-        v-if="!isMobile"
-        :columns="columns"
-        :data="bannerList"
-        :loading="loading"
-        :pagination="pagination"
-        :row-key="row => row.id"
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-        :scroll-x="1200"
+          v-if="!isMobile"
+          :columns="columns"
+          :data="bannerList"
+          :loading="loading"
+          :pagination="pagination"
+          :row-key="row => row.id"
+          @update:page="handlePageChange"
+          @update:page-size="handlePageSizeChange"
+          :scroll-x="1200"
       />
-      
+
       <!-- 移动端卡片列表 -->
       <div v-else class="mobile-list">
         <n-spin :show="loading">
@@ -48,10 +48,10 @@
           </div>
           <div v-else class="card-list">
             <n-card
-              v-for="banner in bannerList"
-              :key="banner.id"
-              class="mobile-card"
-              hoverable
+                v-for="banner in bannerList"
+                :key="banner.id"
+                class="mobile-card"
+                hoverable
             >
               <div class="card-header">
                 <div class="banner-info">
@@ -60,12 +60,12 @@
                 </div>
                 <div class="banner-image">
                   <n-image
-                    v-if="banner.imageUrl"
-                    :src="banner.imageUrl"
-                    width="80"
-                    height="60"
-                    object-fit="cover"
-                    preview-disabled
+                      v-if="banner.imageUrl"
+                      :src="banner.imageUrl"
+                      width="80"
+                      height="60"
+                      object-fit="cover"
+                      preview-disabled
                   />
                   <div v-else class="no-image">
                     <Icon icon="mdi:image" :width="32" />
@@ -103,65 +103,65 @@
               </div>
             </n-card>
           </div>
-          
+
           <!-- 移动端分页 -->
           <div class="mobile-pagination">
             <n-pagination
-              :page="pagination.page"
-              :page-size="pagination.pageSize"
-              :item-count="pagination.itemCount"
-              :page-sizes="[10, 20, 50]"
-              show-size-picker
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
+                :page="pagination.page"
+                :page-size="pagination.pageSize"
+                :item-count="pagination.itemCount"
+                :page-sizes="[10, 20, 50]"
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange"
             />
           </div>
         </n-spin>
       </div>
     </n-card>
-    
-    <n-modal 
-      v-model:show="dialogVisible" 
-      preset="dialog" 
-      :title="dialogTitle" 
-      style="width: 90%; max-width: 800px"
-      :mask-closable="false"
+
+    <n-modal
+        v-model:show="dialogVisible"
+        preset="dialog"
+        :title="dialogTitle"
+        style="width: 90%; max-width: 800px"
+        :mask-closable="false"
     >
-      <n-form 
-        ref="formRef" 
-        :model="bannerForm" 
-        :rules="formRules" 
-        :label-placement="isMobile ? 'top' : 'left'"
-        :label-width="isMobile ? 'auto' : '100'"
+      <n-form
+          ref="formRef"
+          :model="bannerForm"
+          :rules="formRules"
+          :label-placement="isMobile ? 'top' : 'left'"
+          :label-width="isMobile ? 'auto' : '100'"
       >
         <n-form-item label="标题" path="title">
           <n-input v-model:value="bannerForm.title" placeholder="请输入Banner标题" />
         </n-form-item>
         <n-form-item label="跳转模块" path="link">
-          <n-select 
-            v-model:value="bannerForm.link" 
-            :options="moduleOptions" 
-            placeholder="请选择跳转模块" 
-            clearable
-            style="width: 100%;"
+          <n-select
+              v-model:value="bannerForm.link"
+              :options="moduleOptions"
+              placeholder="请选择跳转模块"
+              clearable
+              style="width: 100%;"
           />
         </n-form-item>
         <n-form-item label="图片" path="imageUrl">
           <n-upload
-            :max="1"
-            :default-file-list="fileList"
-            @update:file-list="handleFileListChange"
-            @finish="handleUploadFinish"
-            :custom-request="handleUpload"
+              :max="1"
+              :default-file-list="fileList"
+              @update:file-list="handleFileListChange"
+              @finish="handleUploadFinish"
+              :custom-request="handleUpload"
           >
             <n-button>上传图片</n-button>
           </n-upload>
           <div v-if="bannerForm.imageUrl" style="margin-top: 12px;">
             <n-image
-              :src="getImageUrl(bannerForm.imageUrl)"
-              width="200"
-              height="120"
-              object-fit="cover"
+                :src="getImageUrl(bannerForm.imageUrl)"
+                width="200"
+                height="120"
+                object-fit="cover"
             />
           </div>
         </n-form-item>
@@ -300,11 +300,7 @@ const pagination = reactive({
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true,
-  // 添加以下属性以确保Naive UI正确计算分页
-  pageCount: 1,
-  prefix: ({ itemCount }) => `共 ${itemCount} 条`
+  pageSizes: [10, 20, 50, 100]
 })
 
 // 跳转模块选项
@@ -333,33 +329,33 @@ const formRules = {
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
   {
-      title: '图片',
-      key: 'imageUrl',
-      width: 120,
-      render: (row) => {
-        // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
-        const thumbnailUrl = row.thumbUrl;
-        // 获取原图URL用于预览
-        const originalUrl = row.imageUrl || '';
-        
-        return h(NImage, {
-          width: 80,
-          height: 50,
-          src: getImageUrl(thumbnailUrl || originalUrl), // 显示压缩后的图片
-          objectFit: 'cover',
-          previewDisabled: false, // 启用预览功能
-          showToolbar: false,
-          fallbackSrc: '/placeholder.jpg',
-          // 配置预览功能，点击时显示原图
-          srcset: [
-            {
-              src: getImageUrl(originalUrl),
-              alt: 'Banner图片'
-            }
-          ]
-        })
-      }
-    },
+    title: '图片',
+    key: 'imageUrl',
+    width: 120,
+    render: (row) => {
+      // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
+      const thumbnailUrl = row.thumbUrl;
+      // 获取原图URL用于预览
+      const originalUrl = row.imageUrl || '';
+
+      return h(NImage, {
+        width: 80,
+        height: 50,
+        src: getImageUrl(thumbnailUrl || originalUrl), // 显示压缩后的图片
+        objectFit: 'cover',
+        previewDisabled: false, // 启用预览功能
+        showToolbar: false,
+        fallbackSrc: '/placeholder.jpg',
+        // 配置预览功能，点击时显示原图
+        srcset: [
+          {
+            src: getImageUrl(originalUrl),
+            alt: 'Banner图片'
+          }
+        ]
+      })
+    }
+  },
   { title: '标题', key: 'title', width: 200, ellipsis: { tooltip: true }, render: (row) => row.imageName || row.title || '-' },
   { title: '链接', key: 'link', width: 200, ellipsis: { tooltip: true }, render: (row) => row.targetModule || row.link || '-' },
   { title: '排序', key: 'sortOrder', width: 80, render: (row) => row.sort || row.sortOrder || 0 },
@@ -396,16 +392,16 @@ const columns = [
       return h('div', { style: 'display: flex; gap: 8px;' }, [
         h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
         h(
-          NPopconfirm,
-          { 
-            onPositiveClick: () => handleDelete(row.id),
-            positiveText: '确定',
-            negativeText: '取消'
-          },
-          {
-            default: () => '确定要删除这个Banner吗？',
-            trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
-          }
+            NPopconfirm,
+            {
+              onPositiveClick: () => handleDelete(row.id),
+              positiveText: '确定',
+              negativeText: '取消'
+            },
+            {
+              default: () => '确定要删除这个Banner吗？',
+              trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true }, { default: () => '删除' })
+            }
         )
       ])
     }
@@ -426,26 +422,9 @@ const loadData = async () => {
   try {
     loading.value = true
     const res = await getBannerPage(pagination.page, pagination.pageSize, searchForm.keyword)
-    console.log('=== Banner API 响应数据 ===')
-    console.log('完整响应:', res)
-    console.log('res.code:', res.code)
-    console.log('res.data:', res.data)
-    console.log('res.pagination:', res.pagination)
-    console.log('res.pagination?.totalItems:', res.pagination?.totalItems)
-
     if (res.code === 200) {
       bannerList.value = res.data || []
-<<<<<<< HEAD
-      // 设置总数据量
-      pagination.itemCount = res.pagination?.totalItems || 0
-      // 自动计算总页数
-      pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
-      console.log('设置总数据量:', pagination.itemCount)
-      console.log('自动计算总页数:', pagination.pageCount)
-      console.log('当前 pagination 对象:', pagination)
-=======
       pagination.itemCount = res.pagination?.totalItems || res.total || 0
->>>>>>> d6e8090b7be17a369ce2236d95c3fdfc0c48929c
     }
   } catch (error) {
     console.error('加载Banner列表失败:', error)
@@ -467,17 +446,11 @@ const handleReset = () => {
 }
 
 const handlePageChange = (page) => {
-  console.log('=== handlePageChange 被调用 ===')
-  console.log('新页码:', page)
-  console.log('当前 pagination.page:', pagination.page)
   pagination.page = page
-  console.log('更新后 pagination.page:', pagination.page)
   loadData()
 }
 
 const handlePageSizeChange = (pageSize) => {
-  console.log('=== handlePageSizeChange 被调用 ===')
-  console.log('新每页条数:', pageSize)
   pagination.pageSize = pageSize
   pagination.page = 1
   loadData()
@@ -513,7 +486,7 @@ const handleEdit = async (row) => {
         sortOrder: res.data.sort || res.data.sortOrder || 0, // sort映射到sortOrder
         status: res.data.status === true ? 1 : (res.data.status === false ? 0 : (res.data.status || 1)) // Boolean转换为数字
       })
-      
+
       // 设置文件列表
       if (res.data.imageUrl) {
         fileList.value = [{
@@ -525,7 +498,7 @@ const handleEdit = async (row) => {
       } else {
         fileList.value = []
       }
-      
+
       dialogVisible.value = true
     }
   } catch (error) {
@@ -578,7 +551,7 @@ const handleDialogSave = async () => {
   } catch (error) {
     return
   }
-  
+
   try {
     dialogLoading.value = true
     // 映射前端字段到后端DTO字段
@@ -589,14 +562,14 @@ const handleDialogSave = async () => {
       sort: bannerForm.sortOrder || bannerForm.sort || 0, // sortOrder映射到sort
       status: bannerForm.status === 1 ? true : (bannerForm.status === 0 ? false : bannerForm.status) // 转换为Boolean
     }
-    
+
     let res
     if (bannerForm.id) {
       res = await updateBanner(bannerForm.id, data)
     } else {
       res = await createBanner(data)
     }
-    
+
     if (res.code === 200) {
       message.success(bannerForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
@@ -661,64 +634,64 @@ const handleDelete = async (id) => {
     text-align: center;
     padding: 60px 20px;
   }
-  
+
   .card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .mobile-card {
     :deep(.n-card__content) {
       padding: 16px;
     }
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
-      
+
       .banner-info {
-          flex: 1;
-          margin-right: 12px;
-          
-          .banner-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-            margin: 0 0 4px 0;
-          }
-          
-          .banner-link {
-            font-size: 14px;
-            color: #6b7280;
-            margin: 0;
-            word-break: break-all;
-          }
+        flex: 1;
+        margin-right: 12px;
+
+        .banner-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          margin: 0 0 4px 0;
         }
-        
-        .banner-image {
-          flex-shrink: 0;
-          
-          .no-image {
-            width: 80px;
-            height: 60px;
-            background: #f3f4f6;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #9ca3af;
-          }
-          
-          // 针对图片添加点击放大功能
-          .n-image {
-            cursor: zoom-in;
-          }
+
+        .banner-link {
+          font-size: 14px;
+          color: #6b7280;
+          margin: 0;
+          word-break: break-all;
         }
+      }
+
+      .banner-image {
+        flex-shrink: 0;
+
+        .no-image {
+          width: 80px;
+          height: 60px;
+          background: #f3f4f6;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #9ca3af;
+        }
+
+        // 针对图片添加点击放大功能
+        .n-image {
+          cursor: zoom-in;
+        }
+      }
     }
-    
+
     .card-content {
       display: flex;
       flex-direction: column;
@@ -727,11 +700,11 @@ const handleDelete = async (id) => {
       padding: 12px;
       background: #f9fafb;
       border-radius: 8px;
-      
+
       .info-item {
         display: flex;
         font-size: 13px;
-        
+
         .label {
           color: #6b7280;
           min-width: 60px;
@@ -739,20 +712,20 @@ const handleDelete = async (id) => {
         }
       }
     }
-    
+
     .card-actions {
       margin-top: 12px;
       padding-top: 12px;
       border-top: 1px solid #e5e7eb;
     }
   }
-  
+
   .mobile-pagination {
     margin-top: 16px;
     padding: 12px;
     background: #ffffff;
     border-radius: 8px;
-    
+
     :deep(.n-pagination) {
       justify-content: center;
     }
@@ -764,60 +737,60 @@ const handleDelete = async (id) => {
   .search-header {
     flex-direction: column;
     gap: 12px;
-    
+
     .search-form {
       width: 100%;
       min-width: auto;
-      
+
       :deep(.n-form-item) {
         margin-bottom: 12px;
-        
+
         .n-form-item-label {
           width: auto !important;
           margin-bottom: 4px;
         }
       }
     }
-    
+
     .action-buttons {
       width: 100%;
-      
+
       button {
         flex: 1;
       }
     }
   }
-  
+
   .management-card {
     :deep(.n-card__content) {
       padding: 12px;
     }
   }
-  
+
   // 移动端表单优化
   :deep(.n-modal) {
     .n-dialog {
       margin: 20px auto;
     }
-    
+
     .n-form-item {
       margin-bottom: 16px;
-      
+
       .n-form-item-label {
         font-weight: 500;
         margin-bottom: 8px;
       }
-      
+
       .n-input,
       .n-select,
       .n-input-number {
         width: 100%;
       }
     }
-    
+
     .n-dialog__action {
       padding: 12px 16px;
-      
+
       .n-button {
         flex: 1;
         margin: 0 4px;

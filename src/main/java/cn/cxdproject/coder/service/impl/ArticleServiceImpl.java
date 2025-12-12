@@ -264,7 +264,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .setCurrent(current)
                 .setSize(size)
                 .setRecords(voList)
-                .setTotal(total); // 设置总记录数
-
+                .setTotal(total);
     }
 }
