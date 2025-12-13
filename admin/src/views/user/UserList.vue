@@ -248,7 +248,7 @@ const formRules = {
   ],
   phoneNumber: [
     { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+    { pattern: /(^1[3-9]\d{9}$)|(^0\d{2,3}-\d{7,8}$)/, message: '请输入正确的手机号或座机号', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
