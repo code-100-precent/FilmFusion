@@ -116,10 +116,10 @@
             <if test="dto.producerUnit != null and dto.producerUnit != ''">
                 producer_unit = #{dto.producerUnit},
             </if>
-            <if test="dto.startDate != null and dto.startDate != ''">
+            <if test="dto.startDate != null">
                 start_date = #{dto.startDate},
             </if>
-            <if test="dto.endDate != null and dto.endDate != ''">
+            <if test="dto.endDate != null">
                 end_date = #{dto.endDate},
             </if>
             <if test="dto.crewScale != null and dto.crewScale != ''">
