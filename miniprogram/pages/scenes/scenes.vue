@@ -72,7 +72,6 @@
                   <uni-icons type="image" size="32" color="#d1d5db"></uni-icons>
                   <text class="placeholder-text">暂无</text>
                 </view>
-                <view class="location-badge">{{ location.type }}</view>
               </view>
             
             <view class="location-info">
@@ -120,15 +119,15 @@ export default {
   data() {
     return {
       keyword: '',
-      selectedCategory: '自然场景',
+      selectedCategory: 'natural',
       categories: [
-        { value: '自然场景', label: '自然场景', icon: 'image' },
-        { value: '自然风光', label: '自然风光', icon: 'image' },
-        { value: '历史建筑', label: '历史建筑', icon: 'home' },
-        { value: '现代建筑', label: '现代建筑', icon: 'location' },
-        { value: '文化场所', label: '文化场所', icon: 'star' },
-        { value: '商业场所', label: '商业场所', icon: 'shop' },
-        { value: '其他', label: '其他', icon: 'more' }
+        { label: '自然风光', value: 'natural', icon: 'image' },
+        { label: '历史建筑', value: 'historical', icon: 'home' },
+        { label: '现代建筑', value: 'modern', icon: 'location' },
+        { label: '文化场所', value: 'cultural', icon: 'star' },
+        { label: '商业场所', value: 'commercial', icon: 'shop' },
+        { label: '公园景点', value: 'park', icon: 'map' },
+        { label: '其他', value: 'other', icon: 'more' }
       ],
       allLocations: [],
       nextCursor: null, // 游标分页
@@ -221,6 +220,10 @@ export default {
         return desc.substring(0, 40) + '...'
       }
       return desc
+    },
+    getCategoryLabel(value) {
+      const category = this.categories.find(c => c.value === value)
+      return category ? category.label : value
     }
   }
 }

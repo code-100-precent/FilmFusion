@@ -42,7 +42,7 @@
       <view class="info-card">
         <view class="card-header">
           <text class="location-name">{{ location.name }}</text>
-          <view class="location-badge">{{ location.type }}</view>
+          <view class="location-badge">{{ getCategoryLabel(location.type) }}</view>
         </view>
       </view>
 
@@ -55,17 +55,42 @@
       <!-- 联系信息 -->
       <view class="info-card">
         <view class="card-title">联系信息</view>
-        <view class="info-item">
-          <uni-icons type="person" size="18" color="#6b7280"></uni-icons>
-          <text class="info-label">联系人：</text>
-          <text class="info-value">{{ location.locationPrincipalName }}</text>
+        
+        <!-- 场地联系人 -->
+        <view class="contact-section">
+          <view class="section-subtitle">场地负责人</view>
+          <view class="info-item">
+            <uni-icons type="person" size="18" color="#6b7280"></uni-icons>
+            <text class="info-label">姓名：</text>
+            <text class="info-value">{{ location.locationPrincipalName || '暂无' }}</text>
+          </view>
+          <view class="info-item">
+            <uni-icons type="phone" size="18" color="#6b7280"></uni-icons>
+            <text class="info-label">电话：</text>
+            <text class="info-value">{{ location.locationPrincipalPhone || '暂无' }}</text>
+          </view>
         </view>
-        <view class="info-item">
-          <uni-icons type="phone" size="18" color="#6b7280"></uni-icons>
-          <text class="info-label">联系电话：</text>
-          <text class="info-value">{{ location.locationPrincipalPhone }}</text>
+
+        <view class="divider" v-if="location.govPrincipalName || location.govPrincipalPhone"></view>
+
+        <!-- 政府联系人 -->
+        <view class="contact-section" v-if="location.govPrincipalName || location.govPrincipalPhone">
+          <view class="section-subtitle">政府联络员</view>
+          <view class="info-item">
+            <uni-icons type="person" size="18" color="#6b7280"></uni-icons>
+            <text class="info-label">姓名：</text>
+            <text class="info-value">{{ location.govPrincipalName }}</text>
+          </view>
+          <view class="info-item">
+            <uni-icons type="phone" size="18" color="#6b7280"></uni-icons>
+            <text class="info-label">电话：</text>
+            <text class="info-value">{{ location.govPrincipalPhone }}</text>
+          </view>
         </view>
-        <view class="info-item">
+
+        <view class="divider"></view>
+
+        <view class="info-item" style="margin-top: 24rpx;">
           <uni-icons type="location" size="18" color="#6b7280"></uni-icons>
           <text class="info-label">地址：</text>
           <text class="info-value">{{ location.address }}</text>
@@ -124,7 +149,16 @@ export default {
   data() {
     return {
       location: null,
-      loading: false
+      loading: false,
+      categories: [
+        { label: '自然风光', value: 'natural' },
+        { label: '历史建筑', value: 'historical' },
+        { label: '现代建筑', value: 'modern' },
+        { label: '文化场所', value: 'cultural' },
+        { label: '商业场所', value: 'commercial' },
+        { label: '公园景点', value: 'park' },
+        { label: '其他', value: 'other' }
+      ]
     }
   },
   computed: {
@@ -177,6 +211,11 @@ export default {
     }
   },
   methods: {
+    getCategoryLabel(value) {
+      if (!value) return ''
+      const category = this.categories.find(c => c.value === value)
+      return category ? category.label : value
+    },
     async loadLocation(id) {
       this.loading = true
       try {
@@ -453,6 +492,25 @@ export default {
 .highlight {
   color: #f59e0b;
   font-weight: 600;
+}
+
+.contact-section {
+  margin-bottom: 24rpx;
+}
+
+.section-subtitle {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16rpx;
+  padding-left: 16rpx;
+  border-left: 6rpx solid #6366f1;
+}
+
+.divider {
+  height: 1rpx;
+  background: #e5e7eb;
+  margin: 24rpx 0;
 }
 </style>
 

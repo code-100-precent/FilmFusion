@@ -133,7 +133,7 @@
             </view>
             <view class="location-card-info">
               <text class="location-card-name">{{ location.name }}</text>
-              <text class="location-card-type">{{ location.type }}</text>
+              <text class="location-card-type">{{ getLocationTypeLabel(location.type) }}</text>
             </view>
           </view>
         </view>
@@ -230,7 +230,16 @@ export default {
       ],
       articles: [],
       locations: [],
-      currentBanner: 0
+      currentBanner: 0,
+      locationCategories: [
+        { label: '自然风光', value: 'natural' },
+        { label: '历史建筑', value: 'historical' },
+        { label: '现代建筑', value: 'modern' },
+        { label: '文化场所', value: 'cultural' },
+        { label: '商业场所', value: 'commercial' },
+        { label: '公园景点', value: 'park' },
+        { label: '其他', value: 'other' }
+      ]
     }
   },
   onLoad() {
@@ -373,6 +382,11 @@ export default {
     },
     onScrollToLower() {
       // 可以在这里实现加载更多
+    },
+    getLocationTypeLabel(value) {
+      if (!value) return ''
+      const category = this.locationCategories.find(c => c.value === value)
+      return category ? category.label : value
     }
   }
 }
