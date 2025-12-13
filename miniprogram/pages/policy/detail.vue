@@ -7,6 +7,37 @@
         <Loading></Loading>
       </view>
       <view v-else-if="policy">
+        <!-- 轮播图/封面图 -->
+        <view class="banner-section" v-if="bannerImages.length > 0">
+          <swiper 
+            v-if="bannerImages.length > 1" 
+            class="banner-swiper" 
+            circular 
+            indicator-dots 
+            autoplay 
+            :interval="4000" 
+            :duration="500"
+            indicator-active-color="#ef4444"
+            indicator-color="rgba(255, 255, 255, 0.5)"
+          >
+            <swiper-item v-for="(img, index) in bannerImages" :key="index">
+              <image 
+                :src="img" 
+                class="banner-image" 
+                mode="aspectFill" 
+                @click="previewImage(index)"
+              ></image>
+            </swiper-item>
+          </swiper>
+          <image 
+            v-else
+            :src="bannerImages[0]" 
+            class="banner-image" 
+            mode="aspectFill" 
+            @click="previewImage(0)"
+          ></image>
+        </view>
+
         <!-- 政策标题卡片 -->
         <view class="header-card">
           <view class="policy-type-badge" :class="policy.type === '省级' ? 'type-prov' : 'type-city'">
@@ -70,6 +101,7 @@ import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 import { getPolicyById } from '@/services/backend-api'
+import { getFileUrl } from '@/utils'
 
 export default {
   components: { NavBar, Loading, Empty },
@@ -78,6 +110,42 @@ export default {
       policyId: null,
       policy: null,
       loading: true
+    }
+  },
+  computed: {
+    bannerImages() {
+      if (!this.policy) return []
+      let images = []
+      
+      // 1. 优先使用 images 数组
+      if (this.policy.images && Array.isArray(this.policy.images) && this.policy.images.length > 0) {
+        images = this.policy.images.map(img => getFileUrl(img))
+      } 
+      // 2. 尝试解析逗号分隔的字符串
+      else if (this.policy.images && typeof this.policy.images === 'string') {
+        images = this.policy.images.split(',').map(img => getFileUrl(img))
+      }
+
+      // 3. 如果没有 images，尝试使用 image 字段
+      if (images.length === 0) {
+        const cover = this.policy.image
+        if (Array.isArray(cover)) {
+          images = cover.map(img => getFileUrl(img))
+        } else if (typeof cover === 'string' && cover) {
+          images = cover.split(',').map(img => getFileUrl(img))
+        }
+      }
+
+      // 4. 去重
+      images = [...new Set(images)].filter(img => img)
+      
+      // 用户要求：详情页面展示的图片是除了第一个以外的图片
+      // 如果有多张图片，移除第一张（通常是列表封面）；如果只有一张，保留显示
+      if (images.length > 1) {
+        return images.slice(1)
+      }
+      
+      return images
     }
   },
   onLoad(options) {
@@ -93,6 +161,14 @@ export default {
     }
   },
   methods: {
+    previewImage(index = 0) {
+      if (this.bannerImages && this.bannerImages.length > 0) {
+        uni.previewImage({
+          urls: this.bannerImages,
+          current: index
+        })
+      }
+    },
     async loadData() {
       this.loading = true
       try {
@@ -106,7 +182,9 @@ export default {
             issueUnit: res.data.issueUnit,
             issueTime: res.data.issueTime,
             content: res.data.content,
-            attachments: res.data.attachments || []
+            attachments: res.data.attachments || [],
+            image: res.data.image,
+            images: res.data.images
           }
         } else {
           uni.showToast({
@@ -180,6 +258,24 @@ export default {
   scrollbar-width: none;
   /* 兼容IE浏览器 */
   -ms-overflow-style: none;
+}
+
+.banner-section {
+  width: 100%;
+  margin-bottom: 24rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.banner-swiper {
+  width: 100%;
+  height: 400rpx;
+}
+
+.banner-image {
+  width: 100%;
+  height: 400rpx;
 }
 
 .header-card {

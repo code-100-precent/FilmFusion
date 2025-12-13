@@ -5,9 +5,8 @@
     <scroll-view class="content" scroll-y>
       <view class="about-section">
         <view class="logo-section">
-          <view class="logo">
-            <uni-icons type="film" size="60" color="#6366f1"></uni-icons>
-          </view>
+          <!-- <view class="logo">
+          </view> -->
           <text class="app-name">雅安影视服务</text>
           <text class="app-version">版本 1.0.0</text>
         </view>
@@ -151,15 +150,22 @@ export default {
   padding: 40rpx 0;
 }
 
-.logo {
-  width: 120rpx;
-  height: 120rpx;
-  background: #eef2ff;
-  border-radius: 24rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24rpx;
+// .logo {
+//   background-image: url('/static/logo.png');
+//   background-size: cover;
+
+//   width: 120rpx;
+//   height: 120rpx;
+//   border-radius: 24rpx;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   margin-bottom: 24rpx;
+// }
+
+.logo-img {
+  width: 150rpx;
+  height: 150rpx;
 }
 
 .app-name {

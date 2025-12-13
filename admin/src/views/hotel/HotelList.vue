@@ -415,6 +415,9 @@ onUnmounted(() => {
 // 辅助函数：解析图片字符串
 const parseImages = (imageStr) => {
   if (!imageStr) return []
+  if (Array.isArray(imageStr)) {
+    return imageStr.filter(url => url && typeof url === 'string').map(url => url.trim())
+  }
   if (typeof imageStr !== 'string') return []
   return imageStr.split(',').filter(url => url && url.trim())
 }
@@ -597,7 +600,6 @@ const handleEdit = async (row) => {
 
 // --- 图片上传逻辑 ---
 
-const handleCoverUpload = async ({ file, onFinish, onError }) => {
 const beforeUpload = (data) => {
   if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
@@ -610,9 +612,7 @@ const beforeUpload = (data) => {
   return true
 }
 
->>>>>>> b7326086e0e75703cb5af249ab6dc25ee0902864
 const handleCoverUpload = async ({file, onFinish, onError}) => {
->>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
   try {
     const res = await uploadFile(file.file);
 

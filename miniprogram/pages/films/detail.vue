@@ -10,8 +10,9 @@
           <image :src="posterUrl" class="poster-img" mode="aspectFill"></image>
           <view class="header-info">
             <text class="film-title">{{ film.name }}</text>
-            <text class="film-type">{{ film.type }} / {{ film.genre }}</text>
-            <text class="film-date">{{ film.releaseDate }} 上映</text>
+            <text class="film-type" v-if="film.genre">{{ film.type }} | 备案号：{{ film.genre }}</text>
+            <text class="film-type" v-else>{{ film.type }}</text>
+            <text class="film-date" v-if="film.releaseDate">收录时间：{{ film.releaseDate }}</text>
           </view>
         </view>
       </view>
@@ -21,14 +22,50 @@
         <view class="section-title">作品简介</view>
         <text class="description">{{ film.description }}</text>
         
-        <view class="meta-row">
-          <text class="label">导演：</text>
-          <text class="value">{{ film.director }}</text>
+        <view class="meta-row" v-if="film.prodCompany">
+          <text class="label">出品单位：</text>
+          <text class="value">{{ film.prodCompany }}</text>
         </view>
-        <view class="meta-row">
-          <text class="label">主演：</text>
+        <view class="meta-row" v-if="film.service">
+          <text class="label">播放平台：</text>
+          <text class="value">{{ film.service }}</text>
+        </view>
+        <view class="meta-row" v-if="film.actors && film.actors.length > 0">
+          <text class="label">主要演员：</text>
           <text class="value">{{ film.actors.join(' / ') }}</text>
         </view>
+        <view class="meta-row" v-if="film.crewDescription">
+          <text class="label">幕后制作：</text>
+          <text class="value">{{ film.crewDescription }}</text>
+        </view>
+      </view>
+
+      <!-- Stage Photos Section -->
+      <view class="stage-photos-section" v-if="bannerImages.length > 0">
+        <view class="section-title">剧照赏析</view>
+        <swiper 
+          v-if="bannerImages.length > 1"
+          class="stage-swiper" 
+          circular 
+          indicator-dots 
+          autoplay 
+          :interval="4000" 
+          :duration="500"
+          indicator-active-color="#ef4444"
+          indicator-color="rgba(255, 255, 255, 0.5)"
+        >
+          <swiper-item v-for="(img, index) in bannerImages" :key="index">
+            <image :src="img" class="stage-image" mode="aspectFill" @click="previewImage(index)"></image>
+          </swiper-item>
+        </swiper>
+        <image 
+          v-else
+          :src="bannerImages[0]" 
+          class="stage-image" 
+          mode="aspectFill" 
+          @click="previewImage(0)"
+          style="width: 100%; height: 400rpx; border-radius: 12rpx;"
+        ></image>
       </view>
 
       <!-- Scenes Section -->
@@ -72,6 +109,24 @@ export default {
     // 处理海报URL
     posterUrl() {
       return this.film ? getFileUrl(this.film.poster) : ''
+    },
+    // 处理剧照/多图
+    bannerImages() {
+      if (!this.film) return []
+      let images = []
+      if (this.film.images && Array.isArray(this.film.images)) {
+        images = this.film.images.map(img => getFileUrl(img))
+      } else if (typeof this.film.images === 'string' && this.film.images) {
+        images = this.film.images.split(',').map(img => getFileUrl(img))
+      }
+      
+      // 用户要求：详情页面展示的图片是除了第一个以外的图片（第一个通常为封面）
+      // 对于影视作品，封面已在顶部海报区域显示，因此这里总是移除第一张
+      if (images.length > 0) {
+        return images.slice(1)
+      }
+      
+      return images
     }
   },
   onLoad(options) {
@@ -102,12 +157,34 @@ export default {
         const response = await getDramaById(id);
         
         if (response.code === 200) {
+          const data = response.data || {}
           // 确保 actors 和 scenes 是数组格式
-          if (response.data) {
+          if (data) {
             this.film = {
-              ...response.data,
-              actors: Array.isArray(response.data.actors) ? response.data.actors : [],
-              scenes: Array.isArray(response.data.scenes) ? response.data.scenes : []
+              ...data,
+              // 映射字段
+              description: data.dramaDescription || data.description || '暂无简介',
+              // 处理演员名单 (支持逗号、中文逗号、顿号分隔)
+              actors: data.cast ? String(data.cast).split(/[,，、]/).map(s => s.trim()).filter(s => s) : [],
+              // 处理取景地
+              scenes: data.shootLocation ? String(data.shootLocation).split(/[,，、]/).map(s => s.trim()).filter(s => s) : [],
+              // 映射海报
+              poster: data.image || data.cover,
+              // 映射轮播图 (如果没有多图，就用封面)
+              images: (() => {
+                if (data.images && data.images.length > 0) return data.images;
+                if (data.image) {
+                  return Array.isArray(data.image) ? data.image : String(data.image).split(',').map(s => s.trim()).filter(s => s);
+                }
+                return [];
+              })(),
+              // 映射其他显示字段
+              prodCompany: data.prodCompany || '暂无信息',
+              service: data.service,
+              crewDescription: data.crewDescription,
+              releaseDate: data.createdAt ? data.createdAt.substring(0, 10) : '',
+              type: '影视备案', // 固定类型
+              genre: data.filingNum // 显示备案号
             };
           }
         } else {
@@ -128,6 +205,19 @@ export default {
         }
       } finally {
         this.loading = false;
+      }
+    },
+    previewImage(index) {
+      if (this.bannerImages && this.bannerImages.length > 0) {
+        uni.previewImage({
+          urls: this.bannerImages,
+          current: index
+        })
+      } else if (this.posterUrl) {
+        uni.previewImage({
+          urls: [this.posterUrl],
+          current: 0
+        })
       }
     }
   }
@@ -201,12 +291,24 @@ export default {
   text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.5);
 }
 
-.info-section, .scenes-section {
+.info-section, .scenes-section, .stage-photos-section {
   background: #fff;
   margin: 32rpx;
   padding: 32rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.stage-swiper {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.stage-image {
+  width: 100%;
+  height: 100%;
 }
 
 .section-title {
@@ -235,7 +337,7 @@ export default {
 
 .label {
   color: #6b7280;
-  width: 100rpx;
+  width: 150rpx;
   flex-shrink: 0;
 }
 

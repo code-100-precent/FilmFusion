@@ -39,7 +39,7 @@
             @click="goToDetail(route.id)"
           >
             <view class="route-cover">
-              <image :src="route.cover || route.image || defaultCover" class="route-image" mode="aspectFill"></image>
+              <image :src="getFileUrl(route.cover || route.image) || defaultCover" class="route-image" mode="aspectFill"></image>
             </view>
             <view class="route-content">
               <view class="route-header">
@@ -68,6 +68,7 @@ import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 import { getTourPage } from '@/services/backend-api'
+import { getFileUrl } from '@/utils/fileUrl'
 
 export default {
   components: {
@@ -90,6 +91,7 @@ export default {
     this.loadData()
   },
   methods: {
+    getFileUrl, // 注册到 methods 以便模板使用
     async loadData(reset = false) {
       if (this.loading) return
       

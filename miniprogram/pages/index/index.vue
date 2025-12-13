@@ -145,21 +145,21 @@
           <text class="section-title">雅安印象</text>
         </view>
         <view class="featured-grid">
-          <view class="featured-card nature" @click="goToNature">
+          <view class="featured-card nature">
             <view class="featured-icon">
               <uni-icons type="image-filled" size="40" color="#fff"></uni-icons>
             </view>
             <text class="featured-title">自然风光</text>
             <text class="featured-desc">探索自然之美</text>
           </view>
-          <view class="featured-card culture" @click="goToCulture">
+          <view class="featured-card culture">
             <view class="featured-icon">
               <uni-icons type="star-filled" size="40" color="#fff"></uni-icons>
             </view>
             <text class="featured-title">文化底蕴</text>
             <text class="featured-desc">感受历史魅力</text>
           </view>
-          <view class="featured-card modern" @click="goToModern">
+          <view class="featured-card modern">
             <view class="featured-icon">
               <uni-icons type="home-filled" size="40" color="#fff"></uni-icons>
             </view>
@@ -344,21 +344,6 @@ export default {
     goToLocationDetail(id) {
       uni.navigateTo({
         url: `/pages/location/detail?id=${id}`
-      })
-    },
-    goToNature() {
-      uni.navigateTo({
-        url: '/pages/scenes/scenes?type=自然风光'
-      })
-    },
-    goToCulture() {
-      uni.navigateTo({
-        url: '/pages/scenes/scenes?type=文化底蕴'
-      })
-    },
-    goToModern() {
-      uni.navigateTo({
-        url: '/pages/scenes/scenes?type=现代都市'
       })
     },
     goToServices() {
@@ -924,15 +909,6 @@ export default {
   opacity: 0.8;
 }
 
-.featured-card:active {
-  transform: translateY(-2rpx);
-  box-shadow: 0 8rpx 28rpx rgba(0, 0, 0, 0.1);
-}
-
-.featured-card:active::before {
-  opacity: 1;
-}
-
 .featured-icon {
   width: 72rpx;
   height: 72rpx;
@@ -944,11 +920,6 @@ export default {
   background: linear-gradient(135deg, #D4AF37, #2E7D32);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4rpx 16rpx rgba(212, 175, 55, 0.3);
-}
-
-.featured-card:active .featured-icon {
-  transform: scale(1.12) rotate(10deg);
-  box-shadow: 0 6rpx 20rpx rgba(212, 175, 55, 0.4);
 }
 
 .featured-title {

@@ -5,7 +5,22 @@
     <scroll-view class="content" scroll-y v-if="!loading && hotel">
       <!-- 封面图 -->
       <view class="cover-section">
-        <image :src="getFileUrl(hotel.cover || hotel.image) || defaultCover" class="cover-image" mode="aspectFill" @click="previewImage"></image>
+        <swiper 
+          v-if="bannerImages.length > 1" 
+          class="banner-swiper" 
+          circular 
+          indicator-dots 
+          autoplay 
+          :interval="4000" 
+          :duration="500"
+          indicator-active-color="#6366f1"
+          indicator-color="rgba(255, 255, 255, 0.5)"
+        >
+          <swiper-item v-for="(img, index) in bannerImages" :key="index">
+            <image :src="img" class="cover-image" mode="aspectFill" @click="previewImage(index)"></image>
+          </swiper-item>
+        </swiper>
+        <image v-else :src="bannerImages[0] || defaultCover" class="cover-image" mode="aspectFill" @click="previewImage(0)"></image>
       </view>
 
       <!-- 基本信息 -->
@@ -13,9 +28,6 @@
         <view class="card-header">
           <text class="hotel-name">{{ hotel.name }}</text>
           <view class="hotel-badge">住宿</view>
-        </view>
-        <view class="hotel-status" :class="{ 'status-available': hotel.status === 1 }">
-          {{ hotel.status === 1 ? '营业中' : '暂停营业' }}
         </view>
       </view>
 
@@ -100,6 +112,40 @@ export default {
       defaultCover: 'https://via.placeholder.com/400x300?text=Hotel'
     }
   },
+  computed: {
+    bannerImages() {
+      if (!this.hotel) return []
+      let images = []
+      
+      const imgData = this.hotel.images || this.hotel.image
+      if (Array.isArray(imgData) && imgData.length > 0) {
+        images = imgData.map(img => getFileUrl(img))
+      } else if (typeof imgData === 'string' && imgData) {
+        images = imgData.split(',').map(img => getFileUrl(img))
+      }
+      
+      // If images list is empty, try to use cover/image
+      if (images.length === 0) {
+         const cover = this.hotel.image || this.hotel.cover || this.hotel.thumbImage
+         if (Array.isArray(cover)) {
+           images = cover.map(img => getFileUrl(img))
+         } else if (typeof cover === 'string' && cover) {
+           images = cover.split(',').map(img => getFileUrl(img))
+         }
+      }
+      
+      // 4. 去重
+      images = [...new Set(images)].filter(img => img)
+      
+      // 用户要求：详情页面展示的图片是除了第一个以外的图片
+      // 如果有多张图片，移除第一张（通常是列表封面）；如果只有一张，保留显示
+      if (images.length > 1) {
+        return images.slice(1)
+      }
+      
+      return images
+    }
+  },
   onLoad(options) {
     const id = parseInt(options.id)
     if (id) {
@@ -138,20 +184,18 @@ export default {
       return facilities
     },
     
-    previewImage() {
-      const cover = this.hotel.cover || this.hotel.image
-      if (!this.hotel || !cover) {
+    previewImage(index = 0) {
+      if (this.bannerImages && this.bannerImages.length > 0) {
+        uni.previewImage({
+          urls: this.bannerImages,
+          current: index
+        })
+      } else {
         uni.showToast({
           title: '暂无图片可预览',
           icon: 'none'
         })
-        return
       }
-      
-      uni.previewImage({
-        urls: [this.getFileUrl(cover)],
-        current: this.getFileUrl(cover)
-      })
     },
     
     getFileUrl(url) {
@@ -224,6 +268,11 @@ export default {
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.banner-swiper {
+  width: 100%;
+  height: 400rpx;
 }
 
 .cover-image {

@@ -9,7 +9,23 @@
       <view v-else-if="route">
         <!-- 封面图 -->
         <view class="cover-wrapper">
-          <image :src="getFileUrl(route.cover) || defaultCover" class="cover" mode="aspectFill"></image>
+          <swiper 
+            v-if="bannerImages.length > 1" 
+            class="banner-swiper" 
+            circular 
+            indicator-dots 
+            autoplay 
+            :interval="4000" 
+            :duration="500"
+            indicator-active-color="#6366f1"
+            indicator-color="rgba(255, 255, 255, 0.5)"
+          >
+            <swiper-item v-for="(img, index) in bannerImages" :key="index">
+              <image :src="img" class="cover" mode="aspectFill" @click="previewImage(index)"></image>
+            </swiper-item>
+          </swiper>
+          <image v-else :src="bannerImages[0] || defaultCover" class="cover" mode="aspectFill" @click="previewImage(0)"></image>
+          
           <view class="cover-overlay">
             <view class="theme-tag">{{ route.theme }}</view>
           </view>
@@ -39,6 +55,7 @@
           <view class="section-title">路线地图</view>
           <view class="map-wrapper">
             <map 
+              v-if="!mapError"
               class="route-map" 
               :latitude="mapCenter.latitude" 
               :longitude="mapCenter.longitude" 
@@ -48,6 +65,10 @@
               show-location
               @markertap="onMarkerTap"
             ></map>
+            <view v-else class="map-error-container">
+              <uni-icons type="info-filled" size="40" color="#ef4444"></uni-icons>
+              <text class="map-error-text">位置错误，请联系管理员。</text>
+            </view>
           </view>
           <view class="route-points" v-if="routePoints.length > 0">
             <view class="points-title">
@@ -153,8 +174,9 @@ export default {
       route: null,
       loading: true,
       collected: false,
-      defaultCover: 'https://via.placeholder.com/400x200?text=Tour+Route',
-      // 地图相关数据
+      mapError: false,
+      defaultCover: 'https://via.placeholder.com/750x400',
+      mapContext: null,
       mapCenter: {
         latitude: 30.0,
         longitude: 103.0
@@ -166,6 +188,39 @@ export default {
       nearbyHotels: []
     }
   },
+  computed: {
+    bannerImages() {
+      if (!this.route) return []
+      let images = []
+      
+      const imgData = this.route.image
+      if (Array.isArray(imgData) && imgData.length > 0) {
+        images = imgData.map(img => getFileUrl(img))
+      } else if (typeof imgData === 'string' && imgData) {
+        images = imgData.split(',').map(img => getFileUrl(img))
+      }
+      
+      // If images list is empty, try to use cover/image
+      if (images.length === 0) {
+        const cover = this.route.image || this.route.cover || this.route.thumbImage
+        if (Array.isArray(cover)) {
+          images = cover.map(img => getFileUrl(img))
+        } else if (typeof cover === 'string' && cover) {
+          images = cover.split(',').map(img => getFileUrl(img))
+        }
+      }
+      
+      images = [...new Set(images)].filter(img => img)
+      
+      // 用户要求：详情页面展示的图片是除了第一个以外的图片
+      // 如果有多张图片，移除第一张（通常是列表封面）；如果只有一张，保留显示
+      if (images.length > 1) {
+        return images.slice(1)
+      }
+      
+      return images
+    }
+  },
   onLoad(options) {
     const id = parseInt(options.id)
     if (id) {
@@ -174,19 +229,37 @@ export default {
   },
   methods: {
     getFileUrl,
+    previewImage(index) {
+      if (this.bannerImages && this.bannerImages.length > 0) {
+        uni.previewImage({
+          urls: this.bannerImages,
+          current: index
+        })
+      }
+    },
     async loadData(id) {
       this.loading = true
       try {
         const res = await getTourById(id)
         
         if (res.code === 200 && res.data) {
+          // 处理封面图：如果后端未返回cover但返回了image，则使用image的第一张作为封面
+          let coverUrl = res.data.cover
+          if (!coverUrl && res.data.image) {
+            if (Array.isArray(res.data.image) && res.data.image.length > 0) {
+              coverUrl = res.data.image[0]
+            } else if (typeof res.data.image === 'string') {
+              coverUrl = res.data.image
+            }
+          }
+
           this.route = {
             id: res.data.id,
             name: res.data.name,
             description: res.data.description,
             theme: res.data.theme,
             features: res.data.features,
-            cover: res.data.cover,
+            cover: coverUrl,
             transportInfo: res.data.transport,
             accommodation: res.data.hotel,
             foodRecommendation: res.data.food,
@@ -429,6 +502,7 @@ export default {
     
     // 初始化地图标记和路线
     async initMap(points, lineColor = '#6366f1') {
+      this.mapError = false
       if (!points || points.length === 0) return
       
       // 检查经纬度是否规范
@@ -439,11 +513,7 @@ export default {
       })
 
       if (hasInvalidCoord) {
-        uni.showToast({
-          title: '位置不规范，请联系管理员。',
-          icon: 'none',
-          duration: 3000
-        })
+        this.mapError = true
         return
       }
 
@@ -860,6 +930,11 @@ export default {
   overflow: hidden;
 }
 
+.banner-swiper {
+  width: 100%;
+  height: 100%;
+}
+
 .cover {
   width: 100%;
   height: 100%;
@@ -1212,5 +1287,22 @@ export default {
   font-size: 22rpx;
   color: #fff;
   font-weight: 500;
+}
+
+.map-error-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+}
+
+.map-error-text {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6b7280;
 }
 </style>

@@ -494,6 +494,9 @@ onUnmounted(() => {
 // 辅助函数：解析图片字符串
 const parseImages = (imageStr) => {
   if (!imageStr) return []
+  if (Array.isArray(imageStr)) {
+    return imageStr.filter(url => url && typeof url === 'string').map(url => url.trim())
+  }
   if (typeof imageStr !== 'string') return []
   return imageStr.split(',').filter(url => url && url.trim())
 }
@@ -504,10 +507,13 @@ const loadData = async () => {
     const res = await getTourPage(pagination.page, pagination.pageSize, searchForm.keyword)
 
     if (res.code === 200) {
-      // PageResponse结构：data为数组，pagination包含分页信息
-      const listData = res.data || []
-      const totalItems = res.pagination?.totalItems || 0
-      const totalPages = res.pagination?.totalPages || 1
+      // 兼容多种分页数据结构
+      const listData = Array.isArray(res.data) 
+        ? res.data 
+        : (res.data?.records || res.data?.list || [])
+      
+      const totalItems = res.pagination?.totalItems || res.data?.total || res.data?.totalItems || 0
+      const totalPages = res.pagination?.totalPages || Math.ceil(totalItems / pagination.pageSize) || 1
 
       tourList.value = listData.map(tour => {
         // 解析图片字段

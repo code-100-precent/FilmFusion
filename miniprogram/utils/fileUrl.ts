@@ -24,6 +24,19 @@ export const getFileUrl = (url: string | string[]): string => {
   // 清理字符串：去除首尾空格
   let cleanedUrl = url.trim()
   
+  // 尝试检测是否为JSON字符串（兼容历史脏数据）
+  if (cleanedUrl.startsWith('{') && (cleanedUrl.includes('"originUrl"') || cleanedUrl.includes('"url"'))) {
+    try {
+      const parsed = JSON.parse(cleanedUrl)
+      if (parsed.originUrl) return getFileUrl(parsed.originUrl)
+      if (parsed.url) return getFileUrl(parsed.url)
+      if (parsed.path) return getFileUrl(parsed.path)
+      if (parsed.filename) return getFileUrl(parsed.filename)
+    } catch (e) {
+      // 解析失败则继续按普通字符串处理
+    }
+  }
+  
   // 去除可能存在的反引号 (处理 `url` 这种格式)
   cleanedUrl = cleanedUrl.replace(/`/g, '').trim()
   
