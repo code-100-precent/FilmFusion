@@ -9,25 +9,68 @@ import { FILE_BASE_URL } from './config'
  * @param url 文件URL
  * @returns 处理后的完整URL
  */
-export const getFileUrl = (url: string): string => {
+export const getFileUrl = (url: string | string[]): string => {
+  // 如果是数组，取第一个非空元素
+  if (Array.isArray(url)) {
+    if (url.length === 0) return ''
+    return getFileUrl(url[0])
+  }
+
   // 如果URL为空或无效，返回空字符串
   if (!url || typeof url !== 'string') {
     return ''
   }
+
+  // 清理字符串：去除首尾空格
+  let cleanedUrl = url.trim()
   
-  // 如果已经是完整的URL（以http开头），直接返回
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
+  // 去除可能存在的反引号 (处理 `url` 这种格式)
+  cleanedUrl = cleanedUrl.replace(/`/g, '').trim()
+  
+  // 如果包含逗号，说明是多张图片，取第一张
+  if (cleanedUrl.includes(',')) {
+    const parts = cleanedUrl.split(',')
+    // 递归处理第一部分，确保去除了逗号后的部分也能经过完整的清理流程
+    return getFileUrl(parts[0])
   }
   
+  // 如果已经是完整的URL（以http开头），直接返回
+  if (cleanedUrl.startsWith('http://') || cleanedUrl.startsWith('https://')) {
+    return cleanedUrl
+  }
+  
+  // 统一路径分隔符，将 \ 替换为 /
+  let normalizedUrl = cleanedUrl.replace(/\\/g, '/')
+  
   // 如果URL以/开头，去掉第一个/避免双斜杠
-  const normalizedUrl = url.startsWith('/') ? url.substring(1) : url
+  normalizedUrl = normalizedUrl.startsWith('/') ? normalizedUrl.substring(1) : normalizedUrl
   
   // 如果URL以files开头，需要添加api前缀，因为后端配置的文件访问路径是/api/files/**
   const finalUrl = normalizedUrl.startsWith('files/') ? `api/${normalizedUrl}` : normalizedUrl
   
   // 拼接服务器基础地址
-  return `${FILE_BASE_URL}/${finalUrl}`
+  const result = `${FILE_BASE_URL}/${finalUrl}`
+  
+  return result
+}
+
+/**
+ * 从逗号分隔的字符串中获取文件URL数组
+ * @param urls 逗号分隔的文件URL字符串
+ * @returns 处理后的完整URL数组
+ */
+export const getFileUrlsFromString = (urls: string): string[] => {
+  if (!urls || typeof urls !== 'string') {
+    return []
+  }
+  
+  // 按逗号分割URL，并去除空白
+  const urlArray = urls.split(',').map(url => url.trim()).filter(url => url)
+  
+  // 处理每个URL
+  const result = urlArray.map(url => getFileUrl(url))
+  
+  return result
 }
 
 /**
@@ -40,7 +83,9 @@ export const getFileUrls = (urls: string[]): string[] => {
     return []
   }
   
-  return urls.map(url => getFileUrl(url))
+  const result = urls.map(url => getFileUrl(url))
+  
+  return result
 }
 
 /**
@@ -61,10 +106,21 @@ export const processObjectFileUrls = <T extends Record<string, any>>(
   
   fileFields.forEach(field => {
     const value = result[field]
+    
     if (typeof value === 'string') {
-      result[field] = getFileUrl(value) as T[keyof T]
+      // 检查是否是逗号分隔的多图片路径
+      if (value.includes(',') && (field as string).includes('image')) {
+        // 如果是图片字段且包含逗号，则分割处理
+        const processedValue = getFileUrlsFromString(value) as T[keyof T]
+        result[field] = processedValue
+      } else {
+        // 单个URL直接处理
+        const processedValue = getFileUrl(value) as T[keyof T]
+        result[field] = processedValue
+      }
     } else if (Array.isArray(value)) {
-      result[field] = getFileUrls(value) as T[keyof T]
+      const processedValue = getFileUrls(value) as T[keyof T]
+      result[field] = processedValue
     }
   })
   
@@ -72,7 +128,7 @@ export const processObjectFileUrls = <T extends Record<string, any>>(
 }
 
 /**
- * 处理数组中每个对象的文件URL字段
+ * 批量处理数组中的文件URL
  * @param array 包含文件URL的对象数组
  * @param fileFields 需要处理的文件字段名数组
  * @returns 处理后的数组
@@ -85,5 +141,7 @@ export const processArrayFileUrls = <T extends Record<string, any>>(
     return []
   }
   
-  return array.map(item => processObjectFileUrls(item, fileFields))
+  const result = array.map(item => processObjectFileUrls(item, fileFields))
+  
+  return result
 }

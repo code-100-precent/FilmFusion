@@ -21,20 +21,6 @@
         </view>
       </view>
 
-      <!-- Service Categories -->
-      <view class="category-filter">
-        <scroll-view class="category-scroll" scroll-x :show-scrollbar="false">
-          <view 
-            v-for="category in categories" 
-            :key="category"
-            class="category-item"
-            :class="{ active: selectedCategory === category }"
-            @click="selectCategory(category)">
-            <text>{{ category }}</text>
-          </view>
-        </scroll-view>
-      </view>
-
       <!-- 服务列表 -->
       <scroll-view
         class="shoot-list"
@@ -52,16 +38,17 @@
         </view>
         <view v-else>
           <view
-            v-for="shoot in shoots"
+            v-for="(shoot, index) in shoots"
             :key="shoot.id"
             class="shoot-card"
+            :style="{ 'animation-delay': index * 0.05 + 's' }"
             @click="goToDetail(shoot.id)"
           >
             <!-- 服务封面图片 -->
             <view class="shoot-cover">
               <image 
-                v-if="shoot.image || shoot.thumbImage"
-                :src="shoot.image || shoot.thumbImage" 
+                v-if="getFileUrl(shoot.image || shoot.thumbImage)"
+                :src="getFileUrl(shoot.image || shoot.thumbImage)" 
                 class="cover-image" 
                 mode="aspectFill"
               ></image>
@@ -74,9 +61,6 @@
               <view class="shoot-header">
                 <view class="shoot-title-row">
                   <text class="shoot-name">{{ shoot.name }}</text>
-                  <view class="shoot-status" :class="{ 'status-online': shoot.status === 1 }">
-                    {{ shoot.status === 1 ? '上线' : '下线' }}
-                  </view>
                 </view>
               </view>
               <text class="shoot-desc">{{ shoot.description }}</text>
@@ -123,6 +107,7 @@ import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
 // 使用真实后端API
 import { getShootPage } from '../../services/backend-api'
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
@@ -134,17 +119,6 @@ export default {
   data() {
     return {
       keyword: '',
-      keyword: '',
-      selectedCategory: '全部',
-      categories: [
-        '全部',
-        '场地服务',
-        '食宿服务',
-        '车辆租赁',
-        '器材租赁',
-        '其他服务'
-      ],
-      shoots: [],
       shoots: [],
       nextCursor: null, // 游标分页
       loading: false,
@@ -170,8 +144,7 @@ export default {
         const res = await getShootPage({
           cursor: reset ? null : this.nextCursor,
           size: 10,
-          keyword: this.keyword || undefined,
-          type: this.selectedCategory !== '全部' ? this.selectedCategory : undefined
+          keyword: this.keyword || undefined
         })
 
         // 处理游标分页响应
@@ -200,10 +173,7 @@ export default {
     handleSearch() {
       this.loadShoots(true)
     },
-    selectCategory(category) {
-      this.selectedCategory = category
-      this.loadShoots(true)
-    },
+    
     handleRefresh() {
       this.refreshing = true
       this.loadShoots(true)
@@ -216,6 +186,9 @@ export default {
       uni.navigateTo({
         url: `/pages/shoot/detail?id=${id}`
       })
+    },
+    getFileUrl(url) {
+      return getFileUrl(url)
     }
   }
 }
@@ -273,35 +246,7 @@ export default {
 }
 
 .search-bar {
-  margin-top: 16rpx;
-  margin-bottom: 16rpx;
-}
-
-.category-filter {
   margin-bottom: 24rpx;
-}
-
-.category-scroll {
-  width: 100%;
-  white-space: nowrap;
-}
-
-.category-item {
-  display: inline-block;
-  padding: 10rpx 24rpx;
-  margin-right: 12rpx;
-  background: #fff;
-  border-radius: 32rpx;
-  font-size: 26rpx;
-  color: #6b7280;
-  transition: all 0.3s;
-  border: 1rpx solid transparent;
-  
-  &.active {
-    background: #ec4899;
-    color: #fff;
-    box-shadow: 0 4rpx 12rpx rgba(236, 72, 153, 0.3);
-  }
 }
 
 .search-input-wrapper {
@@ -352,6 +297,19 @@ export default {
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .shoot-card:active {
@@ -401,19 +359,7 @@ export default {
   color: #1f2937;
 }
 
-.shoot-status {
-  padding: 4rpx 12rpx;
-  background: #fee2e2;
-  color: #ef4444;
-  font-size: 22rpx;
-  border-radius: 8rpx;
-  font-weight: 500;
-}
 
-.status-online {
-  background: #d1fae5;
-  color: #10b981;
-}
 
 .shoot-desc {
   display: block;

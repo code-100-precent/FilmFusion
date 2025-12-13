@@ -114,6 +114,15 @@ export default {
           sourceType: ['album', 'camera']
         })
         
+        // 检查图片大小 (4MB)
+        if (res.tempFiles && res.tempFiles[0] && res.tempFiles[0].size > 4 * 1024 * 1024) {
+          uni.showToast({
+            title: '图片大小不能超过4MB',
+            icon: 'none'
+          })
+          return
+        }
+
         const tempFilePath = res.tempFilePaths[0]
         
         uni.showLoading({ title: '上传中...' })

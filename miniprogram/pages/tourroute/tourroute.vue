@@ -32,20 +32,21 @@
         </view>
         <view v-else>
           <view
-            v-for="route in routes"
+            v-for="(route, index) in routes"
             :key="route.id"
             class="route-item"
+            :style="{ 'animation-delay': index * 0.05 + 's' }"
             @click="goToDetail(route.id)"
           >
             <view class="route-cover">
-              <image :src="route.cover || defaultCover" class="route-image" mode="aspectFill"></image>
+              <image :src="route.cover || route.image || defaultCover" class="route-image" mode="aspectFill"></image>
             </view>
             <view class="route-content">
               <view class="route-header">
                 <text class="route-title">{{ route.name }}</text>
                 <view class="route-theme" v-if="route.theme">{{ route.theme }}</view>
               </view>
-              <text class="route-meta">{{ route.description }}</text>
+              <text class="route-meta">{{ formatDescription(route.description) }}</text>
             </view>
           </view>
         </view>
@@ -186,6 +187,13 @@ export default {
       uni.navigateTo({
         url: `/pages/tourroute/detail?id=${id}`
       })
+    },
+    formatDescription(desc) {
+      if (!desc) return ''
+      if (desc.length > 40) {
+        return desc.substring(0, 40) + '...'
+      }
+      return desc
     }
   }
 }
@@ -282,29 +290,44 @@ export default {
 .route-list {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 32rpx;
 }
 
 .route-item {
   display: flex;
   align-items: flex-start;
-  gap: 12rpx;
-  padding: 16rpx;
-  background: #f9fafb;
-  border-radius: 12rpx;
+  gap: 0;
+  padding: 0;
+  background: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s;
   overflow: hidden;
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
 
   &:active {
-    background: #f3f4f6;
-    transform: translateX(4rpx);
+    background: #fff;
+    transform: translateY(-2rpx);
+    box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .route-cover {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 10rpx;
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 0;
   overflow: hidden;
   flex-shrink: 0;
   background: #f3f4f6;
@@ -320,28 +343,30 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  justify-content: space-between;
   min-width: 0;
-  justify-content: center;
+  height: 200rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
 }
 
 .route-header {
-  margin-bottom: 4rpx;
+  margin-bottom: 8rpx;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  gap: 12rpx;
 }
 
 .route-title {
-  font-size: 26rpx;
-  font-weight: 600;
+  font-size: 30rpx;
+  font-weight: 700;
   color: #1f2937;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-height: 1.4;
+  white-space: nowrap;
   overflow: hidden;
-  word-break: break-all;
+  text-overflow: ellipsis;
+  flex: 1;
 }
 
 .route-theme {
@@ -351,14 +376,18 @@ export default {
   background: rgba(99, 102, 241, 0.1);
   padding: 2rpx 8rpx;
   border-radius: 6rpx;
-  margin-left: 12rpx;
+  margin-left: 0;
   flex-shrink: 0;
 }
 
 .route-meta {
-  font-size: 20rpx;
-  color: #9ca3af;
+  font-size: 24rpx;
+  color: #6b7280;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .load-more,

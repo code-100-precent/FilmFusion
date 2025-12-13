@@ -728,6 +728,7 @@ export default {
   align-items: center;
   z-index: 1000;
   padding: 40rpx;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .modal-content {
@@ -737,6 +738,23 @@ export default {
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-header {
@@ -767,6 +785,7 @@ export default {
   flex: 1;
   padding: 32rpx;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .modal-footer {
@@ -774,10 +793,12 @@ export default {
   border-top: 2rpx solid #f3f4f6;
   display: flex;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .detail-section {
   width: 100%;
+  box-sizing: border-box;
 }
 
 .detail-header {
@@ -809,23 +830,31 @@ export default {
   background-color: #f9fafb;
   border-radius: 12rpx;
   border: 2rpx solid #e5e7eb;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .file-info {
   display: flex;
   align-items: center;
   flex: 1;
+  min-width: 0; /* 允许收缩 */
+  margin-right: 16rpx;
 }
 
 .file-name {
   font-size: 28rpx;
   color: #374151;
   margin-left: 12rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .file-actions {
   display: flex;
   gap: 16rpx;
+  flex-shrink: 0; /* 防止按钮被压缩 */
 }
 
 .action-btn {

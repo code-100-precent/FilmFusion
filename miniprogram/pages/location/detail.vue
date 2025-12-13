@@ -6,7 +6,7 @@
       <!-- 场地封面图片 -->
       <view class="cover-section">
         <image 
-          v-if="location.image || location.thumbImage"
+          v-if="coverImageUrl"
           :src="coverImageUrl" 
           class="cover-image" 
           mode="aspectFill" 
@@ -23,9 +23,6 @@
         <view class="card-header">
           <text class="location-name">{{ location.name }}</text>
           <view class="location-badge">{{ location.type }}</view>
-        </view>
-        <view class="location-status" :class="{ 'status-available': location.status === 1 }">
-          {{ location.status === 1 ? '可用' : '不可用' }}
         </view>
       </view>
 

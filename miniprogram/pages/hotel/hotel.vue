@@ -6,7 +6,7 @@
     <NavBar :show-back="true"></NavBar>
 
     <view class="content">
-      <!-- 搜索栏 -->
+      <!-- Search Bar -->
       <view class="search-bar">
         <view class="search-input-wrapper">
           <uni-icons type="search" size="18" color="#9ca3af"></uni-icons>
@@ -14,29 +14,14 @@
             v-model="keyword"
             class="search-input"
             type="text"
-            placeholder="搜索住宿名称、地址..."
+            placeholder="搜索酒店名称、地址..."
             @confirm="handleSearch"
             @input="handleSearch"
           />
         </view>
       </view>
 
-      <!-- Category Filter -->
-      <view class="category-filter">
-        <scroll-view class="category-scroll" scroll-x :show-scrollbar="false">
-          <view 
-            v-for="category in categories" 
-            :key="category.value"
-            class="category-item"
-            :class="{ active: selectedCategory === category.value }"
-            @click="selectCategory(category.value)">
-            <uni-icons :type="category.icon" size="20" :color="selectedCategory === category.value ? '#fff' : '#6b7280'"></uni-icons>
-            <text>{{ category.label }}</text>
-          </view>
-        </scroll-view>
-      </view>
-
-      <!-- 住宿列表 -->
+      <!-- Hotel List -->
       <scroll-view
         class="hotel-list"
         scroll-y
@@ -51,67 +36,44 @@
         <view v-else-if="hotels.length === 0" class="empty-wrapper">
           <Empty text="暂无住宿"></Empty>
         </view>
-        <view v-else>
+        <view v-else class="hotel-list-container">
           <view
-  v-for="(hotel, index) in hotels"
-  :key="hotel.id"
-  class="hotel-card"
-  :style="{ 'animation-delay': index * 0.05 + 's' }"
-  @click="goToDetail(hotel.id)"
->
-  <!-- 住宿封面图片 -->
-  <view class="hotel-cover">
-    <image 
-      v-if="hotel.cover" 
-      :src="hotel.cover" 
-      class="hotel-image" 
-      mode="aspectFill"
-      @error="handleImageError"
-    />
-    <view v-else class="cover-placeholder">
-      <uni-icons type="image" size="40" color="#d1d5db"></uni-icons>
-      <text class="placeholder-text">暂无图片</text>
-    </view>
-    
-    <!-- 价格标签 -->
-    <view class="price-tag">¥{{ hotel.price }}/天</view>
-    
-    <!-- 状态指示器 -->
-    <view class="status-indicator" :class="{ 'status-online': hotel.status === 1 }">
-      {{ hotel.status === 1 ? '可用' : '不可用' }}
-    </view>
-  </view>
-  
-  <view class="hotel-content">
-    <view class="hotel-header">
-      <view class="hotel-title-row">
-        <text class="hotel-name">{{ hotel.name }}</text>
-        <view class="hotel-type">{{ hotel.type }}</view>
-      </view>
-      <view class="hotel-status" :class="{ 'status-available': hotel.status === 1 }">
-        {{ hotel.status === 1 ? '可用' : '不可用' }}
-      </view>
-    </view>
-    
-    <text class="hotel-desc">{{ hotel.description }}</text>
-    
-    <view class="hotel-info">
-      <view class="info-item">
-        <uni-icons type="location" size="16" color="#667eea"></uni-icons>
-        <text>{{ hotel.address }}</text>
-      </view>
-      <view class="info-item">
-        <uni-icons type="phone" size="16" color="#667eea"></uni-icons>
-        <text>{{ hotel.contactPhone }}</text>
-      </view>
-    </view>
-    
-    <view class="hotel-footer">
-      <text class="hotel-price">¥{{ hotel.price }}/天</text>
-      <text class="view-detail">查看详情</text>
-    </view>
-  </view>
-</view>
+            v-for="(hotel, index) in hotels"
+            :key="hotel.id"
+            class="hotel-item"
+            :style="{ 'animation-delay': index * 0.05 + 's' }"
+            @click="goToDetail(hotel.id)"
+          >
+            <view class="hotel-cover-wrapper">
+              <image 
+                v-if="getFileUrl(hotel.cover)" 
+                :src="getFileUrl(hotel.cover)" 
+                class="hotel-cover" 
+                mode="aspectFill"
+                @error="handleImageError"
+              />
+              <view v-else class="cover-placeholder">
+                <uni-icons type="image" size="32" color="#d1d5db"></uni-icons>
+                <text class="placeholder-text">暂无</text>
+              </view>
+              
+              <!-- 状态指示器 -->
+              <view v-if="hotel.status === 1" class="status-indicator status-online">
+                可用
+              </view>
+              <view class="hotel-type">{{ hotel.type }}</view>
+            </view>
+            
+            <view class="hotel-info">
+              <view class="hotel-header">
+                <text class="hotel-name">{{ hotel.name }}</text>
+              </view>
+              <text class="hotel-desc">{{ formatDescription(hotel.description) }}</text>
+              <view class="hotel-footer">
+                <text class="hotel-price">¥{{ hotel.price }}/天</text>
+              </view>
+            </view>
+          </view>
           
           <!-- 加载更多 -->
           <view v-if="hasMore && !loading" class="load-more" @click="loadMore">
@@ -132,6 +94,7 @@ import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 import { getHotelPage } from '@/services/backend-api'
+import { getFileUrl } from '@/utils'
 
 export default {
   components: {
@@ -146,16 +109,7 @@ export default {
       refreshing: false,
       hasMore: true,
       keyword: '',
-      selectedCategory: '',
-      nextCursor: null,
-      categories: [
-        { label: '全部', value: '', icon: 'list' },
-        { label: '星级酒店', value: '星级酒店', icon: 'star' },
-        { label: '经济型', value: '经济型', icon: 'wallet' },
-        { label: '民宿', value: '民宿', icon: 'home' },
-        { label: '公寓', value: '公寓', icon: 'house' },
-        { label: '青年旅社', value: '青年旅社', icon: 'staff' }
-      ]
+      nextCursor: null
     }
   },
   onLoad() {
@@ -177,10 +131,6 @@ export default {
           params.name = this.keyword
         }
         
-        if (this.selectedCategory) {
-          params.type = this.selectedCategory
-        }
-        
         const res = await getHotelPage(params)
         
         // 添加调试日志，查看API返回的数据结构
@@ -198,7 +148,7 @@ export default {
             address: hotel.address || '',
             phone: hotel.phone || '',
             contactName: hotel.contactName || '',
-            cover: hotel.cover || hotel.thumbCover || '',
+            cover: hotel.cover || hotel.image || hotel.thumbCover || '',
             price: hotel.price || '',
             status: hotel.status || 0,
             facilities: hotel.facilities || '',
@@ -252,12 +202,6 @@ export default {
       this.loadHotels(true)
     },
     
-    selectCategory(category) {
-      this.selectedCategory = category
-      this.current = 1
-      this.loadHotels(true)
-    },
-    
     goToDetail(id) {
       uni.navigateTo({
         url: `/pages/hotel/detail?id=${id}`
@@ -272,9 +216,21 @@ export default {
       return facilities
     },
     
+    formatDescription(desc) {
+      if (!desc) return ''
+      if (desc.length > 40) {
+        return desc.substring(0, 40) + '...'
+      }
+      return desc
+    },
+    
     handleImageError(e) {
       console.log('图片加载失败:', e)
       // 可以在这里设置默认图片或其他处理逻辑
+    },
+    
+    getFileUrl(url) {
+      return getFileUrl(url)
     }
   }
 }
@@ -313,8 +269,7 @@ export default {
 }
 
 .search-bar {
-  margin-top: 16rpx;
-  margin-bottom: 16rpx;
+  margin-bottom: 24rpx;
 }
 
 .search-input-wrapper {
@@ -336,59 +291,23 @@ export default {
   color: #1f2937;
 }
 
-.category-filter {
-  margin-bottom: 16rpx;
-}
-
-.category-scroll {
-  width: 100%;
-  white-space: nowrap;
-}
-
-.category-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 10rpx 24rpx;
-  margin-right: 12rpx;
-  background: #fff;
-  border-radius: 32rpx;
-  font-size: 26rpx;
-  color: #6b7280;
-  transition: all 0.3s;
-  border: 1rpx solid transparent;
-}
-
-.category-item.active {
-  background: #667eea;
-  color: #fff;
-  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
-}
-
-.hotel-list {
-  height: calc(100vh - 240rpx);
-  padding: 0 8rpx;
-}
-
-.loading-wrapper,
-.empty-wrapper {
-  padding: 100rpx 0;
+.hotel-list-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  gap: 20rpx;
+  padding-bottom: 20rpx;
 }
 
-.hotel-card {
+.hotel-item {
+  display: flex;
   background: #fff;
   border-radius: 20rpx;
-  margin-bottom: 16rpx;
+  overflow: hidden;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s;
-  width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
   animation: fadeInUp 0.6s ease-out forwards;
   opacity: 0;
+  padding: 0;
 }
 
 @keyframes fadeInUp {
@@ -402,18 +321,20 @@ export default {
   }
 }
 
-.hotel-card:active {
-  transform: translateY(-4rpx);
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+.hotel-item:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.1);
+}
+
+.hotel-cover-wrapper {
+  width: 200rpx;
+  height: 200rpx;
+  position: relative;
+  background: #f3f4f6;
+  flex-shrink: 0;
 }
 
 .hotel-cover {
-  position: relative;
-  height: 320rpx;
-  overflow: hidden;
-}
-
-.cover-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -427,31 +348,33 @@ export default {
   align-items: center;
   justify-content: center;
   background: #f9fafb;
-  gap: 16rpx;
+  gap: 8rpx;
 }
 
 .placeholder-text {
-  font-size: 26rpx;
+  font-size: 20rpx;
   color: #9ca3af;
+  margin-top: 0;
 }
 
-.cover-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  color: #9ca3af;
+.status-indicator {
+  position: absolute;
+  top: 12rpx;
+  left: 12rpx;
+  padding: 4rpx 12rpx;
+  background: rgba(239, 68, 68, 0.9);
+  color: #fff;
+  font-size: 20rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+  z-index: 2;
+  
+  &.status-online {
+    background: rgba(16, 185, 129, 0.9);
+  }
 }
 
-.placeholder-text {
-  font-size: 24rpx;
-  margin-top: 16rpx;
-}
-
-.price-tag {
+.hotel-type {
   position: absolute;
   top: 12rpx;
   right: 12rpx;
@@ -461,137 +384,64 @@ export default {
   color: #fff;
   font-size: 20rpx;
   border-radius: 8rpx;
-}
-
-.status-indicator {
-  position: absolute;
-  top: 12rpx;
-  left: 12rpx;
-  padding: 4rpx 12rpx;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  color: #fff;
-  font-size: 20rpx;
-  border-radius: 8rpx;
-  
-  &.status-online {
-    background: rgba(16, 185, 129, 0.8);
-  }
-}
-
-.hotel-content {
-  padding: 24rpx;
-}
-
-.hotel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16rpx;
-}
-
-.hotel-title-row {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  flex: 1;
-}
-
-.hotel-name {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #1f2937;
-  flex: 1;
-}
-
-.hotel-type {
-  padding: 6rpx 12rpx;
-  background: #eef2ff;
-  color: #667eea;
-  font-size: 22rpx;
-  border-radius: 8rpx;
   font-weight: 500;
-}
-
-.hotel-status {
-  padding: 6rpx 12rpx;
-  background: #fee2e2;
-  color: #ef4444;
-  font-size: 22rpx;
-  border-radius: 8rpx;
-  font-weight: 500;
-}
-
-.status-available {
-  background: #d1fae5;
-  color: #10b981;
-}
-
-.hotel-desc {
-  display: block;
-  font-size: 26rpx;
-  color: #6b7280;
-  line-height: 1.6;
-  margin-bottom: 16rpx;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  z-index: 2;
 }
 
 .hotel-info {
+  flex: 1;
+  padding: 20rpx;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
-  margin-bottom: 16rpx;
-  padding: 16rpx;
-  background: #f9fafb;
-  border-radius: 12rpx;
+  justify-content: space-between;
+  min-width: 0;
 }
 
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
+.hotel-header {
+  margin-bottom: 8rpx;
+}
+
+.hotel-name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1f2937;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hotel-desc {
   font-size: 24rpx;
-  color: #374151;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-bottom: 12rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
 }
 
 .hotel-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 16rpx;
-  border-top: 1rpx solid #f3f4f6;
+  padding-top: 0;
+  border-top: none;
 }
 
 .hotel-price {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 700;
   color: #f59e0b;
 }
 
-.view-detail {
-  font-size: 26rpx;
-  color: #667eea;
-  font-weight: 500;
-  padding: 8rpx 16rpx;
-  border-radius: 20rpx;
-  background: #eef2ff;
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-}
-
-.hotel-card:active .view-detail {
-  background: #e0e7ff;
-}
-
 .load-more,
 .no-more {
-  padding: 30rpx 0;
   text-align: center;
-  font-size: 26rpx;
+  padding: 30rpx 0;
+  font-size: 24rpx;
   color: #9ca3af;
 }
 

@@ -5,7 +5,7 @@
     <scroll-view class="content" scroll-y v-if="!loading && hotel">
       <!-- 封面图 -->
       <view class="cover-section">
-        <image :src="hotel.cover || defaultCover" class="cover-image" mode="aspectFill" @click="previewImage"></image>
+        <image :src="getFileUrl(hotel.cover || hotel.image) || defaultCover" class="cover-image" mode="aspectFill" @click="previewImage"></image>
       </view>
 
       <!-- 基本信息 -->
@@ -85,6 +85,7 @@ import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 import { getHotelById } from '@/services/backend-api'
+import { getFileUrl } from '@/utils'
 
 export default {
   components: {
@@ -138,7 +139,8 @@ export default {
     },
     
     previewImage() {
-      if (!this.hotel || !this.hotel.cover) {
+      const cover = this.hotel.cover || this.hotel.image
+      if (!this.hotel || !cover) {
         uni.showToast({
           title: '暂无图片可预览',
           icon: 'none'
@@ -147,9 +149,13 @@ export default {
       }
       
       uni.previewImage({
-        urls: [this.hotel.cover],
-        current: this.hotel.cover
+        urls: [this.getFileUrl(cover)],
+        current: this.getFileUrl(cover)
       })
+    },
+    
+    getFileUrl(url) {
+      return getFileUrl(url)
     },
     
     navigateToHotel() {

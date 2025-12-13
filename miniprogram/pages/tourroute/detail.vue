@@ -9,7 +9,7 @@
       <view v-else-if="route">
         <!-- 封面图 -->
         <view class="cover-wrapper">
-          <image :src="route.cover || defaultCover" class="cover" mode="aspectFill"></image>
+          <image :src="getFileUrl(route.cover) || defaultCover" class="cover" mode="aspectFill"></image>
           <view class="cover-overlay">
             <view class="theme-tag">{{ route.theme }}</view>
           </view>
@@ -61,8 +61,8 @@
               @click="onPointClick(index)"
             >
               <image 
-                v-if="point.cover"
-                :src="point.thumbCover || point.cover || defaultCover" 
+                v-if="point.cover || point.thumbCover"
+                :src="getFileUrl(point.thumbCover || point.cover) || defaultCover" 
                 class="point-image" 
                 mode="aspectFill"
               ></image>
@@ -140,6 +140,7 @@ import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 import { getTourById, getNearbyHotels, getNearbyLocations, getLocationById } from '@/services/backend-api'
+import { getFileUrl } from '@/utils'
 
 export default {
   components: {
@@ -172,6 +173,7 @@ export default {
     }
   },
   methods: {
+    getFileUrl,
     async loadData(id) {
       this.loading = true
       try {
@@ -429,6 +431,22 @@ export default {
     async initMap(points, lineColor = '#6366f1') {
       if (!points || points.length === 0) return
       
+      // 检查经纬度是否规范
+      const hasInvalidCoord = points.some(p => {
+        const lat = parseFloat(p.latitude)
+        const lng = parseFloat(p.longitude)
+        return isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180
+      })
+
+      if (hasInvalidCoord) {
+        uni.showToast({
+          title: '位置不规范，请联系管理员。',
+          icon: 'none',
+          duration: 3000
+        })
+        return
+      }
+
       // 创建标记点
       this.markers = points.map((point, index) => ({
         id: index,
