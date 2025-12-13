@@ -179,6 +179,7 @@
               v-model:file-list="coverFileList"
               list-type="image-card"
               :custom-request="handleCoverUpload"
+              @before-upload="beforeUpload"
               accept="image/*"
               :max="1"
           >
@@ -191,6 +192,7 @@
               v-model:file-list="imageFileList"
               list-type="image-card"
               :custom-request="handleImageUpload"
+              @before-upload="beforeUpload"
               accept="image/*"
               multiple
               :max="9"
@@ -236,7 +238,7 @@ import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
 import {
   NButton, NForm, NFormItem, NInput, NSelect, NInputNumber,
   NModal, NDataTable, NPagination, NSpace, NSpin, useMessage,
-  NTag, NPopconfirm, NUpload, NImage, NSwitch
+  NTag, NPopconfirm, NUpload, NImage, NSwitch, useDialog
 } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile } from '@/api/index'
@@ -245,6 +247,7 @@ import { useUserStore } from '@/store/user'
 import config from '@/config'
 
 const message = useMessage()
+const dialog = useDialog()
 const userStore = useUserStore()
 
 const isMobile = ref(false)
@@ -289,6 +292,18 @@ const formRules = {
   phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
   price: [{ required: true, type: 'number', message: '请输入价格', trigger: 'blur' }],
   address: [{ required: true, message: '请输入服务地址', trigger: 'blur' }]
+}
+
+const beforeUpload = (data) => {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
+    dialog.warning({
+      title: '提示',
+      content: '图片过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
 }
 
 const handleCoverUpload = async ({ file, fileList }) => {

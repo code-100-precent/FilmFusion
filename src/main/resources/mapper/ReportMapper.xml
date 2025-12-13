@@ -70,7 +70,7 @@
             FROM fi_reports
             WHERE user_id = #{userId}
               AND deleted = 0
-            ORDER BY created_at DESC
+            ORDER BY id ASC
                 LIMIT #{offset}, #{size}
         ) tmp ON r.id = tmp.id
     </select>
@@ -85,7 +85,7 @@
             OR type LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        ORDER BY created_at DESC
+        ORDER BY id ASC
         LIMIT #{offset}, #{size}
     </select>
 

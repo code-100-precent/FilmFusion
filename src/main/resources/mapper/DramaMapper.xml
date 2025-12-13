@@ -61,7 +61,7 @@
                 AND id &lt; #{lastId}
             </if>
         </where>
-        ORDER BY id DESC
+        ORDER BY id ASC
         LIMIT #{size}
     </select>
 
@@ -75,7 +75,7 @@
             OR drama_description LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        ORDER BY created_at DESC, id DESC
+        ORDER BY id ASC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -83,7 +83,7 @@
         SELECT *
         FROM fi_dramas
         WHERE deleted = 0
-        ORDER BY created_time DESC
+        ORDER BY id ASC
             LIMIT 10
     </select>
 

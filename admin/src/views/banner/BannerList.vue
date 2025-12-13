@@ -152,6 +152,7 @@
               :default-file-list="fileList"
               @update:file-list="handleFileListChange"
               @finish="handleUploadFinish"
+              @before-upload="beforeUpload"
               :custom-request="handleUpload"
           >
             <n-button>上传图片</n-button>
@@ -524,6 +525,18 @@ const handleUploadFinish = ({ file, event }) => {
       message.error('上传响应解析失败')
     }
   }
+}
+
+const beforeUpload = (data) => {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
+    dialog.warning({
+      title: '提示',
+      content: '图片过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
 }
 
 const handleUpload = async ({ file, onFinish, onError }) => {
