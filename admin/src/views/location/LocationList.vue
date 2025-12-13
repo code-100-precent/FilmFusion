@@ -346,6 +346,12 @@ const formRules = {
   address: [
     { required: true, message: '请输入地址', trigger: 'blur' },
     { min: 1, max: 200, message: '地址长度在 1 到 200 个字符', trigger: 'blur' }
+  ],
+  locationPrincipalPhone: [
+    { pattern: /(^1[3-9]\d{9}$)|(^0\d{2,3}-\d{7,8}$)/, message: '请输入正确的手机号或座机号', trigger: 'blur' }
+  ],
+  govPrincipalPhone: [
+    { pattern: /(^1[3-9]\d{9}$)|(^0\d{2,3}-\d{7,8}$)/, message: '请输入正确的手机号或座机号', trigger: 'blur' }
   ]
 }
 

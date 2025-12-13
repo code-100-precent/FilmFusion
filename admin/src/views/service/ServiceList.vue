@@ -289,7 +289,10 @@ const pagination = reactive({
 const formRules = {
   name: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
   contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-  phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入联系电话', trigger: 'blur' },
+    { pattern: /(^1[3-9]\d{9}$)|(^0\d{2,3}-\d{7,8}$)/, message: '请输入正确的手机号或座机号', trigger: 'blur' }
+  ],
   price: [{ required: true, type: 'number', message: '请输入价格', trigger: 'blur' }],
   address: [{ required: true, message: '请输入服务地址', trigger: 'blur' }]
 }
