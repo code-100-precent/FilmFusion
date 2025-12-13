@@ -69,7 +69,7 @@
               <div class="card-header">
                 <div class="location-info">
                   <h3 class="location-name">{{ location.name }}</h3>
-                  <p class="location-type">{{ location.type }}</p>
+                  <p class="location-type">{{ getTypeLabel(location.type) }}</p>
                 </div>
                 <div class="location-cover">
                   <n-image
@@ -319,8 +319,14 @@ const typeOptions = [
   { label: '现代建筑', value: 'modern' },
   { label: '文化场所', value: 'cultural' },
   { label: '商业场所', value: 'commercial' },
+  { label: '公园景点', value: 'park' },
   { label: '其他', value: 'other' }
 ]
+
+const getTypeLabel = (type) => {
+  const option = typeOptions.find(opt => opt.value === type)
+  return option ? option.label : type
+}
 
 const pagination = reactive({
   page: 1,
@@ -424,7 +430,12 @@ const handleImageUpload = async ({ file, fileList }) => {
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
   { title: '场地名称', key: 'name', width: 150, ellipsis: { tooltip: true } },
-  { title: '类型', key: 'type', width: 100 },
+  {
+    title: '类型',
+    key: 'type',
+    width: 100,
+    render: (row) => getTypeLabel(row.type)
+  },
   {
     title: '状态',
     key: 'status',
