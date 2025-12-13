@@ -630,11 +630,6 @@ const handleEdit = async (row) => {
       if (images.length > 0) {
         const coverUrl = images[0]
         const coverThumbUrl = thumbImages.length > 0 ? thumbImages[0] : coverUrl
-<<<<<<< HEAD
-        
-=======
-
->>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
         coverFileList.value = [{
           id: 'cover',
           name: '封面图',

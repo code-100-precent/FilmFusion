@@ -229,19 +229,11 @@
         </div>
       </template>
     </n-modal>
-<<<<<<< HEAD
-    
-    </div>
-  </template>
-  
-  <script setup>
-=======
 
   </div>
 </template>
 
 <script setup>
->>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
 import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
 import {
   NButton, NForm, NFormItem, NInput, NSelect, NInputNumber,
@@ -532,27 +524,8 @@ const handleEdit = async (row) => {
   try {
     const res = await getServiceById(row.id)
     if (res.code === 200 && res.data) {
-<<<<<<< HEAD
-        dialogTitle.value = '编辑服务'
-        const data = res.data
-        
-        Object.assign(serviceForm, {
-          id: data.id,
-          name: data.name || '',
-          price: data.price || 0,
-          contactName: data.contactName || '',
-          phone: data.phone || '',
-          address: data.address || '',
-          description: data.description || '',
-          status: data.status === 1 || data.status === true,
-          image: data.image || '',
-          thumbImage: data.thumbImage || '',
-          userId: data.userId || data.user_id
-        })
-=======
       dialogTitle.value = '编辑服务'
       const data = res.data
->>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
 
       Object.assign(serviceForm, {
         id: data.id,
@@ -568,26 +541,6 @@ const handleEdit = async (row) => {
         userId: data.userId || data.user_id
       })
 
-<<<<<<< HEAD
-        // 详情图 (第二张开始)
-        const detailUrls = urls.slice(1)
-        const detailThumbUrls = thumbUrls.slice(1)
-        
-        imageFileList.value = detailUrls.map((url, index) => ({
-            id: `img-${index}`,
-            name: `image-${index}.jpg`,
-            status: 'finished',
-            url: getImageUrl(detailThumbUrls[index] || url),
-            originUrl: url,
-            thumbUrl: detailThumbUrls[index] || url
-        }))
-        
-        dialogVisible.value = true
-    }
-  } catch (e) {
-      console.error(e)
-      message.error('获取详情失败')
-=======
       const urls = (data.image || '').split(',').filter(u => u.trim())
       const thumbUrls = (data.thumbImage || '').split(',').filter(u => u.trim())
 
@@ -625,7 +578,6 @@ const handleEdit = async (row) => {
   } catch (e) {
     console.error(e)
     message.error('获取详情失败')
->>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
   }
 }
 
@@ -697,11 +649,6 @@ const handleDialogSave = async () => {
     } else {
       res = await addService(data)
     }
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     if (res.code === 200) {
       message.success(serviceForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false

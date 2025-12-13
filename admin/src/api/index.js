@@ -185,10 +185,6 @@ export const deleteUser = (id) => {
 
 // ==================== 反馈管理 ====================
 
-<<<<<<< HEAD
-=======
-
->>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
 export const getFeedbackPage = (current = 1, size = 10, keyword = '', status = '') => {
   return request({
     url: '/feedback/admin/page',
