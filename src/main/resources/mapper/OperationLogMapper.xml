@@ -43,7 +43,7 @@
         <if test="keyword != null and keyword != ''">
             AND type LIKE CONCAT('%', #{keyword}, '%')
         </if>
-        ORDER BY timestamp DESC
+        ORDER BY id ASC
         LIMIT #{offset}, #{size}
     </select>
 

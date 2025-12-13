@@ -167,6 +167,7 @@
               :file-list="coverFileList"
               @update:file-list="handleCoverFileListChange"
               :custom-request="handleCoverUpload"
+              @before-upload="beforeUpload"
               accept="image/*"
               list-type="image-card"
           >
@@ -178,6 +179,7 @@
               v-model:file-list="detailFileList"
               @update:file-list="handleDetailFileListChange"
               :custom-request="handleDetailUpload"
+              @before-upload="beforeUpload"
               accept="image/*"
               list-type="image-card"
               multiple
@@ -207,6 +209,7 @@ import {
   NPopconfirm,
   NModal,
   useMessage,
+  useDialog,
   NImage,
   NUpload,
   NPagination,
@@ -220,6 +223,7 @@ import config from '@/config'
 import dayjs from 'dayjs'
 
 const message = useMessage()
+const dialog = useDialog()
 const userStore = useUserStore()
 
 const isMobile = ref(false)
@@ -499,6 +503,18 @@ const handleEdit = async (row) => {
   } catch (error) {
     console.error('获取文章详情失败:', error)
   }
+}
+
+const beforeUpload = (data) => {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
+    dialog.warning({
+      title: '提示',
+      content: '图片过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
 }
 
 const handleCoverUpload = async ({file, onFinish, onError}) => {

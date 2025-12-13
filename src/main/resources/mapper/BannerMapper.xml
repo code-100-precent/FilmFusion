@@ -38,7 +38,7 @@
         <if test="keyword != null and keyword != ''">
             AND image_name LIKE CONCAT('%', #{keyword}, '%')
         </if>
-        ORDER BY created_at DESC
+        ORDER BY id ASC
         LIMIT #{offset}, #{size}
         ) tmp ON a.id = tmp.id
     </select>

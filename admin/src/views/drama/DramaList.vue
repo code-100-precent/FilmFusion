@@ -181,6 +181,7 @@
               :file-list="coverFileList"
               @update:file-list="handleCoverFileListChange"
               :custom-request="handleCoverUpload"
+              @before-upload="beforeUpload"
               accept="image/*"
           >
             <n-button>上传封面图片</n-button>
@@ -200,6 +201,7 @@
               :file-list="imageFileList"
               @update:file-list="handleImageFileListChange"
               :custom-request="handleImageUpload"
+              @before-upload="beforeUpload"
               accept="image/*"
               multiple
           >
@@ -243,7 +245,8 @@ import {
   NPagination,
   NUpload,
   NSelect,
-  useMessage
+  useMessage,
+  useDialog
 } from 'naive-ui'
 import { useUserStore } from '@/store/user'
 import {
@@ -261,6 +264,7 @@ import config from '@/config'
 import dayjs from 'dayjs'
 
 const message = useMessage()
+const dialog = useDialog()
 const userStore = useUserStore()
 
 const isMobile = ref(false)
@@ -348,10 +352,10 @@ const formRules = {
     { min: 1, max: 100, message: '出品公司长度在 1 到 100 个字符', trigger: 'blur' }
   ],
   locationId: [
-    { type: 'array', required: true, message: '请选择拍摄场地', trigger: ['blur', 'change'] }
+    { type: 'array', required: false, message: '请选择拍摄场地', trigger: ['blur', 'change'] }
   ],
   serviceId: [
-    { type: 'array', required: true, message: '请选择协拍服务', trigger: ['blur', 'change'] }
+    { type: 'array', required: false, message: '请选择协拍服务', trigger: ['blur', 'change'] }
   ]
 }
 
@@ -719,6 +723,18 @@ const handleEdit = async (row) => {
     console.error('获取电视剧详情失败:', error)
     message.error('获取电视剧详情失败')
   }
+}
+
+const beforeUpload = (data) => {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
+    dialog.warning({
+      title: '提示',
+      content: '图片过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
 }
 
 // 处理封面图片上传

@@ -51,7 +51,7 @@
                 AND id &lt; #{lastId}
             </if>
         </where>
-        ORDER BY id DESC
+        ORDER BY id ASC
         LIMIT #{size}
     </select>
 
@@ -65,7 +65,7 @@
             OR type LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        ORDER BY created_at DESC
+        ORDER BY id ASC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -74,7 +74,7 @@
         FROM fi_policy
         WHERE deleted = 0
           AND status = '发布'
-        ORDER BY issue_time DESC
+        ORDER BY id ASC
             LIMIT 10
     </select>
 
