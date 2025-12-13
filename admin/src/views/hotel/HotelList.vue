@@ -172,6 +172,7 @@
               :max="1"
               :file-list="coverFileList"
               @update:file-list="handleCoverFileListChange"
+              @before-upload="beforeUpload"
               :custom-request="handleCoverUpload"
               accept="image/*"
               list-type="image-card"
@@ -185,6 +186,7 @@
           <n-upload
               v-model:file-list="detailFileList"
               @update:file-list="handleDetailFileListChange"
+              @before-upload="beforeUpload"
               :custom-request="handleDetailUpload"
               accept="image/*"
               list-type="image-card"
@@ -220,7 +222,8 @@ import {
   NSpin,
   NPagination,
   NUpload,
-  useMessage
+  useMessage,
+  useDialog
 } from 'naive-ui'
 import {
   getHotelPage,
@@ -235,6 +238,7 @@ import config from '@/config'
 import { useUserStore } from '@/store/user'
 
 const message = useMessage()
+const dialog = useDialog()
 const userStore = useUserStore()
 
 const isMobile = ref(false)
@@ -594,8 +598,23 @@ const handleEdit = async (row) => {
 // --- 图片上传逻辑 ---
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
 =======
+=======
+const beforeUpload = (data) => {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
+    dialog.warning({
+      title: '提示',
+      content: '图片过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
+}
+
+>>>>>>> b7326086e0e75703cb5af249ab6dc25ee0902864
 const handleCoverUpload = async ({file, onFinish, onError}) => {
 >>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
   try {

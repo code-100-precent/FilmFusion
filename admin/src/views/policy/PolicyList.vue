@@ -175,6 +175,7 @@
               @update:file-list="handleImageFileListChange"
               :custom-request="handleImageUpload"
               accept="image/*"
+              @before-upload="beforeUpload"
           >
             <n-button>上传封面图片</n-button>
           </n-upload>
@@ -218,13 +219,27 @@ import {
   useMessage,
   NTag,
   NSpin,
-  NPagination
+  NPagination,
+  useDialog
 } from 'naive-ui'
 import dayjs from 'dayjs'
 import { uploadFile, getPolicyPage, getPolicyById, createPolicy, updatePolicy, deletePolicy } from '@/api'
 import config from '@/config'
 
 const message = useMessage()
+const dialog = useDialog()
+
+const beforeUpload = (data) => {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
+    dialog.warning({
+      title: '提示',
+      content: '图片过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
+}
 
 const isMobile = ref(false)
 const loading = ref(false)

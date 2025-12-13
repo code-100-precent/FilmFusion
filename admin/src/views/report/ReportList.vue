@@ -117,6 +117,7 @@
                 :max="1"
                 :file-list="shootPermitFileList"
                 @update:file-list="(v) => shootPermitFileList = v"
+                @before-upload="beforeUpload"
               >
                 <n-button>上传文件</n-button>
               </n-upload>
@@ -132,6 +133,7 @@
                 :max="1"
                 :file-list="approvalFileList"
                 @update:file-list="(v) => approvalFileList = v"
+                @before-upload="beforeUpload"
               >
                 <n-button>上传文件</n-button>
               </n-upload>
@@ -147,6 +149,7 @@
                 :max="1"
                 :file-list="shootApplyFileList"
                 @update:file-list="(v) => shootApplyFileList = v"
+                @before-upload="beforeUpload"
               >
                 <n-button>上传文件</n-button>
               </n-upload>
@@ -203,13 +206,15 @@ import {
   NDatePicker,
   NUpload,
   NImage,
-  useMessage
+  useMessage,
+  useDialog
 } from 'naive-ui'
 import { getReportPage, addReport, updateReport, deleteReport, getReportById, uploadFile, updateReportStatus } from '@/api'
 import dayjs from 'dayjs'
 import config from '@/config'
 
 const message = useMessage()
+const dialog = useDialog()
 
 const loading = ref(false)
 const reportList = ref([])
@@ -318,6 +323,21 @@ const formRules = {
   contact: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
   phoneNumber: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
   crewPosition: [{ required: true, message: '请输入剧组职务', trigger: 'blur' }]
+}
+
+const beforeUpload = (data) => {
+  const isImage = data.file.file?.type.startsWith('image/')
+  const limit = isImage ? 5 * 1024 * 1024 : 15 * 1024 * 1024
+  
+  if (data.file.file?.size > limit) {
+    dialog.warning({
+      title: '提示',
+      content: isImage ? '图片过大，请重新上传' : '文件过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
 }
 
 const columns = [

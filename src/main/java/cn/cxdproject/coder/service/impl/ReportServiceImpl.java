@@ -209,6 +209,28 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
 
 
     @Override
+    @Loggable(
+            type = LogType.REPORT_ADMIN_DELETE,
+            value = "Admin delete report application ID: #{#reportId}"
+    )
+    public void deleteReportByAdmin(Long reportId) {
+        boolean updated = reportMapper.update(null,
+                Wrappers.<Report>lambdaUpdate()
+                        .set(Report::getDeleted, true)
+                        .eq(Report::getId, reportId)
+                        .eq(Report::getDeleted, false)
+        ) > 0;
+
+        if (!updated) {
+            Report report = this.getById(reportId);
+            if (report == null || Boolean.TRUE.equals(report.getDeleted())) {
+                throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
+            }
+        }
+        cache.invalidate(CaffeineConstants.REPORT + reportId);
+    }
+
+    @Override
     public Page<ReportVO> getReportPageByAdmin(Page<Report> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();

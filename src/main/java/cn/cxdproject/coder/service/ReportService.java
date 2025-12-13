@@ -20,6 +20,7 @@ public interface ReportService extends IService<Report> {
     ReportVO getReportById(Long reportId,Long userId);
     Page<ReportVO> getMyReportPage(Long userId, Page<Report> page);
     ReportVO updateReportByAdmin(Long reportId, UpdateReportAdminDTO updateDTO);
+    void deleteReportByAdmin(Long reportId);
     Page<ReportVO> getReportPageByAdmin(Page<Report> page, String keyword);
     ReportVO getReportByIdByAdmin(Long reportId);
     ReportVO toReportVO(Report report);

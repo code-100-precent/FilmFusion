@@ -214,6 +214,7 @@
               :max="1"
               :file-list="coverFileList"
               @update:file-list="handleCoverFileListChange"
+              @before-upload="beforeUpload"
               :custom-request="handleCoverUpload"
               accept="image/*"
               list-type="image-card"
@@ -227,6 +228,7 @@
           <n-upload
               v-model:file-list="detailFileList"
               @update:file-list="handleDetailFileListChange"
+              @before-upload="beforeUpload"
               :custom-request="handleDetailUpload"
               accept="image/*"
               list-type="image-card"
@@ -263,13 +265,15 @@ import {
   NSwitch,
   NUpload,
   useMessage,
-  NSelect
+  NSelect,
+  useDialog
 } from 'naive-ui'
 import { getTourPage, createTour, updateTour, deleteTour, getTourById, uploadFile, getLocationList, getDramaList } from '@/api'
 import { getImageUrl } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const message = useMessage()
+const dialog = useDialog()
 
 const isMobile = ref(false)
 const loading = ref(false)
@@ -365,6 +369,18 @@ const loadOptions = async () => {
 }
 
 
+const beforeUpload = (data) => {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
+    dialog.warning({
+      title: '提示',
+      content: '图片过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
+}
+
 const formRules = {
   name: [
     { required: true, message: '请输入体验游名称', trigger: 'blur' },
@@ -378,10 +394,10 @@ const formRules = {
     { required: true, message: '请输入介绍', trigger: 'blur' }
   ],
   locationId: [
-    { type: 'array', required: true, message: '请选择景点', trigger: ['blur', 'change'] }
+    { type: 'array', required: false, message: '请选择景点', trigger: ['blur', 'change'] }
   ],
   dramaId: [
-    { type: 'array', required: true, message: '请选择关联影视', trigger: ['blur', 'change'] }
+    { type: 'array', required: false, message: '请选择关联影视', trigger: ['blur', 'change'] }
   ]
 }
 
