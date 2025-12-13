@@ -21,20 +21,6 @@
         </view>
       </view>
 
-      <!-- Category Filter -->
-      <view class="category-filter">
-        <scroll-view class="category-scroll" scroll-x :show-scrollbar="false">
-          <view 
-            v-for="category in categories" 
-            :key="category"
-            class="category-item"
-            :class="{ active: selectedCategory === category }"
-            @click="selectCategory(category)">
-            <text>{{ category }}</text>
-          </view>
-        </scroll-view>
-      </view>
-
       <!-- Film List -->
       <scroll-view
         class="film-list"
@@ -44,25 +30,41 @@
         <view v-if="films.length === 0 && !loading" class="empty-wrapper">
           <Empty text="暂无影视作品"></Empty>
         </view>
-        <view v-else class="film-grid">
+        <view v-else class="film-list-container">
           <view
-            v-for="film in films"
+            v-for="(film, index) in films"
             :key="film.id"
-            class="film-card"
+            class="film-item"
+            :style="{ 'animation-delay': index * 0.05 + 's' }"
             @click="goToDetail(film.id)"
           >
             <view class="film-cover-wrapper">
-              <image :src="getPosterUrl(film.poster)" class="film-cover" mode="aspectFill"></image>
-              <view class="film-type-badge">{{ film.type }}</view>
+              <image 
+                :src="getPosterUrl(film.cover || film.image)" 
+                class="film-cover" 
+                mode="aspectFill"
+                @error="handleImageError"
+              ></image>
+              <view class="film-type-badge" v-if="film.type">{{ film.type }}</view>
             </view>
             <view class="film-info">
-              <text class="film-title">{{ film.name }}</text>
-              <text class="film-meta">{{ film.releaseDate }} 上映</text>
-              <view class="film-tags">
-                <text class="film-tag">{{ film.genre }}</text>
+              <view class="film-header">
+                <text class="film-title">{{ film.name }}</text>
+              </view>
+              <text class="film-desc">{{ formatDescription(film.dramaDescription) }}</text>
+              <view class="film-footer">
+                <text class="film-meta-text" v-if="film.prodCompany">{{ film.prodCompany }}</text>
+                <text class="film-meta-text" v-if="film.filingNum">备案号: {{ film.filingNum }}</text>
               </view>
             </view>
           </view>
+        </view>
+        
+        <view v-if="hasMore && !loading" class="load-more">
+          <text>上拉加载更多</text>
+        </view>
+        <view v-if="!hasMore && films.length > 0" class="no-more">
+          <text>没有更多了</text>
         </view>
       </scroll-view>
     </view>
@@ -84,8 +86,6 @@ export default {
   data() {
     return {
       keyword: '',
-      selectedCategory: '全部',
-      categories: ['全部', '自主创作', '外来剧组', '视听资讯', '视听四川', '电影', '电视剧'],
       films: [],
       loading: false,
       currentPage: 1,
@@ -104,6 +104,16 @@ export default {
     getPosterUrl(poster) {
       return getFileUrl(poster)
     },
+    handleImageError(e) {
+      // 图片加载失败处理
+    },
+    formatDescription(desc) {
+      if (!desc) return ''
+      if (desc.length > 40) {
+        return desc.substring(0, 40) + '...'
+      }
+      return desc
+    },
     async loadFilms(isRefresh = false) {
       if (this.loading) return;
       
@@ -114,11 +124,6 @@ export default {
           size: this.pageSize,
           keyword: this.keyword
         };
-        
-        // 如果选择了分类且不是"全部"，添加类型筛选
-        if (this.selectedCategory !== '全部') {
-          params.type = this.selectedCategory;
-        }
         
         console.log('加载影视作品，参数:', params);
         const response = await getDramaPage(params);
@@ -173,10 +178,6 @@ export default {
     },
     handleSearch() {
       this.loadFilms(true) // 搜索时刷新数据
-    },
-    selectCategory(category) {
-      this.selectedCategory = category
-      this.loadFilms(true) // 切换分类时刷新数据
     },
     async loadMore() {
       if (this.loading || !this.hasMore) {
@@ -241,7 +242,6 @@ export default {
 }
 
 .search-bar {
-  margin-top: 16rpx;
   margin-bottom: 16rpx;
 }
 
@@ -296,31 +296,47 @@ export default {
   min-height: 0;
 }
 
-.film-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16rpx;
-  padding-bottom: 16rpx;
+.film-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding-bottom: 20rpx;
 }
 
-.film-card {
+.film-item {
+  display: flex;
   background: #fff;
   border-radius: 20rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s;
+  padding: 0;
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
 }
 
-.film-card:active {
-  transform: translateY(-4rpx);
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.film-item:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.1);
 }
 
 .film-cover-wrapper {
-  width: 100%;
-  aspect-ratio: 3/4;
+  width: 200rpx;
+  height: 280rpx;
   position: relative;
   background: #f3f4f6;
+  flex-shrink: 0;
 }
 
 .film-cover {
@@ -342,39 +358,60 @@ export default {
 }
 
 .film-info {
-  padding: 16rpx;
+  flex: 1;
+  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.film-header {
+  margin-bottom: 8rpx;
 }
 
 .film-title {
-  font-size: 26rpx;
+  font-size: 30rpx;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 8rpx;
-  display: block;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.film-desc {
+  font-size: 24rpx;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-bottom: 12rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Allow slightly more text for vertical card */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+.film-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.film-meta-text {
+  font-size: 22rpx;
+  color: #9ca3af;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.film-meta {
-  font-size: 20rpx;
+.load-more,
+.no-more {
+  text-align: center;
+  padding: 30rpx 0;
+  font-size: 24rpx;
   color: #9ca3af;
-  margin-bottom: 12rpx;
-  display: block;
-}
-
-.film-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
-}
-
-.film-tag {
-  font-size: 20rpx;
-  color: #ef4444;
-  background: #fef2f2;
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
 }
 
 .empty-wrapper {

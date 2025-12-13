@@ -56,7 +56,7 @@ export const userLogin = (params: LoginDTO): Promise<ApiResponse<LoginResponse>>
     url: '/user/login',
     method: 'POST',
     data: params
-  })
+  }) as Promise<ApiResponse<LoginResponse>>
 }
 
 // 用户注册
@@ -65,7 +65,7 @@ export const userRegister = (params: RegisterDTO): Promise<ApiResponse<LoginResp
     url: '/user/register',
     method: 'POST',
     data: params
-  })
+  }) as Promise<ApiResponse<LoginResponse>>
 }
 
 // 获取当前用户信息
@@ -73,7 +73,7 @@ export const getCurrentUserInfo = (): Promise<ApiResponse<UserInfo>> => {
   return http<UserInfo>({
     url: '/user/info',
     method: 'GET'
-  })
+  }) as Promise<ApiResponse<UserInfo>>
 }
 
 // 更新用户信息
@@ -82,7 +82,7 @@ export const updateUserInfo = (data: { username?: string; phoneNumber?: string }
     url: '/user/info',
     method: 'PUT',
     data
-  })
+  }) as Promise<ApiResponse<UserInfo>>
 }
 
 // 修改密码
@@ -91,7 +91,7 @@ export const changePassword = (data: { oldPassword: string; newPassword: string 
     url: '/user/password',
     method: 'PUT',
     data
-  })
+  }) as Promise<ApiResponse<void>>
 }
 
 // 退出登录
@@ -99,7 +99,7 @@ export const userLogout = (): Promise<ApiResponse<void>> => {
   return http<void>({
     url: '/user/logout',
     method: 'POST'
-  })
+  }) as Promise<ApiResponse<void>>
 }
 
 // ==================== 文章相关 ====================
@@ -128,7 +128,7 @@ export const getArticleById = (id: number): Promise<ApiResponse<Article>> => {
   return http<Article>({
     url: `/article/${id}`,
     method: 'GET'
-  })
+  }) as Promise<ApiResponse<Article>>
 }
 
 // ==================== 拍摄场地相关 ====================
@@ -161,7 +161,7 @@ export const getLocationById = (id: number): Promise<ApiResponse<Location>> => {
   return http<Location>({
     url: `/location/${id}`,
     method: 'GET'
-  })
+  }) as Promise<ApiResponse<Location>>
 }
 
 // ==================== 协拍服务相关 ====================
@@ -193,7 +193,7 @@ export const getShootById = (id: number): Promise<ApiResponse<Shoot>> => {
   return http<Shoot>({
     url: `/shoot/${id}`,
     method: 'GET'
-  })
+  }) as Promise<ApiResponse<Shoot>>
 }
 
 // ==================== 影视剧备案相关 ====================
@@ -249,7 +249,7 @@ export const getReportById = (id: number): Promise<ApiResponse<Report>> => {
   return http<Report>({
     url: `/report/${id}`,
     method: 'GET'
-  })
+  }) as Promise<ApiResponse<Report>>
 }
 
 // 创建影视剧备案
@@ -258,7 +258,7 @@ export const createReport = (data: CreateReportDTO): Promise<ApiResponse<Report>
     url: '/report',
     method: 'POST',
     data
-  })
+  }) as Promise<ApiResponse<Report>>
 }
 
 // 获取我的报备列表
@@ -287,13 +287,19 @@ export interface CreateFeedbackDTO {
   type: string
 }
 
+export interface FeedbackDTO {
+  content?: string
+  type?: string
+  status?: string
+}
+
 // 创建反馈
 export const createFeedback = (data: CreateFeedbackDTO): Promise<ApiResponse<Feedback>> => {
   return http<Feedback>({
     url: '/feedback',
     method: 'POST',
     data
-  })
+  }) as Promise<ApiResponse<Feedback>>
 }
 
 // 获取我的反馈列表
@@ -303,4 +309,29 @@ export const getMyFeedbackPage = (params: { current?: number; size?: number }): 
     method: 'GET',
     data: params
   }) as Promise<PageResponse<Feedback>>
+}
+
+// 获取反馈详情
+export const getFeedbackDetail = (id: number): Promise<ApiResponse<Feedback>> => {
+  return http<Feedback>({
+    url: `/feedback/${id}`,
+    method: 'GET'
+  }) as Promise<ApiResponse<Feedback>>
+}
+
+// 更新反馈
+export const updateFeedback = (id: number, data: FeedbackDTO): Promise<ApiResponse<Feedback>> => {
+  return http<Feedback>({
+    url: `/feedback/${id}`,
+    method: 'PUT',
+    data
+  }) as Promise<ApiResponse<Feedback>>
+}
+
+// 删除反馈
+export const deleteFeedback = (id: number): Promise<ApiResponse<void>> => {
+  return http<void>({
+    url: `/feedback/${id}`,
+    method: 'DELETE'
+  }) as Promise<ApiResponse<void>>
 }

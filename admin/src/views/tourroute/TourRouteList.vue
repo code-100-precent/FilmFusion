@@ -80,28 +80,6 @@
             />
           </div>
         </n-form-item>
-        <n-form-item label="详情图片" path="image">
-          <n-upload
-            :max="10"
-            multiple
-            :file-list="imageFileList"
-            @update:file-list="handleImageFileListChange"
-            :custom-request="handleImageUpload"
-            accept="image/*"
-          >
-            <n-button>上传详情图片（最多10张）</n-button>
-          </n-upload>
-          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
-            <n-image
-              v-for="(file, index) in imageFileList"
-              :key="index"
-              :src="file.url"
-              width="100"
-              height="100"
-              object-fit="cover"
-            />
-          </div>
-        </n-form-item>
         <n-form-item label="状态" path="status">
           <n-select v-model:value="tourRouteForm.status" :options="statusOptions" />
         </n-form-item>
@@ -165,18 +143,13 @@ const tourRouteForm = reactive({
 })
 
 const coverFileList = ref([])
-const imageFileList = ref([])
 
 const pagination = reactive({
   page: 1,
   pageSize: 10,
   itemCount: 0,
   showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true,
-  // 添加以下属性以确保Naive UI正确计算分页
-  pageCount: 1,
-  prefix: ({ itemCount }) => `共 ${itemCount} 条`
+  pageSizes: [10, 20, 50, 100]
 })
 
 const statusOptions = [
@@ -272,8 +245,7 @@ const loadData = async () => {
       tourRouteList.value = res.data || []
       if (res.pagination) {
         pagination.itemCount = res.pagination.totalItems || 0
-        // 自动计算总页数
-        pagination.pageCount = Math.ceil(pagination.itemCount / pagination.pageSize) || 1
+        pagination.pageCount = res.pagination.totalPages || 1
         pagination.page = res.pagination.currentPage || 1
         pagination.pageSize = res.pagination.pageSize || 10
       }
@@ -331,7 +303,6 @@ const handleAdd = () => {
     status: 1
   })
   coverFileList.value = []
-  imageFileList.value = []
   dialogVisible.value = true
 }
 
@@ -342,46 +313,20 @@ const handleEdit = async (row) => {
     if (res.code === 200) {
       if (res.data) {
         dialogTitle.value = '编辑线路'
-
-        // 分离封面图片和详情图片
-        const imageUrls = res.data.image ? res.data.image.split(',').filter(url => url.trim()) : []
-        const thumbUrls = res.data.thumbImage ? res.data.thumbImage.split(',').filter(url => url.trim()) : []
-
-        const coverImage = imageUrls.length > 0 ? imageUrls[0] : (res.data.cover || '')
-        const coverThumb = thumbUrls.length > 0 ? thumbUrls[0] : (res.data.thumbCover || '')
-        const detailImages = imageUrls.slice(1)
-        const detailThumbs = thumbUrls.slice(1)
-
-        Object.assign(tourRouteForm, {
-          ...res.data,
-          cover: coverImage,
-          thumbCover: coverThumb,
-          image: detailImages.join(','),
-          thumbImage: detailThumbs.join(',')
-        })
-
+        Object.assign(tourRouteForm, res.data)
+        
         // 设置封面图片文件列表
-        coverFileList.value = []
-        if (coverImage) {
+        if (res.data.cover || res.data.thumbCover) {
           coverFileList.value = [{
             id: 'cover',
             name: 'cover.jpg',
             status: 'finished',
-            url: coverThumb || coverImage
+            url: res.data.thumbCover || res.data.cover
           }]
+        } else {
+          coverFileList.value = []
         }
-
-        // 设置详情图片文件列表
-        imageFileList.value = []
-        if (detailImages.length > 0) {
-          imageFileList.value = detailImages.map((url, index) => ({
-            id: `image-${index}`,
-            name: `image-${index}.jpg`,
-            status: 'finished',
-            url: detailThumbs[index] || url
-          }))
-        }
-
+        
         dialogVisible.value = true
       } else {
         console.error('获取线路详情失败: 数据为空', res)
@@ -449,54 +394,6 @@ const handleCoverFileListChange = (files) => {
   }
 }
 
-// 处理详情图片上传
-const handleImageUpload = async ({ file, onFinish, onError }) => {
-  try {
-    const res = await uploadFile(file.file)
-    if (res.code === 200 && res.data) {
-      const originUrl = res.data.originUrl || res.data.url
-      const thumbUrl = res.data.thumbUrl || originUrl
-
-      // 将新上传的图片添加到现有图片列表
-      const currentImages = tourRouteForm.image ? tourRouteForm.image.split(',').filter(url => url.trim()) : []
-      const currentThumbs = tourRouteForm.thumbImage ? tourRouteForm.thumbImage.split(',').filter(url => url.trim()) : []
-
-      currentImages.push(originUrl)
-      currentThumbs.push(thumbUrl)
-
-      tourRouteForm.image = currentImages.join(',')
-      tourRouteForm.thumbImage = currentThumbs.join(',')
-
-      onFinish()
-      message.success('详情图片上传成功')
-    } else {
-      onError()
-      message.error('上传失败：' + (res.message || '未知错误'))
-    }
-  } catch (error) {
-    console.error('上传详情图片失败:', error)
-    onError()
-    message.error('上传失败')
-  }
-}
-
-// 处理详情图片文件列表变化
-const handleImageFileListChange = (files) => {
-  imageFileList.value = files
-
-  // 从文件列表中提取已上传的图片URL
-  const uploadedFiles = files.filter(f => f.status === 'finished' && f.url)
-  const imageUrls = uploadedFiles.map(f => f.url)
-
-  // 更新表单中的图片字段
-  if (imageUrls.length > 0) {
-    tourRouteForm.image = imageUrls.join(',')
-  } else {
-    tourRouteForm.image = ''
-    tourRouteForm.thumbImage = ''
-  }
-}
-
 const handleDialogSave = async () => {
   if (!formRef.value) return
   try {
@@ -507,25 +404,6 @@ const handleDialogSave = async () => {
   
   try {
     dialogLoading.value = true
-
-    // 合并封面和详情图片为逗号分隔的字符串
-    const allImages = []
-    const allThumbs = []
-
-    // 先添加封面图片
-    if (tourRouteForm.cover) {
-      allImages.push(tourRouteForm.cover)
-      allThumbs.push(tourRouteForm.thumbCover || tourRouteForm.cover)
-    }
-
-    // 再添加详情图片
-    if (tourRouteForm.image) {
-      const detailImages = tourRouteForm.image.split(',').filter(url => url.trim())
-      const detailThumbs = tourRouteForm.thumbImage ? tourRouteForm.thumbImage.split(',').filter(url => url.trim()) : []
-      allImages.push(...detailImages)
-      allThumbs.push(...detailThumbs)
-    }
-
     const data = {
       name: tourRouteForm.name,
       description: tourRouteForm.description,
@@ -535,9 +413,9 @@ const handleDialogSave = async () => {
       accommodation: tourRouteForm.accommodation,
       foodRecommendation: tourRouteForm.foodRecommendation,
       cover: tourRouteForm.cover,
-      image: allImages.join(','),
+      image: tourRouteForm.image,
       thumbCover: tourRouteForm.thumbCover,
-      thumbImage: allThumbs.join(','),
+      thumbImage: tourRouteForm.thumbImage,
       status: tourRouteForm.status
     }
     

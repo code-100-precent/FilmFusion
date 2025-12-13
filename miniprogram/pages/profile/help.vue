@@ -101,15 +101,11 @@
         <view class="contact-info">
           <view class="contact-item">
             <uni-icons type="phone" size="20" color="#6366f1"></uni-icons>
-            <text>客服热线：400-888-8888</text>
-          </view>
-          <view class="contact-item">
-            <uni-icons type="email" size="20" color="#6366f1"></uni-icons>
-            <text>邮箱：service@yaanfilm.com</text>
+            <text>客服热线：2360111</text>
           </view>
           <view class="contact-item">
             <uni-icons type="location" size="20" color="#6366f1"></uni-icons>
-            <text>地址：四川省雅安市雨城区</text>
+            <text>地址：延安市文化广播电视体育和旅游局</text>
           </view>
           <view class="contact-item">
             <uni-icons type="clock" size="20" color="#6366f1"></uni-icons>

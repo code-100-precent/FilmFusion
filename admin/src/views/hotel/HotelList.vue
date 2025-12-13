@@ -597,6 +597,11 @@ const handleEdit = async (row) => {
 
 // --- 图片上传逻辑 ---
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+const handleCoverUpload = async ({ file, onFinish, onError }) => {
+=======
+=======
 const beforeUpload = (data) => {
   if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
@@ -609,7 +614,9 @@ const beforeUpload = (data) => {
   return true
 }
 
+>>>>>>> b7326086e0e75703cb5af249ab6dc25ee0902864
 const handleCoverUpload = async ({file, onFinish, onError}) => {
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
   try {
     const res = await uploadFile(file.file);
 
@@ -669,7 +676,11 @@ const handleCoverFileListChange = (newList) => {
   }
 }
 
+<<<<<<< HEAD
+const handleDetailUpload = async ({ file, onFinish, onError }) => {
+=======
 const handleDetailUpload = async ({file, onFinish, onError}) => {
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
   try {
     const res = await uploadFile(file.file);
 
@@ -732,7 +743,11 @@ const handleDialogSave = async () => {
 
   try {
     dialogLoading.value = true
+<<<<<<< HEAD
+    
+=======
 
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     // 辅助函数：获取文件信息
     const getFileInfo = (file) => {
       // 1. 优先检查 fileMapping (本次会话上传的文件)
@@ -828,7 +843,11 @@ const handleDialogSave = async () => {
       detailUrls,
       finalImageStr
     })
+<<<<<<< HEAD
+    
+=======
 
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     const data = {
       name: hotelForm.name,
       address: hotelForm.address,

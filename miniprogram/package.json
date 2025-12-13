@@ -1,11 +1,6 @@
 {
   "dependencies": {
-    "@vant/weapp": "^1.11.6",
     "@vue/runtime-core": "^3.4.38",
-    "pdfjs-dist": "^4.8.69",
-    "pinia": "^2.2.2",
-    "pinia-plugin-persistedstate": "^3.2.3",
-    "vant-weapp": "^0.5.29",
     "vue": "^3.4.38"
   },
   "devDependencies": {

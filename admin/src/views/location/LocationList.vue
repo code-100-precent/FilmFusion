@@ -165,16 +165,28 @@
           <n-input v-model:value="locationForm.address" placeholder="请输入详细地址" />
         </n-form-item>
         <n-form-item label="价格" path="price">
+<<<<<<< HEAD
+          <n-input-number 
+            v-model:value="locationForm.price" 
+            placeholder="请输入价格" 
+            :min="0"
+            :show-button="false"
+=======
           <n-input-number
               v-model:value="locationForm.price"
               placeholder="请输入价格"
               :min="0"
               :show-button="false"
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
           >
             <template #prefix>￥</template>
           </n-input-number>
         </n-form-item>
+<<<<<<< HEAD
+        
+=======
 
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
         <n-form-item label="封面图片">
           <n-upload
               v-model:file-list="coverFileList"
@@ -507,16 +519,20 @@ const columns = [
 
 const handleDialogSave = async () => {
   if (!formRef.value) return
-
+  
   try {
     await formRef.value.validate()
   } catch (error) {
     return
   }
-
+  
   try {
     dialogLoading.value = true
+<<<<<<< HEAD
+    
+=======
 
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     // 组合图片字段：封面 + 详情图
     // 优先使用 fileList 中的 originUrl (相对路径)，如果没有则尝试从 url 解析
     const detailOrigins = imageFileList.value
@@ -590,14 +606,18 @@ const handleDialogSave = async () => {
       thumbImage: finalThumbImageStr,
       user_id: locationForm.userId
     }
+<<<<<<< HEAD
+    
+=======
 
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
     let res
     if (locationForm.id) {
       res = await updateLocation(data)
     } else {
       res = await addLocation(data)
     }
-
+    
     if (res.code === 200) {
       message.success(locationForm.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
@@ -726,7 +746,11 @@ const handleEdit = async (row) => {
         thumbImage: '',
         userId: res.data.userId || res.data.user_id
       })
+<<<<<<< HEAD
+      
+=======
 
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
       // 设置封面图片文件列表
       if (coverUrl) {
         coverFileList.value = [{
@@ -753,7 +777,11 @@ const handleEdit = async (row) => {
           thumbUrl: thumbUrl
         }
       })
+<<<<<<< HEAD
+      
+=======
 
+>>>>>>> d19d7fd1954f1e828eae1b79e38d10b2d057ee79
       dialogVisible.value = true
     }
   } catch (error) {

@@ -11,7 +11,7 @@
         <view v-if="isLoggedIn" class="user-info">
           <view class="avatar-wrapper">
             <image
-              v-if="userInfo.avatar"
+              v-if="avatarUrl"
               class="avatar"
               :src="avatarUrl"
               mode="aspectFill"

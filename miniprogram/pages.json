@@ -192,13 +192,6 @@
 				"navigationBarTitleText": "政策详情",
 				"navigationStyle": "custom"
 			}
-		},
-		{
-			"path": "pages/test/file-preview-test",
-			"style": {
-				"navigationBarTitleText": "文件预览测试",
-				"navigationStyle": "custom"
-			}
 		}
 	],
 	"globalStyle": {

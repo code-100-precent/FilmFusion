@@ -120,8 +120,15 @@
             @click="goToLocationDetail(location.id)"
           >
             <view class="location-card-image-box">
-              <image :src="location.cover" class="location-card-image" mode="cover"></image>
-              <view class="location-card-overlay"></view>
+              <image 
+                v-if="getFileUrl(location.cover || location.thumbImage)"
+                :src="getFileUrl(location.cover || location.thumbImage)" 
+                class="location-card-image" 
+                mode="aspectFill"
+              ></image>
+              <view v-else class="location-card-overlay" style="background: #f3f4f6; display: flex; align-items: center; justify-content: center;">
+                 <uni-icons type="image" size="30" color="#d1d5db"></uni-icons>
+              </view>
               <view class="location-card-price" v-if="location.price">¥{{ location.price }}/天</view>
             </view>
             <view class="location-card-info">
@@ -188,7 +195,7 @@ import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
 import { getArticlePage, getLocationPage, getBannerPage } from '../../services/backend-api'
-import { loadingMixin } from '../../utils/index'
+import { loadingMixin, getFileUrl } from '../../utils/index'
 
 export default {
   components: {
@@ -230,6 +237,7 @@ export default {
     this.loadData()
   },
   methods: {
+    getFileUrl, // Expose helper to template
     async loadData() {
       try {
         await this.withLoading(async () => {
@@ -355,7 +363,7 @@ export default {
     },
     goToServices() {
       uni.navigateTo({
-        url: '/pages/services/services'
+        url: '/pages/profile/help'
       })
     },
     getArticleCover(cover) {

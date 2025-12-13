@@ -13,7 +13,9 @@ export const processApiResponseFileUrls = <T>(
   response: any,
   fileFields: string[]
 ): T => {
-  if (!response) return response
+  if (!response) {
+    return response
+  }
 
   // 处理分页响应
   if (response.data && Array.isArray(response.data)) {
@@ -22,6 +24,9 @@ export const processApiResponseFileUrls = <T>(
   } else if (response.data && typeof response.data === 'object') {
     // 单个对象响应格式: { code, message, data: {} }
     response.data = processObjectFileUrls(response.data, fileFields)
+  } else if (response.records && Array.isArray(response.records)) {
+    // 游标分页响应格式: { records: [], nextCursor: ... }
+    response.records = processArrayFileUrls(response.records, fileFields)
   } else if (Array.isArray(response)) {
     // 直接是数组响应
     response = processArrayFileUrls(response, fileFields)
@@ -53,10 +58,10 @@ export const FILE_FIELDS_CONFIG = {
   drama: ['poster', 'posterUrl', 'images', 'thumbs'],
   
   // 场地模块
-  location: ['image', 'thumbImage', 'images', 'thumbs'],
+  location: ['cover', 'image', 'thumbImage', 'images', 'thumbs'],
   
   // 酒店模块
-  hotel: ['image', 'thumbImage', 'images', 'thumbs'],
+  hotel: ['cover', 'image', 'thumbImage', 'images', 'thumbs'],
   
   // 旅游线路模块
   tour: ['image', 'thumbImage', 'images', 'thumbs'],

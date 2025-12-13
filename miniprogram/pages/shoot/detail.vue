@@ -6,8 +6,8 @@
       <!-- 服务封面图片 -->
       <view class="cover-section">
         <image 
-          v-if="shoot.image || shoot.thumbImage"
-          :src="shoot.image || shoot.thumbImage" 
+          v-if="getFileUrl(shoot.image || shoot.thumbImage)"
+          :src="getFileUrl(shoot.image || shoot.thumbImage)" 
           class="cover-image" 
           mode="aspectFill" 
           @click="previewImage"
@@ -22,9 +22,6 @@
       <view class="info-card">
         <view class="card-header">
           <text class="shoot-name">{{ shoot.name }}</text>
-          <view class="shoot-status" :class="{ 'status-online': shoot.status === 1 }">
-            {{ shoot.status === 1 ? '上线' : '下线' }}
-          </view>
         </view>
       </view>
 
@@ -79,6 +76,7 @@ import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 import { getShootById } from '../../services/backend-api'
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
@@ -103,6 +101,7 @@ export default {
       this.loading = true
       try {
         const res = await getShootById(id)
+        
         if (res.code === 200 && res.data) {
           this.shoot = res.data
         } else {
@@ -130,11 +129,14 @@ export default {
         return
       }
       
-      const imageUrl = this.shoot.image || this.shoot.thumbImage
+      const imageUrl = this.getFileUrl(this.shoot.image || this.shoot.thumbImage)
       uni.previewImage({
         urls: [imageUrl],
         current: imageUrl
       })
+    },
+    getFileUrl(url) {
+      return getFileUrl(url)
     }
   }
 }
