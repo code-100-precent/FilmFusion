@@ -17,7 +17,7 @@
         <Empty text="暂无报备记录"></Empty>
         <button class="add-btn" @click="goToFiling">新增报备</button>
       </view>
-      <view v-else>
+      <view v-else-if="reports.length > 0">
         <view
           v-for="report in reports"
           :key="report.id"
@@ -194,6 +194,7 @@ export default {
     }
   },
   onLoad() {
+    console.log('报备列表页面加载')
     this.loadReports()
   },
   computed: {
@@ -222,9 +223,31 @@ export default {
           size: this.size
         })
 
-        if (res.code === 200 && res.data) {
-          const dataList = Array.isArray(res.data) ? res.data : []
-          const pagination = res.pagination || { totalItems: 0 }
+        if (res && (res.code === 200 || res.code === undefined)) {
+          // 处理响应数据 - 兼容多种数据格式
+          let dataList = []
+          let pagination = {}
+          
+          // 情况1: 标准格式 { code: 200, data: [], pagination: {} }
+          if (res.data && Array.isArray(res.data)) {
+            dataList = res.data
+            pagination = res.pagination || {}
+          }
+          // 情况2: 数据直接在data字段中但不是数组
+          else if (res.data && !Array.isArray(res.data)) {
+            dataList = [res.data]
+            pagination = res.pagination || {}
+          }
+          // 情况3: 没有code字段，直接是数据
+          else if (res.code === undefined) {
+            // 可能是游标分页格式或其他格式
+            if (res.records && Array.isArray(res.records)) {
+              dataList = res.records
+            } else if (Array.isArray(res)) {
+              dataList = res
+            }
+            pagination = res.pagination || {}
+          }
           
           // 预处理每个报备项，添加状态文本和类名
           const processedList = dataList.map(report => ({
@@ -238,8 +261,18 @@ export default {
           } else {
             this.reports = [...this.reports, ...processedList]
           }
-          this.total = pagination.totalItems || 0
+          this.total = pagination.totalItems || (pagination.total || 0)
           this.hasMore = this.reports.length < this.total
+        } else {
+          console.warn('响应格式异常:', res)
+          if (reset) {
+            this.reports = []
+          }
+          // 显示错误提示，但不要让页面一直处于加载状态
+          uni.showToast({
+            title: '数据加载失败',
+            icon: 'none'
+          })
         }
       } catch (error) {
         console.error('加载报备失败:', error)
@@ -695,6 +728,7 @@ export default {
   align-items: center;
   z-index: 1000;
   padding: 40rpx;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .modal-content {
@@ -704,6 +738,23 @@ export default {
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-header {
@@ -734,6 +785,7 @@ export default {
   flex: 1;
   padding: 32rpx;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .modal-footer {
@@ -741,10 +793,12 @@ export default {
   border-top: 2rpx solid #f3f4f6;
   display: flex;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .detail-section {
   width: 100%;
+  box-sizing: border-box;
 }
 
 .detail-header {
@@ -776,23 +830,31 @@ export default {
   background-color: #f9fafb;
   border-radius: 12rpx;
   border: 2rpx solid #e5e7eb;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .file-info {
   display: flex;
   align-items: center;
   flex: 1;
+  min-width: 0; /* 允许收缩 */
+  margin-right: 16rpx;
 }
 
 .file-name {
   font-size: 28rpx;
   color: #374151;
   margin-left: 12rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .file-actions {
   display: flex;
   gap: 16rpx;
+  flex-shrink: 0; /* 防止按钮被压缩 */
 }
 
 .action-btn {

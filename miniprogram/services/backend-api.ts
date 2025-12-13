@@ -85,10 +85,10 @@ export const getTourPage = async (params: {
  * 获取线路详情
  */
 export const getTourById = (id: number) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: `/tour/${id}`,
         method: 'GET'
-    })
+    }, ['cover', 'image', 'images', 'thumbImage'])
 }
 
 // ==================== 2.1 住宿推荐 (Hotel) ====================
@@ -97,25 +97,26 @@ export const getTourById = (id: number) => {
  * 获取住宿列表（分页）
  */
 export const getHotelPage = (params: {
+    cursor?: string
     current?: number
     size?: number
     keyword?: string
 }) => {
-    return http<PageResponse<any>>({
+    return httpWithFileUrl<PageResponse<any>>({
         url: '/hotel/page',
         method: 'GET',
         data: params
-    })
+    }, ['cover', 'image', 'images', 'thumbImage'])
 }
 
 /**
  * 获取住宿详情
  */
 export const getHotelById = (id: number) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: `/hotel/${id}`,
         method: 'GET'
-    })
+    }, ['cover', 'image', 'images', 'thumbImage'])
 }
 
 /**
@@ -129,14 +130,14 @@ export const getNearbyHotels = (params: {
     longitude?: number
     size?: number
 }) => {
-    return http<PageResponse<any>>({
+    return httpWithFileUrl<PageResponse<any>>({
         url: '/hotel/page',
         method: 'GET',
         data: {
             current: 1,
             size: params.size || 5
         }
-    })
+    }, ['cover', 'image', 'images', 'thumbImage'])
 }
 
 // ==================== 3. 拍摄场景 (Location) ====================
@@ -145,6 +146,7 @@ export const getNearbyHotels = (params: {
  * 获取拍摄场地列表（分页）
  */
 export const getLocationPage = (params: {
+    cursor?: string
     current?: number
     size?: number
     keyword?: string
@@ -154,12 +156,12 @@ export const getLocationPage = (params: {
         url: '/location/page',
         method: 'GET',
         data: {
-            cursor: null, // 使用游标分页，第一页不传cursor
+            cursor: params.cursor || null, // 使用传入的cursor参数
             size: params.size || 5,
             keyword: params.keyword,
-            category: params.category
+            type: params.category
         }
-    }, ['image', 'thumbImage', 'images', 'thumbs'])
+    }, ['cover', 'image', 'thumbImage', 'images', 'thumbs'])
 }
 
 /**
@@ -169,7 +171,7 @@ export const getLocationById = (id: number) => {
     return httpWithFileUrl<any>({
         url: `/location/${id}`,
         method: 'GET'
-    }, ['image', 'thumbImage', 'images', 'thumbs'])
+    }, ['cover', 'image', 'thumbImage', 'images', 'thumbs'])
 }
 
 /**
@@ -183,14 +185,14 @@ export const getNearbyLocations = (params: {
     longitude?: number
     size?: number
 }) => {
-    return http<PageResponse<any>>({
+    return httpWithFileUrl<PageResponse<any>>({
         url: '/location/page',
         method: 'GET',
         data: {
             current: 1,
             size: params.size || 5
         }
-    })
+    }, ['cover', 'image', 'thumbImage', 'images', 'thumbs'])
 }
 
 // ==================== 4. 视听政策 (Article) ====================
@@ -199,31 +201,32 @@ export const getNearbyLocations = (params: {
  * 获取政策列表（分页）
  */
 export const getArticlePage = (params: {
+    cursor?: string
     current?: number
     size?: number
     keyword?: string
     level?: string
 }) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: '/article/page',
         method: 'GET',
         data: {
-            cursor: null, // 使用游标分页，第一页不传cursor
+            cursor: params.cursor || null, // 使用传入的cursor参数
             size: params.size || 5,
             keyword: params.keyword,
             level: params.level
         }
-    })
+    }, ['image', 'thumbImage', 'images', 'thumbs'])
 }
 
 /**
  * 获取政策详情
  */
 export const getArticleById = (id: number) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: `/article/${id}`,
         method: 'GET'
-    })
+    }, ['image', 'thumbImage', 'images', 'thumbs'])
 }
 
 // ==================== 4.1 视听政策 (Policy) ====================
@@ -237,21 +240,21 @@ export const getPolicyPage = (params: {
     keyword?: string
     type?: string
 }) => {
-    return http<PageResponse<any>>({
+    return httpWithFileUrl<PageResponse<any>>({
         url: '/policy/page',
         method: 'GET',
         data: params
-    })
+    }, ['image', 'thumbImage', 'images', 'thumbs', 'fileUrl', 'attachmentUrl'])
 }
 
 /**
  * 获取政策详情
  */
 export const getPolicyById = (id: number) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: `/policy/${id}`,
         method: 'GET'
-    })
+    }, ['image', 'thumbImage', 'images', 'thumbs', 'fileUrl', 'attachmentUrl'])
 }
 
 // ==================== 5. 协拍服务 (Shoot) ====================
@@ -260,26 +263,27 @@ export const getPolicyById = (id: number) => {
  * 获取协拍服务列表（分页）
  */
 export const getShootPage = (params: {
+    cursor?: string
     current?: number
     size?: number
     keyword?: string
     category?: string
 }) => {
-    return http<PageResponse<any>>({
+    return httpWithFileUrl<PageResponse<any>>({
         url: '/shoot/page',
         method: 'GET',
         data: params
-    })
+    }, ['image', 'thumbImage', 'images', 'thumbs'])
 }
 
 /**
  * 获取协拍服务详情
  */
 export const getShootById = (id: number) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: `/shoot/${id}`,
         method: 'GET'
-    })
+    }, ['image', 'thumbImage', 'images', 'thumbs'])
 }
 
 // ==================== 6. 剧组报备 (Report) ====================
@@ -412,7 +416,44 @@ export const uploadFile = (filePath: string) => {
     })
 }
 
-// ==================== 8. 用户认证 (User) ====================
+// ==================== 8. 用户反馈 (Feedback) ====================
+
+/**
+ * 创建反馈
+ */
+export const createFeedback = (data: any) => {
+    return http<any>({
+        url: '/feedback',
+        method: 'POST',
+        data
+    })
+}
+
+/**
+ * 获取我的反馈列表
+ */
+export const getMyFeedbackPage = (params: {
+    current?: number
+    size?: number
+}) => {
+    return httpWithFileUrl<PageResponse<any>>({
+        url: '/feedback/my',
+        method: 'GET',
+        data: params
+    }, ['images', 'thumbs', 'attachments'])
+}
+
+/**
+ * 获取反馈详情
+ */
+export const getFeedbackById = (id: number) => {
+    return httpWithFileUrl<any>({
+        url: `/feedback/${id}`,
+        method: 'GET'
+    }, ['images', 'thumbs', 'attachments'])
+}
+
+// ==================== 9. 用户认证 (User) ====================
 
 /**
  * 用户登录
@@ -486,7 +527,7 @@ export const uploadAvatar = (filePath: string) => {
     return new Promise<ApiResponse<string>>((resolve, reject) => {
         const token = uni.getStorageSync('token')
         const baseURL = process.env.NODE_ENV === 'development'
-            ? 'http://localhost:8080/api'
+            ? 'http://162.14.106.139:8080/api'
             : 'https://your-production-domain.com/api'
 
         uni.uploadFile({
@@ -551,7 +592,7 @@ export const getBannerPage = (params: {
     size?: number
     keyword?: string
 }) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: '/banner/admin/page',
         method: 'GET',
         data: {
@@ -559,17 +600,17 @@ export const getBannerPage = (params: {
             size: params.size || 10,
             keyword: params.keyword
         }
-    })
+    }, ['imageUrl'])
 }
 
 /**
  * 获取轮播图详情
  */
 export const getBannerById = (id: number) => {
-    return http<any>({
+    return httpWithFileUrl<any>({
         url: `/banner/${id}`,
         method: 'GET'
-    })
+    }, ['imageUrl'])
 }
 
 // ==================== 导出所有API ====================
@@ -608,6 +649,11 @@ export default {
     getReportById,
     updateReport,
     deleteReport,
+
+    // 用户反馈
+    createFeedback,
+    getMyFeedbackPage,
+    getFeedbackById,
 
     // 文件上传
     uploadFile,

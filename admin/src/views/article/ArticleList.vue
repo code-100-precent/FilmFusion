@@ -376,7 +376,6 @@ const loadData = async () => {
   try {
     loading.value = true
     const res = await getArticlePage(pagination.page, pagination.pageSize, searchForm.keyword)
-
     if (res.code === 200) {
       articleList.value = res.data?.records || res.data || []
       pagination.itemCount = res.data?.total || res.total || res.pagination?.totalItems || 0

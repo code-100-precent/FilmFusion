@@ -16,7 +16,7 @@
       <view v-else-if="!loading && feedbacks.length === 0" class="empty-wrapper">
         <Empty text="暂无反馈记录"></Empty>
       </view>
-      <view v-else>
+      <view v-else-if="feedbacks.length > 0">
         <view
           v-for="feedback in feedbacks"
           :key="feedback.id"
@@ -42,7 +42,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import { getMyFeedbackPage } from '../../services/api'
+import { getMyFeedbackPage } from '../../services/backend-api'
 
 export default {
   components: {
@@ -72,6 +72,7 @@ export default {
     }
   },
   onLoad() {
+    console.log('反馈列表页面加载')
     this.loadFeedbacks()
   },
   methods: {
@@ -93,10 +94,31 @@ export default {
 
         console.log('反馈列表响应:', res)
 
-        if (res && res.code === 200) {
-          // 处理响应数据
-          const dataList = Array.isArray(res.data) ? res.data : (res.data ? [res.data] : [])
-          const pagination = res.pagination || {}
+        if (res && (res.code === 200 || res.code === undefined)) {
+          // 处理响应数据 - 兼容多种数据格式
+          let dataList = []
+          let pagination = {}
+          
+          // 情况1: 标准格式 { code: 200, data: [], pagination: {} }
+          if (res.data && Array.isArray(res.data)) {
+            dataList = res.data
+            pagination = res.pagination || {}
+          }
+          // 情况2: 数据直接在data字段中但不是数组
+          else if (res.data && !Array.isArray(res.data)) {
+            dataList = [res.data]
+            pagination = res.pagination || {}
+          }
+          // 情况3: 没有code字段，直接是数据
+          else if (res.code === undefined) {
+            // 可能是游标分页格式或其他格式
+            if (res.records && Array.isArray(res.records)) {
+              dataList = res.records
+            } else if (Array.isArray(res)) {
+              dataList = res
+            }
+            pagination = res.pagination || {}
+          }
           
           console.log('解析后的数据列表:', dataList)
           console.log('分页信息:', pagination)
@@ -106,7 +128,7 @@ export default {
           } else {
             this.feedbacks = [...this.feedbacks, ...dataList]
           }
-          this.total = pagination.totalItems || 0
+          this.total = pagination.totalItems || (pagination.total || 0)
           this.hasMore = this.feedbacks.length < this.total
           
           console.log('当前反馈列表:', this.feedbacks)
@@ -117,6 +139,11 @@ export default {
           if (reset) {
             this.feedbacks = []
           }
+          // 显示错误提示，但不要让页面一直处于加载状态
+          uni.showToast({
+            title: '数据加载失败',
+            icon: 'none'
+          })
         }
       } catch (error) {
         console.error('加载反馈失败:', error)

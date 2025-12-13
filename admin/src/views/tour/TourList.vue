@@ -630,7 +630,6 @@ const handleEdit = async (row) => {
       if (images.length > 0) {
         const coverUrl = images[0]
         const coverThumbUrl = thumbImages.length > 0 ? thumbImages[0] : coverUrl
-
         coverFileList.value = [{
           id: 'cover',
           name: '封面图',

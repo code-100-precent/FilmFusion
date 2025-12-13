@@ -459,6 +459,15 @@ export default {
                 console.log('未选择图片')
                 return
               }
+
+              // 检查图片大小 (4MB)
+              if (imageResult.tempFiles && imageResult.tempFiles[0] && imageResult.tempFiles[0].size > 4 * 1024 * 1024) {
+                uni.showToast({
+                  title: '图片大小不能超过4MB',
+                  icon: 'none'
+                })
+                return
+              }
               
               // 使用选择的第一张图片
               const tempFilePath = imageResult.tempFilePaths[0]
@@ -480,6 +489,22 @@ export default {
               })
               
               console.log('2. 文件选择结果:', JSON.stringify(fileResult))
+
+              // 检查文件大小
+              if (fileResult.tempFiles && fileResult.tempFiles.length > 0) {
+                const file = fileResult.tempFiles[0]
+                const fileName = file.name || file.path || ''
+                const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName)
+                const limit = isImage ? 4 * 1024 * 1024 : 10 * 1024 * 1024
+                
+                if (file.size > limit) {
+                  uni.showToast({
+                    title: isImage ? '图片大小不能超过4MB' : '文件大小不能超过10MB',
+                    icon: 'none'
+                  })
+                  return
+                }
+              }
               
               // 兼容两种返回格式：tempFilePaths数组 或 tempFiles数组
               let filePath = null
@@ -526,7 +551,7 @@ export default {
         uni.showLoading({ title: '上传中...' })
         
         console.log('4. 开始调用上传API...')
-        console.log('4.1 上传目标URL:', 'http://localhost:8080/api/file')
+        console.log('4.1 上传目标URL:', 'http://162.14.106.139:8080/api/file')
         
         // 记录开始时间用于监控响应延迟
         const startTime = Date.now()
@@ -980,19 +1005,37 @@ export default {
             }
           })
         } else {
+          // 检查是否为特定的后端类型转换错误
+          if (res.message && res.message.includes('nested exception is org.apache.ibatis.exceptions.PersistenceException')) {
+             uni.showToast({
+              title: '更新失败，请联系管理员。',
+              icon: 'none',
+              duration: 2000
+            })
+          } else {
+            uni.showToast({
+              title: res.message || res.msg || '操作失败',
+              icon: 'none',
+              duration: 2000
+            })
+          }
+        }
+      } catch (error) {
+        console.error('提交报备失败:', error)
+        // 检查是否为特定的后端类型转换错误
+        if (error.message && error.message.includes('nested exception is org.apache.ibatis.exceptions.PersistenceException')) {
+           uni.showToast({
+            title: '更新失败，请联系管理员。',
+            icon: 'none',
+            duration: 2000
+          })
+        } else {
           uni.showToast({
-            title: res.message || res.msg || '操作失败',
+            title: error.message || '提交失败，请稍后重试',
             icon: 'none',
             duration: 2000
           })
         }
-      } catch (error) {
-        console.error('提交报备失败:', error)
-        uni.showToast({
-          title: error.message || '提交失败，请稍后重试',
-          icon: 'none',
-          duration: 2000
-        })
       } finally {
         this.submitting = false
       }

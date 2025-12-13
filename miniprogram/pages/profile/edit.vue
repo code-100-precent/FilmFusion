@@ -114,6 +114,15 @@ export default {
           sourceType: ['album', 'camera']
         })
         
+        // 检查图片大小 (4MB)
+        if (res.tempFiles && res.tempFiles[0] && res.tempFiles[0].size > 4 * 1024 * 1024) {
+          uni.showToast({
+            title: '图片大小不能超过4MB',
+            icon: 'none'
+          })
+          return
+        }
+
         const tempFilePath = res.tempFilePaths[0]
         
         uni.showLoading({ title: '上传中...' })
@@ -136,7 +145,7 @@ export default {
               // 处理相对路径
               if (avatarUrl && typeof avatarUrl === 'string' && !avatarUrl.startsWith('http')) {
                 // 假设后端服务运行在 localhost:8080，实际项目中应从配置文件获取
-                const serverUrl = 'http://localhost:8080'
+                const serverUrl = 'http://162.14.106.139:8080'
                 // 如果返回的路径已经包含 /api，则不需要重复拼接 /api
                 // 但这里返回的是 /api/files/...，所以直接拼接到 serverUrl 即可
                 // 注意：如果 serverUrl 结尾有 /，或者 avatarUrl 开头有 /，需要处理

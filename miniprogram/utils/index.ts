@@ -23,7 +23,7 @@ export const formatDate = (date: Date, format = 'YYYY-MM-DD HH:mm:ss') => {
 }
 
 // 导出文件URL处理函数
-export { getFileUrl, getFileUrls, processObjectFileUrls, processArrayFileUrls } from './fileUrl'
+export { getFileUrl, getFileUrls, getFileUrlsFromString, processObjectFileUrls, processArrayFileUrls } from './fileUrl'
 
 // 导出API响应处理器
 export { 

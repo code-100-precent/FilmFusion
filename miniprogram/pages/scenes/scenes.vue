@@ -51,55 +51,37 @@
         <view v-else-if="locations.length === 0" class="empty-wrapper">
           <Empty text="暂无场地"></Empty>
         </view>
-        <view v-else>
+        <view v-else class="location-list-container">
           <view
-            v-for="location in locations"
+            v-for="(location, index) in locations"
             :key="location.id"
-            class="location-card"
+            class="location-item"
+            :style="{ 'animation-delay': index * 0.05 + 's' }"
             @click="goToDetail(location.id)"
           >
             <!-- 场地封面图片 -->
-            <view class="location-cover">
-              <image 
-                v-if="location.cover" 
-                :src="location.cover" 
-                class="cover-image" 
-                mode="aspectFill"
-                @error="handleImageError"
-              />
-              <view v-else class="cover-placeholder">
-                <uni-icons type="image" size="40" color="#d1d5db"></uni-icons>
-                <text class="placeholder-text">暂无图片</text>
+            <view class="location-cover-wrapper">
+                <image 
+                  v-if="getFileUrl(location.cover || location.thumbImage)" 
+                  :src="getFileUrl(location.cover || location.thumbImage)" 
+                  class="location-cover" 
+                  mode="aspectFill"
+                  @error="handleImageError"
+                />
+                <view v-else class="cover-placeholder">
+                  <uni-icons type="image" size="32" color="#d1d5db"></uni-icons>
+                  <text class="placeholder-text">暂无</text>
+                </view>
+                <view class="location-badge">{{ location.type }}</view>
               </view>
-            </view>
             
-            <view class="location-content">
+            <view class="location-info">
               <view class="location-header">
-                <view class="location-title-row">
-                  <text class="location-name">{{ location.name }}</text>
-                  <view class="location-badge">{{ location.type }}</view>
-                </view>
-                <view class="location-status" :class="{ 'status-available': location.status === 1 }">
-                  {{ location.status === 1 ? '可用' : '不可用' }}
-                </view>
+                <text class="location-name">{{ location.name }}</text>
               </view>
-              
-              <text class="location-desc">{{ location.locationDescription }}</text>
-              
-              <view class="location-info">
-                <view class="info-item">
-                  <uni-icons type="location" size="16" color="#6366f1"></uni-icons>
-                  <text>{{ location.address }}</text>
-                </view>
-                <view class="info-item">
-                  <uni-icons type="phone" size="16" color="#6366f1"></uni-icons>
-                  <text>{{ location.contactPhone }}</text>
-                </view>
-              </view>
-              
+              <text class="location-desc">{{ formatDescription(location.locationDescription) }}</text>
               <view class="location-footer">
                 <text class="location-price">¥{{ location.price }}/天</text>
-                <text class="view-detail">查看详情</text>
               </view>
             </view>
           </view>
@@ -124,8 +106,9 @@ import NavBar from '../../components/NavBar/NavBar.vue'
 import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
-// 使用真实后端API
 import { getLocationPage } from '../../services/backend-api'
+// 导入文件URL处理函数
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
@@ -137,22 +120,32 @@ export default {
   data() {
     return {
       keyword: '',
-      selectedCategory: 'all',
+      selectedCategory: '自然场景',
       categories: [
-        { value: 'all', label: '全部', icon: 'list' },
-        { value: '自然景观', label: '自然景观', icon: 'image' },
-        { value: '人文景观', label: '人文景观', icon: 'home' },
-        { value: '城市场景', label: '城市场景', icon: 'location' },
-        { value: '特色场景', label: '特色场景', icon: 'star' }
+        { value: '自然场景', label: '自然场景', icon: 'image' },
+        { value: '自然风光', label: '自然风光', icon: 'image' },
+        { value: '历史建筑', label: '历史建筑', icon: 'home' },
+        { value: '现代建筑', label: '现代建筑', icon: 'location' },
+        { value: '文化场所', label: '文化场所', icon: 'star' },
+        { value: '商业场所', label: '商业场所', icon: 'shop' },
+        { value: '其他', label: '其他', icon: 'more' }
       ],
-      locations: [],
+      allLocations: [],
       nextCursor: null, // 游标分页
       loading: false,
       refreshing: false,
       hasMore: true
     }
   },
-  onLoad() {
+  computed: {
+    locations() {
+      return this.allLocations.filter(item => item.type === this.selectedCategory)
+    }
+  },
+  onLoad(options) {
+    if (options && options.type) {
+      this.selectedCategory = options.type
+    }
     this.loadLocations()
   },
   methods: {
@@ -160,7 +153,7 @@ export default {
       if (this.loading) return
 
       if (reset) {
-        this.locations = []
+        this.allLocations = []
         this.nextCursor = null
         this.hasMore = true
       }
@@ -169,9 +162,8 @@ export default {
       try {
         const res = await getLocationPage({
           cursor: reset ? null : this.nextCursor,
-          size: 10,
-          keyword: this.keyword || undefined,
-          type: this.selectedCategory !== 'all' ? this.selectedCategory : undefined
+          size: 100,
+          keyword: this.keyword || undefined
         })
 
         // 处理游标分页响应
@@ -179,9 +171,9 @@ export default {
           const dataList = Array.isArray(res.records) ? res.records : []
           
           if (reset) {
-            this.locations = dataList
+            this.allLocations = dataList
           } else {
-            this.locations = [...this.locations, ...dataList]
+            this.allLocations = [...this.allLocations, ...dataList]
           }
           this.nextCursor = res.nextCursor
           this.hasMore = res.hasMore || false
@@ -202,7 +194,6 @@ export default {
     },
     selectCategory(category) {
       this.selectedCategory = category
-      this.loadLocations(true)
     },
     handleRefresh() {
       this.refreshing = true
@@ -220,6 +211,16 @@ export default {
     handleImageError(e) {
       console.log('图片加载失败:', e)
       // 可以在这里设置默认图片或其他处理逻辑
+    },
+    getFileUrl(url) {
+      return getFileUrl(url)
+    },
+    formatDescription(desc) {
+      if (!desc) return ''
+      if (desc.length > 40) {
+        return desc.substring(0, 40) + '...'
+      }
+      return desc
     }
   }
 }
@@ -353,157 +354,127 @@ export default {
   justify-content: center;
 }
 
-.location-card {
-  background: #fff;
-  border-radius: 20rpx;
-  margin-bottom: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
-  width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
+.location-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding-bottom: 20rpx;
 }
 
-.location-card:active {
-  transform: translateY(-4rpx);
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+.location-item {
+  display: flex;
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+  padding: 0;
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.location-item:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.1);
+}
+
+.location-cover-wrapper {
+  width: 200rpx;
+  height: 200rpx;
+  position: relative;
+  background: #f3f4f6;
+  flex-shrink: 0;
 }
 
 .location-cover {
-  width: 100%;
-  height: 320rpx;
-  position: relative;
-  overflow: hidden;
-}
-
-.cover-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.cover-placeholder {
-  width: 100%;
-  height: 100%;
+.location-badge {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  padding: 4rpx 12rpx;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 20rpx;
+  border-radius: 8rpx;
+}
+
+
+
+.location-info {
+  flex: 1;
+  padding: 20rpx;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: #f9fafb;
-  gap: 16rpx;
-}
-
-.placeholder-text {
-  font-size: 26rpx;
-  color: #9ca3af;
-}
-
-.location-content {
-  padding: 24rpx;
+  justify-content: space-between;
+  min-width: 0;
 }
 
 .location-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16rpx;
-}
-
-.location-title-row {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  flex: 1;
+  margin-bottom: 8rpx;
 }
 
 .location-name {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 700;
   color: #1f2937;
-  flex: 1;
-}
-
-.location-badge {
-  padding: 6rpx 12rpx;
-  background: #eef2ff;
-  color: #6366f1;
-  font-size: 22rpx;
-  border-radius: 8rpx;
-  font-weight: 500;
-}
-
-.location-status {
-  padding: 6rpx 12rpx;
-  background: #fee2e2;
-  color: #ef4444;
-  font-size: 22rpx;
-  border-radius: 8rpx;
-  font-weight: 500;
-}
-
-.status-available {
-  background: #d1fae5;
-  color: #10b981;
-}
-
-.location-desc {
-  display: block;
-  font-size: 26rpx;
-  color: #6b7280;
-  line-height: 1.6;
-  margin-bottom: 16rpx;
   display: -webkit-box;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
-.location-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-  margin-bottom: 16rpx;
-  padding: 16rpx;
-  background: #f9fafb;
-  border-radius: 12rpx;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
+.location-desc {
   font-size: 24rpx;
-  color: #374151;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-bottom: 12rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
 }
 
 .location-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 16rpx;
-  border-top: 1rpx solid #f3f4f6;
+  padding-top: 0;
+  border-top: none;
 }
 
 .location-price {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 700;
   color: #f59e0b;
 }
 
 .view-detail {
-  font-size: 26rpx;
-  color: #6366f1;
-  font-weight: 500;
-  padding: 8rpx 16rpx;
-  border-radius: 20rpx;
-  background: #eef2ff;
+  display: none;
 }
 
 .load-more,
 .no-more {
   text-align: center;
-  padding: 40rpx 0;
-  font-size: 26rpx;
+  padding: 30rpx 0;
+  font-size: 24rpx;
   color: #9ca3af;
 }
 </style>

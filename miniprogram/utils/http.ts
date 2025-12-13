@@ -8,6 +8,28 @@ import { processApiResponseFileUrls } from './apiProcessor'
 // 使用配置文件中的API基础地址
 export const baseURL = API_BASE_URL
 
+// 错误码映射表 - 前端统一处理错误文案
+const ERROR_MESSAGES: Record<number, string> = {
+  // 通用/系统错误
+  400: '请求参数有误',
+  401: '登录已过期，请重新登录',
+  402: '请求参数不合法',
+  403: '您没有权限执行此操作',
+  404: '找不到相关内容',
+  409: '该记录已存在',
+  410: '内容已过期或失效',
+  429: '操作太频繁，请稍后再试',
+  500: '系统繁忙，请稍后再试',
+  501: '数据服务异常',
+  502: '服务暂不可用',
+  503: '网络服务异常',
+  
+  // 业务逻辑错误
+  550: '业务处理失败',
+  551: '余额不足',
+  552: '商品已售罄'
+}
+
 // 为不同类型的请求创建不同的拦截器配置
 const requestInterceptor = {
   // 拦截前触发
@@ -59,9 +81,12 @@ uni.addInterceptor('request', requestInterceptor)
  *    3.3 网络错误 -> 提示用户换网络
  */
 type Data<T> = {
-  code: number
-  message: string
-  data: T
+  code?: number
+  message?: string
+  data?: T
+  // 兼容游标分页等直接返回数据的格式
+  records?: T[]
+  nextCursor?: string
 }
 
 // 添加类型，支持泛型
@@ -122,9 +147,16 @@ export const http = <T>(options: UniApp.RequestOptions) => {
             resolve(responseData)
           } else {
             // 业务错误 (只有明确 code !== 200 时才视为错误)
+            const errorCode = responseData.code
+            // 优先使用映射表中的文案，如果没有则使用默认文案，忽略后端返回的message
+            const friendlyMsg = (errorCode && ERROR_MESSAGES[errorCode]) || '请求处理失败，请稍后重试'
+            
+            // 记录原始错误信息以便开发调试
+            console.warn(`API业务错误: code=${errorCode}, message=${responseData.message}`)
+            
             uni.showToast({
               icon: 'none',
-              title: responseData.message || '请求失败',
+              title: friendlyMsg,
             })
             reject(responseData)
           }
@@ -145,10 +177,18 @@ export const http = <T>(options: UniApp.RequestOptions) => {
         } else {
           // 其他错误 -> 根据后端错误信息轻提示
           const responseData = res.data as Data<T>
-          const errorMsg = responseData?.message || '请求错误'
+          
+          // 记录原始错误
+          console.error(`HTTP错误: status=${res.statusCode}, message=${responseData?.message}`)
+          
+          let friendlyMsg = '服务器开小差了'
+          if (res.statusCode === 404) friendlyMsg = '找不到相关内容'
+          if (res.statusCode === 403) friendlyMsg = '您没有权限执行此操作'
+          if (res.statusCode >= 500) friendlyMsg = '服务器繁忙，请稍后再试'
+          
           uni.showToast({
             icon: 'none',
-            title: errorMsg,
+            title: friendlyMsg,
           })
           reject(res)
         }
@@ -226,7 +266,7 @@ export const httpWithFileUrl = <T>(
           let responseData = res.data as Data<T>
           
           // 处理文件URL
-          if (responseData && (responseData.data || Array.isArray(responseData))) {
+          if (responseData && (responseData.data || responseData.records || Array.isArray(responseData))) {
             responseData = processApiResponseFileUrls(responseData, fileFields)
           }
           

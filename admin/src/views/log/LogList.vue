@@ -63,8 +63,7 @@ export default {
       showSizePicker: true,
       pageSizes: [10, 20, 50, 100],
       showQuickJumper: true,
-      // 添加以下属性以确保Naive UI正确计算分页
-      prefix: ({ itemCount }) => `共 ${itemCount} 条`
+      showTotal: (total, range) => `共 ${total} 条数据,当前 ${range[0]}-${range[1]}`
     })
     
     const columns = [
@@ -130,15 +129,11 @@ export default {
     const loadData = async () => {
       loading.value = true
       try {
-        const res = await getLogPage(pagination.page, pagination.pageSize, searchForm.keyword)
-        console.log('分页响应数据:', res) // 添加调试日志
-        if (res.code === 200) {
-          logList.value = res.data || []
-          // 确保正确设置总数据量和总页数
-          pagination.itemCount = res.pagination?.totalItems || 0
-          pagination.pageCount = res.pagination?.totalPages || 1
-          console.log('设置总数据量:', pagination.itemCount) // 添加调试日志
-          console.log('设置总页数:', pagination.pageCount) // 添加调试日志
+        const response = await getLogPage(pagination.page, pagination.pageSize, searchForm.keyword)
+        if (response.code === 200) {
+          logList.value = response.data.records || []
+          pagination.itemCount = response.data.total || 0
+          pagination.pageCount = response.data.pages || 1
         }
       } catch (error) {
         console.error('获取日志列表失败:', error)
