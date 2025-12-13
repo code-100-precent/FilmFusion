@@ -231,7 +231,9 @@ export default {
 
 <style lang="scss" scoped>
 .scenes-page {
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: #f5f7fa;
   padding-top: 132rpx;
   box-sizing: border-box;
@@ -250,6 +252,10 @@ export default {
 }
 
 .content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 16rpx 24rpx;
   padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
@@ -268,7 +274,8 @@ export default {
 }
 
 .location-list {
-  height: calc(100vh - 88rpx - 200rpx);
+  flex: 1;
+  height: 0;
   
   /* 隐藏滚动条 */
   &::-webkit-scrollbar {
@@ -296,10 +303,12 @@ export default {
 .search-bar {
   margin-top: 16rpx;
   margin-bottom: 16rpx;
+  flex-shrink: 0;
 }
 
 .category-filter {
   margin-bottom: 16rpx;
+  flex-shrink: 0;
 }
 
 .category-scroll {
