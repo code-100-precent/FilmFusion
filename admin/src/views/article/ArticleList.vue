@@ -621,70 +621,89 @@ const handleDialogSave = async () => {
   try {
     dialogLoading.value = true
 
-    // 组合图片字段：封面 + 详情图
-    // 优先使用 fileList 中的 originUrl (相对路径)，如果没有则尝试从 url 解析
+    // 1. 获取封面图信息
+    let coverOrigin = ''
+    let coverThumb = ''
+    if (coverFileList.value.length > 0) {
+      const file = coverFileList.value[0]
+      if (file.status === 'finished') {
+        if (file.originUrl) coverOrigin = file.originUrl
+        else coverOrigin = file.url
+
+        if (coverOrigin && coverOrigin.startsWith('http')) {
+          coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
+        }
+
+        if (file.thumbUrl) coverThumb = file.thumbUrl
+        else if (file.url && file.url.startsWith('http')) coverThumb = file.url.replace(config.fileBaseURL, '')
+        else coverThumb = file.url
+      }
+    }
+
+    // 2. 获取详情图信息
     const detailOrigins = detailFileList.value
         .filter(f => f.status === 'finished')
         .map(f => {
-          if (f.originUrl) return f.originUrl
+          let url = f.url
+          if (f.originUrl) url = f.originUrl
+          
+          if (url && url.startsWith('http')) {
+            url = url.replace(config.fileBaseURL, '')
+          }
+          
+          // 强制转换为原图路径
+          if (url && url.includes('/files/thumb/')) {
+            return url.replace('/files/thumb/', '/files/origin/')
+          }
+          return url
+        })
+        
+    const detailThumbs = detailFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.thumbUrl) return f.thumbUrl
+          if (f.originUrl) return f.originUrl // 如果没有缩略图，用原图
           if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
           return f.url
         })
 
     const allImages = []
-
-    // 获取封面原图（优先从文件列表获取）
-    let coverOrigin = articleForm.cover
-    const coverFile = coverFileList.value.find(f => f.status === 'finished')
-    if (coverFile) {
-      if (coverFile.originUrl) {
-        coverOrigin = coverFile.originUrl
-      } else if (coverFile.url && coverFile.url.startsWith('http')) {
-        coverOrigin = coverFile.url.replace(config.fileBaseURL, '')
+    // 封面图强制使用原图
+    if (coverOrigin) {
+      if (coverOrigin.includes('/files/thumb/')) {
+        allImages.push(coverOrigin.replace('/files/thumb/', '/files/origin/'))
       } else {
-        coverOrigin = coverFile.url
+        allImages.push(coverOrigin)
       }
-    } else if (coverOrigin && coverOrigin.startsWith('http')) {
-      // 兜底：如果 articleForm.cover 是完整路径
-      coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
     }
-
-    if (coverOrigin) allImages.push(coverOrigin)
     if (detailOrigins.length > 0) allImages.push(...detailOrigins)
-
-    const finalImageStr = allImages.join(',')
-
-    // 组合缩略图字段
-    // 优先使用 fileList 中的 thumbUrl (相对路径)，如果没有则回退到 originUrl 或 url
-    const detailThumbs = detailFileList.value
-        .filter(f => f.status === 'finished')
-        .map(f => {
-          if (f.thumbUrl) return f.thumbUrl
-          if (f.originUrl) return f.originUrl
-          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
-          return f.url
-        })
+    
+    // 辅助函数：从URL提取原始文件名（忽略时间戳）
+    const getOriginalFileName = (url) => {
+      if (!url) return ''
+      const parts = url.split('/')
+      const fileName = parts[parts.length - 1]
+      // 假设格式为 timestamp_filename，找到第一个下划线
+      const index = fileName.indexOf('_')
+      if (index !== -1 && index < fileName.length - 1) {
+        return fileName.substring(index + 1)
+      }
+      return fileName
+    }
 
     const allThumbImages = []
-
-    // 获取封面缩略图（优先从文件列表获取）
-    let coverThumb = articleForm.thumbCover || articleForm.cover
-    if (coverFile) {
-      if (coverFile.thumbUrl) {
-        coverThumb = coverFile.thumbUrl
-      } else if (coverFile.originUrl) {
-        coverThumb = coverFile.originUrl
-      }
+    
+    // 处理封面缩略图
+    if (coverOrigin) {
+        allThumbImages.push(coverThumb || coverOrigin)
+    }
+    
+    // 处理详情缩略图
+    if (detailOrigins.length > 0) {
+        allThumbImages.push(...detailThumbs)
     }
 
-    // 兜底处理
-    if (coverThumb && coverThumb.startsWith('http')) {
-      coverThumb = coverThumb.replace(config.fileBaseURL, '')
-    }
-
-    if (coverThumb) allThumbImages.push(coverThumb)
-    if (detailThumbs.length > 0) allThumbImages.push(...detailThumbs)
-
+    const finalImageStr = allImages.join(',')
     const finalThumbImageStr = allThumbImages.join(',')
 
     const data = {
