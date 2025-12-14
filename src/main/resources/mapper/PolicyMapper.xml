@@ -39,7 +39,7 @@
         FROM fi_policy
         <where>
             deleted = 0
-            AND status = '发布'
+            AND status = '1'
             <!-- 模糊搜索 -->
             <if test="keyword != null and keyword != ''">
                 AND (
@@ -48,7 +48,7 @@
                 )
             </if>
             <if test="lastId != null">
-                AND id &lt; #{lastId}
+                AND id > #{lastId}
             </if>
         </where>
         ORDER BY id ASC
