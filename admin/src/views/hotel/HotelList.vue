@@ -306,10 +306,32 @@ const formRules = {
     { pattern: /(^1[3-9]\d{9}$)|(^0\d{2,3}-\d{7,8}$)/, message: '请输入正确的手机号或座机号', trigger: 'blur' }
   ],
   longitude: [
-    { required: true, message: '请输入经度', trigger: 'blur' }
+    { required: true, message: '请输入经度', trigger: 'blur' },
+    {
+      validator: (rule, value) => {
+        if (!value) return true
+        const pattern = /^\d+(\.\d+)?° [EW]$/
+        if (!pattern.test(value)) {
+          return new Error('格式错误')
+        }
+        return true
+      },
+      trigger: 'blur'
+    }
   ],
   latitude: [
-    { required: true, message: '请输入纬度', trigger: 'blur' }
+    { required: true, message: '请输入纬度', trigger: 'blur' },
+    {
+      validator: (rule, value) => {
+        if (!value) return true
+        const pattern = /^\d+(\.\d+)?° [NS]$/
+        if (!pattern.test(value)) {
+          return new Error('格式错误')
+        }
+        return true
+      },
+      trigger: 'blur'
+    }
   ]
 }
 
@@ -727,6 +749,18 @@ const handleDialogSave = async () => {
   try {
     await formRef.value.validate()
   } catch (error) {
+    const longPattern = /^\d+(\.\d+)?° [EW]$/
+    const latPattern = /^\d+(\.\d+)?° [NS]$/
+    const isLongValid = !hotelForm.longitude || longPattern.test(hotelForm.longitude)
+    const isLatValid = !hotelForm.latitude || latPattern.test(hotelForm.latitude)
+
+    if (!isLongValid || !isLatValid) {
+      dialog.warning({
+        title: '格式错误',
+        content: '经纬度格式必须为：数字° E/W 和 数字° N/S\n例如: 104.06° E, 29.9861° N',
+        positiveText: '确定'
+      })
+    }
     return
   }
 
