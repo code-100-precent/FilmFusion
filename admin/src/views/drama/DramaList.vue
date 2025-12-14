@@ -471,9 +471,18 @@ const handleDialogSave = async () => {
     const detailOrigins = imageFileList.value
         .filter(f => f.status === 'finished')
         .map(f => {
-          if (f.originUrl) return f.originUrl
-          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
-          return f.url
+          let url = f.url
+          if (f.originUrl) url = f.originUrl
+          
+          if (url && url.startsWith('http')) {
+            url = url.replace(config.fileBaseURL, '')
+          }
+          
+          // 强制转换为原图路径
+          if (url && url.includes('/files/thumb/')) {
+            return url.replace('/files/thumb/', '/files/origin/')
+          }
+          return url
         })
 
     const allImages = []
@@ -484,18 +493,40 @@ const handleDialogSave = async () => {
     if (coverFile) {
       if (coverFile.originUrl) {
         coverOrigin = coverFile.originUrl
-      } else if (coverFile.url && coverFile.url.startsWith('http')) {
-        coverOrigin = coverFile.url.replace(config.fileBaseURL, '')
       } else {
         coverOrigin = coverFile.url
+      }
+      
+      if (coverOrigin && coverOrigin.startsWith('http')) {
+        coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
       }
     } else if (coverOrigin && coverOrigin.startsWith('http')) {
       // 兜底：如果 dramaForm.cover 是完整路径
       coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
     }
 
-    if (coverOrigin) allImages.push(coverOrigin)
+    // 封面图强制使用原图
+    if (coverOrigin) {
+      if (coverOrigin.includes('/files/thumb/')) {
+        allImages.push(coverOrigin.replace('/files/thumb/', '/files/origin/'))
+      } else {
+        allImages.push(coverOrigin)
+      }
+    }
     if (detailOrigins.length > 0) allImages.push(...detailOrigins)
+
+    // 辅助函数：从URL提取原始文件名（忽略时间戳）
+    const getOriginalFileName = (url) => {
+      if (!url) return ''
+      const parts = url.split('/')
+      const fileName = parts[parts.length - 1]
+      // 假设格式为 timestamp_filename，找到第一个下划线
+      const index = fileName.indexOf('_')
+      if (index !== -1 && index < fileName.length - 1) {
+        return fileName.substring(index + 1)
+      }
+      return fileName
+    }
 
     const finalImageStr = allImages.join(',')
 
@@ -527,8 +558,13 @@ const handleDialogSave = async () => {
       coverThumb = coverThumb.replace(config.fileBaseURL, '')
     }
 
-    if (coverThumb) allThumbImages.push(coverThumb)
-    if (detailThumbs.length > 0) allThumbImages.push(...detailThumbs)
+    if (coverOrigin) {
+      allThumbImages.push(coverThumb || coverOrigin)
+    }
+
+    if (detailOrigins.length > 0) {
+      allThumbImages.push(...detailThumbs)
+    }
 
     const finalThumbImageStr = allThumbImages.join(',')
 

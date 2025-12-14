@@ -768,32 +768,33 @@ const handleDialogSave = async () => {
     dialogLoading.value = true
     // 辅助函数：获取文件信息
     const getFileInfo = (file) => {
+      let info = { url: '', thumb: '' }
+
       // 1. 优先检查 fileMapping (本次会话上传的文件)
       if (fileMapping[file.id]) {
-        return {
-          url: fileMapping[file.id].originUrl,
-          thumb: fileMapping[file.id].thumbUrl
-        }
+        info.url = fileMapping[file.id].originUrl
+        info.thumb = fileMapping[file.id].thumbUrl
       }
       // 2. 检查文件对象自带属性 (回显的文件)
-      if (file.originUrl) {
-        return {
-          url: file.originUrl,
-          thumb: file.thumbUrl || file.originUrl
-        }
+      else if (file.originUrl) {
+        info.url = file.originUrl
+        info.thumb = file.thumbUrl || file.originUrl
       }
       // 3. 兜底：尝试解析 url
-      let url = file.url || ''
-      let thumb = file.thumbUrl || url
-
-      if (url && url.startsWith('http')) {
-        url = url.replace(config.fileBaseURL, '')
-      }
-      if (thumb && thumb.startsWith('http')) {
-        thumb = thumb.replace(config.fileBaseURL, '')
+      else {
+        info.url = file.url || ''
+        info.thumb = file.thumbUrl || info.url
       }
 
-      return {url, thumb}
+      // 统一处理去除域名
+      if (info.url && info.url.startsWith('http')) {
+        info.url = info.url.replace(config.fileBaseURL, '')
+      }
+      if (info.thumb && info.thumb.startsWith('http')) {
+        info.thumb = info.thumb.replace(config.fileBaseURL, '')
+      }
+
+      return info
     }
 
     // 1. 提取封面图
@@ -843,13 +844,40 @@ const handleDialogSave = async () => {
     const allImages = []
     const allThumbImages = []
 
+    // 辅助函数：从URL提取原始文件名（忽略时间戳）
+    const getOriginalFileName = (url) => {
+      if (!url) return ''
+      const parts = url.split('/')
+      const fileName = parts[parts.length - 1]
+      // 假设格式为 timestamp_filename，找到第一个下划线
+      const index = fileName.indexOf('_')
+      if (index !== -1 && index < fileName.length - 1) {
+        return fileName.substring(index + 1)
+      }
+      return fileName
+    }
+
     if (coverUrl) {
-      allImages.push(coverUrl)
+      // 强制转换为原图路径
+      let url = coverUrl
+      if (url && url.includes('/files/thumb/')) {
+        url = url.replace('/files/thumb/', '/files/origin/')
+      }
+      allImages.push(url)
+      
       allThumbImages.push(coverThumbUrl || coverUrl)
     }
 
     if (detailUrls.length > 0) {
-      allImages.push(...detailUrls)
+      // 强制转换为原图路径
+      const fixedDetailUrls = detailUrls.map(u => {
+         if (u && u.includes('/files/thumb/')) {
+            return u.replace('/files/thumb/', '/files/origin/')
+         }
+         return u
+      })
+      allImages.push(...fixedDetailUrls)
+      
       allThumbImages.push(...detailThumbUrls)
     }
 
