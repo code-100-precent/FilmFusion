@@ -108,7 +108,6 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .addPathPatterns("/api/policy/admin/**")
                 //banner模块接口 - 只拦截需要管理员权限的接口，排除公开接口
                 .addPathPatterns("/api/banner/admin/**")
-                .excludePathPatterns("/api/banner/*", "/api/banner/page")
                 //操作日志相关接口
                 .addPathPatterns("/api/operationlog/admin/**");
         registry.addInterceptor(registrationInterceptor);

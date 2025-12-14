@@ -15,12 +15,20 @@ import java.util.List;
 @Mapper
 public interface BannerMapper extends BaseMapper<Banner> {
 
-    List<Banner> getPage(
+    List<Banner> getAdminPage(
             @Param("keyword") String keyword,
             @Param("offset") long offset,
             @Param("size") long size
     );
 
-    Long getTotal(@Param("keyword") String keyword);
+    List<Banner> getPage(
+            @Param("offset") long offset,
+            @Param("size") long size
+    );
+
+    Long getAdminTotal(@Param("keyword") String keyword);
+
+    Long getTotal();
+
 
 }
