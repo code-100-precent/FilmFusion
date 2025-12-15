@@ -51,9 +51,8 @@ public class BannerController {
         return ApiResponse.success(imagePage);
     }
 
-
     /**
-     * 分页查询
+     * 分页查询（管理端）
      */
     @GetMapping("/admin/page")
     public PageResponse<BannerVO> getImageAdminPage(
