@@ -33,7 +33,7 @@
           :key="type"
           class="filter-tag"
           :class="{ active: selectedType === type }"
-          @click="selectedType = type; handleSearch()"
+          @click="selectedType = type"
         >
           {{ type }}
         </view>
@@ -108,7 +108,7 @@ export default {
     return {
       keyword: '',
       selectedType: '全部',
-      policies: [],
+      rawPolicies: [], // 存储所有原始数据
       loading: false,
       refreshing: false,
       hasMore: true,
@@ -118,7 +118,22 @@ export default {
       typeOptions: ['全部', '省级', '市级']
     }
   },
-  onLoad() {
+  computed: {
+    // 前端过滤后的数据
+    policies() {
+      if (this.selectedType === '全部') {
+        return this.rawPolicies
+      }
+      return this.rawPolicies.filter(policy => policy.type === this.selectedType)
+    }
+  },
+  onLoad(options) {
+    if (options && options.type) {
+      this.selectedType = options.type
+    }
+    if (options && options.keyword) {
+      this.keyword = options.keyword
+    }
     this.loadData()
   },
   methods: {
@@ -127,11 +142,12 @@ export default {
       
       this.loading = true
       try {
+        // 前端筛选模式：请求时不传 type 参数，获取所有类型数据
         const res = await getPolicyPage({
           current: this.currentPage,
           size: this.pageSize,
           keyword: this.keyword || undefined,
-          type: this.selectedType === '全部' ? undefined : this.selectedType
+          // type: this.selectedType === '全部' ? undefined : this.selectedType // 移除后端筛选
         })
 
         // 处理游标分页响应格式
@@ -146,9 +162,9 @@ export default {
           }))
 
           if (this.currentPage === 1) {
-            this.policies = newPolicies
+            this.rawPolicies = newPolicies
           } else {
-            this.policies = [...this.policies, ...newPolicies]
+            this.rawPolicies = [...this.rawPolicies, ...newPolicies]
           }
 
           // 更新游标分页信息
@@ -172,13 +188,13 @@ export default {
     },
     handleSearch() {
       this.currentPage = 1
-      this.policies = []
+      this.rawPolicies = []
       this.loadData()
     },
     async handleRefresh() {
       this.refreshing = true
       this.currentPage = 1
-      this.policies = []
+      this.rawPolicies = []
       await this.loadData()
       this.refreshing = false
     },

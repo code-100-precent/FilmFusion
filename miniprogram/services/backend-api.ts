@@ -593,12 +593,11 @@ export const getBannerPage = (params: {
     keyword?: string
 }) => {
     return httpWithFileUrl<any>({
-        url: '/banner/admin/page',
+        url: '/banner/page',
         method: 'GET',
         data: {
             current: params.current || 1,
-            size: params.size || 10,
-            keyword: params.keyword
+            size: params.size || 10
         }
     }, ['imageUrl'])
 }

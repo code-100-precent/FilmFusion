@@ -84,7 +84,7 @@
             class="news-card"
             @click="goToArticleDetail(article.id)"
           >
-            <image :src="getArticleCover(article.cover)" class="news-card-image" mode="aspectFill"></image>
+            <image :src="getArticleCover(article)" class="news-card-image" mode="aspectFill"></image>
             <view class="news-card-content">
               <view class="news-card-header">
                 <text class="news-card-tag">{{ article.issueUnit || '官方发布' }}</text>
@@ -258,14 +258,27 @@ export default {
 
           // 处理轮播图数据
           if (bannerRes && bannerRes.data) {
-            this.banners = bannerRes.data.map((banner, index) => ({
-              title: banner.imageName || '雅安影视服务',
-              desc: '', // 不再显示任何描述文本
-              imageUrl: banner.imageUrl,
-              tag: index === 0 ? '平台服务' : index === 1 ? '取景胜地' : '专业支持',
-              targetModule: banner.targetModule, // 保存targetModule用于跳转
-              path: this.modulePathMap[banner.targetModule] || '/pages/services/services' // 根据targetModule获取对应路径
-            }))
+            this.banners = bannerRes.data.map((banner, index) => {
+              let path = '/pages/services/services'
+              const targetModule = banner.targetModule || ''
+              
+              // 处理带参数的targetModule (例如 "政策列表?type=省级")
+              const [moduleName, queryString] = targetModule.split('?')
+              const basePath = this.modulePathMap[moduleName]
+              
+              if (basePath) {
+                path = queryString ? `${basePath}?${queryString}` : basePath
+              }
+
+              return {
+                title: banner.imageName || '雅安影视服务',
+                desc: '', // 不再显示任何描述文本
+                imageUrl: banner.imageUrl,
+                tag: index === 0 ? '平台服务' : index === 1 ? '取景胜地' : '专业支持',
+                targetModule: banner.targetModule, // 保存targetModule用于跳转
+                path: path
+              }
+            })
           }
 
           // 处理文章数据（游标分页）
@@ -360,8 +373,21 @@ export default {
         url: '/pages/profile/help'
       })
     },
-    getArticleCover(cover) {
-      return (!cover || cover.includes('example.com')) ? 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png' : cover
+    getArticleCover(article) {
+      // 1. 优先使用 thumbImage
+      if (article.thumbImage) {
+        return getFileUrl(article.thumbImage)
+      }
+      // 2. 其次使用 image (如果是数组取第一个)
+      if (article.image) {
+        return getFileUrl(article.image)
+      }
+      // 3. 最后尝试 cover (兼容旧数据)
+      if (article.cover) {
+        return getFileUrl(article.cover)
+      }
+      // 4. 默认图片
+      return 'http://162.14.106.139:8080/api/files/origin/1765767098667_%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89_compressed.png'
     },
     formatDate(dateStr) {
       if (!dateStr) return ''

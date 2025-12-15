@@ -92,6 +92,9 @@
         <view v-if="!hasMore && locations.length > 0" class="no-more">
           <text>没有更多了</text>
         </view>
+        
+        <!-- 底部占位符，防止被 TabBar 遮挡 -->
+        <view class="bottom-spacer"></view>
       </scroll-view>
     </view>
 
@@ -257,7 +260,6 @@ export default {
   flex-direction: column;
   overflow: hidden;
   padding: 16rpx 24rpx;
-  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   width: 100%;
   position: relative;
@@ -488,5 +490,9 @@ export default {
   padding: 30rpx 0;
   font-size: 24rpx;
   color: #9ca3af;
+}
+.bottom-spacer {
+  height: calc(140rpx + env(safe-area-inset-bottom));
+  width: 100%;
 }
 </style>

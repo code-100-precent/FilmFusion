@@ -2,7 +2,7 @@
 	<view class="splash-screen" :class="{ 'slide-out': isSlideOut }">
 		<image 
 			class="splash-image" 
-			src="https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%9B%BE%E7%89%87%E6%96%87%E5%AD%97%E4%BF%AE%E6%94%B9.png"
+			src="http://162.14.106.139:8080/api/files/origin/1765768530788_compressed-图片文字修改_compressed.jpg"
 		></image>
 	</view>
 </template>

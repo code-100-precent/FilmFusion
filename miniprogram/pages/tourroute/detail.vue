@@ -160,7 +160,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import { getTourById, getNearbyHotels, getNearbyLocations, getLocationById } from '@/services/backend-api'
+import { getTourById, getNearbyHotels, getNearbyLocations, getLocationById, getDramaById } from '@/services/backend-api'
 import { getFileUrl } from '@/utils'
 
 export default {
@@ -253,6 +253,30 @@ export default {
             }
           }
 
+          // 处理影视作品名称
+          let ipWorksStr = res.data.ipWorks || '暂无相关影视作品'
+          // 如果有dramaId，优先使用dramaId获取影视作品名称
+          if (res.data.dramaId) {
+            try {
+              // dramaId可能是逗号分隔的字符串
+              const dramaIds = String(res.data.dramaId).split(',').filter(id => id.trim())
+              if (dramaIds.length > 0) {
+                const dramaPromises = dramaIds.map(dId => getDramaById(parseInt(dId)))
+                const dramaResults = await Promise.all(dramaPromises)
+                
+                const dramaNames = dramaResults
+                  .filter(r => r.code === 200 && r.data)
+                  .map(r => r.data.name)
+                
+                if (dramaNames.length > 0) {
+                  ipWorksStr = dramaNames.join('、')
+                }
+              }
+            } catch (e) {
+              console.error('获取关联影视作品失败:', e)
+            }
+          }
+
           this.route = {
             id: res.data.id,
             name: res.data.name,
@@ -263,7 +287,7 @@ export default {
             transportInfo: res.data.transport,
             accommodation: res.data.hotel,
             foodRecommendation: res.data.food,
-            ipWorks: res.data.ipWorks || '暂无相关影视作品',
+            ipWorks: ipWorksStr,
             image: res.data.image,
             latitude: res.data.latitude || 30.075,
             longitude: res.data.longitude || 102.993,

@@ -83,22 +83,29 @@ export default {
       if (!this.article) return []
       let images = []
       
-      // 1. 优先使用 images 数组
-      if (this.article.images && Array.isArray(this.article.images) && this.article.images.length > 0) {
-        images = this.article.images.map(img => getFileUrl(img))
-      } 
-      // 2. 尝试解析逗号分隔的字符串
-      else if (this.article.images && typeof this.article.images === 'string') {
-        images = this.article.images.split(',').map(img => getFileUrl(img))
+      // 1. 优先使用 image 字段 (根据用户反馈数据)
+      if (this.article.image) {
+        if (Array.isArray(this.article.image)) {
+           images = this.article.image.map(img => getFileUrl(img))
+        } else if (typeof this.article.image === 'string') {
+           images = this.article.image.split(',').map(img => getFileUrl(img))
+        }
       }
 
-      // 3. 如果没有 images，尝试使用 image 字段
+      // 2. 如果没有 image，尝试使用 images 字段 (兼容旧数据)
+      if (images.length === 0 && this.article.images) {
+        if (Array.isArray(this.article.images)) {
+          images = this.article.images.map(img => getFileUrl(img))
+        } else if (typeof this.article.images === 'string') {
+          images = this.article.images.split(',').map(img => getFileUrl(img))
+        }
+      }
+
+      // 3. 如果还是没有，尝试 thumbImage 或 cover
       if (images.length === 0) {
-        const cover = this.article.image
-        if (Array.isArray(cover)) {
-          images = cover.map(img => getFileUrl(img))
-        } else if (typeof cover === 'string' && cover) {
-          images = cover.split(',').map(img => getFileUrl(img))
+        const cover = this.article.thumbImage || this.article.cover
+        if (cover) {
+           images = [getFileUrl(cover)]
         }
       }
 
