@@ -21,10 +21,7 @@ public interface BannerMapper extends BaseMapper<Banner> {
             @Param("size") long size
     );
 
-    List<Banner> getPage(
-            @Param("offset") long offset,
-            @Param("size") long size
-    );
+    List<Banner> getPage();
 
     Long getAdminTotal(@Param("keyword") String keyword);
 

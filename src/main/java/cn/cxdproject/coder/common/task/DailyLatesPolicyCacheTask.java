@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
-
+//Policy的定时任务（用于分页降级时查询的数据）
 @Component
 @Slf4j
 public class DailyLatesPolicyCacheTask {
@@ -36,7 +36,7 @@ public class DailyLatesPolicyCacheTask {
             List<Policy> latestPolicys = policyMapper.selectLatest10();
 
             if (latestPolicys == null || latestPolicys.isEmpty()) {
-                log.warn("未查到地址数据，跳过缓存");
+                log.warn("未查到政策数据，跳过缓存");
                 return;
             }
 

@@ -51,16 +51,13 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         this.redisUtils = redisUtils;
     }
 
+    //创建policy
     @Override
     @Loggable(
             type = LogType.POLICY_CREATE,
             value = "Create policy"
     )
     public PolicyVO createPolicyByAdmin(CreatePolicyDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
 
         Policy policy = Policy.builder()
                 .title(createDTO.getTitle())
@@ -80,6 +77,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         return toPolicyVO(policy);
     }
 
+    //根据id获取id
     @Override
     @CircuitBreaker(name = "policyGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -97,6 +95,8 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         }
     }
 
+
+    //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "policyGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -118,6 +118,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .collect(Collectors.toList());
     }
 
+    //更新数据（仅限管理端）
     @Override
     @Loggable(
             type = LogType.POLICY_UPDATE,
@@ -148,6 +149,8 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         return toPolicyVO(updatedPolicy);
     }
 
+
+    //删除policy（仅限管理端）
     @Override
     @Loggable(
             type = LogType.POLICY_DELETE,
@@ -192,6 +195,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .build();
     }
 
+    //根据id查询的降级接口
     @Override
     public PolicyVO getByIdFallback(Long id, Throwable e) {
 
@@ -206,6 +210,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         return null;
     }
 
+    //客户端批量查询降级接口
     @Override
     public List<PolicyVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -234,6 +239,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         }
     }
 
+    //管理端分页查询
     @Override
     public Page<PolicyVO> getPolicyPageAdmin(Page<Policy> page, String keyword) {
         long current = page.getCurrent();

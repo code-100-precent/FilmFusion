@@ -140,7 +140,7 @@ public class ServiceLogAspect {
         }
 
         try {
-            // 使用 Spring 的 MethodBasedEvaluationContext
+
             EvaluationContext context = new MethodBasedEvaluationContext(null, method, args,
                     new LocalVariableTableParameterNameDiscoverer());
 
@@ -152,9 +152,8 @@ public class ServiceLogAspect {
             return expression; // 降级
         }
     }
-
     /**
-     * 获取方法参数名（需编译时保留参数名：-parameters）
+     * 获取方法参数名
      */
     private String[] getParameterNames(Method method) {
         return Arrays.stream(method.getParameters())
@@ -172,7 +171,7 @@ public class ServiceLogAspect {
         if (result.getClass().isArray()) {
             return true;
         }
-        // 可根据需要扩展，例如 Map size > 100
+        // 可根据需要扩展
         return false;
     }
 

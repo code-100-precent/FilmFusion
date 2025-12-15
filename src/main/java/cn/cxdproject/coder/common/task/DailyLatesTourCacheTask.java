@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
-
+//Tour的定时任务（用于分页降级时查询的数据）
 @Component
 @Slf4j
 public class DailyLatesTourCacheTask {
@@ -35,7 +35,7 @@ public class DailyLatesTourCacheTask {
             List<Tour> latestTours = tourMapper.selectLatest10();
 
             if (latestTours == null || latestTours.isEmpty()) {
-                log.warn("未查到文章数据，跳过缓存");
+                log.warn("未查到旅游路线数据，跳过缓存");
                 return;
             }
 

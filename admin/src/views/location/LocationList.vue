@@ -360,8 +360,8 @@ const formRules = {
     {
       validator: (rule, value) => {
         if (!value) return true
-        // 格式：数字° E 或 W
-        const pattern = /^\d+(\.\d+)?° [EW]$/
+        // 格式：数字° E 或 W (宽松模式，必须大写)
+        const pattern = /^\s*\d+(\.\d+)?\s*°\s*[EW]\s*$/
         if (!pattern.test(value)) {
           return new Error('格式错误')
         }
@@ -375,8 +375,8 @@ const formRules = {
     {
       validator: (rule, value) => {
         if (!value) return true
-        // 格式：数字° N 或 S
-        const pattern = /^\d+(\.\d+)?° [NS]$/
+        // 格式：数字° N 或 S (宽松模式，必须大写)
+        const pattern = /^\s*\d+(\.\d+)?\s*°\s*[NS]\s*$/
         if (!pattern.test(value)) {
           return new Error('格式错误')
         }
@@ -591,15 +591,15 @@ const handleDialogSave = async () => {
   try {
     await formRef.value.validate()
   } catch (error) {
-    const longPattern = /^\d+(\.\d+)?° [EW]$/
-    const latPattern = /^\d+(\.\d+)?° [NS]$/
+    const longPattern = /^\s*\d+(\.\d+)?\s*°\s*[EW]\s*$/
+    const latPattern = /^\s*\d+(\.\d+)?\s*°\s*[NS]\s*$/
     const isLongValid = !locationForm.longitude || longPattern.test(locationForm.longitude)
     const isLatValid = !locationForm.latitude || latPattern.test(locationForm.latitude)
 
     if (!isLongValid || !isLatValid) {
       dialog.warning({
         title: '格式错误',
-        content: '经纬度格式必须为：数字° E/W 和 数字° N/S\n例如: 104.06° E, 29.9861° N',
+        content: '经纬度格式必须为：数字° E/W 和 数字° N/S\n例如: 104.06° E, 29.9861° N\n(支持宽松格式，允许空格，但必须大写)',
         positiveText: '确定'
       })
     }
