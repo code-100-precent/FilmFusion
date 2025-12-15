@@ -564,6 +564,30 @@ const handleDialogSave = async () => {
     return
   }
 
+  // 检查排序是否重复
+  // 注意：编辑模式下，如果sortOrder没变，或者虽然变了但没和其他冲突，都允许。
+  // 但是简单起见，且通常要求全局唯一，我们检查除当前banner外是否有重复。
+  // 如果是新增，检查所有。
+  const currentSort = bannerForm.sortOrder || bannerForm.sort || 0
+  const isDuplicate = bannerList.value.some(item => {
+    // 排除当前编辑的banner
+    if (bannerForm.id && item.id === bannerForm.id) {
+      return false
+    }
+    // 比较sort值 (兼容不同字段名)
+    const itemSort = item.sort || item.sortOrder || 0
+    return itemSort === currentSort
+  })
+
+  if (isDuplicate) {
+    dialog.warning({
+      title: '提示',
+      content: '排序值不能重复，请重新输入',
+      positiveText: '确定'
+    })
+    return
+  }
+
   try {
     dialogLoading.value = true
     // 映射前端字段到后端DTO字段

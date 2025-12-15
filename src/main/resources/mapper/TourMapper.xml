@@ -55,10 +55,10 @@
             </if>
 
             <if test="lastId != null">
-                AND id &lt; #{lastId}
+                AND id > #{lastId}
             </if>
         </where>
-        ORDER BY id ASC给i他啊大大。
+        ORDER BY id ASC
         LIMIT #{size}
     </select>
 

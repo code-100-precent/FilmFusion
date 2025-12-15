@@ -260,7 +260,8 @@ import {
   NImage,
   NSpin,
   NPagination,
-  useMessage
+  useMessage,
+  useDialog
 } from 'naive-ui'
 import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById, uploadFile } from '@/api'
 import { getImageUrl } from '@/utils/image'
@@ -269,6 +270,7 @@ import config from '@/config'
 import dayjs from 'dayjs'
 
 const message = useMessage()
+const dialog = useDialog()
 const userStore = useUserStore()
 
 const isMobile = ref(false)
@@ -352,6 +354,36 @@ const formRules = {
   ],
   govPrincipalPhone: [
     { pattern: /(^1[3-9]\d{9}$)|(^0\d{2,3}-\d{7,8}$)/, message: '请输入正确的手机号或座机号', trigger: 'blur' }
+  ],
+  longitude: [
+    { required: true, message: '请输入经度', trigger: 'blur' },
+    {
+      validator: (rule, value) => {
+        if (!value) return true
+        // 格式：数字° E 或 W
+        const pattern = /^\d+(\.\d+)?° [EW]$/
+        if (!pattern.test(value)) {
+          return new Error('格式错误')
+        }
+        return true
+      },
+      trigger: 'blur'
+    }
+  ],
+  latitude: [
+    { required: true, message: '请输入纬度', trigger: 'blur' },
+    {
+      validator: (rule, value) => {
+        if (!value) return true
+        // 格式：数字° N 或 S
+        const pattern = /^\d+(\.\d+)?° [NS]$/
+        if (!pattern.test(value)) {
+          return new Error('格式错误')
+        }
+        return true
+      },
+      trigger: 'blur'
+    }
   ]
 }
 
@@ -521,12 +553,56 @@ const columns = [
   }
 ]
 
+// 获取文件信息的辅助函数
+const getFileInfo = (file) => {
+  let info = { url: '', thumb: '' }
+
+  // 1. 优先从映射中获取 (upload时存入)
+  if (typeof fileMapping !== 'undefined' && fileMapping[file.id]) {
+    info = { ...fileMapping[file.id] }
+  }
+  // 2. 其次从 file 对象中获取 (回显时设置)
+  else if (file.originUrl) {
+    info = {
+      url: file.originUrl,
+      thumb: file.thumbUrl || file.originUrl
+    }
+  }
+  // 3. 兜底：尝试解析 url
+  else {
+    info.url = file.url || ''
+    info.thumb = file.thumbUrl || info.url
+  }
+
+  // 统一处理去除域名
+  if (info.url && info.url.startsWith('http')) {
+    info.url = info.url.replace(config.fileBaseURL, '')
+  }
+  if (info.thumb && info.thumb.startsWith('http')) {
+    info.thumb = info.thumb.replace(config.fileBaseURL, '')
+  }
+
+  return info
+}
+
 const handleDialogSave = async () => {
   if (!formRef.value) return
   
   try {
     await formRef.value.validate()
   } catch (error) {
+    const longPattern = /^\d+(\.\d+)?° [EW]$/
+    const latPattern = /^\d+(\.\d+)?° [NS]$/
+    const isLongValid = !locationForm.longitude || longPattern.test(locationForm.longitude)
+    const isLatValid = !locationForm.latitude || latPattern.test(locationForm.latitude)
+
+    if (!isLongValid || !isLatValid) {
+      dialog.warning({
+        title: '格式错误',
+        content: '经纬度格式必须为：数字° E/W 和 数字° N/S\n例如: 104.06° E, 29.9861° N',
+        positiveText: '确定'
+      })
+    }
     return
   }
   
@@ -534,67 +610,71 @@ const handleDialogSave = async () => {
     dialogLoading.value = true
     // 组合图片字段：封面 + 详情图
     // 优先使用 fileList 中的 originUrl (相对路径)，如果没有则尝试从 url 解析
+    
+    // 1. 获取封面信息
+    let coverOrigin = locationForm.cover
+    let coverThumb = locationForm.thumbCover
+    const coverFile = coverFileList.value.find(f => f.status === 'finished')
+    
+    if (coverFile) {
+      if (coverFile.originUrl) coverOrigin = coverFile.originUrl
+      else if (coverFile.url && coverFile.url.startsWith('http')) coverOrigin = coverFile.url.replace(config.fileBaseURL, '')
+      else coverOrigin = coverFile.url
+      
+      if (coverFile.thumbUrl) coverThumb = coverFile.thumbUrl
+      else coverThumb = coverOrigin // fallback
+    } else if (coverOrigin && coverOrigin.startsWith('http')) {
+       coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
+    }
+    
+    // 2. 获取详情图信息
     const detailOrigins = imageFileList.value
         .filter(f => f.status === 'finished')
         .map(f => {
-          if (f.originUrl) return f.originUrl
+          let url = f.url
+          if (f.originUrl) url = f.originUrl
+          else if (f.url && f.url.startsWith('http')) url = f.url.replace(config.fileBaseURL, '')
+          
+          // 强制转换为原图路径
+          if (url && url.includes('/files/thumb/')) {
+            return url.replace('/files/thumb/', '/files/origin/')
+          }
+          return url
+        })
+        
+    const detailThumbs = imageFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.thumbUrl) return f.thumbUrl
+          if (f.originUrl) return f.originUrl // 如果没有缩略图，用原图
           if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
           return f.url
         })
 
     const allImages = []
-
-    // 获取封面原图（优先从文件列表获取）
-    let coverOrigin = locationForm.cover
-    const coverFile = coverFileList.value.find(f => f.status === 'finished')
-    if (coverFile) {
-      if (coverFile.originUrl) {
-        coverOrigin = coverFile.originUrl
-      } else if (coverFile.url && coverFile.url.startsWith('http')) {
-        coverOrigin = coverFile.url.replace(config.fileBaseURL, '')
+    // 封面图强制使用原图
+    if (coverOrigin) {
+      if (coverOrigin.includes('/files/thumb/')) {
+        allImages.push(coverOrigin.replace('/files/thumb/', '/files/origin/'))
       } else {
-        coverOrigin = coverFile.url
+        allImages.push(coverOrigin)
       }
-    } else if (coverOrigin && coverOrigin.startsWith('http')) {
-      // 兜底：如果 locationForm.cover 是完整路径
-      coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
     }
-
-    if (coverOrigin) allImages.push(coverOrigin)
     if (detailOrigins.length > 0) allImages.push(...detailOrigins)
 
     const finalImageStr = allImages.join(',')
 
-    // 组合缩略图字段
-    // 优先使用 fileList 中的 thumbUrl (相对路径)，如果没有则回退到 originUrl 或 url
-    const detailThumbs = imageFileList.value
-        .filter(f => f.status === 'finished')
-        .map(f => {
-          if (f.thumbUrl) return f.thumbUrl
-          if (f.originUrl) return f.originUrl
-          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
-          return f.url
-        })
-
     const allThumbImages = []
-
-    // 获取封面缩略图（优先从文件列表获取）
-    let coverThumb = locationForm.thumbCover || locationForm.cover
-    if (coverFile) {
-      if (coverFile.thumbUrl) {
-        coverThumb = coverFile.thumbUrl
-      } else if (coverFile.originUrl) {
-        coverThumb = coverFile.originUrl
-      }
+    
+    // 处理封面缩略图
+    if (coverOrigin) {
+        allThumbImages.push(coverThumb || coverOrigin)
     }
-
-    // 兜底处理
-    if (coverThumb && coverThumb.startsWith('http')) {
-      coverThumb = coverThumb.replace(config.fileBaseURL, '')
+    
+    // 处理详情缩略图
+    if (detailOrigins.length > 0) {
+        allThumbImages.push(...detailThumbs)
     }
-
-    if (coverThumb) allThumbImages.push(coverThumb)
-    if (detailThumbs.length > 0) allThumbImages.push(...detailThumbs)
 
     const finalThumbImageStr = allThumbImages.join(',')
 

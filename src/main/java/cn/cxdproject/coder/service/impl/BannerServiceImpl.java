@@ -107,14 +107,35 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
     }
 
     @Override
-    public Page<BannerVO> getImagePage(Page<Banner> page, String keyword) {
+    public Page<BannerVO> getImageAdminPage(Page<Banner> page, String keyword) {
         long current = page.getCurrent();
         long size = page.getSize();
         long offset = (current - 1) * size;
 
         // 获取当前页的数据和总记录数
-        List<Banner> banners = bannerMapper.getPage(keyword, offset, size);
-        Long total = bannerMapper.getTotal(keyword);
+        List<Banner> banners = bannerMapper.getAdminPage(keyword, offset, size);
+        Long total = bannerMapper.getAdminTotal(keyword);
+
+        List<BannerVO> voList = banners.stream()
+                .map(this::toBannerVO)
+                .collect(Collectors.toList());
+
+        return new Page<BannerVO>()
+                .setCurrent(current)
+                .setSize(size)
+                .setRecords(voList)
+                .setTotal(total);
+    }
+
+    @Override
+    public Page<BannerVO> getImagePage(Page<Banner> page) {
+        long current = page.getCurrent();
+        long size = page.getSize();
+        long offset = (current - 1) * size;
+
+        // 获取当前页的数据和总记录数
+        List<Banner> banners = bannerMapper.getPage( offset, size);
+        Long total = bannerMapper.getTotal();
 
         List<BannerVO> voList = banners.stream()
                 .map(this::toBannerVO)

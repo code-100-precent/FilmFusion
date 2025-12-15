@@ -20,7 +20,9 @@ public interface BannerService extends IService<Banner> {
 
     BannerVO createImage(CreateBannerDTO createDTO);
 
-    Page<BannerVO> getImagePage(Page<Banner> page, String keyword);
+    Page<BannerVO> getImageAdminPage(Page<Banner> page, String keyword);
+
+    Page<BannerVO> getImagePage(Page<Banner> page);
 
     BannerVO getImageById(Long id);
 

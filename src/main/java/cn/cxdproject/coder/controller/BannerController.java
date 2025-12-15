@@ -42,17 +42,34 @@ public class BannerController {
         return ApiResponse.success(bannerVo);
     }
 
+
+    @GetMapping("/page")
+    @PublicAccess
+    public PageResponse<BannerVO> getImagePage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size) {
+        Page<Banner> page = new Page<>(current, size);
+        Page<BannerVO> imagePage = bannerService.getImagePage(page );
+
+        return PageResponse.of(
+                (int) imagePage.getCurrent(),
+                (int) imagePage.getSize(),
+                imagePage.getTotal(),
+                imagePage.getRecords()
+        );
+    }
+
+
     /**
      * 分页查询
      */
     @GetMapping("/admin/page")
-    @PublicAccess
-    public PageResponse<BannerVO> getImagePage(
+    public PageResponse<BannerVO> getImageAdminPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
         Page<Banner> page = new Page<>(current, size);
-        Page<BannerVO> imagePage = bannerService.getImagePage(page, keyword);
+        Page<BannerVO> imagePage = bannerService.getImageAdminPage(page, keyword);
 
         return PageResponse.of(
                 (int) imagePage.getCurrent(),

@@ -595,48 +595,87 @@ const handleDialogSave = async () => {
   try {
     dialogLoading.value = true
 
-    // 处理封面图
-    const coverFile = coverFileList.value.find(f => f.status === 'finished')
-    let coverUrl = ''
+    // 1. 获取封面图信息
+    let coverOrigin = ''
     let coverThumb = ''
+    if (coverFileList.value.length > 0) {
+      const file = coverFileList.value[0]
+      if (file.status === 'finished') {
+        if (file.originUrl) coverOrigin = file.originUrl
+        else coverOrigin = file.url
 
-    if (coverFile) {
-      if (coverFile.originUrl) coverUrl = coverFile.originUrl
-      else if (coverFile.url && coverFile.url.startsWith('http')) coverUrl = coverFile.url.replace(config.fileBaseURL, '')
-      else coverUrl = coverFile.url
+        if (coverOrigin && coverOrigin.startsWith('http')) {
+          coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
+        }
 
-      if (coverFile.thumbUrl) coverThumb = coverFile.thumbUrl
-      else if (coverFile.originUrl) coverThumb = coverFile.originUrl
-      else if (coverFile.url && coverFile.url.startsWith('http')) coverThumb = coverFile.url.replace(config.fileBaseURL, '')
-      else coverThumb = coverFile.url
+        if (file.thumbUrl) coverThumb = file.thumbUrl
+        else if (file.url && file.url.startsWith('http')) coverThumb = file.url.replace(config.fileBaseURL, '')
+        else coverThumb = file.url
+      }
     }
 
-    // 处理详情图
-    const detailImages = imageFileList.value
+    // 2. 获取详情图信息
+    const detailOrigins = imageFileList.value
         .filter(f => f.status === 'finished')
         .map(f => {
-          if (f.originUrl) return f.originUrl
-          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
-          return f.url
+          let url = f.url
+          if (f.originUrl) url = f.originUrl
+          
+          if (url && url.startsWith('http')) {
+            url = url.replace(config.fileBaseURL, '')
+          }
+          
+          // 强制转换为原图路径
+          if (url && url.includes('/files/thumb/')) {
+            return url.replace('/files/thumb/', '/files/origin/')
+          }
+          return url
         })
-
-    const detailThumbImages = imageFileList.value
+        
+    const detailThumbs = imageFileList.value
         .filter(f => f.status === 'finished')
         .map(f => {
           if (f.thumbUrl) return f.thumbUrl
-          if (f.originUrl) return f.originUrl
+          if (f.originUrl) return f.originUrl // 如果没有缩略图，用原图
           if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
           return f.url
         })
 
-    // 组合图片 (封面 + 详情)
     const allImages = []
-    if (coverUrl) allImages.push(coverUrl)
-    if (detailImages.length > 0) allImages.push(...detailImages)
+    // 封面图强制使用原图
+    if (coverOrigin) {
+      if (coverOrigin.includes('/files/thumb/')) {
+        allImages.push(coverOrigin.replace('/files/thumb/', '/files/origin/'))
+      } else {
+        allImages.push(coverOrigin)
+      }
+    }
+    if (detailOrigins.length > 0) allImages.push(...detailOrigins)
+    
+    // 辅助函数：从URL提取原始文件名（忽略时间戳）
+    const getOriginalFileName = (url) => {
+      if (!url) return ''
+      const parts = url.split('/')
+      const fileName = parts[parts.length - 1]
+      // 假设格式为 timestamp_filename，找到第一个下划线
+      const index = fileName.indexOf('_')
+      if (index !== -1 && index < fileName.length - 1) {
+        return fileName.substring(index + 1)
+      }
+      return fileName
+    }
 
     const allThumbImages = []
-    if (coverThumb) allThumbImages.push(coverThumb)
-    if (detailThumbImages.length > 0) allThumbImages.push(...detailThumbImages)
+    
+    // 处理封面缩略图
+    if (coverOrigin) {
+        allThumbImages.push(coverThumb || coverOrigin)
+    }
+    
+    // 处理详情缩略图
+    if (detailOrigins.length > 0) {
+        allThumbImages.push(...detailThumbs)
+    }
 
     const data = {
       ...serviceForm,

@@ -270,6 +270,7 @@ import {
 } from 'naive-ui'
 import { getTourPage, createTour, updateTour, deleteTour, getTourById, uploadFile, getLocationList, getDramaList } from '@/api'
 import { getImageUrl } from '@/utils/image'
+import config from '@/config'
 import dayjs from 'dayjs'
 
 const message = useMessage()
@@ -691,13 +692,26 @@ const handleEdit = async (row) => {
 
 // 获取文件信息的辅助函数
 const getFileInfo = (file) => {
+  let info = { originUrl: '', thumbUrl: '' }
+  
   if (fileMapping[file.id]) {
-    return fileMapping[file.id]
+    info = { ...fileMapping[file.id] }
+  } else {
+    info = {
+      originUrl: file.originUrl || file.url,
+      thumbUrl: file.thumbUrl || file.url
+    }
   }
-  return {
-    originUrl: file.originUrl || file.url,
-    thumbUrl: file.thumbUrl || file.url
+
+  // 统一处理去除域名
+  if (info.originUrl && info.originUrl.startsWith('http')) {
+    info.originUrl = info.originUrl.replace(config.fileBaseURL, '')
   }
+  if (info.thumbUrl && info.thumbUrl.startsWith('http')) {
+    info.thumbUrl = info.thumbUrl.replace(config.fileBaseURL, '')
+  }
+
+  return info
 }
 
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
@@ -813,25 +827,70 @@ const handleDialogSave = async () => {
     const allImages = []
     const allThumbImages = []
 
+    let coverOrigin = ''
+    let coverThumb = ''
+
     // 1. 封面图
     if (coverFileList.value.length > 0) {
       const coverFile = coverFileList.value[0]
       const info = getFileInfo(coverFile)
       if (info.originUrl) {
-        allImages.push(info.originUrl)
-        allThumbImages.push(info.thumbUrl || info.originUrl)
+        coverOrigin = info.originUrl
+        coverThumb = info.thumbUrl || info.originUrl
+        
+        // 强制转换为原图路径
+        let url = coverOrigin
+        if (url && url.includes('/files/thumb/')) {
+          url = url.replace('/files/thumb/', '/files/origin/')
+        }
+        allImages.push(url)
       }
     }
 
+    const detailOrigins = []
+    const detailThumbs = []
+
     // 2. 详情图
     if (detailFileList.value.length > 0) {
-      detailFileList.value.forEach(file => {
-        const info = getFileInfo(file)
-        if (info.originUrl) {
-          allImages.push(info.originUrl)
-          allThumbImages.push(info.thumbUrl || info.originUrl)
+      // 收集详情图信息
+      const validDetails = detailFileList.value
+        .map(file => getFileInfo(file))
+        .filter(info => info.originUrl)
+
+      validDetails.forEach(info => {
+        detailOrigins.push(info.originUrl)
+        detailThumbs.push(info.thumbUrl || info.originUrl)
+        
+        // 强制转换为原图路径
+        let url = info.originUrl
+        if (url && url.includes('/files/thumb/')) {
+          url = url.replace('/files/thumb/', '/files/origin/')
         }
+        allImages.push(url)
       })
+    }
+
+    // 辅助函数：从URL提取原始文件名（忽略时间戳）
+    const getOriginalFileName = (url) => {
+      if (!url) return ''
+      const parts = url.split('/')
+      const fileName = parts[parts.length - 1]
+      // 假设格式为 timestamp_filename，找到第一个下划线
+      const index = fileName.indexOf('_')
+      if (index !== -1 && index < fileName.length - 1) {
+        return fileName.substring(index + 1)
+      }
+      return fileName
+    }
+
+    // 处理封面缩略图
+    if (coverOrigin) {
+      allThumbImages.push(coverThumb)
+    }
+
+    // 处理详情缩略图
+    if (detailOrigins.length > 0) {
+      allThumbImages.push(...detailThumbs)
     }
 
     const data = {

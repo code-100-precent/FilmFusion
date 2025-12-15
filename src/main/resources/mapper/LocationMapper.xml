@@ -64,7 +64,7 @@
             </if>
 
             <if test="lastId != null">
-                AND id &lt; #{lastId}
+                AND id > #{lastId}
             </if>
         </where>
         ORDER BY id ASC
