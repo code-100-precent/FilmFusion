@@ -58,6 +58,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         this.redisUtils = redisUtils;
     }
 
+
+    //单个文章查询，支持降级熔断，限流，数据进行本地缓存
     @Override
     @CircuitBreaker(name = "articleGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -76,6 +78,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
 
+    //用户文章批量查询，采用游标分页
     @Override
     @CircuitBreaker(name = "articleGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -97,6 +100,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .collect(Collectors.toList());
     }
 
+    //管理员新增文章（进行操作日志记录）
     @Override
     @Loggable(
             type = LogType.ARTICLE_CREATE,
@@ -108,10 +112,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (currentUser == null) {
             throw new BusinessException(UNAUTHORIZED.code(), "未登录");
         }
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
+
         // 创建文章
         Article article = Article.builder()
                 .title(createDTO.getTitle())
@@ -131,13 +132,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return toArticleVO(article);
     }
 
+    //管理员更新用户
     @Override
     @Loggable(
             type = LogType.ARTICLE_UPDATE,
             value = "update article ID: #{#articleId}"
     )
     public ArticleVO updateArticleByAdmin(Long articleId, UpdateArticleDTO updateDTO) {
-        // 1. 先校验文章是否存在且未删除（必须做，用于抛出 NotFoundException）
+        // 1. 先校验文章是否存在且未删除
         Article existing = this.getById(articleId);
         if (existing == null || Boolean.TRUE.equals(existing.getDeleted())) {
             throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
@@ -161,12 +163,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return toArticleVO(updatedArticle);
     }
 
+    //管理员删除文章
     @Override
     @Loggable(
             type = LogType.ARTICLE_DELETE,
             value = "Delete article ID: #{#articleId}"
     )
     public void deleteArticleByAdmin(Long articleId) {
+        //直接更新
         boolean updated = articleMapper.update(null,
                 Wrappers.<Article>lambdaUpdate()
                         .set(Article::getDeleted, true)
@@ -174,12 +178,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                         .eq(Article::getDeleted, false)
         ) > 0;
 
+        //如果更新失败查询数据，返回报错
         if (!updated) {
             Article article = this.getById(articleId);
             if (article == null || Boolean.TRUE.equals(article.getDeleted())) {
                 throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
         }
+        //删除缓存，保持数据一致性
         cache.invalidate(CaffeineConstants.ARTICLE + articleId);
     }
 
@@ -203,6 +209,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .build();
     }
 
+    //查询单个文章数据的降级策略（查询缓存的数据）
     @Override
     public ArticleVO getByIdFallback(Long articleId,Throwable e) {
 
@@ -218,6 +225,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return null;
     }
 
+    //游标查询降级策略
     @Override
     public List<ArticleVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -246,6 +254,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
     }
 
+    //管理端分页查询
     @Override
     public Page<ArticleVO> getArticlePagAdmin(Page<Article> page, String keyword) {
         long current = page.getCurrent();

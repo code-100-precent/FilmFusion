@@ -40,7 +40,7 @@ import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements DramaService {
 
     private final DramaMapper dramaMapper;
-    private final Cache<String, Object> cache;;
+    private final Cache<String, Object> cache;
     private final RedisUtils redisUtils;
 
     public DramaServiceImpl(DramaMapper dramaMapper,
@@ -51,17 +51,13 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         this.redisUtils = redisUtils;
     }
 
-
+    //管理员创建drama
     @Override
     @Loggable(
             type = LogType.DRAMA_CREATE,
             value = "create drama"
     )
     public DramaVO createDramaByAdmin(Long userId, CreateDramaDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
 
         Drama drama = Drama.builder()
                 .name(createDTO.getName())
@@ -86,6 +82,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         return toDramaVO(drama);
     }
 
+    //根据id获取drama
     @Override
     @CircuitBreaker(name = "dramaGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -103,6 +100,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
     }
 
+    //用户批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -125,6 +123,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .collect(Collectors.toList());
     }
 
+    //管理员更新
     @Override
     @Loggable(
             type = LogType.DRAMA_UPDATE,
@@ -155,6 +154,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         return toDramaVO(updatedDrama);
     }
 
+    //管理员删除
     @Override
     @Loggable(
             type = LogType.DRAMA_DELETE,
@@ -175,6 +175,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
         cache.invalidate(CaffeineConstants.DRAMA+dramaId);
     }
+
 
     @Override
     public DramaVO toDramaVO(Drama drama) {
@@ -204,6 +205,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
 
     }
 
+    //根据id查询降级接口
     @Override
     public DramaVO getByIdFallback(Long id,Throwable e) {
 
@@ -219,6 +221,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         return null;
     }
 
+    //用户批量查询降级
     @Override
     public List<DramaVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -247,6 +250,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
     }
 
+    //管理端分页查询
     @Override
     public Page<DramaVO> getDramaPageAdmin(Page<Drama> page, String keyword) {
         long current = page.getCurrent();

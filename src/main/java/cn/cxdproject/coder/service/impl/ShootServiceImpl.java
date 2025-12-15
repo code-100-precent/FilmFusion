@@ -54,16 +54,13 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         this.redisUtils = redisUtils;
     }
 
+    //创建shoot数据
     @Override
     @Loggable(
             type = LogType.SHOOT_CREATE,
             value = "Create shoot"
     )
     public ShootVO createShootByAdmin(Long userId, CreateShootDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
 
         Shoot shoot = Shoot.builder()
                 .name(createDTO.getName())
@@ -85,6 +82,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         return toShootVO(shoot);
     }
 
+    //根据id获取单个数据
     @Override
     @CircuitBreaker(name = "shootGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -102,6 +100,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         }
     }
 
+    //客户端批量查询数据（游标分页）
     @Override
     @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -123,6 +122,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .collect(Collectors.toList());
     }
 
+    //管理端更新数据
     @Override
     @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
     @Loggable(
@@ -154,6 +154,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         return toShootVO(updatedShoot);
     }
 
+    //管理员删除数据
     @Override
     @Loggable(
             type = LogType.SHOOT_DELETE,
@@ -198,6 +199,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .build();
     }
 
+    //单个数据查询降级接口
     @Override
     public ShootVO getByIdFallback(Long id,Throwable e) {
 
@@ -212,6 +214,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         return null;
     }
 
+    //客户端批量查询降级接口
     @Override
     public List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -240,6 +243,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         }
     }
 
+    //管理端批量查询
     @Override
     public Page<ShootVO> getShootPageAdmin(Page<Shoot> page, String keyword) {
         long current = page.getCurrent();

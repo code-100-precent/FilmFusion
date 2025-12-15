@@ -50,16 +50,13 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         this.redisUtils = redisUtils;
     }
 
+    //生成数据
     @Override
     @Loggable(
             type = LogType.TOUR_CREATE,
             value = "Create tour"
     )
     public TourVO createTourByAdmin(CreateTourDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
 
         Tour tour = Tour.builder()
                 .name(createDTO.getName())
@@ -84,6 +81,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         return toTourVO(tour);
     }
 
+    //根据id单个数据查询
     @Override
     @CircuitBreaker(name = "tourGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -101,6 +99,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         }
     }
 
+    //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "tourGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -123,6 +122,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     }
 
 
+    //管理端更新数据
     @Override
     @Loggable(
             type = LogType.TOUR_UPDATE,
@@ -153,6 +153,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         return toTourVO(updatedTour);
     }
 
+    //管理员删除数据
     @Override
     @Loggable(
             type = LogType.TOUR_DELETE,
@@ -201,6 +202,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .build();
     }
 
+    //单个数据查询降级接口
     @Override
     public TourVO getByIdFallback(Long id,Throwable e) {
 
@@ -215,6 +217,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         return null;
     }
 
+    //客户端批量查询降级接口
     @Override
     public List<TourVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -243,6 +246,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         }
     }
 
+    //管理端降级接口
     @Override
     public Page<TourVO> getTourPageAdmin(Page<Tour> page, String keyword) {
         long current = page.getCurrent();

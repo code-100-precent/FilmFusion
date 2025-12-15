@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.cxdproject.coder.model.entity.Banner;
 
+import java.util.List;
+
 /**
  * Banner 服务接口
  * @author Hibiscus-code-generate
@@ -22,7 +24,7 @@ public interface BannerService extends IService<Banner> {
 
     Page<BannerVO> getImageAdminPage(Page<Banner> page, String keyword);
 
-    Page<BannerVO> getImagePage(Page<Banner> page);
+    List<BannerVO> getImagePage();
 
     BannerVO getImageById(Long id);
 

@@ -55,16 +55,13 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         this.redisUtils = redisUtils;
     }
 
+    //创建数据（仅限管理员）
     @Override
     @Loggable(
             type = LogType.LOCATION_CREATE,
             value = "Create location"
     )
     public LocationVO createLocationByAdmin(Long userId, CreateLocationDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
 
         Location location = Location.builder()
                 .name(createDTO.getName())
@@ -91,6 +88,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         return toLocationVO(location);
     }
 
+    //根据id查询
     @Override
     @CircuitBreaker(name = "locationGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -108,6 +106,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         }
     }
 
+    //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "locationGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -129,7 +128,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .collect(Collectors.toList());
     }
 
-
+    //更新数据（仅限管理员）
     @Override
     @Loggable(
             type = LogType.LOCATION_UPDATE,
@@ -160,6 +159,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         return toLocationVO(updatedLocation);
     }
 
+    //删除数据（仅限管理员）
     @Override
     @Loggable(
             type = LogType.LOCATION_DELETE,
@@ -210,6 +210,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                .build();
     }
 
+    //单个id查询降级接口
     @Override
     public LocationVO getByIdFallback(Long id,Throwable e) {
 
@@ -224,6 +225,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         return null;
     }
 
+    //客户端批量查询降级接口
     @Override
     public List<LocationVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -252,6 +254,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         }
     }
 
+    //管理端分页接口
     @Override
     public Page<LocationVO> getLocationPageAdmin(Page<Location> page, String keyword) {
         long current = page.getCurrent();

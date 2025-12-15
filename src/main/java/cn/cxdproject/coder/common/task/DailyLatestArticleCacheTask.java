@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
-
+//Article的定时任务（用于分页降级时查询的数据）
 @Component
 @Slf4j
 public class DailyLatestArticleCacheTask {

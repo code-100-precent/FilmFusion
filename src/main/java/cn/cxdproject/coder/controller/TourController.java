@@ -38,16 +38,15 @@ public class TourController {
         this.tourService = tourService;
     }
 
-    
+    //根据id获取tour数据
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<TourVO> getTourById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
         TourVO tourVO = tourService.getTourById(id);
         return ApiResponse.success(tourVO);
     }
-
     /**
-     * 分页获取路线服务列表（按时间倒序，公开，只显示上线的）
+     * 分页获取路线服务列表（按id顺序，公开，只显示上线的）
      */
     @GetMapping("/page")
     @PublicAccess
@@ -90,6 +89,7 @@ public class TourController {
         return ApiResponse.success(tourVO);
     }
 
+    //管理端分页接口（根据id顺序）
     @GetMapping("/admin/page")
     public PageResponse<TourVO> getTourPageAdmin(
             @RequestParam(defaultValue = "1") Integer current,

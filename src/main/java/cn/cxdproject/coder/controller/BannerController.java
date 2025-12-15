@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * Banner 控制器，提供基础增删改查接口
@@ -42,26 +43,16 @@ public class BannerController {
         return ApiResponse.success(bannerVo);
     }
 
-
+    //客户端获取全部banner信息
     @GetMapping("/page")
     @PublicAccess
-    public PageResponse<BannerVO> getImagePage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size) {
-        Page<Banner> page = new Page<>(current, size);
-        Page<BannerVO> imagePage = bannerService.getImagePage(page );
-
-        return PageResponse.of(
-                (int) imagePage.getCurrent(),
-                (int) imagePage.getSize(),
-                imagePage.getTotal(),
-                imagePage.getRecords()
-        );
+    public ApiResponse<List<BannerVO>> getImagePage() {
+        List<BannerVO> imagePage = bannerService.getImagePage();
+        return ApiResponse.success(imagePage);
     }
 
-
     /**
-     * 分页查询
+     * 分页查询（管理端）
      */
     @GetMapping("/admin/page")
     public PageResponse<BannerVO> getImageAdminPage(

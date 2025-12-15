@@ -55,14 +55,9 @@
     <select id="getPage" resultType="cn.cxdproject.coder.model.entity.Banner">
         SELECT a.id, a.image_url, a.image_name, a.target_module, a.status, a.sort
         FROM fi_banner a
-                 INNER JOIN (
-            SELECT id
-            FROM fi_banner
-            WHERE deleted = 0
-              AND status = 1
-            ORDER BY sort ASC
-                LIMIT #{offset}, #{size}
-        ) tmp ON a.id = tmp.id
+        WHERE a.deleted = 0
+          AND a.status = 1
+        ORDER BY a.sort ASC;
     </select>
 
     <select id="getTotal" resultType="java.lang.Long">

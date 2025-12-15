@@ -54,9 +54,8 @@ public class ArticleController {
         ArticleVO articleVO = articleService.getArticleById(id);
         return ApiResponse.success(articleVO);
     }
-
     /**
-     * 分页获取文章列表（按时间倒序，公开）
+     * 分页获取文章列表（按id升序，公开）
      */
     @GetMapping("/page")
     @PublicAccess

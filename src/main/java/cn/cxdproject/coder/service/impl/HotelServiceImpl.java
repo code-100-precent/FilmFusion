@@ -57,16 +57,14 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     }
 
 
+    //管理端创建
     @Override
     @Loggable(
             type = LogType.HOTEL_CREATE,
             value = "Create hotel"
     )
     public HotelVO createHotelByAdmin(Long userId, CreateHotelDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
+
         Hotel hotel = Hotel.builder()
                 .name(createDTO.getName())
                 .description(createDTO.getDescription())
@@ -87,6 +85,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         return toHotelVO(hotel);
     }
 
+    //根据id查询
     @Override
     @CircuitBreaker(name = "hotelGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -104,6 +103,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         }
     }
 
+    //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "hotelGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -126,10 +126,11 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     }
 
 
+    //更新数据（仅限管理端）
     @Override
     @Loggable(
             type = LogType.DRAMA_UPDATE,
-            value = "Update hotel ID: #{#dramaId}"
+            value = "Update hotel ID: #{#hotelId}"
     )
     public HotelVO updateHotelByAdmin(Long hotelId, UpdateHotelDTO updateDTO) {
         // 1. 校验是否存在且未删除
@@ -157,6 +158,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     }
 
 
+    //删除信息（仅限管理端）
     @Override
     @Loggable(
             type = LogType.HOTEL_DELETE,
@@ -201,6 +203,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .build();
     }
 
+    //id查询降级接口
     @Override
     public HotelVO getByIdFallback(Long id,Throwable e) {
 
@@ -215,6 +218,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         return null;
     }
 
+    //客户端游标分页降级接口
     @Override
     public List<HotelVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -244,6 +248,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         }
     }
 
+    //管理端分页查询
     @Override
     public Page<HotelVO> getHotelPageAdmin(Page<Hotel> page, String keyword) {
         long current = page.getCurrent();
