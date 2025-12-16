@@ -43,8 +43,6 @@ public class ArticleController {
         this.articleService = articleService;
     }
 
-    // ==================== 公开接口 ====================
-
     /**
      * 获取文章详情（公开）
      */
@@ -83,7 +81,6 @@ public class ArticleController {
         return new CursorPageResponseVO<>(list, nextCursor);
     }
 
-    // ==================== 管理员接口 ====================
 
     /**
      * 管理员创建文章

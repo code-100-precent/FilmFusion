@@ -125,24 +125,45 @@ public class Report extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
+    /**
+     * 申报状态（是否处理）
+     */
     @TableField("status")
     private String status;
 
+    /**
+     * 影视拍摄许可证（可为文档或者图片）
+     */
     @TableField(value = "shoot_permit")
     private String shootPermit;
 
+    /**
+     * 压缩后影视拍摄许可证（如果是文档则没有压缩后url）
+     */
     @TableField(value = "thumb_shoot_permit")
     private String thumbShootPermit;
 
+    /**
+     * 立项审批文件（可为文档或者图片）
+     */
     @TableField(value = "approval_file")
     private String approvalFile;
 
+    /**
+     * 压缩后立项审批文件（如果为文档则没有压缩后url）
+     */
     @TableField(value = "thumb_approval_file")
     private String thumbApprovalFile;
 
+    /**
+     * 协拍服务申请表（可为文档或者图片）
+     */
     @TableField(value = "shoot_apply")
     private String shootApply;
 
+    /**
+     * 压缩后协拍服务申请表（如果为文档则没有压缩后url）
+     */
     @TableField(value = "thumb_shoot_apply")
     private String thumbShootApply;
 

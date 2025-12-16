@@ -41,7 +41,6 @@ public class LocationController {
         this.locationService = locationService;
     }
 
-    // ==================== 公开接口 ====================
 
     /**
      * 获取拍摄场地详情（公开）
@@ -82,7 +81,6 @@ public class LocationController {
         return new CursorPageResponseVO<>(list, nextCursor);
     }
 
-    // ==================== 管理员接口 ====================
 
 
     /**

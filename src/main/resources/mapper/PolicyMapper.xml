@@ -30,7 +30,7 @@
             `thumb_image`,
             `created_at`,
             `updated_at`,
-            'status',
+            `status`,
             `deleted`
     </sql>
 
@@ -39,7 +39,7 @@
         FROM fi_policy
         <where>
             deleted = 0
-            AND status = '1'
+            AND status = '发布'
             <!-- 模糊搜索 -->
             <if test="keyword != null and keyword != ''">
                 AND (
@@ -51,7 +51,7 @@
                 AND id > #{lastId}
             </if>
         </where>
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT #{size}
     </select>
 
@@ -65,7 +65,7 @@
             OR type LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -74,7 +74,7 @@
         FROM fi_policy
         WHERE deleted = 0
           AND status = '发布'
-        ORDER BY id ASC
+        ORDER BY created_at DESC
             LIMIT 10
     </select>
 
@@ -114,6 +114,7 @@
         SELECT COUNT(1)
         FROM fi_policy
         WHERE deleted = 0
+        AND status = '发布'
         <if test="keyword != null and keyword != ''">
             AND (
             title LIKE CONCAT('%', #{keyword}, '%')

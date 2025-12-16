@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * Article 服务接口
- *
+ * 提供文章的创建、查询及管理能力
  * @author Hibiscus-code-generate
  */
 public interface ArticleService extends IService<Article> {
@@ -28,11 +28,12 @@ public interface ArticleService extends IService<Article> {
     /**
      * 分页获取文章列表（按时间倒序，公开接口）
      *
-     * @param page    分页对象
+     * @param lastId  上一页最后一条ID
+     * @param size    每页大小
      * @param keyword 关键字（搜索标题或内容）
-     * @return 分页结果
+     * @return 文章VO列表
      */
-   List<ArticleVO> getArticlePage(Long lastId,int size, String keyword);
+   List<ArticleVO> getArticlePage(Long lastId, int size, String keyword);
 
     /**
      * 管理员创建文章
@@ -66,9 +67,32 @@ public interface ArticleService extends IService<Article> {
      */
     ArticleVO toArticleVO(Article article);
 
-    ArticleVO getByIdFallback(Long id,Throwable e);
+    /**
+     * 获取文章详情的降级方法
+     *
+     * @param id 文章ID
+     * @param e  降级触发的异常
+     * @return 文章VO（可能为兜底数据）
+     */
+    ArticleVO getByIdFallback(Long id, Throwable e);
 
+    /**
+     * 分页查询文章列表的降级方法
+     *
+     * @param lastId  上一页最后一条ID
+     * @param size    每页大小
+     * @param keyword 关键字（搜索标题或内容）
+     * @param e       降级触发的异常
+     * @return 文章VO列表（可能为兜底数据）
+     */
     List<ArticleVO> getPageFallback(Long lastId, int size, String keyword, Throwable e);
 
+    /**
+     * 管理员分页查询文章
+     *
+     * @param page    分页对象
+     * @param keyword 关键字
+     * @return 文章分页结果
+     */
     Page<ArticleVO> getArticlePagAdmin(Page<Article> page, String keyword);
 }

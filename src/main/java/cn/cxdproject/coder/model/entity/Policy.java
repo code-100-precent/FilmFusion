@@ -67,6 +67,9 @@ public class Policy extends BaseEntity implements Serializable {
     @TableField("thumb_image")
     private String thumbImage;
 
+    /**
+     * 发布状态（草稿或发布）
+     */
     @TableField("status")
     private String status;
 

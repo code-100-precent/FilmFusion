@@ -74,7 +74,6 @@ public class TourController {
         return new CursorPageResponseVO<>(list, nextCursor);
     }
 
-    // ==================== 管理员接口 ====================
 
     /**
      * 创建路线服务

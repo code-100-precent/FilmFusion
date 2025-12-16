@@ -56,20 +56,26 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
     private String locationDescription;
 
     /**
-     * 联系人电话
+     * 场地联系人电话
      */
     @TableField("location_principal_phone")
     private String locationPrincipalPhone;
 
     /**
-     * 联系人
+     * 场地联系人
      */
     @TableField("location_principal_name")
     private String locationPrincipalName;
 
+    /**
+     * 政府联系人电话
+     */
     @TableField("gov_principal_phone")
     private String govPrincipalPhone;
 
+    /**
+     * 政府联系人姓名
+     */
     @TableField("gov_principal_name")
     private String govPrincipalName;
 
@@ -91,16 +97,27 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
-
+    /**
+     * 图片url(第一张为封面)
+     */
     @TableField("image")
     private String image;
 
+    /**
+     * 压缩后图片url(第一张为封面)
+     */
     @TableField("thumb_image")
     private String thumbImage;
 
+    /**
+     * 经度
+     */
     @TableField("longitude")
     private String longitude;
 
+    /**
+     * 纬度
+     */
     @TableField("latitude")
     private String latitude;
 

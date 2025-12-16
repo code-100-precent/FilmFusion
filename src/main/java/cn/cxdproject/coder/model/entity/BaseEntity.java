@@ -18,16 +18,26 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public abstract class BaseEntity {
+
+    /**
+     * 数据创建时间
+     */
     @CreatedDate
     @TableField("created_at")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 
+    /**
+     * 数据更新时间
+     */
     @LastModifiedDate
     @TableField("updated_at")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
+    /**
+     * 逻辑删除
+     */
     @TableField("deleted")
     private Boolean deleted = false;
 }

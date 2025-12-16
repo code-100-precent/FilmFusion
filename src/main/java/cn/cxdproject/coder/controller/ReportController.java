@@ -48,8 +48,6 @@ public class ReportController {
         return ApiResponse.success(reportVO);
     }
 
-    // ==================== 普通用户接口 ====================
-
     /**
      * 创建影视剧备案
      */
@@ -119,8 +117,6 @@ public class ReportController {
                 reportPage.getRecords()
         );
     }
-
-    // ==================== 管理员接口 ====================
 
     /**
      * 管理员更新影视剧备案
