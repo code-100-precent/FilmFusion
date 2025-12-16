@@ -109,14 +109,17 @@ service.interceptors.response.use(
       // 统一错误处理
       const errorMsg = res.message || '请求失败'
       console.error(`业务逻辑错误: ${response.config.url}, 错误码: ${res.code}, 错误信息: ${errorMsg}`)
-      showMessage(errorMsg, 'error')
 
       if (res.code === 401) {
-        console.warn('认证失效，清除token并跳转到登录页')
+        // token 失效时不再弹出错误提示，只做静默跳转
+        console.warn('认证失效，清除token并跳转到登录页（静默处理）')
         localStorage.removeItem('token')
         setTimeout(() => {
           router.push('/login')
         }, 1000)
+      } else {
+        // 非认证类错误正常提示
+        showMessage(errorMsg, 'error')
       }
       // 构建详细的错误对象
       const error = new Error(errorMsg)
@@ -140,7 +143,7 @@ service.interceptors.response.use(
           break
         case 401:
           errorMsg = data?.message || '未登录或登录已过期，请重新登录'
-          console.warn('认证失败，清除token并跳转到登录页')
+          console.warn('认证失败，清除token并跳转到登录页（静默处理）')
           localStorage.removeItem('token')
           setTimeout(() => {
             router.push('/login')
@@ -178,8 +181,10 @@ service.interceptors.response.use(
       errorMsg = error.message || '请求配置错误'
     }
 
-    // 显示详细的错误信息
-    showMessage(errorMsg, 'error')
+    // 401 认证错误不再弹出提示，只做静默处理
+    if (error.httpStatus !== 401) {
+      showMessage(errorMsg, 'error')
+    }
     return Promise.reject(error)
   }
 )
