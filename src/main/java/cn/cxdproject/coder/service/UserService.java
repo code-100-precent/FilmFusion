@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
  * User 服务接口
+ * 定义用户认证与管理相关能力
  * @author Hibiscus-code-generate
  */
 public interface UserService extends IService<User> {
@@ -110,7 +111,11 @@ public interface UserService extends IService<User> {
      */
     UserVO toUserVO(User user);
 
-    //将User实体转换为UserVO(不对电话号码进行铭感处理)
+    /**
+     * 将User实体转换为UserVO（不对电话号码进行敏感处理）
+     * @param user 用户实体
+     * @return 用户VO（包含完整电话号码）
+     */
     UserVO toUserAdminVO(User user);
     
     /**

@@ -33,9 +33,9 @@
             `status`,
             `location_description`,
             `location_principal_phone`,
-            'location_principal_name',
-            'gov_principal_phone',
-            'gov_principal_name',
+            `location_principal_name`,
+            `gov_principal_phone`,
+            `gov_principal_name`,
             `contact_name`,
             `address`,
             `price`,
@@ -43,10 +43,10 @@
             `deleted`,
             `created_at`,
             `updated_at`,
-            'image',
-            'thumb_image',
-            'longitude',
-            'latitude'
+            `image`,
+            `thumb_image`,
+            `longitude`,
+            `latitude`
     </sql>
 
     <select id="selectIds" resultType="long">
@@ -54,6 +54,7 @@
         FROM fi_locations
         <where>
             deleted = 0
+            AND status = 1
             <!-- 模糊搜索 -->
             <if test="keyword != null and keyword != ''">
                 AND (
@@ -67,7 +68,7 @@
                 AND id > #{lastId}
             </if>
         </where>
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT #{size}
     </select>
 
@@ -82,7 +83,7 @@
             OR type LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -90,7 +91,8 @@
         SELECT *
         FROM fi_locations
         WHERE deleted = 0
-        ORDER BY id ASC
+          AND status = 1
+        ORDER BY created_at DESC
             LIMIT 10
     </select>
 
@@ -149,6 +151,7 @@
         SELECT COUNT(1)
         FROM fi_locations
         WHERE deleted = 0
+        AND status = 1
         <if test="keyword != null and keyword != ''">
             AND (
             name LIKE CONCAT('%', #{keyword}, '%')

@@ -39,8 +39,6 @@ public class ShootController {
         this.shootService = shootService;
     }
 
-    // ==================== 公开接口 ====================
-
     /**
      * 获取协拍服务详情（公开）
      */
@@ -80,7 +78,6 @@ public class ShootController {
         return new CursorPageResponseVO<>(list, nextCursor);
     }
 
-    // ==================== 管理员接口 ====================
 
     /**
      * 创建协拍服务

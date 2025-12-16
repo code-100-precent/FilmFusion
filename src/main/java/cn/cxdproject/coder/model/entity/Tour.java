@@ -72,17 +72,26 @@ public class Tour extends BaseEntity implements Serializable {
     private String food;
 
     /**
-    * images
-    */
+     * 图片url(第一张为封面)
+     */
     @TableField("image")
     private String image;
 
+    /**
+     * 压缩后图片url(第一张为封面)
+     */
     @TableField("thumb_image")
     private String thumbImage;
 
+    /**
+     * 附近的景点
+     */
     @TableField("location_id")
     private String locationId;
 
+    /**
+     * 附近拍摄的影视剧
+     */
     @TableField("drama_id")
     private String dramaId;
 

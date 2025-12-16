@@ -58,7 +58,7 @@
                 AND id > #{lastId}
             </if>
         </where>
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT #{size}
     </select>
 
@@ -73,7 +73,7 @@
             OR theme LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -94,7 +94,7 @@
         SELECT *
         FROM fi_tours
         WHERE deleted = 0
-        ORDER BY id ASC
+        ORDER BY created_at DESC
             LIMIT 10
     </select>
 

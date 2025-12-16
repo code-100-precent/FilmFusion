@@ -79,11 +79,15 @@ public class Shoot extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
-
+    /**
+     * 图片url(第一张为封面)
+     */
     @TableField("image")
     private String image;
 
-
+    /**
+     * 压缩后图片url(第一张为封面)
+     */
     @TableField("thumb_image")
     private String thumbImage;
 

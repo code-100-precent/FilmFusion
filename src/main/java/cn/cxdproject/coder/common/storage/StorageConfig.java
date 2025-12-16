@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import static cn.cxdproject.coder.common.constants.Constants.STORAGE_TYPE_LOCAL;
-import static cn.cxdproject.coder.common.constants.Constants.STORAGE_TYPE_MINIO;
+
 
 
 /**
@@ -12,11 +12,6 @@ import static cn.cxdproject.coder.common.constants.Constants.STORAGE_TYPE_MINIO;
  */
 @Configuration
 public class StorageConfig {
-
-    /**
-     * Minio存储服务
-     */
-    private final MinioStorageService minioStorageService;
 
     /**
      * 本地存储服务
@@ -28,8 +23,7 @@ public class StorageConfig {
      */
     private final FileStorageProperties properties;
 
-    public StorageConfig(MinioStorageService minioStorageService, LocalStorageService localStorageService, FileStorageProperties properties) {
-        this.minioStorageService = minioStorageService;
+    public StorageConfig(LocalStorageService localStorageService, FileStorageProperties properties) {
         this.localStorageService = localStorageService;
         this.properties = properties;
     }
@@ -40,7 +34,6 @@ public class StorageConfig {
     @Bean
     public FileStorageAdapter fileStorageAdapter() {
         return switch (properties.getType()) {
-            case STORAGE_TYPE_MINIO -> minioStorageService;
             case STORAGE_TYPE_LOCAL -> localStorageService;
             default -> throw new IllegalArgumentException("不支持的存储类型: " + properties.getType());
         };

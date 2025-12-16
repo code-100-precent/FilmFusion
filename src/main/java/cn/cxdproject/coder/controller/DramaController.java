@@ -40,8 +40,6 @@ public class DramaController {
         this.dramaService = dramaService;
     }
 
-    // ==================== 公开接口 ====================
-
     /**
      * 获取电视剧备案详情（公开）
      */
@@ -80,8 +78,6 @@ public class DramaController {
 
         return new CursorPageResponseVO<>(list, nextCursor);
     }
-
-    // ==================== 管理员接口 ====================
 
     /**
      * 管理员更新电视剧备案

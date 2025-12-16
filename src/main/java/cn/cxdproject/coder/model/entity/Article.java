@@ -62,11 +62,16 @@ public class Article extends BaseEntity implements Serializable, Cloneable {
     @TableField("user_id")
     private Long userId;
 
-
+    /**
+     * 图片url
+     */
     @TableField("image")
     private String image;
 
 
+    /**
+     * 压缩图片url
+     */
     @TableField("thumb_image")
     private String thumbImage;
 

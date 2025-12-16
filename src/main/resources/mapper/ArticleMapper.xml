@@ -49,7 +49,7 @@
                 AND id > #{lastId}
             </if>
         </where>
-        ORDER BY id ASC
+        ORDER BY issue_time ASC
         LIMIT #{size}
     </select>
 
@@ -60,7 +60,7 @@
         <if test="keyword != null and keyword != ''">
             AND title LIKE CONCAT('%', #{keyword}, '%')
         </if>
-        ORDER BY id ASC
+        ORDER BY issue_time ASC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -68,7 +68,7 @@
         SELECT *
         FROM fi_articles
         WHERE deleted = 0
-        ORDER BY id ASC
+        ORDER BY created_at DESC
             LIMIT 10;
     </select>
 
