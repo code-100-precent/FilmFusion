@@ -30,9 +30,19 @@ public interface HotelService extends IService<Hotel> {
     HotelVO getHotelById(Long otelId);
 
     /**
+     * 根据ID获取酒店详情（带超时控制和降级）
+     */
+    HotelVO getHotelByIdWithTimeout(Long hotelId);
+
+    /**
      * 分页获取酒店列表（按时间倒序，公开接口）
      */
     List<HotelVO> getHotelPage(Long lastId, int size, String keyword);
+
+    /**
+     * 分页获取酒店列表（带超时控制和降级）
+     */
+    List<HotelVO> getHotelPageWithTimeout(Long lastId, int size, String keyword);
 
     /**
      * 管理员更新酒店信息

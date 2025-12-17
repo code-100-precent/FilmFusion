@@ -52,5 +52,7 @@ public class CreateLocationDTO {
     private String longitude;
 
     private String latitude;
+
+    private String dramaId;
 }
 

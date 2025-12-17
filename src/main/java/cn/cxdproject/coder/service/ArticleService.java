@@ -23,9 +23,19 @@ public interface ArticleService extends IService<Article> {
     ArticleVO getArticleById(Long articleId);
 
     /**
+     * 获取文章详情（带超时控制和降级）
+     */
+    ArticleVO getArticleByIdWithTimeout(Long articleId);
+
+    /**
      * 分页获取文章列表（按时间倒序，公开接口）
      */
-   List<ArticleVO> getArticlePage(Long lastId, int size, String keyword);
+    List<ArticleVO> getArticlePage(Long lastId, int size, String keyword);
+
+    /**
+     * 分页获取文章列表（带超时控制和降级）
+     */
+    List<ArticleVO> getArticlePageWithTimeout(Long lastId, int size, String keyword);
 
     /**
      * 管理员创建文章

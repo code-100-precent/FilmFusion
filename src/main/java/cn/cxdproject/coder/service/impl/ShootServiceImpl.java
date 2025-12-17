@@ -14,6 +14,7 @@ import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.mapper.ShootMapper;
+import cn.cxdproject.coder.service.PolicyService;
 import cn.cxdproject.coder.service.ShootService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
@@ -23,14 +24,19 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
+import javax.annotation.Resource;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 
@@ -44,14 +50,16 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     private final ShootMapper shootMapper;
     private final Cache<String, Object> cache;
     private final RedisUtils redisUtils;
+    private final ObjectProvider<ShootService> shootServiceProvider;
 
     public ShootServiceImpl(
             ShootMapper shootMapper,
             @Qualifier("cache") Cache<String, Object> cache,
-            RedisUtils redisUtils) {
+            RedisUtils redisUtils, ObjectProvider<ShootService> shootServiceProvider) {
         this.shootMapper = shootMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.shootServiceProvider = shootServiceProvider;
     }
 
     //创建shoot数据
@@ -263,5 +271,33 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public ShootVO getShootByIdWithTimeout(Long shootId) {
+        try {
+            CompletableFuture<ShootVO> future =
+                    CompletableFuture.supplyAsync(() -> shootServiceProvider.getObject()
+                            .getShootById(shootId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(shootId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<ShootVO>> future =
+                    CompletableFuture.supplyAsync(() -> shootServiceProvider.getObject()
+                            .getShootPage(lastId, size, keyword));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

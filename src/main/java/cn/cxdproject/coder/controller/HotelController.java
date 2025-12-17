@@ -40,7 +40,7 @@ public class HotelController {
     @PublicAccess
     public ApiResponse<HotelVO> getHotelById(@PathVariable @NotNull(message = "旅店ID不能为空") Long id) {
 
-        HotelVO hotelVO = hotelService.getHotelById(id);
+        HotelVO hotelVO = hotelService.getHotelByIdWithTimeout(id);
         return ApiResponse.success(hotelVO);
     }
 
@@ -63,7 +63,7 @@ public class HotelController {
             }
         }
 
-        List<HotelVO> list = hotelService.getHotelPage(lastId, size, keyword);
+        List<HotelVO> list = hotelService.getHotelPageWithTimeout(lastId, size, keyword);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {

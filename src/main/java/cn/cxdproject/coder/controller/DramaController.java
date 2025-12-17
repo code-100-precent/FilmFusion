@@ -46,7 +46,7 @@ public class DramaController {
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<DramaVO> getDramaById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        DramaVO dramaVO = dramaService.getDramaById(id);
+        DramaVO dramaVO = dramaService.getDramaByIdWithTimeout(id);
         return ApiResponse.success(dramaVO);
     }
 
@@ -69,7 +69,7 @@ public class DramaController {
             }
         }
 
-        List<DramaVO> list = dramaService.getDramaPage(lastId, size, keyword);
+        List<DramaVO> list = dramaService.getDramaPageWithTimeout(lastId, size, keyword);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {

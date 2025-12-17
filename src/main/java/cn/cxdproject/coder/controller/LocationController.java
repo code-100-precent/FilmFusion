@@ -48,7 +48,7 @@ public class LocationController {
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<LocationVO> getLocationById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        LocationVO locationVO = locationService.getLocationById(id);
+        LocationVO locationVO = locationService.getLocationByIdWithTimeout(id);
         return ApiResponse.success(locationVO);
     }
 
@@ -71,7 +71,7 @@ public class LocationController {
             }
         }
 
-        List<LocationVO> list = locationService.getLocationPage(lastId, size, keyword);
+        List<LocationVO> list = locationService.getLocationPageWithTimeout(lastId, size, keyword);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {

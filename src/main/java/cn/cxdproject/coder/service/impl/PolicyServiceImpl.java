@@ -14,6 +14,7 @@ import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.PolicyVO;
+import cn.cxdproject.coder.service.DramaService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -25,12 +26,17 @@ import cn.cxdproject.coder.service.PolicyService;
 import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
+import javax.annotation.Resource;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.NOT_FOUND;
 
@@ -44,11 +50,14 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     private final PolicyMapper policyMapper;
     private final Cache<String, Object> cache;
     public final RedisUtils redisUtils;
+    private final ObjectProvider<PolicyService> policyServiceProvider;
 
-    public PolicyServiceImpl(PolicyMapper policyMapper, Cache<String, Object> cache, RedisUtils redisUtils) {
+
+    public PolicyServiceImpl(PolicyMapper policyMapper, Cache<String, Object> cache, RedisUtils redisUtils, ObjectProvider<PolicyService> policyServiceProvider) {
         this.policyMapper = policyMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.policyServiceProvider = policyServiceProvider;
     }
 
     //创建policy
@@ -90,10 +99,12 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
             if (policy == null || Boolean.TRUE.equals(policy.getDeleted())) {
                 throw new NotFoundException(NOT_FOUND.code(), ResponseConstants.NOT_FIND);
             }
-            cache.asMap().put(CaffeineConstants.POLICY + policyId, policy);
+            cache.put(CaffeineConstants.POLICY + policyId, policy);
             return toPolicyVO(policy);
         }
     }
+
+
 
 
     //客户端批量查询（游标分页）
@@ -259,5 +270,33 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public List<PolicyVO> getPolicyPageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<PolicyVO>> future =
+                    CompletableFuture.supplyAsync(() -> policyServiceProvider.getObject()
+                            .getPolicyPage(lastId, size, keyword));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public PolicyVO getPolicyByIdWithTimeout(Long policyId) {
+        try {
+            CompletableFuture<PolicyVO> future =
+                    CompletableFuture.supplyAsync(() -> policyServiceProvider.getObject()
+                            .getPolicyById(policyId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(policyId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

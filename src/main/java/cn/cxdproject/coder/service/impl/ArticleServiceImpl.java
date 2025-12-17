@@ -15,6 +15,7 @@ import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.mapper.ArticleMapper;
 import cn.cxdproject.coder.model.vo.BannerVO;
 import cn.cxdproject.coder.service.ArticleService;
+import cn.cxdproject.coder.service.LocationService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -24,14 +25,17 @@ import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 
@@ -47,15 +51,19 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private final ArticleMapper articleMapper;
     private final Cache<String, Object> cache;
     private final RedisUtils redisUtils;
+    private final ObjectProvider<ArticleService> articleServiceProvider;
+
 
     public ArticleServiceImpl(
             ArticleMapper articleMapper,
             @Qualifier("cache") Cache<String, Object> cache,
-            RedisUtils redisUtils
+            RedisUtils redisUtils,
+            ObjectProvider<ArticleService> articleServiceProvider
     ) {
         this.articleMapper = articleMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.articleServiceProvider = articleServiceProvider;
     }
 
 
@@ -76,6 +84,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             return toArticleVO(article);
         }
     }
+
 
 
     //用户文章批量查询，采用游标分页
@@ -99,6 +108,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .map(this::toArticleVO)
                 .collect(Collectors.toList());
     }
+
 
     //管理员新增文章（进行操作日志记录）
     @Override
@@ -274,5 +284,33 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public ArticleVO getArticleByIdWithTimeout(Long articleId) {
+        try {
+            CompletableFuture<ArticleVO> future =
+                    CompletableFuture.supplyAsync(() -> articleServiceProvider.getObject()
+                            .getArticleById(articleId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(articleId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<ArticleVO> getArticlePageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<ArticleVO>> future =
+                    CompletableFuture.supplyAsync(() -> articleServiceProvider.getObject()
+                            .getArticlePage(lastId, size, keyword));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

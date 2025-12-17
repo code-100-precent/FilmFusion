@@ -121,6 +121,10 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
     @TableField("latitude")
     private String latitude;
 
+    //关联影视剧
+    @TableField("drama_id")
+    private String dramaId;
+
     @Override
     public Location clone() {
         try {

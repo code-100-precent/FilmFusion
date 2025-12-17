@@ -19,6 +19,7 @@ import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.HotelVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
+import cn.cxdproject.coder.service.DramaService;
 import cn.cxdproject.coder.service.HotelService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
@@ -29,13 +30,18 @@ import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.NOT_FOUND;
 
@@ -46,14 +52,17 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     private final HotelMapper hotelMapper;
     private final Cache<String, Object> cache;
     public  final RedisUtils redisUtils;
+    private final ObjectProvider<HotelService> hotelServiceProvider;
+
 
     public HotelServiceImpl(
             HotelMapper hotelMapper,
             @Qualifier("cache") Cache<String, Object> cache,
-            RedisUtils redisUtils) {
+            RedisUtils redisUtils, ObjectProvider<HotelService> hotelServiceProvider) {
         this.hotelMapper = hotelMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.hotelServiceProvider = hotelServiceProvider;
     }
 
 
@@ -103,6 +112,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         }
     }
 
+
     //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "hotelGetPage", fallbackMethod = "getPageFallback")
@@ -124,7 +134,6 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .map(this::toHotelVO)
                 .collect(Collectors.toList());
     }
-
 
     //更新数据（仅限管理端）
     @Override
@@ -268,5 +277,33 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public HotelVO getHotelByIdWithTimeout(Long hotelId) {
+        try {
+            CompletableFuture<HotelVO> future =
+                    CompletableFuture.supplyAsync(() -> hotelServiceProvider.getObject().
+                            getHotelById(hotelId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(hotelId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<HotelVO> getHotelPageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<HotelVO>> future =
+                    CompletableFuture.supplyAsync(() -> hotelServiceProvider.getObject()
+                            .getHotelPage(lastId, size, keyword));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -134,7 +134,7 @@ resilience4j:
         failure-rate-threshold: 50
         slow-call-rate-threshold: 50
         slow-call-duration-threshold: 2s
-        wait-duration-in-open-state: 5s
+        wait-duration-in-open-state: 2s
         permitted-number-of-calls-in-half-open-state: 5
         automatic-transition-from-open-to-half-open-enabled: true
 

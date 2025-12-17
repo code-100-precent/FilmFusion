@@ -41,6 +41,7 @@ public class LocationVO {
     private String thumbImage;
     private String longitude;
     private String latitude;
+    private String dramaId;
 
 }
 

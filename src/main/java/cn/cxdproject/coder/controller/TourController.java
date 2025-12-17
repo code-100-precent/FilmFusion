@@ -42,7 +42,7 @@ public class TourController {
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<TourVO> getTourById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        TourVO tourVO = tourService.getTourById(id);
+        TourVO tourVO = tourService.getTourByIdWithTimeout(id);
         return ApiResponse.success(tourVO);
     }
     /**
@@ -64,7 +64,7 @@ public class TourController {
             }
         }
 
-        List<TourVO> list = tourService.getTourPage(lastId, size, keyword);
+        List<TourVO> list = tourService.getTourPageWithTimeout(lastId, size, keyword);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {

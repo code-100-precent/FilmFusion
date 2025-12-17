@@ -21,14 +21,17 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 
@@ -42,13 +45,16 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     private final DramaMapper dramaMapper;
     private final Cache<String, Object> cache;
     private final RedisUtils redisUtils;
+    private final ObjectProvider<DramaService> dramaServiceProvider;
 
     public DramaServiceImpl(DramaMapper dramaMapper,
                             @Qualifier("cache") Cache<String, Object> cache,
-                            RedisUtils redisUtils) {
+                            RedisUtils redisUtils,
+                            ObjectProvider<DramaService> dramaServiceProvider) {
         this.dramaMapper = dramaMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.dramaServiceProvider = dramaServiceProvider;
     }
 
     //管理员创建drama
@@ -99,6 +105,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
             return toDramaVO(drama);
         }
     }
+
 
     //用户批量查询（游标分页）
     @Override
@@ -270,5 +277,31 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public DramaVO getDramaByIdWithTimeout(Long dramaId) {
+        try {
+            CompletableFuture<DramaVO> future =
+                    CompletableFuture.supplyAsync(() -> dramaServiceProvider.getObject().getDramaById(dramaId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(dramaId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<DramaVO> getDramaPageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<DramaVO>> future =
+                    CompletableFuture.supplyAsync(() -> dramaServiceProvider.getObject().getDramaPage(lastId, size, keyword));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
