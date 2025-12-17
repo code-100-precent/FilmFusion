@@ -34,7 +34,7 @@ public class DailyLatesDramaCacheTask {
 
 
     @Scheduled(cron = "0 0 2 * * ?")
-    public void cacheLatest10Dramas() {
+    public void cacheLatestDramaPage() {
         try {
             // 1. 从数据库查询最新10条
             List<Drama> latestDramas = dramaMapper.selectLatest10();
@@ -54,13 +54,43 @@ public class DailyLatesDramaCacheTask {
 
             // 4. 写入 Redis，有效期25小时
             redisUtils.set(
-                    TaskConstants.DRAMA,
+                    TaskConstants.DRAMA_PAGE,
                     json,
                     Duration.ofHours(25)
             );
             log.info("成功缓存 {} 条影视信息到 Redis", voList.size());
         } catch (Exception e) {
             log.error("缓存失败", e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void cacheLatestDrama() {
+        try {
+            // 1. 从数据库查询最新1条剧目数据
+            Drama latestDrama = dramaMapper.selectLatestOne();
+
+            if (latestDrama == null) {
+                log.warn("未查到任何剧目数据，跳过缓存");
+                return;
+            }
+
+            // 2. 转为 VO
+            DramaVO vo = toDramaVO(latestDrama);
+
+            // 3. 序列化为 JSON（单个对象）
+            String json = JsonUtils.toJson(vo);
+
+            // 4. 写入 Redis，有效期 25 小时
+            redisUtils.set(
+                    TaskConstants.DRAMA,
+                    json,
+                    Duration.ofHours(25)
+            );
+            log.info("成功缓存最新1条剧目信息到 Redis");
+
+        } catch (Exception e) {
+            log.error("缓存最新剧目信息失败", e);
         }
     }
 

@@ -29,7 +29,7 @@ public class DailyLatesTourCacheTask {
     }
 
     @Scheduled(cron = "0 0 2 * * ?")
-    public void cacheLatest10Tours() {
+    public void cacheLatestTourPage() {
         try {
             // 1. 从数据库查询最新10条
             List<Tour> latestTours = tourMapper.selectLatest10();
@@ -50,13 +50,43 @@ public class DailyLatesTourCacheTask {
 
             // 4. 写入 Redis，有效期25小时
             redisUtils.set(
-                    TaskConstants.ARTICLE,
+                    TaskConstants.TOUR_PAGE,
                     json,
                     Duration.ofHours(25)
             );
             log.info("成功缓存 {} 条文章到 Redis", voList.size());
         } catch (Exception e) {
             log.error("缓存失败", e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void cacheLatestTourId() {
+        try {
+            // 1. 从数据库查询最新1条
+            Tour latestTour = tourMapper.selectLatestOne();
+
+            if (latestTour == null) {
+                log.warn("未查到任何旅游路线数据，跳过缓存");
+                return;
+            }
+
+            // 2. 转为VO
+            TourVO vo = toTourVO(latestTour);
+
+            // 3. 序列化（单个对象，不是列表）
+            String json = JsonUtils.toJson(vo);
+
+            // 4. 写入 Redis，有效期25小时
+            redisUtils.set(
+                    TaskConstants.TOUR,
+                    json,
+                    Duration.ofHours(25)
+            );
+            log.info("成功缓存最新1条旅游路线到 Redis");
+
+        } catch (Exception e) {
+            log.error("缓存最新旅游路线失败", e);
         }
     }
 

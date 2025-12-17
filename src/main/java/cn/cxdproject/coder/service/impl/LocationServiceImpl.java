@@ -230,10 +230,11 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.LOCATION + id);
-        if (store != null) {
-            return toLocationVO((Location) store);
+        if (store == null) {
+            store = redisUtils.get(TaskConstants.LOCATION, Location.class);
         }
-        return null;
+
+        return store != null ? toLocationVO((Location) store) : null;
     }
 
     //客户端批量查询降级接口
@@ -245,8 +246,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         }
 
         try {
-            // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
-            String json = (String) redisUtils.get(TaskConstants.LOCATION);
+            // 从 Redis 获取缓存的全量文章
+            String json = (String) redisUtils.get(TaskConstants.LOCATION_PAGE);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }

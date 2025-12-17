@@ -35,7 +35,7 @@ public interface DramaService extends IService<Drama> {
     /**
      * 分页获取电视剧备案列表（按时间倒序，公开）
      */
-    List<DramaVO> getDramaPage(Long lastId, int size, String keyword);
+    List<DramaVO> getDramaPage(Long lastId, int size, String keyword) throws InterruptedException;
     
     /**
      * 分页获取电视剧备案列表（带超时控制和降级）

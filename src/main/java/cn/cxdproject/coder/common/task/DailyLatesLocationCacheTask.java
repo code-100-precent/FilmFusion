@@ -31,7 +31,7 @@ public class DailyLatesLocationCacheTask {
     }
 
     @Scheduled(cron = "0 0 2 * * ?")
-    public void cacheLatest10Locations() {
+    public void cacheLatestLocationPage() {
         try {
             // 1. 从数据库查询最新10条
             List<Location> latestLocations = locationMapper.selectLatest10();
@@ -51,13 +51,43 @@ public class DailyLatesLocationCacheTask {
 
             // 4. 写入 Redis，有效期 25 小时
             redisUtils.set(
-                    TaskConstants.LOCATION,
+                    TaskConstants.LOCATION_PAGE,
                     json,
                     Duration.ofHours(25)
             );
             log.info("成功缓存 {} 条地址到 Redis", voList.size());
         } catch (Exception e) {
             log.error("缓存失败", e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void cacheLatestLocation() {
+        try {
+            // 1. 从数据库查询最新1条地点数据
+            Location latestLocation = locationMapper.selectLatestOne();
+
+            if (latestLocation == null) {
+                log.warn("未查到任何地点数据，跳过缓存");
+                return;
+            }
+
+            // 2. 转为 VO
+            LocationVO vo = toLocationVO(latestLocation);
+
+            // 3. 序列化为 JSON（单个对象）
+            String json = JsonUtils.toJson(vo);
+
+            // 4. 写入 Redis，有效期 25 小时
+            redisUtils.set(
+                    TaskConstants.LOCATION,
+                    json,
+                    Duration.ofHours(25)
+            );
+            log.info("成功缓存最新1条地点到 Redis");
+
+        } catch (Exception e) {
+            log.error("缓存最新地点失败", e);
         }
     }
 

@@ -40,7 +40,7 @@ public interface TourService extends IService<Tour> {
     /**
      * 分页获取线路列表（按时间倒序，公开接口）
      */
-    List<TourVO> getTourPage(Long lastId, int size, String keyword);
+    List<TourVO> getTourPage(Long lastId, int size, String keyword) throws InterruptedException;
 
     /**
      * 分页获取线路列表（带超时控制和降级）

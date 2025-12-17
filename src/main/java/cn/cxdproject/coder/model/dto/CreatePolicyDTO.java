@@ -1,5 +1,6 @@
 package cn.cxdproject.coder.model.dto;
 
+import cn.cxdproject.coder.model.entity.Banner;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
@@ -50,7 +51,7 @@ public class CreatePolicyDTO {
 
     private String thumbImage;
 
-    private String status;
+    private Boolean status;
 
 
 }

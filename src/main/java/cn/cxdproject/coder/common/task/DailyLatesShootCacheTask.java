@@ -31,7 +31,7 @@ public class DailyLatesShootCacheTask {
     }
 
     @Scheduled(cron = "0 0 2 * * ?")
-    public void cacheLatest10Shoots() {
+    public void cacheLatestShootPage() {
         try {
             // 1. 从数据库查询最新10条
             List<Shoot> latestShoots = shootMapper.selectLatest10();
@@ -51,13 +51,43 @@ public class DailyLatesShootCacheTask {
 
             // 4. 写入 Redis，有效期25小时
             redisUtils.set(
-                    TaskConstants.SHOOT,
+                    TaskConstants.SHOOT_PAGE,
                     json,
                     Duration.ofHours(25)
             );
             log.info("成功缓存 {} 条协拍服务信息到 Redis", voList.size());
         } catch (Exception e) {
             log.error("缓存失败", e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void cacheLatestShootId() {
+        try {
+            // 1. 从数据库查询最新1条
+            Shoot latestShoot = shootMapper.selectLatestOne();
+
+            if (latestShoot == null) {
+                log.warn("未查到任何 Shoot 数据，跳过缓存");
+                return;
+            }
+
+            // 2. 转为 VO
+            ShootVO vo = toShootVO(latestShoot);
+
+            // 3. 序列化（单个对象）
+            String json = JsonUtils.toJson(vo);
+
+            // 4. 写入 Redis，有效期25小时
+            redisUtils.set(
+                    TaskConstants.SHOOT,
+                    json,
+                    Duration.ofHours(25)
+            );
+            log.info("成功缓存最新1条 Shoot 到 Redis");
+
+        } catch (Exception e) {
+            log.error("缓存最新 Shoot 失败", e);
         }
     }
 

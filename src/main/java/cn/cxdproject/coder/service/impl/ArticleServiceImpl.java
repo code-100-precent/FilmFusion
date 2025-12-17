@@ -228,11 +228,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.ARTICLE + articleId);
-        if (store != null) {
-            return toArticleVO((Article) store);
+        if (store == null) {
+            store = redisUtils.get(TaskConstants.ARTICLE, Article.class);
         }
 
-        return null;
+        return store != null ? toArticleVO((Article) store) : null;
     }
 
     //游标查询降级策略
@@ -245,7 +245,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
-            String json = (String) redisUtils.get(TaskConstants.ARTICLE);
+            String json = (String) redisUtils.get(TaskConstants.ARTICLE_PAGE);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }

@@ -37,4 +37,6 @@ public interface DramaMapper extends BaseMapper<Drama> {
 
     Long getTotal(@Param("keyword") String keyword);
 
+    Drama selectLatestOne();
+
 }
