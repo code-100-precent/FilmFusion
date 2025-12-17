@@ -215,10 +215,11 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.POLICY + id);
-        if (store != null) {
-            return toPolicyVO((Policy) store);
+        if (store == null) {
+            store = redisUtils.get(TaskConstants.POLICY, Policy.class);
         }
-        return null;
+
+        return store != null ? toPolicyVO((Policy) store) : null;
     }
 
     //客户端批量查询降级接口
@@ -231,7 +232,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
-            String json = (String) redisUtils.get(TaskConstants.POLICY);
+            String json = (String) redisUtils.get(TaskConstants.POLICY_PAGE);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }

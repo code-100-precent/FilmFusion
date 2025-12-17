@@ -140,7 +140,7 @@
             </if>
         </set>
         WHERE id = #{id}
-        AND deleted = false
+        AND deleted = 0
     </update>
 
     <select id="getTotal" resultType="java.lang.Long">
@@ -154,6 +154,14 @@
             OR theme LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
+    </select>
+
+    <select id="selectLatestOne" resultType="cn.cxdproject.coder.model.entity.Tour">
+        SELECT *
+        FROM fi_tours
+        WHERE deleted = 0
+        ORDER BY created_at DESC
+            LIMIT 1
     </select>
 
 </mapper>

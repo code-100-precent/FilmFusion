@@ -156,7 +156,7 @@
             </if>
         </set>
         WHERE id = #{id}
-        AND deleted = false
+        AND deleted = 0
     </update>
 
     <select id="getTotal" resultType="java.lang.Long">
@@ -171,6 +171,15 @@
             OR type LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
+    </select>
+
+    <select id="selectLatestOne" resultType="cn.cxdproject.coder.model.entity.Location">
+        SELECT *
+        FROM fi_locations
+        WHERE deleted = 0
+          AND status = 1
+        ORDER BY created_at DESC
+        LIMIT 1
     </select>
 
 </mapper>

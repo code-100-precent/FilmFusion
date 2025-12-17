@@ -71,7 +71,7 @@ public class Policy extends BaseEntity implements Serializable {
      * 发布状态（草稿或发布）
      */
     @TableField("status")
-    private String status;
+    private Boolean status;
 
 
     @Override

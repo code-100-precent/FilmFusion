@@ -268,7 +268,8 @@ const policyForm = reactive({
   issueTime: null,
   content: '',
   image: '',
-  thumbImage: ''
+  thumbImage: '',
+  status: true
 })
 
 const imageFileList = ref([])
@@ -280,8 +281,8 @@ const typeOptions = [
 ]
 
 const statusOptions = [
-  { label: '发布', value: 1 },
-  { label: '草稿', value: 0 }
+  { label: '发布', value: true },
+  { label: '草稿', value: false }
 ]
 
 // 分页相关状态
@@ -511,7 +512,8 @@ const handleEdit = async (row) => {
         issueTime: res.data.issueTime || null,
         content: res.data.content || '',
         image: res.data.image || '',
-        thumbImage: res.data.thumbImage || ''
+        thumbImage: res.data.thumbImage || '',
+        status: res.data.status
       })
 
       // 设置封面图片文件列表

@@ -30,7 +30,7 @@ public class DailyLatesHotelCacheTask {
 
 
     @Scheduled(cron = "0 0 2 * * ?")
-    public void cacheLatest10Hotel() {
+    public void cacheLatestHotelPage() {
         try {
             // 1. 从数据库查询最新10条
             List<Hotel> latestHotels = hotelMapper.selectLatest10();
@@ -50,13 +50,43 @@ public class DailyLatesHotelCacheTask {
 
             // 4. 写入 Redis，有效期25小时
             redisUtils.set(
-                    TaskConstants.HOTEL,
+                    TaskConstants.HOTEL_PAGE,
                     json,
                     Duration.ofHours(25)
             );
             log.info("成功缓存 {} 条影视信息到 Redis", voList.size());
         } catch (Exception e) {
             log.error("缓存失败", e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void cacheLatestHotel() {
+        try {
+            // 1. 从数据库查询最新1条酒店数据
+            Hotel latestHotel = hotelMapper.selectLatestOne();
+
+            if (latestHotel == null) {
+                log.warn("未查到任何酒店数据，跳过缓存");
+                return;
+            }
+
+            // 2. 转为 VO
+            HotelVO vo = toHotelVO(latestHotel);
+
+            // 3. 序列化为 JSON（单个对象）
+            String json = JsonUtils.toJson(vo);
+
+            // 4. 写入 Redis，有效期 25 小时
+            redisUtils.set(
+                    TaskConstants.HOTEL,
+                    json,
+                    Duration.ofHours(25)
+            );
+            log.info("成功缓存最新1条酒店信息到 Redis");
+
+        } catch (Exception e) {
+            log.error("缓存最新酒店信息失败", e);
         }
     }
 

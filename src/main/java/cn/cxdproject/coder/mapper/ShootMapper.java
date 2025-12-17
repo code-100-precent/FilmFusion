@@ -37,4 +37,6 @@ public interface ShootMapper extends BaseMapper<Shoot> {
 
     Long getTotal(@Param("keyword") String keyword);
 
+    Shoot selectLatestOne();
+
 }

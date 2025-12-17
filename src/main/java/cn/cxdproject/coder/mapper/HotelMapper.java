@@ -28,4 +28,6 @@ public interface HotelMapper extends BaseMapper<Hotel> {
     );
 
     Long getTotal(@Param("keyword") String keyword);
+
+    Hotel selectLatestOne();
 }

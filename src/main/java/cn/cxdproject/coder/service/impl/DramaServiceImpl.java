@@ -221,11 +221,11 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.DRAMA + id);
-        if (store != null) {
-            return toDramaVO((Drama) store);
+        if (store == null) {
+            store = redisUtils.get(TaskConstants.DRAMA, Drama.class);
         }
 
-        return null;
+        return store != null ? toDramaVO((Drama) store) : null;
     }
 
     //用户批量查询降级
@@ -238,7 +238,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
-            String json = (String) redisUtils.get(TaskConstants.DRAMA);
+            String json = (String) redisUtils.get(TaskConstants.DRAMA_PAGE);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }
@@ -283,7 +283,8 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     public DramaVO getDramaByIdWithTimeout(Long dramaId) {
         try {
             CompletableFuture<DramaVO> future =
-                    CompletableFuture.supplyAsync(() -> dramaServiceProvider.getObject().getDramaById(dramaId));
+                    CompletableFuture.supplyAsync(() -> dramaServiceProvider.getObject()
+                            .getDramaById(dramaId));
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(dramaId, e);
@@ -296,7 +297,14 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     public List<DramaVO> getDramaPageWithTimeout(Long lastId, int size, String keyword) {
         try {
             CompletableFuture<List<DramaVO>> future =
-                    CompletableFuture.supplyAsync(() -> dramaServiceProvider.getObject().getDramaPage(lastId, size, keyword));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return dramaServiceProvider.getObject()
+                                    .getDramaPage(lastId, size, keyword);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);

@@ -45,5 +45,5 @@ public class UpdatePolicyDTO {
 
     private String thumbImage;
 
-    private String status;
+    private Boolean status;
 }
