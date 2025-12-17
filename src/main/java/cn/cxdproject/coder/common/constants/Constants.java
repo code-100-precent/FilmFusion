@@ -178,4 +178,5 @@ public interface Constants {
      */
     String STORAGE_TYPE_LOCAL = "local";
 
+    Long TIME = 2L;
 }

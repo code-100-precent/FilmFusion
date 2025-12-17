@@ -30,9 +30,19 @@ public interface ShootService extends IService<Shoot> {
     ShootVO getShootById(Long shootId);
 
     /**
+     * 根据ID获取拍摄报备详情（带超时控制和降级）
+     */
+    ShootVO getShootByIdWithTimeout(Long shootId);
+
+    /**
      * 分页获取拍摄报备列表（按时间倒序，公开接口）
      */
     List<ShootVO> getShootPage(Long lastId, int size, String keyword);
+
+    /**
+     * 分页获取拍摄报备列表（带超时控制和降级）
+     */
+    List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword);
 
     /**
      * 管理员更新拍摄报备信息

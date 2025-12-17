@@ -32,9 +32,19 @@ public interface PolicyService extends IService<Policy> {
     PolicyVO getPolicyById(Long policyId);
 
     /**
+     * 根据ID获取政策详情（带超时控制和降级）
+     */
+    PolicyVO getPolicyByIdWithTimeout(Long policyId);
+
+    /**
      * 分页获取政策列表（按时间倒序，公开接口）
      */
     List<PolicyVO> getPolicyPage(Long lastId, int size, String keyword);
+
+    /**
+     * 分页获取政策列表（带超时控制和降级）
+     */
+    List<PolicyVO> getPolicyPageWithTimeout(Long lastId, int size, String keyword);
 
     /**
      * 管理员更新政策

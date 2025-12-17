@@ -33,9 +33,19 @@ public interface TourService extends IService<Tour> {
     TourVO getTourById(Long tourId);
 
     /**
+     * 根据ID获取线路详情（带超时控制和降级）
+     */
+    TourVO getTourByIdWithTimeout(Long tourId);
+
+    /**
      * 分页获取线路列表（按时间倒序，公开接口）
      */
     List<TourVO> getTourPage(Long lastId, int size, String keyword);
+
+    /**
+     * 分页获取线路列表（带超时控制和降级）
+     */
+    List<TourVO> getTourPageWithTimeout(Long lastId, int size, String keyword);
 
     /**
      * 管理员更新线路信息

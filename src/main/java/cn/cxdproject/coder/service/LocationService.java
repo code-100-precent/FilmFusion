@@ -29,9 +29,19 @@ public interface LocationService extends IService<Location> {
     LocationVO getLocationById(Long locationId);
 
     /**
+     * 根据ID获取拍摄地详情（带超时控制和降级）
+     */
+    LocationVO getLocationByIdWithTimeout(Long locationId);
+
+    /**
      * 分页获取拍摄地列表（按时间倒序，公开接口）
      */
-    List<LocationVO> getLocationPage(Long lastId, int size, String keyword);
+    List<LocationVO> getLocationPage(Long lastId, int size, String keyword) throws InterruptedException;
+
+    /**
+     * 分页获取拍摄地列表（带超时控制和降级）
+     */
+    List<LocationVO> getLocationPageWithTimeout(Long lastId, int size, String keyword);
 
     /**
      * 管理员更新拍摄地信息

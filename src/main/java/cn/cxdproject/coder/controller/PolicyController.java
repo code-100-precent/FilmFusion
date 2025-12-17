@@ -44,7 +44,7 @@ public class PolicyController {
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<PolicyVO> getPolicyById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        PolicyVO policyVO = policyService.getPolicyById(id);
+        PolicyVO policyVO = policyService.getPolicyByIdWithTimeout(id);
         return ApiResponse.success(policyVO);
     }
 
@@ -67,7 +67,7 @@ public class PolicyController {
             }
         }
 
-        List<PolicyVO> list = policyService.getPolicyPage(lastId, size, keyword);
+        List<PolicyVO> list = policyService.getPolicyPageWithTimeout(lastId, size, keyword);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {

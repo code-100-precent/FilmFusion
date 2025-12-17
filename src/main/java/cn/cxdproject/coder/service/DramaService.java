@@ -28,9 +28,19 @@ public interface DramaService extends IService<Drama> {
     DramaVO getDramaById(Long dramaId);
     
     /**
+     * 获取电视剧备案详情（带超时控制和降级）
+     */
+    DramaVO getDramaByIdWithTimeout(Long dramaId);
+    
+    /**
      * 分页获取电视剧备案列表（按时间倒序，公开）
      */
     List<DramaVO> getDramaPage(Long lastId, int size, String keyword);
+    
+    /**
+     * 分页获取电视剧备案列表（带超时控制和降级）
+     */
+    List<DramaVO> getDramaPageWithTimeout(Long lastId, int size, String keyword);
     
     /**
      * 管理员更新电视剧备案

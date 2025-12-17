@@ -24,6 +24,7 @@
         <result column="thumb_image" property="thumbImage"/>
         <result column="longitude" property="longitude"/>
         <result column="latitude" property="latitude"/>
+        <result column="drama_id" property="dramaId"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -46,8 +47,16 @@
             `image`,
             `thumb_image`,
             `longitude`,
-            `latitude`
+            `latitude`,
+            `drama_id`
     </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT *
+        FROM fi_locations
+        WHERE id = #{id}
+        AND deleted = 0
+    </select>
 
     <select id="selectIds" resultType="long">
         SELECT id
@@ -72,7 +81,7 @@
         LIMIT #{size}
     </select>
 
-    <select id="getAdminPage" resultType="cn.cxdproject.coder.model.entity.Location">
+    <select id="getAdminPage" resultMap="BaseResultMap">
         SELECT *
         FROM fi_locations
         WHERE deleted = 0
@@ -87,7 +96,7 @@
         LIMIT #{offset}, #{size}
     </select>
 
-    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Location">
+    <select id="selectLatest10" resultMap="BaseResultMap">
         SELECT *
         FROM fi_locations
         WHERE deleted = 0
@@ -141,6 +150,9 @@
             </if>
             <if test="dto.latitude != null and dto.latitude != ''">
                 latitude = #{dto.latitude},
+            </if>
+            <if test="dto.dramaId != null and dto.dramaId != ''">
+                drama_id = #{dto.dramaId},
             </if>
         </set>
         WHERE id = #{id}

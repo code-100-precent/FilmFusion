@@ -49,7 +49,7 @@ public class ArticleController {
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<ArticleVO> getArticleById(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
-        ArticleVO articleVO = articleService.getArticleById(id);
+        ArticleVO articleVO = articleService.getArticleByIdWithTimeout(id);
         return ApiResponse.success(articleVO);
     }
     /**
@@ -71,7 +71,7 @@ public class ArticleController {
             }
         }
 
-        List<ArticleVO> list = articleService.getArticlePage(lastId, size, keyword);
+        List<ArticleVO> list = articleService.getArticlePageWithTimeout(lastId, size, keyword);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {

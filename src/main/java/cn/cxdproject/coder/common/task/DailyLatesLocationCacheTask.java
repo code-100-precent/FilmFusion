@@ -84,6 +84,7 @@ public class DailyLatesLocationCacheTask {
                 .thumbImage(location.getThumbImage())
                 .longitude(location.getLongitude())
                 .latitude(location.getLatitude())
+                .dramaId(location.getDramaId())
                 .build();
     }
 }
