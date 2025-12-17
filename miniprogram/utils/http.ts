@@ -2,11 +2,10 @@
  * HTTP 请求工具
  * 需要配置 baseURL
  */
-import { API_BASE_URL } from './config'
 import { processApiResponseFileUrls } from './apiProcessor'
 
-// 使用配置文件中的API基础地址
-export const baseURL = API_BASE_URL
+import { SERVER_BASE_URL } from './config'
+export const baseURL = `${SERVER_BASE_URL}/api`
 
 // 错误码映射表 - 前端统一处理错误文案
 const ERROR_MESSAGES: Record<number, string> = {
@@ -43,9 +42,9 @@ const requestInterceptor = {
 
     console.log('最终请求URL:', options.url)
 
-    // 2. 请求超时, 默认 10s，但不覆盖已设置的值
+    // 2. 请求超时, 默认 2s，但不覆盖已设置的值
     if (!options.timeout) {
-      options.timeout = 10000
+      options.timeout = 4000
     }
     // 3. 添加小程序端请求头标识
     options.header = {

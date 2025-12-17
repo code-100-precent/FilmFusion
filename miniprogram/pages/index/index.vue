@@ -243,6 +243,15 @@ export default {
     }
   },
   onLoad() {
+    // 1. 尝试从缓存读取Banner，实现秒开
+    try {
+      const cachedBanners = uni.getStorageSync('index_banners_cache')
+      if (cachedBanners && Array.isArray(cachedBanners)) {
+        this.banners = cachedBanners
+      }
+    } catch (e) {
+      console.error('读取Banner缓存失败', e)
+    }
     this.loadData()
   },
   methods: {
@@ -258,7 +267,10 @@ export default {
 
           // 处理轮播图数据
           if (bannerRes && bannerRes.data) {
-            this.banners = bannerRes.data.map((banner, index) => {
+            const cachedPaths = uni.getStorageSync('banner_local_paths') || {}
+            const fs = uni.getFileSystemManager ? uni.getFileSystemManager() : null
+            
+            const newBanners = bannerRes.data.map((banner, index) => {
               let path = '/pages/services/services'
               const targetModule = banner.targetModule || ''
               
@@ -270,15 +282,42 @@ export default {
                 path = queryString ? `${basePath}?${queryString}` : basePath
               }
 
+              const remoteUrl = getFileUrl(banner.imageUrl)
+              let displayUrl = remoteUrl
+              
+              // 尝试使用本地缓存图片
+              if (fs && cachedPaths[remoteUrl]) {
+                try {
+                  fs.accessSync(cachedPaths[remoteUrl])
+                  displayUrl = cachedPaths[remoteUrl]
+                } catch (e) {
+                  // 文件不存在，清除缓存记录
+                  delete cachedPaths[remoteUrl]
+                  uni.setStorageSync('banner_local_paths', cachedPaths)
+                }
+              }
+
               return {
                 title: banner.imageName || '雅安影视服务',
                 desc: '', // 不再显示任何描述文本
-                imageUrl: banner.imageUrl,
+                imageUrl: displayUrl,
+                originalUrl: remoteUrl, // 保存原始URL用于下载对比
                 tag: index === 0 ? '平台服务' : index === 1 ? '取景胜地' : '专业支持',
                 targetModule: banner.targetModule, // 保存targetModule用于跳转
                 path: path
               }
             })
+            
+            this.banners = newBanners
+            // 更新缓存
+            try {
+              uni.setStorageSync('index_banners_cache', newBanners)
+            } catch (e) {
+              console.error('缓存Banner失败', e)
+            }
+            
+            // 触发后台下载更新缓存
+            this.downloadAndCacheBannerImages(newBanners)
           }
 
           // 处理文章数据（游标分页）
@@ -373,6 +412,45 @@ export default {
         url: '/pages/profile/help'
       })
     },
+    downloadAndCacheBannerImages(banners) {
+      // 仅在支持文件系统的环境下执行
+      if (!uni.getFileSystemManager) return
+      
+      const cachedPaths = uni.getStorageSync('banner_local_paths') || {}
+      let hasChange = false
+      
+      banners.forEach((banner, index) => {
+        const remoteUrl = banner.originalUrl || banner.imageUrl
+        // 如果已经是本地路径，或者已经缓存且文件存在，则跳过
+        if (remoteUrl.startsWith('http') && (!cachedPaths[remoteUrl] || banner.imageUrl === remoteUrl)) {
+          // 下载文件
+          uni.downloadFile({
+            url: remoteUrl,
+            success: (res) => {
+              if (res.statusCode === 200) {
+                // 保存文件
+                uni.saveFile({
+                  tempFilePath: res.tempFilePath,
+                  success: (saveRes) => {
+                    const savedPath = saveRes.savedFilePath
+                    cachedPaths[remoteUrl] = savedPath
+                    uni.setStorageSync('banner_local_paths', cachedPaths)
+                    
+                    // 更新当前视图中的图片路径（如果还在显示该banner）
+                    // 注意：这里修改this.banners会触发视图更新
+                    if (this.banners[index] && (this.banners[index].originalUrl === remoteUrl || this.banners[index].imageUrl === remoteUrl)) {
+                      this.banners[index].imageUrl = savedPath
+                      // 同时更新页面缓存
+                      uni.setStorageSync('index_banners_cache', this.banners)
+                    }
+                  }
+                })
+              }
+            }
+          })
+        }
+      })
+    },
     getArticleCover(article) {
       // 1. 优先使用 thumbImage
       if (article.thumbImage) {
@@ -387,7 +465,7 @@ export default {
         return getFileUrl(article.cover)
       }
       // 4. 默认图片
-      return 'http://162.14.106.139:8080/api/files/origin/1765767098667_%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89_compressed.png'
+      return getFileUrl('files/origin/1765767098667_%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89_compressed.png')
     },
     formatDate(dateStr) {
       if (!dateStr) return ''

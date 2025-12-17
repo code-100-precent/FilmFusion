@@ -1,7 +1,10 @@
 /**
  * 文件URL处理工具
  */
-import { FILE_BASE_URL } from './config'
+
+import { SERVER_BASE_URL } from './config'
+
+const FILE_BASE_URL = SERVER_BASE_URL
 
 /**
  * 处理文件URL

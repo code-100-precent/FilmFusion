@@ -15,7 +15,7 @@
             v-model="keyword"
             class="search-input"
             type="text"
-            placeholder="搜索线路..."
+            placeholder="搜索"
             @confirm="handleSearch"
             @input="handleSearch"
           />

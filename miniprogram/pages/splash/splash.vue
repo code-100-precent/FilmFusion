@@ -2,16 +2,23 @@
 	<view class="splash-screen" :class="{ 'slide-out': isSlideOut }">
 		<image 
 			class="splash-image" 
-			src="http://162.14.106.139:8080/api/files/origin/1765768530788_compressed-图片文字修改_compressed.jpg"
+			:src="splashImage"
 		></image>
 	</view>
 </template>
 
 <script>
+import { getFileUrl } from '../../utils'
+
 export default {
 	data() {
 		return {
 			isSlideOut: false
+		}
+	},
+	computed: {
+		splashImage() {
+			return getFileUrl('files/origin/1765768530788_compressed-图片文字修改_compressed.jpg')
 		}
 	},
 	onLoad() {

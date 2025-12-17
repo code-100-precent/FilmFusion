@@ -14,7 +14,7 @@
             v-model="keyword"
             class="search-input"
             type="text"
-            placeholder="搜索资讯..."
+            placeholder="搜索"
             @confirm="handleSearch"
             @input="handleSearch"
           />
@@ -201,7 +201,7 @@ export default {
         return getFileUrl(article.cover)
       }
       // 4. 默认图片
-      return 'http://162.14.106.139:8080/api/files/origin/1765767098667_%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89_compressed.png'
+      return getFileUrl('files/origin/1765767098667_%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89_compressed.png')
     },
     getContentPreview(content) {
       if (!content) return ''

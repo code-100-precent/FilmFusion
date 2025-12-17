@@ -368,7 +368,7 @@ export const uploadFile = (filePath: string) => {
                 'Authorization': token ? `Bearer ${token}` : '',
                 'source-client': 'miniapp'
             },
-            timeout: 60000,
+            timeout: 10000,
             success: (res) => {
                 // 检查HTTP状态码
                 if (res.statusCode !== 200) {
@@ -526,9 +526,6 @@ export const changePassword = (data: {
 export const uploadAvatar = (filePath: string) => {
     return new Promise<ApiResponse<string>>((resolve, reject) => {
         const token = uni.getStorageSync('token')
-        const baseURL = process.env.NODE_ENV === 'development'
-            ? 'http://162.14.106.139:8080/api'
-            : 'https://your-production-domain.com/api'
 
         uni.uploadFile({
             url: baseURL + '/user/avatar',
@@ -539,6 +536,7 @@ export const uploadAvatar = (filePath: string) => {
                 'source-client': 'miniapp'
             },
             method: 'PUT',
+            timeout: 10000,
             success: (res) => {
                 const data = JSON.parse(res.data)
                 if (data.code === 200) {
