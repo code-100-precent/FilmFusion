@@ -172,17 +172,11 @@ public interface Constants {
      */
     String IS_READ_MESSAGE = "1";
 
-    /**
-     * minio存储类型
-     */
-    String STORAGE_TYPE_MINIO = "minio";
 
     /**
      * 本地存储类型
      */
     String STORAGE_TYPE_LOCAL = "local";
 
-
-    String DEFAULT_COVER = "/files/origin/1765506685069_picture1.png";
-    String DEFAULT_THUMB_COVER = "/files/thumb/1765506685069_picture1.png";
+    Long TIME = 2L;
 }

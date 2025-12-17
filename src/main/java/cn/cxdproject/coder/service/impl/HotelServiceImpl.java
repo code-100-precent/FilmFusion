@@ -19,6 +19,7 @@ import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.HotelVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
+import cn.cxdproject.coder.service.DramaService;
 import cn.cxdproject.coder.service.HotelService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
@@ -29,13 +30,18 @@ import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.NOT_FOUND;
 
@@ -46,27 +52,28 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     private final HotelMapper hotelMapper;
     private final Cache<String, Object> cache;
     public  final RedisUtils redisUtils;
+    private final ObjectProvider<HotelService> hotelServiceProvider;
+
 
     public HotelServiceImpl(
             HotelMapper hotelMapper,
             @Qualifier("cache") Cache<String, Object> cache,
-            RedisUtils redisUtils) {
+            RedisUtils redisUtils, ObjectProvider<HotelService> hotelServiceProvider) {
         this.hotelMapper = hotelMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.hotelServiceProvider = hotelServiceProvider;
     }
 
 
+    //管理端创建
     @Override
     @Loggable(
             type = LogType.HOTEL_CREATE,
             value = "Create hotel"
     )
     public HotelVO createHotelByAdmin(Long userId, CreateHotelDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
+
         Hotel hotel = Hotel.builder()
                 .name(createDTO.getName())
                 .description(createDTO.getDescription())
@@ -87,6 +94,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         return toHotelVO(hotel);
     }
 
+    //根据id查询
     @Override
     @CircuitBreaker(name = "hotelGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -104,6 +112,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         }
     }
 
+
+    //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "hotelGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -125,11 +135,11 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .collect(Collectors.toList());
     }
 
-
+    //更新数据（仅限管理端）
     @Override
     @Loggable(
             type = LogType.DRAMA_UPDATE,
-            value = "Update hotel ID: #{#dramaId}"
+            value = "Update hotel ID: #{#hotelId}"
     )
     public HotelVO updateHotelByAdmin(Long hotelId, UpdateHotelDTO updateDTO) {
         // 1. 校验是否存在且未删除
@@ -157,6 +167,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     }
 
 
+    //删除信息（仅限管理端）
     @Override
     @Loggable(
             type = LogType.HOTEL_DELETE,
@@ -201,6 +212,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .build();
     }
 
+    //id查询降级接口
     @Override
     public HotelVO getByIdFallback(Long id,Throwable e) {
 
@@ -215,6 +227,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         return null;
     }
 
+    //客户端游标分页降级接口
     @Override
     public List<HotelVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -244,6 +257,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         }
     }
 
+    //管理端分页查询
     @Override
     public Page<HotelVO> getHotelPageAdmin(Page<Hotel> page, String keyword) {
         long current = page.getCurrent();
@@ -263,5 +277,33 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public HotelVO getHotelByIdWithTimeout(Long hotelId) {
+        try {
+            CompletableFuture<HotelVO> future =
+                    CompletableFuture.supplyAsync(() -> hotelServiceProvider.getObject().
+                            getHotelById(hotelId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(hotelId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<HotelVO> getHotelPageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<HotelVO>> future =
+                    CompletableFuture.supplyAsync(() -> hotelServiceProvider.getObject()
+                            .getHotelPage(lastId, size, keyword));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

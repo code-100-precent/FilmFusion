@@ -36,6 +36,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         this.bannerMapper = bannerMapper;
     }
 
+    //管理员删除banner
     @Override
     public void deleteImage(Long id) {
         boolean updated = bannerMapper.update(null,
@@ -54,6 +55,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
 
     }
 
+    //管理员更新banner
     @Override
     public BannerVO updateImage(Long id,UpdateBannerDTO updateDTO) {
         Banner banner = this.getById(id);
@@ -83,6 +85,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         return toBannerVO(banner);
     }
 
+    //管理员创建banner
     @Override
     public BannerVO createImage(CreateBannerDTO createDTO) {
         // 如果targetModule为空，设置为空字符串
@@ -106,6 +109,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
         return toBannerVO(banner);
     }
 
+    //管理员分页查询
     @Override
     public Page<BannerVO> getImageAdminPage(Page<Banner> page, String keyword) {
         long current = page.getCurrent();
@@ -127,27 +131,16 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
                 .setTotal(total);
     }
 
+    //客户端返回所有可用banner数据
     @Override
-    public Page<BannerVO> getImagePage(Page<Banner> page) {
-        long current = page.getCurrent();
-        long size = page.getSize();
-        long offset = (current - 1) * size;
-
-        // 获取当前页的数据和总记录数
-        List<Banner> banners = bannerMapper.getPage( offset, size);
-        Long total = bannerMapper.getTotal();
-
-        List<BannerVO> voList = banners.stream()
+    public List<BannerVO> getImagePage() {
+        return bannerMapper.getPage().stream()
                 .map(this::toBannerVO)
                 .collect(Collectors.toList());
 
-        return new Page<BannerVO>()
-                .setCurrent(current)
-                .setSize(size)
-                .setRecords(voList)
-                .setTotal(total);
     }
 
+    //根据id查询
     @Override
     public BannerVO getImageById(Long id) {
             Banner banner = this.getById(id);

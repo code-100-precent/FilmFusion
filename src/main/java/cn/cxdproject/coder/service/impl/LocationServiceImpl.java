@@ -24,14 +24,17 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 
@@ -45,26 +48,26 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     private final LocationMapper locationMapper;
     private final Cache<String, Object> cache;
     public  final RedisUtils redisUtils;
+    private final ObjectProvider<LocationService> locationServiceProvider;
 
     public LocationServiceImpl(
             LocationMapper locationMapper,
             @Qualifier("cache") Cache<String, Object> cache,
-            RedisUtils redisUtils) {
+            RedisUtils redisUtils,
+            ObjectProvider<LocationService> locationServiceProvider) {
         this.locationMapper = locationMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.locationServiceProvider = locationServiceProvider;
     }
 
+    //创建数据（仅限管理员）
     @Override
     @Loggable(
             type = LogType.LOCATION_CREATE,
             value = "Create location"
     )
     public LocationVO createLocationByAdmin(Long userId, CreateLocationDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
 
         Location location = Location.builder()
                 .name(createDTO.getName())
@@ -82,6 +85,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .thumbImage(createDTO.getThumbImage())
                 .longitude(createDTO.getLongitude())
                 .latitude(createDTO.getLatitude())
+                .dramaId(createDTO.getDramaId())
                 .build();
 
         location.setCreatedAt(LocalDateTime.now());
@@ -91,6 +95,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         return toLocationVO(location);
     }
 
+    //根据id查询
     @Override
     @CircuitBreaker(name = "locationGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -108,11 +113,13 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         }
     }
 
+    //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "locationGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public List<LocationVO> getLocationPage(Long lastId, int size, String keyword) {
         List<Long> ids = locationMapper.selectIds(lastId, size, keyword);
+
         if (ids.isEmpty()) {
             return Collections.emptyList();
         }
@@ -130,6 +137,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     }
 
 
+
+    //更新数据（仅限管理员）
     @Override
     @Loggable(
             type = LogType.LOCATION_UPDATE,
@@ -160,6 +169,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         return toLocationVO(updatedLocation);
     }
 
+    //删除数据（仅限管理员）
     @Override
     @Loggable(
             type = LogType.LOCATION_DELETE,
@@ -207,9 +217,11 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                .thumbImage(location.getThumbImage())
                .longitude(location.getLongitude())
                .latitude(location.getLatitude())
+               .dramaId(location.getDramaId())
                .build();
     }
 
+    //单个id查询降级接口
     @Override
     public LocationVO getByIdFallback(Long id,Throwable e) {
 
@@ -224,6 +236,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         return null;
     }
 
+    //客户端批量查询降级接口
     @Override
     public List<LocationVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -252,6 +265,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         }
     }
 
+    //管理端分页接口
     @Override
     public Page<LocationVO> getLocationPageAdmin(Page<Location> page, String keyword) {
         long current = page.getCurrent();
@@ -271,5 +285,38 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public List<LocationVO> getLocationPageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<LocationVO>> future =
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return locationServiceProvider.getObject()
+                                    .getLocationPage(lastId, size, keyword);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public LocationVO getLocationByIdWithTimeout(Long locationId) {
+        try {
+            CompletableFuture<LocationVO> future =
+                    CompletableFuture.supplyAsync(() -> locationServiceProvider.getObject().getLocationById(locationId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(locationId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -34,7 +34,6 @@ public class FeedbackController {
         this.feedbackService = feedbackService;
     }
 
-    // ==================== 普通用户接口 ====================
 
     /**
      * 创建反馈
@@ -81,7 +80,6 @@ public class FeedbackController {
         return ApiResponse.success(feedbackVO);
     }
 
-    // ==================== 管理员接口 ====================
 
     /**
      * 管理员更新反馈状态

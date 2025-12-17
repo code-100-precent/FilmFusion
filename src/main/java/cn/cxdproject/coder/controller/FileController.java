@@ -3,6 +3,7 @@ package cn.cxdproject.coder.controller;
 
 import cn.cxdproject.coder.common.ApiResponse;
 import cn.cxdproject.coder.model.vo.FileVO;
+import cn.cxdproject.coder.service.FileService;
 import cn.cxdproject.coder.service.impl.FileServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -15,9 +16,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Validated
 public class FileController {
 
-    public final FileServiceImpl fileService;
+    public final FileService fileService;
 
-    public FileController(FileServiceImpl fileService) {
+    public FileController(FileService fileService) {
         this.fileService = fileService;
     }
 

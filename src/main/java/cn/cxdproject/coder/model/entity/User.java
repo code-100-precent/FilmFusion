@@ -64,6 +64,9 @@ public class User extends BaseEntity implements Serializable, Cloneable {
     @TableField("enabled")
     private Boolean enabled;
 
+    /**
+     * 压缩后头像url(第一张为封面)
+     */
     @TableField("thumb_avatar")
     private String thumbAvatar;
 

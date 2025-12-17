@@ -13,6 +13,7 @@ import java.util.List;
 
 /**
  * Drama 服务接口
+ * 提供剧目备案的创建、查询及管理能力
  * @author Hibiscus-code-generate
  */
 public interface DramaService extends IService<Drama> {
@@ -27,9 +28,19 @@ public interface DramaService extends IService<Drama> {
     DramaVO getDramaById(Long dramaId);
     
     /**
+     * 获取电视剧备案详情（带超时控制和降级）
+     */
+    DramaVO getDramaByIdWithTimeout(Long dramaId);
+    
+    /**
      * 分页获取电视剧备案列表（按时间倒序，公开）
      */
-    List<DramaVO> getDramaPage(Long lastId,int size, String keyword);
+    List<DramaVO> getDramaPage(Long lastId, int size, String keyword);
+    
+    /**
+     * 分页获取电视剧备案列表（带超时控制和降级）
+     */
+    List<DramaVO> getDramaPageWithTimeout(Long lastId, int size, String keyword);
     
     /**
      * 管理员更新电视剧备案
@@ -46,9 +57,18 @@ public interface DramaService extends IService<Drama> {
      */
     DramaVO toDramaVO(Drama drama);
 
-    DramaVO getByIdFallback(Long id,Throwable e);
+    /**
+     * 获取剧目详情的降级方法
+     */
+    DramaVO getByIdFallback(Long id, Throwable e);
 
+    /**
+     * 分页查询剧目列表的降级方法
+     */
     List<DramaVO> getPageFallback(Long lastId, int size, String keyword, Throwable e);
 
+    /**
+     * 管理员分页查询剧目备案
+     */
     Page<DramaVO> getDramaPageAdmin(Page<Drama> page, String keyword);
 }

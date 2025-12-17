@@ -161,6 +161,16 @@
         <n-form-item label="类型" path="type">
           <n-select v-model:value="locationForm.type" :options="typeOptions" placeholder="请选择场地类型" />
         </n-form-item>
+        <n-form-item label="关联影视剧" path="dramaId">
+          <n-select
+              v-model:value="locationForm.dramaId"
+              multiple
+              filterable
+              clearable
+              placeholder="请选择关联影视剧"
+              :options="dramaOptions"
+          />
+        </n-form-item>
         <n-form-item label="地址" path="address">
           <n-input v-model:value="locationForm.address" placeholder="请输入详细地址" />
         </n-form-item>
@@ -263,7 +273,7 @@ import {
   useMessage,
   useDialog
 } from 'naive-ui'
-import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById, uploadFile } from '@/api'
+import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById, uploadFile, getDramaPage } from '@/api'
 import { getImageUrl } from '@/utils/image'
 import { useUserStore } from '@/store/user'
 import config from '@/config'
@@ -288,6 +298,7 @@ const dialogTitle = ref('新增场地')
 const formRef = ref(null)
 const coverFileList = ref([])
 const imageFileList = ref([])
+const dramaOptions = ref([])
 
 const searchForm = reactive({
   keyword: ''
@@ -311,6 +322,7 @@ const locationForm = reactive({
   image: '',
   thumbCover: '',
   thumbImage: '',
+  dramaId: [],
   userId: null
 })
 
@@ -360,8 +372,8 @@ const formRules = {
     {
       validator: (rule, value) => {
         if (!value) return true
-        // 格式：数字° E 或 W
-        const pattern = /^\d+(\.\d+)?° [EW]$/
+        // 格式：数字° E 或 W (宽松模式，必须大写)
+        const pattern = /^\s*\d+(\.\d+)?\s*°\s*[EW]\s*$/
         if (!pattern.test(value)) {
           return new Error('格式错误')
         }
@@ -375,8 +387,8 @@ const formRules = {
     {
       validator: (rule, value) => {
         if (!value) return true
-        // 格式：数字° N 或 S
-        const pattern = /^\d+(\.\d+)?° [NS]$/
+        // 格式：数字° N 或 S (宽松模式，必须大写)
+        const pattern = /^\s*\d+(\.\d+)?\s*°\s*[NS]\s*$/
         if (!pattern.test(value)) {
           return new Error('格式错误')
         }
@@ -530,6 +542,33 @@ const columns = [
     }
   },
   { title: '地址', key: 'address', width: 200, ellipsis: { tooltip: true } },
+  {
+    title: '关联影视剧',
+    key: 'dramaId',
+    width: 150,
+    render: (row) => {
+      const idsStr = row.dramaId || row.drama_id
+      if (!idsStr) return '-'
+
+      // 解析 ID
+      let ids = []
+      if (typeof idsStr === 'string') {
+        ids = idsStr.split(',').map(id => Number(id.trim()))
+      } else if (typeof idsStr === 'number') {
+        ids = [idsStr]
+      } else if (Array.isArray(idsStr)) {
+        ids = idsStr.map(id => Number(id))
+      }
+
+      // 查找名称
+      const names = ids.map(id => {
+        const option = dramaOptions.value.find(opt => opt.value === id)
+        return option ? option.label : String(id)
+      })
+
+      return names.join(', ')
+    }
+  },
   { title: '联系人', key: 'locationPrincipalName', width: 120 },
   { title: '联系电话', key: 'locationPrincipalPhone', width: 130 },
   { title: '价格', key: 'price', width: 100, render: (row) => row.price ? '¥' + row.price : '-' },
@@ -591,15 +630,15 @@ const handleDialogSave = async () => {
   try {
     await formRef.value.validate()
   } catch (error) {
-    const longPattern = /^\d+(\.\d+)?° [EW]$/
-    const latPattern = /^\d+(\.\d+)?° [NS]$/
+    const longPattern = /^\s*\d+(\.\d+)?\s*°\s*[EW]\s*$/
+    const latPattern = /^\s*\d+(\.\d+)?\s*°\s*[NS]\s*$/
     const isLongValid = !locationForm.longitude || longPattern.test(locationForm.longitude)
     const isLatValid = !locationForm.latitude || latPattern.test(locationForm.latitude)
 
     if (!isLongValid || !isLatValid) {
       dialog.warning({
         title: '格式错误',
-        content: '经纬度格式必须为：数字° E/W 和 数字° N/S\n例如: 104.06° E, 29.9861° N',
+        content: '经纬度格式必须为：数字° E/W 和 数字° N/S\n例如: 104.06° E, 29.9861° N\n(支持宽松格式，允许空格，但必须大写)',
         positiveText: '确定'
       })
     }
@@ -671,15 +710,24 @@ const handleDialogSave = async () => {
         allThumbImages.push(coverThumb || coverOrigin)
     }
     
-    // 处理详情缩略图
+    // 详情缩略图
     if (detailOrigins.length > 0) {
         allThumbImages.push(...detailThumbs)
     }
 
     const finalThumbImageStr = allThumbImages.join(',')
 
+    // 处理 dramaId 数组转字符串
+    let dramaIdStr = ''
+    if (Array.isArray(locationForm.dramaId)) {
+      dramaIdStr = locationForm.dramaId.join(',')
+    } else {
+      dramaIdStr = locationForm.dramaId || ''
+    }
+
     const data = {
       ...locationForm,
+      dramaId: dramaIdStr,
       status: locationForm.status, // 直接传递Boolean值
       image: finalImageStr,
       thumbImage: finalThumbImageStr,
@@ -800,6 +848,23 @@ const handleEdit = async (row) => {
       const thumbCoverUrl = allThumbImages[0] || coverUrl
       const detailThumbUrls = allThumbImages.slice(1)
 
+      // 解析关联影视剧ID
+      let dramaIds = []
+      const rawDramaId = res.data.dramaId || res.data.drama_id
+      
+      if (rawDramaId) {
+        // 如果是逗号分隔的字符串
+        if (typeof rawDramaId === 'string') {
+          dramaIds = rawDramaId.split(',').map(id => Number(id))
+        } else if (Array.isArray(rawDramaId)) {
+          // 如果已经是数组
+          dramaIds = rawDramaId.map(id => Number(id))
+        } else if (typeof rawDramaId === 'number') {
+          // 单个数字
+          dramaIds = [rawDramaId]
+        }
+      }
+
       Object.assign(locationForm, {
         id: res.data.id,
         name: res.data.name || '',
@@ -818,6 +883,7 @@ const handleEdit = async (row) => {
         image: detailUrls.join(','),
         thumbCover: thumbCoverUrl,
         thumbImage: '',
+        dramaId: dramaIds,
         userId: res.data.userId || res.data.user_id
       })
       // 设置封面图片文件列表
@@ -854,10 +920,26 @@ const handleEdit = async (row) => {
   }
 }
 
+const fetchDramaOptions = async () => {
+  try {
+    const res = await getDramaPage(1, 1000)
+    if (res.code === 200) {
+      const records = res.data?.records || res.data || []
+      dramaOptions.value = records.map(item => ({
+        label: item.name,
+        value: item.id
+      }))
+    }
+  } catch (error) {
+    console.error('获取影视剧列表失败:', error)
+  }
+}
+
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
   loadData()
+  fetchDramaOptions()
 })
 
 onUnmounted(() => {

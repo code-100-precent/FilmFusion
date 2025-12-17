@@ -39,15 +39,13 @@ public class ShootController {
         this.shootService = shootService;
     }
 
-    // ==================== 公开接口 ====================
-
     /**
      * 获取协拍服务详情（公开）
      */
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<ShootVO> getShootById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        ShootVO shootVO = shootService.getShootById(id);
+        ShootVO shootVO = shootService.getShootByIdWithTimeout(id);
         return ApiResponse.success(shootVO);
     }
 
@@ -70,7 +68,7 @@ public class ShootController {
             }
         }
 
-        List<ShootVO> list = shootService.getShootPage(lastId, size, keyword);
+        List<ShootVO> list = shootService.getShootPageWithTimeout(lastId, size, keyword);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {
@@ -80,7 +78,6 @@ public class ShootController {
         return new CursorPageResponseVO<>(list, nextCursor);
     }
 
-    // ==================== 管理员接口 ====================
 
     /**
      * 创建协拍服务

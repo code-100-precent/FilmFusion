@@ -63,15 +63,27 @@ public class Hotel extends BaseEntity implements Serializable, Cloneable {
     @TableField("image")
     private String image;
 
+    /**
+     * 创建数据的用户id
+     */
     @TableField("user_id")
     private Long userId;
 
+    /**
+     * 压缩后图片url(第一张为封面)
+     */
     @TableField("thumb_image")
     private String thumbImage;
 
+    /**
+     * 经度
+     */
     @TableField("longitude")
     private String longitude;
 
+    /**
+     * 纬度
+     */
     @TableField("latitude")
     private String latitude;
 

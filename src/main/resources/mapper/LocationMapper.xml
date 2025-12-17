@@ -24,6 +24,7 @@
         <result column="thumb_image" property="thumbImage"/>
         <result column="longitude" property="longitude"/>
         <result column="latitude" property="latitude"/>
+        <result column="drama_id" property="dramaId"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -33,9 +34,9 @@
             `status`,
             `location_description`,
             `location_principal_phone`,
-            'location_principal_name',
-            'gov_principal_phone',
-            'gov_principal_name',
+            `location_principal_name`,
+            `gov_principal_phone`,
+            `gov_principal_name`,
             `contact_name`,
             `address`,
             `price`,
@@ -43,17 +44,26 @@
             `deleted`,
             `created_at`,
             `updated_at`,
-            'image',
-            'thumb_image',
-            'longitude',
-            'latitude'
+            `image`,
+            `thumb_image`,
+            `longitude`,
+            `latitude`,
+            `drama_id`
     </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT *
+        FROM fi_locations
+        WHERE id = #{id}
+        AND deleted = 0
+    </select>
 
     <select id="selectIds" resultType="long">
         SELECT id
         FROM fi_locations
         <where>
             deleted = 0
+            AND status = 1
             <!-- 模糊搜索 -->
             <if test="keyword != null and keyword != ''">
                 AND (
@@ -67,11 +77,11 @@
                 AND id > #{lastId}
             </if>
         </where>
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT #{size}
     </select>
 
-    <select id="getAdminPage" resultType="cn.cxdproject.coder.model.entity.Location">
+    <select id="getAdminPage" resultMap="BaseResultMap">
         SELECT *
         FROM fi_locations
         WHERE deleted = 0
@@ -82,15 +92,16 @@
             OR type LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT #{offset}, #{size}
     </select>
 
-    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Location">
+    <select id="selectLatest10" resultMap="BaseResultMap">
         SELECT *
         FROM fi_locations
         WHERE deleted = 0
-        ORDER BY id ASC
+          AND status = 1
+        ORDER BY created_at DESC
             LIMIT 10
     </select>
 
@@ -140,6 +151,9 @@
             <if test="dto.latitude != null and dto.latitude != ''">
                 latitude = #{dto.latitude},
             </if>
+            <if test="dto.dramaId != null and dto.dramaId != ''">
+                drama_id = #{dto.dramaId},
+            </if>
         </set>
         WHERE id = #{id}
         AND deleted = false
@@ -149,6 +163,7 @@
         SELECT COUNT(1)
         FROM fi_locations
         WHERE deleted = 0
+        AND status = 1
         <if test="keyword != null and keyword != ''">
             AND (
             name LIKE CONCAT('%', #{keyword}, '%')

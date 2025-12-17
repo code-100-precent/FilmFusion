@@ -48,6 +48,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         this.cache = cache;
     }
 
+    //创建提交申请
     @Override
     @Loggable(
             type = LogType.REPORT_USER_CREATE,
@@ -87,6 +88,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         return toReportVO(report);
     }
 
+    //用户更新自己的申请信息
     @Override
     @Loggable(
             type = LogType.REPORT_USER_UPDATE,
@@ -111,6 +113,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         return toReportVO(updated);
     }
 
+    //删除申请（只能删除自己的申请）
     @Override
     @Loggable(
             type = LogType.REPORT_USER_DELETE,
@@ -136,6 +139,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         cache.invalidate(CaffeineConstants.REPORT+reportId);
     }
 
+    //查询单个申请报告（客户端）
     @Override
     @Loggable(
             type = LogType.REPORT_USER_GET,
@@ -161,6 +165,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
 
+    //查询自己的所有申请
     @Override
     public Page<ReportVO> getMyReportPage(Long userId, Page<Report> page) {
         long current = page.getCurrent();
@@ -182,6 +187,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
 
+    //管理员处理申请
     @Override
     @Loggable(
             type = LogType.REPORT_ADMIN_UPDATE,
@@ -208,6 +214,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
 
+    //管理端删除申请
     @Override
     @Loggable(
             type = LogType.REPORT_ADMIN_DELETE,
@@ -230,6 +237,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         cache.invalidate(CaffeineConstants.REPORT + reportId);
     }
 
+    //管理端分页查询
     @Override
     public Page<ReportVO> getReportPageByAdmin(Page<Report> page, String keyword) {
         long current = page.getCurrent();
@@ -256,6 +264,7 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                 .setRecords(voList);
     }
 
+    //管理端查询单个申请
     @Override
     public ReportVO getReportByIdByAdmin(Long reportId) {
         Object store = cache.asMap().get(CaffeineConstants.REPORT + reportId);

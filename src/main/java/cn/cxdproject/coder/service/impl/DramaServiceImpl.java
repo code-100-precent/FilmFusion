@@ -21,14 +21,17 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 
@@ -40,28 +43,27 @@ import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements DramaService {
 
     private final DramaMapper dramaMapper;
-    private final Cache<String, Object> cache;;
+    private final Cache<String, Object> cache;
     private final RedisUtils redisUtils;
+    private final ObjectProvider<DramaService> dramaServiceProvider;
 
     public DramaServiceImpl(DramaMapper dramaMapper,
                             @Qualifier("cache") Cache<String, Object> cache,
-                            RedisUtils redisUtils) {
+                            RedisUtils redisUtils,
+                            ObjectProvider<DramaService> dramaServiceProvider) {
         this.dramaMapper = dramaMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.dramaServiceProvider = dramaServiceProvider;
     }
 
-
+    //管理员创建drama
     @Override
     @Loggable(
             type = LogType.DRAMA_CREATE,
             value = "create drama"
     )
     public DramaVO createDramaByAdmin(Long userId, CreateDramaDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
 
         Drama drama = Drama.builder()
                 .name(createDTO.getName())
@@ -86,6 +88,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         return toDramaVO(drama);
     }
 
+    //根据id获取drama
     @Override
     @CircuitBreaker(name = "dramaGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -103,6 +106,8 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
     }
 
+
+    //用户批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -125,6 +130,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .collect(Collectors.toList());
     }
 
+    //管理员更新
     @Override
     @Loggable(
             type = LogType.DRAMA_UPDATE,
@@ -155,6 +161,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         return toDramaVO(updatedDrama);
     }
 
+    //管理员删除
     @Override
     @Loggable(
             type = LogType.DRAMA_DELETE,
@@ -175,6 +182,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
         cache.invalidate(CaffeineConstants.DRAMA+dramaId);
     }
+
 
     @Override
     public DramaVO toDramaVO(Drama drama) {
@@ -204,6 +212,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
 
     }
 
+    //根据id查询降级接口
     @Override
     public DramaVO getByIdFallback(Long id,Throwable e) {
 
@@ -219,6 +228,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         return null;
     }
 
+    //用户批量查询降级
     @Override
     public List<DramaVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -247,6 +257,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
     }
 
+    //管理端分页查询
     @Override
     public Page<DramaVO> getDramaPageAdmin(Page<Drama> page, String keyword) {
         long current = page.getCurrent();
@@ -266,5 +277,31 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public DramaVO getDramaByIdWithTimeout(Long dramaId) {
+        try {
+            CompletableFuture<DramaVO> future =
+                    CompletableFuture.supplyAsync(() -> dramaServiceProvider.getObject().getDramaById(dramaId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(dramaId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<DramaVO> getDramaPageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<DramaVO>> future =
+                    CompletableFuture.supplyAsync(() -> dramaServiceProvider.getObject().getDramaPage(lastId, size, keyword));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

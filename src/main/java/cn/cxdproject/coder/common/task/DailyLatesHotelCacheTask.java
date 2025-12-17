@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
-
+//Hotel的定时任务（用于分页降级时查询的数据）
 @Component
 @Slf4j
 public class DailyLatesHotelCacheTask {
@@ -36,7 +36,7 @@ public class DailyLatesHotelCacheTask {
             List<Hotel> latestHotels = hotelMapper.selectLatest10();
 
             if (latestHotels == null || latestHotels.isEmpty()) {
-                log.warn("未查到影视数据，跳过缓存");
+                log.warn("未查到旅店数据，跳过缓存");
                 return;
             }
 

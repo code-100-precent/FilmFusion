@@ -13,6 +13,7 @@ import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.PolicyVO;
 import cn.cxdproject.coder.model.vo.TourVO;
+import cn.cxdproject.coder.service.PolicyService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -24,12 +25,17 @@ import cn.cxdproject.coder.service.TourService;
 import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.NOT_FOUND;
 
@@ -43,23 +49,22 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     private final TourMapper tourMapper;
     private final Cache<String, Object> cache;
     private final RedisUtils redisUtils;
+    private final ObjectProvider<TourService> tourServiceProvider;
 
-    public TourServiceImpl(TourMapper tourMapper, Cache<String, Object> cache, RedisUtils redisUtils) {
+    public TourServiceImpl(TourMapper tourMapper, Cache<String, Object> cache, RedisUtils redisUtils, ObjectProvider<TourService> tourServiceProvider) {
         this.tourMapper = tourMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.tourServiceProvider = tourServiceProvider;
     }
 
+    //生成数据
     @Override
     @Loggable(
             type = LogType.TOUR_CREATE,
             value = "Create tour"
     )
     public TourVO createTourByAdmin(CreateTourDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
 
         Tour tour = Tour.builder()
                 .name(createDTO.getName())
@@ -84,6 +89,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         return toTourVO(tour);
     }
 
+    //根据id单个数据查询
     @Override
     @CircuitBreaker(name = "tourGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -101,6 +107,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         }
     }
 
+    //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "tourGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -123,6 +130,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     }
 
 
+    //管理端更新数据
     @Override
     @Loggable(
             type = LogType.TOUR_UPDATE,
@@ -153,6 +161,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         return toTourVO(updatedTour);
     }
 
+    //管理员删除数据
     @Override
     @Loggable(
             type = LogType.TOUR_DELETE,
@@ -201,6 +210,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .build();
     }
 
+    //单个数据查询降级接口
     @Override
     public TourVO getByIdFallback(Long id,Throwable e) {
 
@@ -215,6 +225,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         return null;
     }
 
+    //客户端批量查询降级接口
     @Override
     public List<TourVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -243,6 +254,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         }
     }
 
+    //管理端降级接口
     @Override
     public Page<TourVO> getTourPageAdmin(Page<Tour> page, String keyword) {
         long current = page.getCurrent();
@@ -262,5 +274,33 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public TourVO getTourByIdWithTimeout(Long tourId) {
+        try {
+            CompletableFuture<TourVO> future =
+                    CompletableFuture.supplyAsync(() -> tourServiceProvider.getObject()
+                            .getTourById(tourId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(tourId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<TourVO> getTourPageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<TourVO>> future =
+                    CompletableFuture.supplyAsync(() -> tourServiceProvider.getObject()
+                            .getTourPage(lastId, size, keyword));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

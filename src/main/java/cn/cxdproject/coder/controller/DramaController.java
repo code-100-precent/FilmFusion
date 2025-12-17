@@ -40,15 +40,13 @@ public class DramaController {
         this.dramaService = dramaService;
     }
 
-    // ==================== 公开接口 ====================
-
     /**
      * 获取电视剧备案详情（公开）
      */
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<DramaVO> getDramaById(@PathVariable @NotNull(message = "ID不能为空") Long id) {
-        DramaVO dramaVO = dramaService.getDramaById(id);
+        DramaVO dramaVO = dramaService.getDramaByIdWithTimeout(id);
         return ApiResponse.success(dramaVO);
     }
 
@@ -71,7 +69,7 @@ public class DramaController {
             }
         }
 
-        List<DramaVO> list = dramaService.getDramaPage(lastId, size, keyword);
+        List<DramaVO> list = dramaService.getDramaPageWithTimeout(lastId, size, keyword);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {
@@ -80,8 +78,6 @@ public class DramaController {
 
         return new CursorPageResponseVO<>(list, nextCursor);
     }
-
-    // ==================== 管理员接口 ====================
 
     /**
      * 管理员更新电视剧备案

@@ -14,6 +14,7 @@ import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.mapper.ShootMapper;
+import cn.cxdproject.coder.service.PolicyService;
 import cn.cxdproject.coder.service.ShootService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
@@ -23,14 +24,19 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
+import javax.annotation.Resource;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 
@@ -44,26 +50,25 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     private final ShootMapper shootMapper;
     private final Cache<String, Object> cache;
     private final RedisUtils redisUtils;
+    private final ObjectProvider<ShootService> shootServiceProvider;
 
     public ShootServiceImpl(
             ShootMapper shootMapper,
             @Qualifier("cache") Cache<String, Object> cache,
-            RedisUtils redisUtils) {
+            RedisUtils redisUtils, ObjectProvider<ShootService> shootServiceProvider) {
         this.shootMapper = shootMapper;
         this.cache = cache;
         this.redisUtils = redisUtils;
+        this.shootServiceProvider = shootServiceProvider;
     }
 
+    //创建shoot数据
     @Override
     @Loggable(
             type = LogType.SHOOT_CREATE,
             value = "Create shoot"
     )
     public ShootVO createShootByAdmin(Long userId, CreateShootDTO createDTO) {
-        if (createDTO.getImage() == null) {
-            createDTO.setImage(Constants.DEFAULT_COVER);
-            createDTO.setThumbImage(Constants.DEFAULT_THUMB_COVER);
-        }
 
         Shoot shoot = Shoot.builder()
                 .name(createDTO.getName())
@@ -85,6 +90,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         return toShootVO(shoot);
     }
 
+    //根据id获取单个数据
     @Override
     @CircuitBreaker(name = "shootGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -102,6 +108,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         }
     }
 
+    //客户端批量查询数据（游标分页）
     @Override
     @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
@@ -123,6 +130,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .collect(Collectors.toList());
     }
 
+    //管理端更新数据
     @Override
     @Bulkhead(name = "update", type = Bulkhead.Type.SEMAPHORE)
     @Loggable(
@@ -154,6 +162,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         return toShootVO(updatedShoot);
     }
 
+    //管理员删除数据
     @Override
     @Loggable(
             type = LogType.SHOOT_DELETE,
@@ -198,6 +207,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .build();
     }
 
+    //单个数据查询降级接口
     @Override
     public ShootVO getByIdFallback(Long id,Throwable e) {
 
@@ -212,6 +222,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         return null;
     }
 
+    //客户端批量查询降级接口
     @Override
     public List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
@@ -240,6 +251,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         }
     }
 
+    //管理端批量查询
     @Override
     public Page<ShootVO> getShootPageAdmin(Page<Shoot> page, String keyword) {
         long current = page.getCurrent();
@@ -259,5 +271,33 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .setSize(size)
                 .setRecords(voList)
                 .setTotal(total);
+    }
+
+    @Override
+    public ShootVO getShootByIdWithTimeout(Long shootId) {
+        try {
+            CompletableFuture<ShootVO> future =
+                    CompletableFuture.supplyAsync(() -> shootServiceProvider.getObject()
+                            .getShootById(shootId));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getByIdFallback(shootId, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword) {
+        try {
+            CompletableFuture<List<ShootVO>> future =
+                    CompletableFuture.supplyAsync(() -> shootServiceProvider.getObject()
+                            .getShootPage(lastId, size, keyword));
+            return future.get(Constants.TIME, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            return getPageFallback(lastId, size, keyword, e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

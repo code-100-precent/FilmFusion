@@ -18,11 +18,7 @@ code100:
 
   # 对象存储
   storage:
-    type: local  # 支持 local、minio
-    minio-endpoint: https://xxx.com:19000
-    minio-access-key: minio
-    minio-secret-key: minio
-    minio-bucket: code100
+    type: local  # 支持 local
     local-base-path: app_uploads
 
 # 基础服务器配置
@@ -138,7 +134,7 @@ resilience4j:
         failure-rate-threshold: 50
         slow-call-rate-threshold: 50
         slow-call-duration-threshold: 2s
-        wait-duration-in-open-state: 5s
+        wait-duration-in-open-state: 2s
         permitted-number-of-calls-in-half-open-state: 5
         automatic-transition-from-open-to-half-open-enabled: true
 

@@ -43,20 +43,17 @@ public class ArticleController {
         this.articleService = articleService;
     }
 
-    // ==================== 公开接口 ====================
-
     /**
      * 获取文章详情（公开）
      */
     @GetMapping("/{id}")
     @PublicAccess
     public ApiResponse<ArticleVO> getArticleById(@PathVariable @NotNull(message = "文章ID不能为空") Long id) {
-        ArticleVO articleVO = articleService.getArticleById(id);
+        ArticleVO articleVO = articleService.getArticleByIdWithTimeout(id);
         return ApiResponse.success(articleVO);
     }
-
     /**
-     * 分页获取文章列表（按时间倒序，公开）
+     * 分页获取文章列表（按id升序，公开）
      */
     @GetMapping("/page")
     @PublicAccess
@@ -74,7 +71,7 @@ public class ArticleController {
             }
         }
 
-        List<ArticleVO> list = articleService.getArticlePage(lastId, size, keyword);
+        List<ArticleVO> list = articleService.getArticlePageWithTimeout(lastId, size, keyword);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {
@@ -84,7 +81,6 @@ public class ArticleController {
         return new CursorPageResponseVO<>(list, nextCursor);
     }
 
-    // ==================== 管理员接口 ====================
 
     /**
      * 管理员创建文章
