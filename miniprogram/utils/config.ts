@@ -5,6 +5,6 @@
 const ENV_BASE_URL = process.env.VUE_APP_SERVER_BASE_URL;
 
 // 默认服务器地址 (作为兜底)
-const DEFAULT_SERVER_URL = 'http://162.14.106.139:8080';
+const DEFAULT_SERVER_URL = 'http://localhost:8080';
 
 export const SERVER_BASE_URL = ENV_BASE_URL || DEFAULT_SERVER_URL;
