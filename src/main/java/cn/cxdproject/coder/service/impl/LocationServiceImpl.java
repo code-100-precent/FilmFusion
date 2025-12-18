@@ -230,18 +230,10 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
             throw (RuntimeException) e;
         }
 
-        Object store = cache.getIfPresent(CaffeineConstants.LOCATION + id);
-        if (store != null) {
-            return toLocationVO((Location) store);
+        LocationVO location = redisUtils.get(TaskConstants.LOCATION + id, LocationVO.class);
+        if (location != null) {
+            return location;
         }
-
-        String json = (String) redisUtils.get(TaskConstants.LOCATION);
-        Location location = null;
-        if (json != null && !json.isEmpty()) {
-            location = JsonUtils.fromJson(json, Location.class);
-            return toLocationVO(location);
-        }
-
         return null;
     }
 
@@ -320,7 +312,14 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     public LocationVO getLocationByIdWithTimeout(Long locationId) {
         try {
             CompletableFuture<LocationVO> future =
-                    CompletableFuture.supplyAsync(() -> locationServiceProvider.getObject().getLocationById(locationId));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return locationServiceProvider.getObject()
+                                    .getLocationById(locationId);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(locationId, e);

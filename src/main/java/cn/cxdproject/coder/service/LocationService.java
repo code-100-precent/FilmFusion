@@ -26,7 +26,7 @@ public interface LocationService extends IService<Location> {
     /**
      * 根据ID获取拍摄地详情
      */
-    LocationVO getLocationById(Long locationId);
+    LocationVO getLocationById(Long locationId) throws InterruptedException;
 
     /**
      * 根据ID获取拍摄地详情（带超时控制和降级）

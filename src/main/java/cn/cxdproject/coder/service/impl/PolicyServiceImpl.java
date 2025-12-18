@@ -91,7 +91,7 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @Override
     @CircuitBreaker(name = "policyGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public PolicyVO getPolicyById(Long policyId) {
+    public PolicyVO getPolicyById(Long policyId){
         Object store = cache.asMap().get(CaffeineConstants.POLICY + policyId);
         if (store != null) {
             return toPolicyVO((Policy) store);
@@ -215,18 +215,11 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
             throw (RuntimeException) e;
         }
 
-        Object store = cache.getIfPresent(CaffeineConstants.POLICY + id);
-        if (store != null) {
-            return toPolicyVO((Policy) store);
-        }
+        PolicyVO policy = redisUtils.get(TaskConstants.POLICY + id, PolicyVO.class);
 
-        String json = (String) redisUtils.get(TaskConstants.POLICY);
-        Policy policy = null;
-        if (json != null && !json.isEmpty()) {
-            policy = JsonUtils.fromJson(json, Policy.class);
-            return toPolicyVO(policy);
+        if (policy != null) {
+            return policy;
         }
-
         return null;
     }
 
@@ -285,8 +278,14 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     public List<PolicyVO> getPolicyPageWithTimeout(Long lastId, int size, String keyword) {
         try {
             CompletableFuture<List<PolicyVO>> future =
-                    CompletableFuture.supplyAsync(() -> policyServiceProvider.getObject()
-                            .getPolicyPage(lastId, size, keyword));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return policyServiceProvider.getObject()
+                                    .getPolicyPage(lastId, size, keyword);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);
@@ -299,8 +298,14 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     public PolicyVO getPolicyByIdWithTimeout(Long policyId) {
         try {
             CompletableFuture<PolicyVO> future =
-                    CompletableFuture.supplyAsync(() -> policyServiceProvider.getObject()
-                            .getPolicyById(policyId));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return policyServiceProvider.getObject()
+                                    .getPolicyById(policyId);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(policyId, e);

@@ -64,30 +64,26 @@ public class DailyLatesShootCacheTask {
     @Scheduled(cron = "0 0 2 * * ?")
     public void cacheLatestShootId() {
         try {
-            // 1. 从数据库查询最新1条
-            Shoot latestShoot = shootMapper.selectLatestOne();
+            // 1. 查询所有未删除的拍摄数据
+            List<Shoot> allShoots = shootMapper.selectAll();
 
-            if (latestShoot == null) {
-                log.warn("未查到任何 Shoot 数据，跳过缓存");
+            if (allShoots == null || allShoots.isEmpty()) {
+                log.warn("未查到任何拍摄数据，跳过缓存");
                 return;
             }
 
-            // 2. 转为 VO
-            ShootVO vo = toShootVO(latestShoot);
+            // 2. 遍历每一条，单独存入 Redis
+            for (Shoot shoot : allShoots) {
+                ShootVO vo = toShootVO(shoot);
+                String key = TaskConstants.SHOOT + shoot.getId();
 
-            // 3. 序列化（单个对象）
-            String json = JsonUtils.toJson(vo);
+                redisUtils.set(key, vo, Duration.ofHours(25));
+            }
 
-            // 4. 写入 Redis，有效期25小时
-            redisUtils.set(
-                    TaskConstants.SHOOT,
-                    json,
-                    Duration.ofHours(25)
-            );
-            log.info("成功缓存最新1条 Shoot 到 Redis");
+            log.info("成功将 {} 条拍摄信息逐条缓存到 Redis", allShoots.size());
 
         } catch (Exception e) {
-            log.error("缓存最新 Shoot 失败", e);
+            log.error("全量缓存拍摄数据到 Redis 失败", e);
         }
     }
 

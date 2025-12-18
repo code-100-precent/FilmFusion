@@ -25,7 +25,7 @@ public interface DramaService extends IService<Drama> {
     /**
      * 获取电视剧备案详情（公开）
      */
-    DramaVO getDramaById(Long dramaId);
+    DramaVO getDramaById(Long dramaId) throws InterruptedException;
     
     /**
      * 获取电视剧备案详情（带超时控制和降级）

@@ -95,7 +95,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     @CircuitBreaker(name = "hotelGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public HotelVO getHotelById(Long hotelId) {
+    public HotelVO getHotelById(Long hotelId){
         Object store = cache.asMap().get(CaffeineConstants.HOTEL + hotelId);
         if (store != null) {
             return toHotelVO((Hotel) store);
@@ -114,7 +114,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     @CircuitBreaker(name = "hotelGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public List<HotelVO> getHotelPage(Long lastId, int size, String keyword) {
+    public List<HotelVO> getHotelPage(Long lastId, int size, String keyword)  {
         List<Long> ids = hotelMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
             return Collections.emptyList();
@@ -217,18 +217,10 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
             throw (RuntimeException) e;
         }
 
-        Object store = cache.getIfPresent(CaffeineConstants.HOTEL + id);
-        if (store != null) {
-            return toHotelVO((Hotel) store);
+        HotelVO hotel = redisUtils.get(TaskConstants.HOTEL + id, HotelVO.class);
+        if (hotel != null) {
+            return hotel;
         }
-
-        String json = (String) redisUtils.get(TaskConstants.HOTEL);
-        Hotel hotel = null;
-        if (json != null && !json.isEmpty()) {
-            hotel = JsonUtils.fromJson(json, Hotel.class);
-            return toHotelVO(hotel);
-        }
-
         return null;
     }
 
@@ -288,8 +280,14 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     public HotelVO getHotelByIdWithTimeout(Long hotelId) {
         try {
             CompletableFuture<HotelVO> future =
-                    CompletableFuture.supplyAsync(() -> hotelServiceProvider.getObject().
-                            getHotelById(hotelId));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return hotelServiceProvider.getObject().
+                                    getHotelById(hotelId);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(hotelId, e);
@@ -302,8 +300,14 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     public List<HotelVO> getHotelPageWithTimeout(Long lastId, int size, String keyword) {
         try {
             CompletableFuture<List<HotelVO>> future =
-                    CompletableFuture.supplyAsync(() -> hotelServiceProvider.getObject()
-                            .getHotelPage(lastId, size, keyword));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return hotelServiceProvider.getObject()
+                                    .getHotelPage(lastId, size, keyword);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);

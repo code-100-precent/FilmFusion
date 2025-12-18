@@ -29,7 +29,7 @@ public interface PolicyService extends IService<Policy> {
     /**
      * 根据ID获取政策详情
      */
-    PolicyVO getPolicyById(Long policyId);
+    PolicyVO getPolicyById(Long policyId) throws InterruptedException;
 
     /**
      * 根据ID获取政策详情（带超时控制和降级）
@@ -39,7 +39,7 @@ public interface PolicyService extends IService<Policy> {
     /**
      * 分页获取政策列表（按时间倒序，公开接口）
      */
-    List<PolicyVO> getPolicyPage(Long lastId, int size, String keyword);
+    List<PolicyVO> getPolicyPage(Long lastId, int size, String keyword) throws InterruptedException;
 
     /**
      * 分页获取政策列表（带超时控制和降级）

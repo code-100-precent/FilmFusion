@@ -20,7 +20,7 @@ public interface ArticleService extends IService<Article> {
     /**
      * 获取文章详情（公开接口）
      */
-    ArticleVO getArticleById(Long articleId);
+    ArticleVO getArticleById(Long articleId) throws InterruptedException;
 
     /**
      * 获取文章详情（带超时控制和降级）
@@ -30,7 +30,7 @@ public interface ArticleService extends IService<Article> {
     /**
      * 分页获取文章列表（按时间倒序，公开接口）
      */
-    List<ArticleVO> getArticlePage(Long lastId, int size, String keyword);
+    List<ArticleVO> getArticlePage(Long lastId, int size, String keyword) throws InterruptedException;
 
     /**
      * 分页获取文章列表（带超时控制和降级）

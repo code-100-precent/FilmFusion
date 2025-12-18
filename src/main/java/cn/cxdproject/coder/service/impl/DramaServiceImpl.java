@@ -112,7 +112,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public List<DramaVO> getDramaPage(Long lastId, int size, String keyword) {
+    public List<DramaVO> getDramaPage(Long lastId, int size, String keyword){
         List<Long> ids = dramaMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
             return Collections.emptyList();
@@ -221,16 +221,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
             throw (RuntimeException) e;
         }
 
-        Object store = cache.getIfPresent(CaffeineConstants.DRAMA + id);
-        if (store != null) {
-            return toDramaVO((Drama) store);
-        }
-
-        String json = (String) redisUtils.get(TaskConstants.DRAMA);
-        Drama drama = null;
-        if (json != null && !json.isEmpty()) {
-            drama = JsonUtils.fromJson(json, Drama.class);
-            return toDramaVO(drama);
+        DramaVO drama = redisUtils.get(TaskConstants.DRAMA+id,DramaVO.class);
+        if(drama != null){
+            return drama;
         }
 
         return null;
@@ -245,7 +238,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
 
         try {
-            // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
+            // 从 Redis 获取缓存的全量文章
             String json = (String) redisUtils.get(TaskConstants.DRAMA_PAGE);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
@@ -291,8 +284,14 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     public DramaVO getDramaByIdWithTimeout(Long dramaId) {
         try {
             CompletableFuture<DramaVO> future =
-                    CompletableFuture.supplyAsync(() -> dramaServiceProvider.getObject()
-                            .getDramaById(dramaId));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return dramaServiceProvider.getObject()
+                                    .getDramaById(dramaId);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(dramaId, e);

@@ -65,7 +65,7 @@ public interface TourService extends IService<Tour> {
     /**
      * 获取线路详情的降级方法
      */
-    TourVO getByIdFallback(Long id, Throwable e);
+    TourVO getByIdFallback(Long id, Throwable e) throws InterruptedException;
 
     /**
      * 分页查询线路列表的降级方法

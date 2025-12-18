@@ -93,7 +93,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     @CircuitBreaker(name = "tourGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public TourVO getTourById(Long tourId) throws InterruptedException {
+    public TourVO getTourById(Long tourId) {
         Object store = cache.asMap().get(CaffeineConstants.TOUR + tourId);
         if (store != null) {
             return toTourVO((Tour) store);
@@ -212,24 +212,16 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
 
     //单个数据查询降级接口
     @Override
-    public TourVO getByIdFallback(Long id,Throwable e) {
+    public TourVO getByIdFallback(Long id,Throwable e)  {
 
         if (e instanceof NotFoundException || e instanceof BusinessException) {
             throw (RuntimeException) e;
         }
 
-        Object store = cache.getIfPresent(CaffeineConstants.TOUR + id);
-        if (store != null) {
-            return toTourVO((Tour) store);
+        TourVO tour = redisUtils.get(TaskConstants.TOUR + id, TourVO.class);
+        if (tour != null) {
+            return tour;
         }
-
-        String json = (String) redisUtils.get(TaskConstants.TOUR);
-        Tour tour = null;
-        if (json != null && !json.isEmpty()) {
-                tour = JsonUtils.fromJson(json, Tour.class);
-                return toTourVO(tour);
-        }
-
         return null;
     }
 
@@ -247,7 +239,6 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }
-
             TourVO[] array = JsonUtils.fromJson(json, TourVO[].class);
             if (array == null || array.length == 0) {
                 return Collections.emptyList();

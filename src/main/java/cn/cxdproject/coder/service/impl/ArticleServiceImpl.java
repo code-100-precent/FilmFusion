@@ -9,14 +9,10 @@ import cn.cxdproject.coder.exception.NotFoundException;
 import cn.cxdproject.coder.model.dto.CreateArticleDTO;
 import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
 import cn.cxdproject.coder.model.entity.Article;
-import cn.cxdproject.coder.model.entity.Banner;
-import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.mapper.ArticleMapper;
-import cn.cxdproject.coder.model.vo.BannerVO;
 import cn.cxdproject.coder.service.ArticleService;
-import cn.cxdproject.coder.service.LocationService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -33,10 +29,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.*;
 
@@ -72,7 +69,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @CircuitBreaker(name = "articleGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public ArticleVO getArticleById(Long articleId) {
+    public ArticleVO getArticleById(Long articleId){
         Object store = cache.getIfPresent(CaffeineConstants.ARTICLE + articleId);
         if (store != null) {
             return toArticleVO((Article) store);
@@ -94,6 +91,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
     public List<ArticleVO> getArticlePage(Long lastId, int size, String keyword) {
         List<Long> ids = articleMapper.selectIds(lastId, size, keyword);
+
         if (ids.isEmpty()) {
             return Collections.emptyList();
         }
@@ -222,24 +220,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     //查询单个文章数据的降级策略（查询缓存的数据）
     @Override
-    public ArticleVO getByIdFallback(Long articleId,Throwable e) {
+    public ArticleVO getByIdFallback(Long id,Throwable e) {
 
         if (e instanceof NotFoundException || e instanceof BusinessException) {
             throw (RuntimeException) e;
         }
 
-        Object store = cache.getIfPresent(CaffeineConstants.ARTICLE + articleId);
-        if (store != null) {
-            return toArticleVO((Article) store);
-        }
+        ArticleVO article = redisUtils.get(TaskConstants.ARTICLE + id, ArticleVO.class);
 
-        String json = (String) redisUtils.get(TaskConstants.ARTICLE);
-        Article article = null;
-        if (json != null && !json.isEmpty()) {
-            article = JsonUtils.fromJson(json, Article.class);
-            return toArticleVO(article);
+        if (article != null) {
+            return article;
         }
-
         return null;
     }
 
@@ -257,6 +248,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }
+
 
             ArticleVO[] array = JsonUtils.fromJson(json, ArticleVO[].class);
             if (array == null || array.length == 0) {
@@ -298,8 +290,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public ArticleVO getArticleByIdWithTimeout(Long articleId) {
         try {
             CompletableFuture<ArticleVO> future =
-                    CompletableFuture.supplyAsync(() -> articleServiceProvider.getObject()
-                            .getArticleById(articleId));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return articleServiceProvider.getObject()
+                                    .getArticleById(articleId);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(articleId, e);
@@ -312,8 +310,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public List<ArticleVO> getArticlePageWithTimeout(Long lastId, int size, String keyword) {
         try {
             CompletableFuture<List<ArticleVO>> future =
-                    CompletableFuture.supplyAsync(() -> articleServiceProvider.getObject()
-                            .getArticlePage(lastId, size, keyword));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return articleServiceProvider.getObject()
+                                    .getArticlePage(lastId, size, keyword);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);
