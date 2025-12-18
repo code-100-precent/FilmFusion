@@ -50,13 +50,43 @@ public class DailyLatesPolicyCacheTask {
 
             // 4. 写入 Redis，有效期 25 小时
             redisUtils.set(
-                    TaskConstants.POLICY,
+                    TaskConstants.POLICY_PAGE,
                     json,
                     Duration.ofHours(25)
             );
             log.info("成功缓存 {} 条地址到 Redis", voList.size());
         } catch (Exception e) {
             log.error("缓存失败", e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void cacheLatestPolicy() {
+        try {
+            // 1. 从数据库查询最新1条政策
+            Policy latestPolicy = policyMapper.selectLatestOne();
+
+            if (latestPolicy == null) {
+                log.warn("未查到任何政策数据，跳过缓存");
+                return;
+            }
+
+            // 2. 转为 VO
+            PolicyVO vo = toPolicyVO(latestPolicy);
+
+            // 3. 序列化（单个对象）
+            String json = JsonUtils.toJson(vo);
+
+            // 4. 写入 Redis，有效期25小时
+            redisUtils.set(
+                    TaskConstants.POLICY,
+                    json,
+                    Duration.ofHours(25)
+            );
+            log.info("成功缓存最新1条政策到 Redis");
+
+        } catch (Exception e) {
+            log.error("缓存最新政策失败", e);
         }
     }
 

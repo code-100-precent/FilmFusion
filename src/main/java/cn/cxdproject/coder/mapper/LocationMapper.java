@@ -36,4 +36,6 @@ public interface LocationMapper extends BaseMapper<Location> {
     );
 
     Long getTotal(@Param("keyword") String keyword);
+
+    Location selectLatestOne();
 }

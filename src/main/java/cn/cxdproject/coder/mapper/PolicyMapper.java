@@ -35,4 +35,6 @@ public interface PolicyMapper extends BaseMapper<Policy> {
 
     Long getTotal(@Param("keyword") String keyword);
 
+    Policy selectLatestOne();
+
 }

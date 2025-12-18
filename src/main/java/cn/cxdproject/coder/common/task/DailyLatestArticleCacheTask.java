@@ -3,7 +3,9 @@ package cn.cxdproject.coder.common.task;
 import cn.cxdproject.coder.common.constants.TaskConstants;
 import cn.cxdproject.coder.mapper.ArticleMapper;
 import cn.cxdproject.coder.model.entity.Article;
+import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.model.vo.ArticleVO;
+import cn.cxdproject.coder.model.vo.TourVO;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +30,7 @@ public class DailyLatestArticleCacheTask {
     }
 
     @Scheduled(cron = "0 0 2 * * ?")
-    public void cacheLatest10Articles() {
+    public void cacheLatestArticlePage() {
         try {
             // 1. 从数据库查询最新10条
             List<Article> latestArticles = articleMapper.selectLatest10();
@@ -49,13 +51,43 @@ public class DailyLatestArticleCacheTask {
 
             // 4. 写入 Redis，有效期25小时
             redisUtils.set(
-                    TaskConstants.ARTICLE,
+                    TaskConstants.ARTICLE_PAGE,
                     json,
                     Duration.ofHours(25)
             );
             log.info("成功缓存 {} 条文章到 Redis", voList.size());
         } catch (Exception e) {
             log.error("缓存失败", e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void cacheLatestArticleId() {
+        try {
+            // 1. 从数据库查询最新1条
+            Article latestArticle = articleMapper.selectLatestOne();
+
+            if (latestArticle == null) {
+                log.warn("未查到任何文章数据，跳过缓存");
+                return;
+            }
+
+            // 2. 转为VO
+            ArticleVO vo = toArticleVO(latestArticle);
+
+            // 3. 序列化（单个对象，不是列表）
+            String json = JsonUtils.toJson(vo);
+
+            // 4. 写入 Redis，有效期25小时
+            redisUtils.set(
+                    TaskConstants.ARTICLE,
+                    json,
+                    Duration.ofHours(25)
+            );
+            log.info("成功缓存最新1条文章到 Redis");
+
+        } catch (Exception e) {
+            log.error("缓存最新文章失败", e);
         }
     }
 

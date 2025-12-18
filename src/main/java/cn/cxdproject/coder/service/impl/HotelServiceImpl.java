@@ -221,10 +221,11 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.HOTEL + id);
-        if (store != null) {
-            return toHotelVO((Hotel) store);
+        if (store == null) {
+            store = redisUtils.get(TaskConstants.HOTEL, Hotel.class);
         }
-        return null;
+
+        return store != null ? toHotelVO((Hotel) store) : null;
     }
 
     //客户端游标分页降级接口
@@ -237,7 +238,7 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
-            String json = (String) redisUtils.get(TaskConstants.HOTEL);
+            String json = (String) redisUtils.get(TaskConstants.HOTEL_PAGE);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }

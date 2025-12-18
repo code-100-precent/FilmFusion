@@ -38,4 +38,6 @@ public interface TourMapper extends BaseMapper<Tour> {
 
     Long getTotal(@Param("keyword") String keyword);
 
+    Tour selectLatestOne();
+
 }

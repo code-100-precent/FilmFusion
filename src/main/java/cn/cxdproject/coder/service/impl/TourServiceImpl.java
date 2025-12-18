@@ -219,10 +219,11 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.TOUR + id);
-        if (store != null) {
-            return toTourVO((Tour) store);
+        if (store == null) {
+            store = redisUtils.get(TaskConstants.TOUR, Tour.class);
         }
-        return null;
+
+        return store != null ? toTourVO((Tour) store) : null;
     }
 
     //客户端批量查询降级接口
@@ -235,7 +236,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
 
         try {
 
-            String json = (String) redisUtils.get(TaskConstants.TOUR);
+            String json = (String) redisUtils.get(TaskConstants.TOUR_PAGE);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }
@@ -294,8 +295,14 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     public List<TourVO> getTourPageWithTimeout(Long lastId, int size, String keyword) {
         try {
             CompletableFuture<List<TourVO>> future =
-                    CompletableFuture.supplyAsync(() -> tourServiceProvider.getObject()
-                            .getTourPage(lastId, size, keyword));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return tourServiceProvider.getObject()
+                                    .getTourPage(lastId, size, keyword);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);

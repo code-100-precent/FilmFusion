@@ -216,10 +216,11 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.SHOOT + id);
-        if (store != null) {
-            return toShootVO((Shoot) store);
+        if (store == null) {
+            store = redisUtils.get(TaskConstants.SHOOT, Shoot.class);
         }
-        return null;
+
+        return store != null ? toShootVO((Shoot) store) : null;
     }
 
     //客户端批量查询降级接口
@@ -232,7 +233,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
-            String json = (String) redisUtils.get(TaskConstants.SHOOT);
+            String json = (String) redisUtils.get(TaskConstants.SHOOT_PAGE);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }

@@ -86,7 +86,8 @@ CREATE TABLE `fi_reports`
     `thumb_approval_file` varchar(500)    DEFAULT NULL COMMENT '立项审批压缩图片',
     `shoot_apply`         varchar(500)    DEFAULT NULL COMMENT '协拍服务许可',
     `thumb_shoot_apply`   varchar(500)    DEFAULT NULL COMMENT '协拍服务许可压缩图片',
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    KEY `name_type_deleted` (`name`,`type`,`deleted`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='影视剧备案信息表';
@@ -113,7 +114,9 @@ CREATE TABLE `fi_locations`
     `thumb_image`          varchar(500)          DEFAULT NULL COMMENT '压缩后图片',
     `longitude`       varchar(40)       NOT NULL COMMENT '经度',
     `latitude`        varchar(40)       NOT NULL COMMENT '纬度',
-    PRIMARY KEY (`id`)
+    `drama_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '拍摄地相关的影视',
+    PRIMARY KEY (`id`),
+    KEY `name_type_status_deleted` (`name`,`type`,`status`,`deleted`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='拍摄场地表';
@@ -132,7 +135,8 @@ CREATE TABLE `fi_articles`
     `updated_at`    DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `image`         varchar(500) DEFAULT NULL COMMENT '图片',
     `thumb_image`   varchar(500) DEFAULT NULL COMMENT '压缩后图片',
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    KEY `id` (`id`,`title`,`issue_time`,`deleted`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='资讯文章表';
@@ -154,7 +158,8 @@ CREATE TABLE `fi_shoots`
     `updated_at`   DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `image`        varchar(500) DEFAULT NULL COMMENT '图片',
     `thumb_image`  varchar(500) DEFAULT NULL COMMENT '压缩后图片',
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    KEY `name_status_deleted` (`name`,`status`,`deleted`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='协拍服务表';
@@ -179,7 +184,8 @@ CREATE TABLE `fi_dramas`
     `updated_at`        DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `image`             varchar(500)         DEFAULT NULL COMMENT '图片',
     `thumb_image`       varchar(550) DEFAULT NULL COMMENT '压缩后图片',
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    KEY `name_deleted` (`name`,`deleted`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='电视剧备案表';
@@ -195,8 +201,8 @@ CREATE TABLE `fi_banner` (
     `created_at`       DATETIME           NOT NULL COMMENT '创建时间',
     `updated_at`       DATETIME           NOT NULL COMMENT '更新时间',
     `sort`             INT                NOT NULL COMMENT '排序值，越小越靠前',
-    PRIMARY KEY ( `id` ),
-    UNIQUE KEY `sort` (`sort`)
+    PRIMARY KEY (`id`),
+    KEY `idx_status_deleted_sort` (`status`,`deleted`,`sort`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
 
 CREATE TABLE `fi_hotel` (
@@ -214,7 +220,8 @@ CREATE TABLE `fi_hotel` (
      `thumb_image`     varchar(500)      DEFAULT NULL COMMENT '压缩后图片',
      `longitude`       varchar(40)       NOT NULL COMMENT '经度',
      `latitude`        varchar(40)       NOT NULL COMMENT '纬度',
-      PRIMARY KEY ( `id` )
+     PRIMARY KEY (`id`),
+     KEY `name_deleted` (`name`,`deleted`) USING BTREE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
 
 CREATE TABLE `fi_tours` (
@@ -233,21 +240,24 @@ CREATE TABLE `fi_tours` (
      `thumb_image`     varchar(500)     DEFAULT NULL COMMENT '压缩后图片',
      `location_id`     varchar(255)      NOT NULL COMMENT '景点id',
      `drama_id`        varchar(255)      NOT NULL COMMENT '关联影视id',
-     PRIMARY KEY (`id`)
+     PRIMARY KEY (`id`),
+     KEY `name_deleted` (`name`,`deleted`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 CREATE TABLE `fi_policy` (
-      `id`             int               NOT NULL AUTO_INCREMENT,
-      `title`          varchar(255)      NOT NULL COMMENT '政策标题',
-      `type`           varchar(255)      NOT NULL COMMENT '政策类型："省级" | "市级"',
-      `issue_unit`     varchar(255)      NOT NULL COMMENT '发布单位',
-      `issue_time`     datetime          NOT NULL COMMENT '发布时间',
-      `content`        text              NOT NULL COMMENT '内容',
-      `image`          varchar(500)     DEFAULT NULL COMMENT '图片',
-      `thumb_image`    varchar(500)     DEFAULT NULL COMMENT '压缩图片',
-      `created_at`     datetime          NOT NULL,
-      `updated_at`     datetime          NOT NULL,
-      `deleted`        tinyint           NOT NULL,
-      PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+    `id`           int(11)         NOT NULL AUTO_INCREMENT,
+    `title`        varchar(255)    NOT NULL COMMENT '政策标题',
+    `type`         varchar(255)    NOT NULL COMMENT '政策类型："省级" | "市级"',
+    `issue_unit`   varchar(255)    NOT NULL COMMENT '发布单位',
+    `issue_time`   datetime        NOT NULL COMMENT '发布时间',
+    `content`      text            NOT NULL COMMENT '内容',
+    `image`        varchar(500)    DEFAULT NULL COMMENT '图片',
+    `thumb_image`  varchar(500)    DEFAULT NULL COMMENT '压缩图片',
+    `created_at`   datetime        DEFAULT NULL,
+    `updated_at`   datetime        DEFAULT NULL,
+    `deleted`      tinyint(4)      NOT NULL,
+    `status`       tinyint(4)      NOT NULL COMMENT '0:草稿  1:发布',
+     PRIMARY KEY (`id`),
+    KEY `title_type_deleted_status` (`title`,`type`,`deleted`,`status`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
