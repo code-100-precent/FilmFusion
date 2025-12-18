@@ -27,7 +27,7 @@ public interface HotelService extends IService<Hotel> {
     /**
      * 根据ID获取酒店详情
      */
-    HotelVO getHotelById(Long otelId);
+    HotelVO getHotelById(Long otelId) throws InterruptedException;
 
     /**
      * 根据ID获取酒店详情（带超时控制和降级）
@@ -37,7 +37,7 @@ public interface HotelService extends IService<Hotel> {
     /**
      * 分页获取酒店列表（按时间倒序，公开接口）
      */
-    List<HotelVO> getHotelPage(Long lastId, int size, String keyword);
+    List<HotelVO> getHotelPage(Long lastId, int size, String keyword) throws InterruptedException;
 
     /**
      * 分页获取酒店列表（带超时控制和降级）

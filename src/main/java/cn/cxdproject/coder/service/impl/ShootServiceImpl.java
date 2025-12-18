@@ -113,7 +113,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public List<ShootVO> getShootPage(Long lastId, int size, String keyword) {
+    public List<ShootVO> getShootPage(Long lastId, int size, String keyword){
         List<Long> ids = shootMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
             return Collections.emptyList();
@@ -216,18 +216,10 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
             throw (RuntimeException) e;
         }
 
-        Object store = cache.getIfPresent(CaffeineConstants.SHOOT + id);
-        if (store != null) {
-            return toShootVO((Shoot) store);
+        ShootVO shoot = redisUtils.get(TaskConstants.SHOOT + id, ShootVO.class);
+        if (shoot != null) {
+            return shoot;
         }
-
-        String json = (String) redisUtils.get(TaskConstants.SHOOT);
-        Shoot shoot = null;
-        if (json != null && !json.isEmpty()) {
-            shoot = JsonUtils.fromJson(json, Shoot.class);
-            return toShootVO(shoot);
-        }
-
         return null;
     }
 
@@ -286,8 +278,14 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     public ShootVO getShootByIdWithTimeout(Long shootId) {
         try {
             CompletableFuture<ShootVO> future =
-                    CompletableFuture.supplyAsync(() -> shootServiceProvider.getObject()
-                            .getShootById(shootId));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return shootServiceProvider.getObject()
+                                    .getShootById(shootId);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(shootId, e);
@@ -300,8 +298,14 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     public List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword) {
         try {
             CompletableFuture<List<ShootVO>> future =
-                    CompletableFuture.supplyAsync(() -> shootServiceProvider.getObject()
-                            .getShootPage(lastId, size, keyword));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return shootServiceProvider.getObject()
+                                    .getShootPage(lastId, size, keyword);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);

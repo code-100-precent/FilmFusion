@@ -2,6 +2,7 @@ package cn.cxdproject.coder.mapper;
 
 import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
 import cn.cxdproject.coder.model.entity.Banner;
+import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Tour;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import cn.cxdproject.coder.model.entity.Article;
@@ -39,6 +40,6 @@ public interface ArticleMapper extends BaseMapper<Article> {
 
     Long getTotal(@Param("keyword") String keyword);
 
-    Article selectLatestOne();
+    List<Article> selectAll();
 
 }

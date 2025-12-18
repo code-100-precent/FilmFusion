@@ -2,6 +2,7 @@ package cn.cxdproject.coder.mapper;
 
 import cn.cxdproject.coder.model.dto.UpdateHotelDTO;
 import cn.cxdproject.coder.model.entity.Banner;
+import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Hotel;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -29,5 +30,5 @@ public interface HotelMapper extends BaseMapper<Hotel> {
 
     Long getTotal(@Param("keyword") String keyword);
 
-    Hotel selectLatestOne();
+    List<Hotel> selectAll();
 }

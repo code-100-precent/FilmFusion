@@ -10,7 +10,7 @@ public interface TaskConstants {
     String HOTEL = "fallback:hotel";
     String TOUR = "fallback:tour";
     String POLICY = "fallback:policy";
-    String TOUR_PAGE = "fallback:policyPage";
+    String TOUR_PAGE = "fallback:tourPage";
     String ARTICLE_PAGE = "fallback:articlePage";
     String SHOOT_PAGE = "fallback:shootPage";
     String POLICY_PAGE = "fallback:policyPage";

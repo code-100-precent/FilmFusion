@@ -1,6 +1,8 @@
 package cn.cxdproject.coder.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -22,6 +24,8 @@ public class RedisConfig {
 
         // 创建 ObjectMapper 并注册 JavaTimeModule
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule()); // 支持 Java 8 时间类型
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         // 设置key的序列化方式
         template.setKeySerializer(new StringRedisSerializer());
 
