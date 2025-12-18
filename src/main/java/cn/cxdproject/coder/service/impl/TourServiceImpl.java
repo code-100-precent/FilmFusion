@@ -93,7 +93,7 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     @CircuitBreaker(name = "tourGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public TourVO getTourById(Long tourId) {
+    public TourVO getTourById(Long tourId) throws InterruptedException {
         Object store = cache.asMap().get(CaffeineConstants.TOUR + tourId);
         if (store != null) {
             return toTourVO((Tour) store);
@@ -219,11 +219,18 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.TOUR + id);
-        if (store == null) {
-            store = redisUtils.get(TaskConstants.TOUR, Tour.class);
+        if (store != null) {
+            return toTourVO((Tour) store);
         }
 
-        return store != null ? toTourVO((Tour) store) : null;
+        String json = (String) redisUtils.get(TaskConstants.TOUR);
+        Tour tour = null;
+        if (json != null && !json.isEmpty()) {
+                tour = JsonUtils.fromJson(json, Tour.class);
+                return toTourVO(tour);
+        }
+
+        return null;
     }
 
     //客户端批量查询降级接口
@@ -281,8 +288,14 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     public TourVO getTourByIdWithTimeout(Long tourId) {
         try {
             CompletableFuture<TourVO> future =
-                    CompletableFuture.supplyAsync(() -> tourServiceProvider.getObject()
-                            .getTourById(tourId));
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return tourServiceProvider.getObject()
+                                    .getTourById(tourId);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
             return future.get(Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(tourId, e);

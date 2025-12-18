@@ -10,6 +10,7 @@ import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
 import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
+import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.HotelVO;
@@ -230,11 +231,18 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.LOCATION + id);
-        if (store == null) {
-            store = redisUtils.get(TaskConstants.LOCATION, Location.class);
+        if (store != null) {
+            return toLocationVO((Location) store);
         }
 
-        return store != null ? toLocationVO((Location) store) : null;
+        String json = (String) redisUtils.get(TaskConstants.LOCATION);
+        Location location = null;
+        if (json != null && !json.isEmpty()) {
+            location = JsonUtils.fromJson(json, Location.class);
+            return toLocationVO(location);
+        }
+
+        return null;
     }
 
     //客户端批量查询降级接口

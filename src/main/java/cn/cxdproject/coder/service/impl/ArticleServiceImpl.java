@@ -10,6 +10,7 @@ import cn.cxdproject.coder.model.dto.CreateArticleDTO;
 import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
 import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Banner;
+import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.mapper.ArticleMapper;
@@ -228,11 +229,18 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.ARTICLE + articleId);
-        if (store == null) {
-            store = redisUtils.get(TaskConstants.ARTICLE, Article.class);
+        if (store != null) {
+            return toArticleVO((Article) store);
         }
 
-        return store != null ? toArticleVO((Article) store) : null;
+        String json = (String) redisUtils.get(TaskConstants.ARTICLE);
+        Article article = null;
+        if (json != null && !json.isEmpty()) {
+            article = JsonUtils.fromJson(json, Article.class);
+            return toArticleVO(article);
+        }
+
+        return null;
     }
 
     //游标查询降级策略

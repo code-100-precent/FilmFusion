@@ -11,10 +11,7 @@ import cn.cxdproject.coder.model.dto.CreateDramaDTO;
 import cn.cxdproject.coder.model.dto.CreateHotelDTO;
 import cn.cxdproject.coder.model.dto.UpdateHotelDTO;
 import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
-import cn.cxdproject.coder.model.entity.Article;
-import cn.cxdproject.coder.model.entity.Drama;
-import cn.cxdproject.coder.model.entity.Hotel;
-import cn.cxdproject.coder.model.entity.Location;
+import cn.cxdproject.coder.model.entity.*;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.HotelVO;
@@ -221,11 +218,18 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.HOTEL + id);
-        if (store == null) {
-            store = redisUtils.get(TaskConstants.HOTEL, Hotel.class);
+        if (store != null) {
+            return toHotelVO((Hotel) store);
         }
 
-        return store != null ? toHotelVO((Hotel) store) : null;
+        String json = (String) redisUtils.get(TaskConstants.HOTEL);
+        Hotel hotel = null;
+        if (json != null && !json.isEmpty()) {
+            hotel = JsonUtils.fromJson(json, Hotel.class);
+            return toHotelVO(hotel);
+        }
+
+        return null;
     }
 
     //客户端游标分页降级接口

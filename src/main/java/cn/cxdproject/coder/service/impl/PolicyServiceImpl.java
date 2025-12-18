@@ -11,6 +11,7 @@ import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
 import cn.cxdproject.coder.model.dto.UpdatePolicyDTO;
 import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
+import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.PolicyVO;
@@ -215,11 +216,18 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.POLICY + id);
-        if (store == null) {
-            store = redisUtils.get(TaskConstants.POLICY, Policy.class);
+        if (store != null) {
+            return toPolicyVO((Policy) store);
         }
 
-        return store != null ? toPolicyVO((Policy) store) : null;
+        String json = (String) redisUtils.get(TaskConstants.POLICY);
+        Policy policy = null;
+        if (json != null && !json.isEmpty()) {
+            policy = JsonUtils.fromJson(json, Policy.class);
+            return toPolicyVO(policy);
+        }
+
+        return null;
     }
 
     //客户端批量查询降级接口

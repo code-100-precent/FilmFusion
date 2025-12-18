@@ -10,6 +10,7 @@ import cn.cxdproject.coder.model.dto.UpdateShootDTO;
 import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.entity.Shoot;
+import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
@@ -216,11 +217,18 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.SHOOT + id);
-        if (store == null) {
-            store = redisUtils.get(TaskConstants.SHOOT, Shoot.class);
+        if (store != null) {
+            return toShootVO((Shoot) store);
         }
 
-        return store != null ? toShootVO((Shoot) store) : null;
+        String json = (String) redisUtils.get(TaskConstants.SHOOT);
+        Shoot shoot = null;
+        if (json != null && !json.isEmpty()) {
+            shoot = JsonUtils.fromJson(json, Shoot.class);
+            return toShootVO(shoot);
+        }
+
+        return null;
     }
 
     //客户端批量查询降级接口

@@ -30,7 +30,7 @@ public interface TourService extends IService<Tour> {
     /**
      * 根据ID获取线路详情
      */
-    TourVO getTourById(Long tourId);
+    TourVO getTourById(Long tourId) throws InterruptedException;
 
     /**
      * 根据ID获取线路详情（带超时控制和降级）
