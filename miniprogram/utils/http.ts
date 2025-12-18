@@ -44,7 +44,7 @@ const requestInterceptor = {
 
     // 2. 请求超时, 默认 2s，但不覆盖已设置的值
     if (!options.timeout) {
-      options.timeout = 4000
+      options.timeout = 10000
     }
     // 3. 添加小程序端请求头标识
     options.header = {

@@ -634,11 +634,7 @@ const beforeUpload = (data) => {
   return true
 }
 
-<<<<<<< HEAD
-const handleCoverUpload = async ({file, onFinish, onError}) => {
-=======
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
->>>>>>> cab17b8c0cbdd87b811f7680afee7acdac73198c
   try {
     const res = await uploadFile(file.file);
 

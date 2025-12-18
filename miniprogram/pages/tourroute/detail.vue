@@ -78,37 +78,66 @@
             <view 
               v-for="(point, index) in routePoints" 
               :key="index" 
-              class="point-card"
-              @click="onPointClick(index)"
+              class="point-card-wrapper"
             >
-              <image 
-                v-if="point.cover || point.thumbCover"
-                :src="getFileUrl(point.thumbCover || point.cover) || defaultCover" 
-                class="point-image" 
-                mode="aspectFill"
-              ></image>
-              <view class="point-content">
-                <view class="point-header">
-                  <view class="point-number">{{ index + 1 }}</view>
-                  <text class="point-name">{{ point.name }}</text>
+              <view class="point-card" @click="onPointClick(index)">
+                <image 
+                  v-if="point.cover || point.thumbCover"
+                  :src="getFileUrl(point.thumbCover || point.cover) || defaultCover" 
+                  class="point-image" 
+                  mode="aspectFill"
+                ></image>
+                <view class="point-content">
+                  <view class="point-header">
+                    <view class="point-number">{{ index + 1 }}</view>
+                    <text class="point-name">{{ point.name }}</text>
+                  </view>
+                  <text v-if="point.address" class="point-address">{{ point.address }}</text>
+                  <text class="point-desc">{{ point.description || point.locationDescription || point.type }}</text>
                 </view>
-                <text v-if="point.address" class="point-address">{{ point.address }}</text>
-                <text class="point-desc">{{ point.description || point.locationDescription || point.type }}</text>
+                <view class="point-actions">
+                  <view class="point-nav-icon" @click.stop="onPointClick(index)">
+                    <uni-icons type="paperplane" size="20" color="#6366f1"></uni-icons>
+                  </view>
+                  <view 
+                    v-if="point.relatedDramas && point.relatedDramas.length > 0"
+                    class="point-expand-icon" 
+                    @click.stop="togglePointExpand(index)"
+                  >
+                    <uni-icons 
+                      :type="expandedPoints[index] ? 'up' : 'down'" 
+                      size="20" 
+                      color="#6366f1"
+                    ></uni-icons>
+                  </view>
+                </view>
               </view>
-              <view class="point-nav-icon" @click.stop="onPointClick(index)">
-                <uni-icons type="paperplane" size="20" color="#6366f1"></uni-icons>
+              
+              <!-- 相关影视下拉内容 -->
+              <view 
+                v-if="point.relatedDramas && point.relatedDramas.length > 0 && expandedPoints[index]" 
+                class="point-dramas"
+              >
+                <view class="dramas-title">相关影视</view>
+                <view 
+                  v-for="drama in point.relatedDramas" 
+                  :key="drama.id" 
+                  class="drama-item-small"
+                  @click="goToDramaDetail(drama.id)"
+                >
+                  <image 
+                    v-if="drama.poster"
+                    :src="getFileUrl(drama.poster)" 
+                    class="drama-poster-small" 
+                    mode="aspectFill"
+                  ></image>
+                  <view class="drama-info-small">
+                    <text class="drama-name-small">{{ drama.name }}</text>
+                    <text class="drama-type-small" v-if="drama.type">{{ drama.type }}</text>
+                  </view>
+                  <uni-icons type="right" size="14" color="#9ca3af"></uni-icons>
+                </view>
               </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- 影视场景 -->
-        <view class="info-section">
-          <view class="section-title">影视场景</view>
-          <view class="section-content">
-            <view class="info-item">
-              <uni-icons type="videocam-filled" size="16" color="#ef4444"></uni-icons>
-              <text>相关作品：{{ route.ipWorks }}</text>
             </view>
           </view>
         </view>
@@ -185,7 +214,9 @@ export default {
       polyline: [],
       routePoints: [],
       // 周边数据
-      nearbyHotels: []
+      nearbyHotels: [],
+      // 景点展开状态
+      expandedPoints: {}
     }
   },
   computed: {
@@ -396,23 +427,34 @@ export default {
         const results = await Promise.all(locationPromises)
         
         // 过滤成功的结果并映射数据
-        this.routePoints = results
-          .filter(res => res.code === 200 && res.data)
-          .map(res => {
-            const location = res.data
-            return {
-              id: location.id,
-              name: location.name,
-              address: location.address,
-              description: location.locationDescription || location.type || '暂无描述',
-              locationDescription: location.locationDescription,
-              type: location.type,
-              cover: location.cover,
-              thumbCover: location.thumbCover,
-              latitude: parseFloat(location.latitude) || 0,
-              longitude: parseFloat(location.longitude) || 0
-            }
-          })
+        this.routePoints = await Promise.all(
+          results
+            .filter(res => res.code === 200 && res.data)
+            .map(async res => {
+              const location = res.data
+              const point = {
+                id: location.id,
+                name: location.name,
+                address: location.address,
+                description: location.locationDescription || location.type || '暂无描述',
+                locationDescription: location.locationDescription,
+                type: location.type,
+                cover: location.cover,
+                thumbCover: location.thumbCover,
+                latitude: parseFloat(location.latitude) || 0,
+                longitude: parseFloat(location.longitude) || 0,
+                dramaId: location.dramaId,
+                relatedDramas: []
+              }
+              
+              // 加载相关影视
+              if (location.dramaId) {
+                point.relatedDramas = await this.loadDramasForPoint(location.dramaId)
+              }
+              
+              return point
+            })
+        )
         
         // 使用真实的location数据初始化地图
         if (this.routePoints.length > 0) {
@@ -421,6 +463,44 @@ export default {
       } catch (error) {
         console.error('根据ID加载景点失败:', error)
       }
+    },
+    
+    // 为景点加载相关影视
+    async loadDramasForPoint(dramaIds) {
+      try {
+        const ids = String(dramaIds).split(',').map(id => id.trim()).filter(id => id)
+        if (ids.length === 0) return []
+        
+        const dramaPromises = ids.map(id => getDramaById(parseInt(id)))
+        const results = await Promise.all(dramaPromises)
+        
+        return results
+          .filter(res => res.code === 200 && res.data)
+          .map(res => ({
+            id: res.data.id,
+            name: res.data.name,
+            poster: res.data.image || res.data.cover || res.data.poster,
+            type: res.data.type || '影视作品'
+          }))
+      } catch (error) {
+        console.error('加载景点相关影视失败:', error)
+        return []
+      }
+    },
+    
+    // 切换景点展开状态
+    togglePointExpand(index) {
+      this.expandedPoints = {
+        ...this.expandedPoints,
+        [index]: !this.expandedPoints[index]
+      }
+    },
+    
+    // 跳转到影视详情
+    goToDramaDetail(id) {
+      uni.navigateTo({
+        url: `/pages/films/detail?id=${id}`
+      })
     },
     
     // 加载周边的location（当tour没有指定locationId时使用）
@@ -639,11 +719,11 @@ export default {
           const polylineData = [{
             points: allRoutePoints,
             color: lineColor,
-            width: 8, // 加宽一点
+            width: 10, // 加宽线条，让箭头更明显
             dottedLine: false,
-            arrowLine: true, // 保持开启，如果还不显示再关掉
-            borderColor: lineColor,
-            borderWidth: 1
+            arrowLine: true, // 显示箭头，表示方向和顺序
+            borderColor: '#ffffff', // 白色边框，增强对比度
+            borderWidth: 2
           }]
           
           this.polyline = polylineData
@@ -670,10 +750,10 @@ export default {
         this.polyline = [{
           points: coordinates,
           color: lineColor,
-          width: 4,
+          width: 10,
           dottedLine: false,
-          arrowLine: true,
-          borderColor: lineColor,
+          arrowLine: true, // 显示箭头，表示方向和顺序
+          borderColor: '#ffffff', // 白色边框，增强对比度
           borderWidth: 2
         }]
       } finally {
@@ -1114,6 +1194,14 @@ export default {
   color: #9ca3af;
 }
 
+.point-card-wrapper {
+  margin-bottom: 12px;
+}
+
+.point-card-wrapper:last-child {
+  margin-bottom: 0;
+}
+
 .point-card {
   display: flex;
   align-items: center;
@@ -1121,7 +1209,6 @@ export default {
   padding: 12px;
   background: #f9fafb;
   border-radius: 10px;
-  margin-bottom: 12px;
   transition: all 0.2s;
   cursor: pointer;
 }
@@ -1129,10 +1216,6 @@ export default {
 .point-card:active {
   background: #f3f4f6;
   transform: scale(0.98);
-}
-
-.point-card:last-child {
-  margin-bottom: 0;
 }
 
 .point-image {
@@ -1200,8 +1283,15 @@ export default {
   line-height: 1.4;
 }
 
-.point-nav-icon {
+.point-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+.point-nav-icon,
+.point-expand-icon {
   width: 36px;
   height: 36px;
   display: flex;
@@ -1210,6 +1300,79 @@ export default {
   background: white;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.point-expand-icon:active {
+  transform: scale(0.95);
+  background: #f3f4f6;
+}
+
+.point-dramas {
+  margin-top: 8px;
+  padding: 12px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.dramas-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 12px;
+  padding-left: 8px;
+  border-left: 3px solid #6366f1;
+}
+
+.drama-item-small {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.drama-item-small:last-child {
+  margin-bottom: 0;
+}
+
+.drama-item-small:active {
+  background: #f3f4f6;
+  transform: scale(0.98);
+}
+
+.drama-poster-small {
+  width: 60px;
+  height: 84px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.drama-info-small {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.drama-name-small {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drama-type-small {
+  font-size: 12px;
+  color: #6b7280;
 }
 
 

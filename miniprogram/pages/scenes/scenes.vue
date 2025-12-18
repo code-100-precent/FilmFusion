@@ -79,6 +79,12 @@
                 <text class="location-name">{{ location.name }}</text>
               </view>
               <text class="location-desc">{{ formatDescription(location.locationDescription) }}</text>
+              <view class="location-tags" v-if="location.dramaId">
+                <view class="drama-tag">
+                  <uni-icons type="videocam" size="12" color="#ef4444"></uni-icons>
+                  <text>相关影视</text>
+                </view>
+              </view>
               <view class="location-footer">
                 <text class="location-price">¥{{ location.price }}/天</text>
               </view>
@@ -464,6 +470,23 @@ export default {
   -webkit-box-orient: vertical;
   overflow: hidden;
   flex: 1;
+}
+
+.location-tags {
+  display: flex;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.drama-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 4rpx 12rpx;
+  background: #fef2f2;
+  border-radius: 12rpx;
+  font-size: 20rpx;
+  color: #ef4444;
 }
 
 .location-footer {

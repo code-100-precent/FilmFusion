@@ -119,6 +119,30 @@
         </view>
       </view>
 
+      <!-- 相关影视 -->
+      <view class="info-card" v-if="relatedDramas.length > 0">
+        <view class="card-title">相关影视</view>
+        <view class="drama-list">
+          <view 
+            v-for="drama in relatedDramas" 
+            :key="drama.id" 
+            class="drama-item"
+            @click="goToDramaDetail(drama.id)"
+          >
+            <image 
+              v-if="drama.poster"
+              :src="getFileUrl(drama.poster)" 
+              class="drama-poster" 
+              mode="aspectFill"
+            ></image>
+            <view class="drama-info">
+              <text class="drama-name">{{ drama.name }}</text>
+              <text class="drama-type" v-if="drama.type">{{ drama.type }}</text>
+            </view>
+            <uni-icons type="right" size="16" color="#9ca3af"></uni-icons>
+          </view>
+        </view>
+      </view>
 
     </scroll-view>
 
@@ -136,7 +160,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import { getLocationById } from '../../services/backend-api'
+import { getLocationById, getDramaById } from '../../services/backend-api'
 // 导入文件URL处理函数
 import { getFileUrl } from '../../utils'
 
@@ -150,6 +174,7 @@ export default {
     return {
       location: null,
       loading: false,
+      relatedDramas: [], // 相关影视作品列表
       categories: [
         { label: '自然风光', value: 'natural' },
         { label: '历史建筑', value: 'historical' },
@@ -211,6 +236,7 @@ export default {
     }
   },
   methods: {
+    getFileUrl,
     getCategoryLabel(value) {
       if (!value) return ''
       const category = this.categories.find(c => c.value === value)
@@ -233,6 +259,11 @@ export default {
           if (!this.location.bestShootingTime) {
             this.location.bestShootingTime = '春秋两季，清晨或傍晚光线最佳'
           }
+
+          // 加载相关影视作品
+          if (this.location.dramaId) {
+            await this.loadRelatedDramas(this.location.dramaId)
+          }
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -248,6 +279,35 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    async loadRelatedDramas(dramaIds) {
+      try {
+        // dramaIds可能是逗号分隔的字符串
+        const ids = String(dramaIds).split(',').map(id => id.trim()).filter(id => id)
+        
+        if (ids.length === 0) return
+        
+        // 逐个获取drama详情
+        const dramaPromises = ids.map(id => getDramaById(parseInt(id)))
+        const results = await Promise.all(dramaPromises)
+        
+        // 过滤成功的结果
+        this.relatedDramas = results
+          .filter(res => res.code === 200 && res.data)
+          .map(res => ({
+            id: res.data.id,
+            name: res.data.name,
+            poster: res.data.image || res.data.cover || res.data.poster,
+            type: res.data.type || '影视作品'
+          }))
+      } catch (error) {
+        console.error('加载相关影视失败:', error)
+      }
+    },
+    goToDramaDetail(id) {
+      uni.navigateTo({
+        url: `/pages/films/detail?id=${id}`
+      })
     },
     openLocation() {
       if (!this.location || !this.location.latitude || !this.location.longitude) {
@@ -511,6 +571,57 @@ export default {
   height: 1rpx;
   background: #e5e7eb;
   margin: 24rpx 0;
+}
+
+.drama-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.drama-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx;
+  background: #f9fafb;
+  border-radius: 12rpx;
+  transition: all 0.3s;
+}
+
+.drama-item:active {
+  background: #f3f4f6;
+  transform: scale(0.98);
+}
+
+.drama-poster {
+  width: 100rpx;
+  height: 140rpx;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.drama-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.drama-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drama-type {
+  font-size: 24rpx;
+  color: #6b7280;
 }
 </style>
 
