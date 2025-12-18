@@ -9,6 +9,7 @@ import cn.cxdproject.coder.model.dto.CreateDramaDTO;
 import cn.cxdproject.coder.model.dto.UpdateDramaDTO;
 import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Drama;
+import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.mapper.DramaMapper;
@@ -222,11 +223,18 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
 
         Object store = cache.getIfPresent(CaffeineConstants.DRAMA + id);
-        if (store == null) {
-            store = redisUtils.get(TaskConstants.DRAMA, Drama.class);
+        if (store != null) {
+            return toDramaVO((Drama) store);
         }
 
-        return store != null ? toDramaVO((Drama) store) : null;
+        String json = (String) redisUtils.get(TaskConstants.DRAMA);
+        Drama drama = null;
+        if (json != null && !json.isEmpty()) {
+            drama = JsonUtils.fromJson(json, Drama.class);
+            return toDramaVO(drama);
+        }
+
+        return null;
     }
 
     //用户批量查询降级
