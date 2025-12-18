@@ -113,11 +113,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-<<<<<<< HEAD
     public List<DramaVO> getDramaPage(Long lastId, int size, String keyword) throws InterruptedException {
-=======
-    public List<DramaVO> getDramaPage(Long lastId, int size, String keyword){
->>>>>>> dad71072bb0d69407e404ceb16a8abd3f1feca3b
         List<Long> ids = dramaMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
             return Collections.emptyList();

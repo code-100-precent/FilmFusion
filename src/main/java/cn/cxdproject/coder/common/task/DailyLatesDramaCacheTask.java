@@ -93,25 +93,10 @@ public class DailyLatesDramaCacheTask {
                 redisUtils.set(key, vo, Duration.ofHours(25));
             }
 
-<<<<<<< HEAD
-            // 4. 写入 Redis，有效期 25 小时
-            redisUtils.set(
-                    TaskConstants.DRAMA,
-                    json,
-                    Duration.ofHours(25)
-            );
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("成功缓存最新1条剧目信息到 Redis，耗时: {}ms", duration);
-
-        } catch (Exception e) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("缓存最新剧目信息失败，耗时: {}ms", duration, e);
-=======
             log.info("成功将 {} 条剧目信息逐条缓存到 Redis", allDramas.size());
 
         } catch (Exception e) {
             log.error("全量缓存剧目到 Redis 失败", e);
->>>>>>> dad71072bb0d69407e404ceb16a8abd3f1feca3b
         }
     }
 

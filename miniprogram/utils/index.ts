@@ -32,6 +32,18 @@ export {
   FILE_FIELDS_CONFIG 
 } from './apiProcessor'
 
+// 导出错误处理工具
+export {
+  ERROR_MESSAGES,
+  handleApiError,
+  handleNetworkError,
+  handleUploadError,
+  handleValidationError,
+  showSuccess,
+  showWarning,
+  showConfirm
+} from './errorHandler'
+
 /**
  * 加载状态管理Mixin
  * 为所有页面提供统一的加载状态管理
