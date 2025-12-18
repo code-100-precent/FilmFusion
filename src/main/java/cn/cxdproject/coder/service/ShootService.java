@@ -27,7 +27,7 @@ public interface ShootService extends IService<Shoot> {
     /**
      * 根据ID获取拍摄报备详情
      */
-    ShootVO getShootById(Long shootId);
+    ShootVO getShootById(Long shootId) throws InterruptedException;
 
     /**
      * 根据ID获取拍摄报备详情（带超时控制和降级）
@@ -37,7 +37,7 @@ public interface ShootService extends IService<Shoot> {
     /**
      * 分页获取拍摄报备列表（按时间倒序，公开接口）
      */
-    List<ShootVO> getShootPage(Long lastId, int size, String keyword);
+    List<ShootVO> getShootPage(Long lastId, int size, String keyword) throws InterruptedException;
 
     /**
      * 分页获取拍摄报备列表（带超时控制和降级）

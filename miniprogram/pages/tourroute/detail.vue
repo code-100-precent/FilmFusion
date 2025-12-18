@@ -648,117 +648,32 @@ export default {
       this.calculateMapCenter(points)
     },
     
-    // 获取真实道路路线（使用腾讯地图API）
+    // 获取路线（简化版：直接连接景点，显示箭头）
     async fetchRealRoutes(points, lineColor) {
       if (!points || points.length < 2) {
         this.polyline = []
         return
       }
       
-      // 1. 尝试从缓存读取
-      // 生成一个唯一的缓存Key，基于路线ID和点的数量
-      const cacheKey = `route_cache_${this.route.id}_${points.length}`
-      const cachedPolyline = uni.getStorageSync(cacheKey)
+      // 直接使用景点坐标作为路线点
+      // 为了让箭头更明显，我们不使用真实道路，而是使用直线连接
+      // 这样既"简洁"又"方向明确"
       
-      if (cachedPolyline) {
-        console.log('命中本地缓存，无需调用API')
-        this.polyline = JSON.parse(cachedPolyline)
-        // 即使有缓存，也重新设置颜色（因为颜色可能变了）
-        if (this.polyline && this.polyline.length > 0) {
-          this.polyline[0].color = lineColor
-          this.polyline[0].borderColor = lineColor
-        }
-        return
-      }
+      const allRoutePoints = points.map(point => ({
+        latitude: point.latitude,
+        longitude: point.longitude
+      }))
       
-      // 2. 无缓存，调用API
-      uni.showLoading({
-        title: '正在规划路线...',
-        mask: true
-      })
+      const polylineData = [{
+        points: allRoutePoints,
+        color: lineColor,
+        width: 7, // 调整宽度，使其更精致
+        dottedLine: false,
+        arrowLine: true, // 保持箭头
+        // 移除白色边框，减少突兀感，使箭头与线条融合更自然
+      }]
       
-      try {
-        const allRoutePoints = []
-        
-        for (let i = 0; i < points.length - 1; i++) {
-          const from = points[i]
-          const to = points[i + 1]
-          
-          // 进一步增加延迟：1.5秒
-          // 确保绝对安全，特别是在开发工具热重载时
-          if (i > 0) {
-            await new Promise(resolve => setTimeout(resolve, 1500))
-          }
-          
-          let routePoints = await this.getDirectionRoute(from, to)
-          
-          // 失败重试
-          if (!routePoints || routePoints.length === 0) {
-            console.log('请求被限流，等待3秒后重试...')
-            await new Promise(resolve => setTimeout(resolve, 3000))
-            routePoints = await this.getDirectionRoute(from, to)
-          }
-          
-          if (routePoints && routePoints.length > 0) {
-            if (i === 0) {
-              allRoutePoints.push(...routePoints)
-            } else {
-              allRoutePoints.push(...routePoints.slice(1))
-            }
-          } else {
-            // 降级为直线
-            console.log('获取路线失败，降级为直线')
-            if (i === 0) allRoutePoints.push({ latitude: from.latitude, longitude: from.longitude })
-            allRoutePoints.push({ latitude: to.latitude, longitude: to.longitude })
-          }
-        }
-        
-        if (allRoutePoints.length > 0) {
-          console.log('成功获取路线点数量:', allRoutePoints.length)
-          
-          const polylineData = [{
-            points: allRoutePoints,
-            color: lineColor,
-            width: 10, // 加宽线条，让箭头更明显
-            dottedLine: false,
-            arrowLine: true, // 显示箭头，表示方向和顺序
-            borderColor: '#ffffff', // 白色边框，增强对比度
-            borderWidth: 2
-          }]
-          
-          this.polyline = polylineData
-          
-          // 3. 保存到缓存
-          // 只有当获取到了真实路线点（点数明显多于直线）才缓存
-          if (allRoutePoints.length > points.length * 2) {
-            try {
-              uni.setStorageSync(cacheKey, JSON.stringify(polylineData))
-              console.log('路线数据已缓存')
-            } catch (e) {
-              console.error('缓存失败', e)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('获取路线完全失败:', error)
-        // 降级方案
-        const coordinates = points.map(point => ({
-          latitude: point.latitude,
-          longitude: point.longitude
-        }))
-        
-        this.polyline = [{
-          points: coordinates,
-          color: lineColor,
-          width: 10,
-          dottedLine: false,
-          arrowLine: true, // 显示箭头，表示方向和顺序
-          borderColor: '#ffffff', // 白色边框，增强对比度
-          borderWidth: 2
-        }]
-      } finally {
-        uni.hideLoading()
-      }
+      this.polyline = polylineData
     },
     
     // 调用腾讯地图API获取两点之间的真实道路路线

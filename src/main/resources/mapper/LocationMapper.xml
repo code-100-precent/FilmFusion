@@ -173,13 +173,11 @@
         </if>
     </select>
 
-    <select id="selectLatestOne" resultType="cn.cxdproject.coder.model.entity.Location">
+    <select id="selectAll" resultType="cn.cxdproject.coder.model.entity.Location">
         SELECT *
         FROM fi_locations
         WHERE deleted = 0
           AND status = 1
-        ORDER BY created_at DESC
-        LIMIT 1
     </select>
 
 </mapper>

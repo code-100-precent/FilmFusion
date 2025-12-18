@@ -64,30 +64,26 @@ public class DailyLatestArticleCacheTask {
     @Scheduled(cron = "0 0 2 * * ?")
     public void cacheLatestArticleId() {
         try {
-            // 1. 从数据库查询最新1条
-            Article latestArticle = articleMapper.selectLatestOne();
+            // 1. 查询所有未删除的文章数据
+            List<Article> allArticles = articleMapper.selectAll();
 
-            if (latestArticle == null) {
+            if (allArticles == null || allArticles.isEmpty()) {
                 log.warn("未查到任何文章数据，跳过缓存");
                 return;
             }
 
-            // 2. 转为VO
-            ArticleVO vo = toArticleVO(latestArticle);
+            // 2. 遍历每一条，单独存入 Redis
+            for (Article article : allArticles) {
+                ArticleVO vo = toArticleVO(article);
+                String key = TaskConstants.ARTICLE + article.getId();
 
-            // 3. 序列化（单个对象，不是列表）
-            String json = JsonUtils.toJson(vo);
+                redisUtils.set(key, vo, Duration.ofHours(25));
+            }
 
-            // 4. 写入 Redis，有效期25小时
-            redisUtils.set(
-                    TaskConstants.ARTICLE,
-                    json,
-                    Duration.ofHours(25)
-            );
-            log.info("成功缓存最新1条文章到 Redis");
+            log.info("成功将 {} 条文章信息逐条缓存到 Redis", allArticles.size());
 
         } catch (Exception e) {
-            log.error("缓存最新文章失败", e);
+            log.error("全量缓存文章到 Redis 失败", e);
         }
     }
 

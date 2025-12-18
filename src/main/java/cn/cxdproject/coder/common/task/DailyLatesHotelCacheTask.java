@@ -63,30 +63,26 @@ public class DailyLatesHotelCacheTask {
     @Scheduled(cron = "0 0 2 * * ?")
     public void cacheLatestHotel() {
         try {
-            // 1. 从数据库查询最新1条酒店数据
-            Hotel latestHotel = hotelMapper.selectLatestOne();
+            // 1. 查询所有未删除的酒店
+            List<Hotel> allHotels = hotelMapper.selectAll();
 
-            if (latestHotel == null) {
+            if (allHotels == null || allHotels.isEmpty()) {
                 log.warn("未查到任何酒店数据，跳过缓存");
                 return;
             }
 
-            // 2. 转为 VO
-            HotelVO vo = toHotelVO(latestHotel);
+            // 2. 遍历每一条，单独存入 Redis
+            for (Hotel hotel : allHotels) {
+                HotelVO vo = toHotelVO(hotel);
+                String key = TaskConstants.HOTEL + hotel.getId(); // 使用 HOTEL 常量前缀
 
-            // 3. 序列化为 JSON（单个对象）
-            String json = JsonUtils.toJson(vo);
+                redisUtils.set(key, vo, Duration.ofHours(25));
+            }
 
-            // 4. 写入 Redis，有效期 25 小时
-            redisUtils.set(
-                    TaskConstants.HOTEL,
-                    json,
-                    Duration.ofHours(25)
-            );
-            log.info("成功缓存最新1条酒店信息到 Redis");
+            log.info("成功将 {} 条酒店信息逐条缓存到 Redis", allHotels.size());
 
         } catch (Exception e) {
-            log.error("缓存最新酒店信息失败", e);
+            log.error("全量缓存酒店到 Redis 失败", e);
         }
     }
 

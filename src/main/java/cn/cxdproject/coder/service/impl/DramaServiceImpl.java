@@ -113,7 +113,11 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+<<<<<<< HEAD
     public List<DramaVO> getDramaPage(Long lastId, int size, String keyword) throws InterruptedException {
+=======
+    public List<DramaVO> getDramaPage(Long lastId, int size, String keyword){
+>>>>>>> dad71072bb0d69407e404ceb16a8abd3f1feca3b
         List<Long> ids = dramaMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
             return Collections.emptyList();
@@ -222,16 +226,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
             throw (RuntimeException) e;
         }
 
-        Object store = cache.getIfPresent(CaffeineConstants.DRAMA + id);
-        if (store != null) {
-            return toDramaVO((Drama) store);
-        }
-
-        String json = (String) redisUtils.get(TaskConstants.DRAMA);
-        Drama drama = null;
-        if (json != null && !json.isEmpty()) {
-            drama = JsonUtils.fromJson(json, Drama.class);
-            return toDramaVO(drama);
+        DramaVO drama = redisUtils.get(TaskConstants.DRAMA+id,DramaVO.class);
+        if(drama != null){
+            return drama;
         }
 
         return null;
@@ -246,7 +243,7 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
         }
 
         try {
-            // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
+            // 从 Redis 获取缓存的全量文章
             String json = (String) redisUtils.get(TaskConstants.DRAMA_PAGE);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();

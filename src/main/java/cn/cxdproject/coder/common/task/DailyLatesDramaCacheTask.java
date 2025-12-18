@@ -9,7 +9,9 @@ import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 //Drama的定时任务（用于分页降级时查询的数据）
 @Component
@@ -25,6 +28,7 @@ public class DailyLatesDramaCacheTask {
 
     private final DramaMapper dramaMapper;
     private final RedisUtils redisUtils;
+
 
     public DailyLatesDramaCacheTask(DramaMapper dramaMapper,
                                     RedisUtils redisUtils) {
@@ -73,20 +77,23 @@ public class DailyLatesDramaCacheTask {
     public void cacheLatestDrama() {
         long startTime = System.currentTimeMillis();
         try {
-            // 1. 从数据库查询最新1条剧目数据
-            Drama latestDrama = dramaMapper.selectLatestOne();
+            // 1. 查询所有未删除的剧目
+            List<Drama> allDramas = dramaMapper.selectAll();
 
-            if (latestDrama == null) {
+            if (allDramas == null || allDramas.isEmpty()) {
                 log.warn("未查到任何剧目数据，跳过缓存");
                 return;
             }
 
-            // 2. 转为 VO
-            DramaVO vo = toDramaVO(latestDrama);
+            // 2. 遍历每一条，单独存入 Redis
+            for (Drama drama : allDramas) {
+                DramaVO vo = toDramaVO(drama);
+                String key = TaskConstants.DRAMA + drama.getId();
 
-            // 3. 序列化为 JSON（单个对象）
-            String json = JsonUtils.toJson(vo);
+                redisUtils.set(key, vo, Duration.ofHours(25));
+            }
 
+<<<<<<< HEAD
             // 4. 写入 Redis，有效期 25 小时
             redisUtils.set(
                     TaskConstants.DRAMA,
@@ -99,6 +106,12 @@ public class DailyLatesDramaCacheTask {
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
             log.error("缓存最新剧目信息失败，耗时: {}ms", duration, e);
+=======
+            log.info("成功将 {} 条剧目信息逐条缓存到 Redis", allDramas.size());
+
+        } catch (Exception e) {
+            log.error("全量缓存剧目到 Redis 失败", e);
+>>>>>>> dad71072bb0d69407e404ceb16a8abd3f1feca3b
         }
     }
 

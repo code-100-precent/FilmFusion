@@ -123,13 +123,11 @@
         </if>
     </select>
 
-    <select id="selectLatestOne" resultType="cn.cxdproject.coder.model.entity.Policy">
+    <select id="selectAll" resultType="cn.cxdproject.coder.model.entity.Policy">
         SELECT *
         FROM fi_policy
         WHERE deleted = 0
           AND status = 1
-        ORDER BY created_at DESC
-        LIMIT 1
     </select>
 
 

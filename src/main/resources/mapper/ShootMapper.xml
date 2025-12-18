@@ -128,11 +128,9 @@
         </if>
     </select>
 
-    <select id="selectLatestOne" resultType="cn.cxdproject.coder.model.entity.Shoot">
+    <select id="selectAll" resultType="cn.cxdproject.coder.model.entity.Shoot">
         SELECT *
         FROM fi_shoots
         WHERE deleted = 0
-        ORDER BY created_at DESC
-        LIMIT 1
     </select>
 </mapper>

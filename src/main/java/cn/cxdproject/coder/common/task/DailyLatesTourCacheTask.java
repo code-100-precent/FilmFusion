@@ -63,30 +63,26 @@ public class DailyLatesTourCacheTask {
     @Scheduled(cron = "0 * * * * ?")
     public void cacheLatestTourId() {
         try {
-            // 1. 从数据库查询最新1条
-            Tour latestTour = tourMapper.selectLatestOne();
+            // 1. 查询所有未删除的旅游线路数据
+            List<Tour> allTours = tourMapper.selectAll();
 
-            if (latestTour == null) {
-                log.warn("未查到任何旅游路线数据，跳过缓存");
+            if (allTours == null || allTours.isEmpty()) {
+                log.warn("未查到任何旅游线路数据，跳过缓存");
                 return;
             }
 
-            // 2. 转为VO
-            TourVO vo = toTourVO(latestTour);
+            // 2. 遍历每一条，单独存入 Redis
+            for (Tour tour : allTours) {
+                TourVO vo = toTourVO(tour);
+                String key = TaskConstants.TOUR + tour.getId();
 
-            // 3. 序列化（单个对象，不是列表）
-            String json = JsonUtils.toJson(vo);
+                redisUtils.set(key, vo, Duration.ofHours(25));
+            }
 
-            // 4. 写入 Redis，有效期25小时
-            redisUtils.set(
-                    TaskConstants.TOUR,
-                    json,
-                    Duration.ofHours(25)
-            );
-            log.info("成功缓存最新1条旅游路线到 Redis");
+            log.info("成功将 {} 条旅游线路信息逐条缓存到 Redis", allTours.size());
 
         } catch (Exception e) {
-            log.error("缓存最新旅游路线失败", e);
+            log.error("全量缓存旅游线路到 Redis 失败", e);
         }
     }
 

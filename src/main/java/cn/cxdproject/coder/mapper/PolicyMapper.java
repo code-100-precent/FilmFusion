@@ -2,6 +2,7 @@ package cn.cxdproject.coder.mapper;
 
 import cn.cxdproject.coder.model.dto.UpdatePolicyDTO;
 import cn.cxdproject.coder.model.entity.Banner;
+import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import cn.cxdproject.coder.model.entity.Policy;
@@ -35,6 +36,6 @@ public interface PolicyMapper extends BaseMapper<Policy> {
 
     Long getTotal(@Param("keyword") String keyword);
 
-    Policy selectLatestOne();
+    List<Policy> selectAll();
 
 }
