@@ -77,11 +77,8 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .image(createDTO.getImage())
                 .thumbImage(createDTO.getThumbImage())
                 .locationId(createDTO.getLocationId())
-                .dramaId(createDTO.getDramaId())
                 .build();
 
-        // deleted字段在BaseEntity中，使用setter方法设置
-        tour.setDeleted(createDTO.getDeleted() != null ? (createDTO.getDeleted() == 0 ? false : true) : false);
         tour.setCreatedAt(LocalDateTime.now());
         tour.setUpdatedAt(LocalDateTime.now());
 
@@ -205,8 +202,6 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
                 .updatedAt(tour.getUpdatedAt())
                 .thumbImage(tour.getThumbImage())
                 .locationId(tour.getLocationId())
-                .dramaId(tour.getDramaId())
-                .deleted(tour.getDeleted() != null ? (tour.getDeleted() ? 1 : 0) : 0)
                 .build();
     }
 

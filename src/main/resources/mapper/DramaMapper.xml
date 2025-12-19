@@ -93,37 +93,37 @@
             <if test="dto.name != null and dto.name != ''">
                 name = #{dto.name},
             </if>
-            <if test="dto.filingNum != null and dto.filingNum != ''">
+            <if test="dto.filingNum != null">
                 filing_num = #{dto.filingNum},
             </if>
-            <if test="dto.prodCompany != null and dto.prodCompany != ''">
+            <if test="dto.prodCompany != null ">
                 prod_company = #{dto.prodCompany},
             </if>
-            <if test="dto.crewDescription != null and dto.crewDescription != ''">
+            <if test="dto.crewDescription != null ">
                 crew_description = #{dto.crewDescription},
             </if>
-            <if test="dto.dramaDescription != null and dto.dramaDescription != ''">
+            <if test="dto.dramaDescription != null ">
                 drama_description = #{dto.dramaDescription},
             </if>
-            <if test="dto.cast != null and dto.cast != ''">
+            <if test="dto.cast != null">
                 cast = #{dto.cast},
             </if>
-            <if test="dto.shootLocation != null and dto.shootLocation != ''">
+            <if test="dto.shootLocation != null ">
                 shoot_location = #{dto.shootLocation},
             </if>
-            <if test="dto.service != null and dto.service != ''">
+            <if test="dto.service != null ">
                 service = #{dto.service},
             </if>
-            <if test="dto.image != null and dto.image != ''">
+            <if test="dto.image != null ">
                 image = #{dto.image},
             </if>
-            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+            <if test="dto.thumbImage != null">
                 thumb_image = #{dto.thumbImage},
             </if>
-            <if test="dto.locationId != null and dto.locationId != '' ">
+            <if test="dto.locationId != null  ">
                 location_id = #{dto.locationId},
             </if>
-            <if test="dto.serviceId != null and dto.serviceId != ''">
+            <if test="dto.serviceId != null">
                 service_id = #{dto.serviceId},
             </if>
         </set>

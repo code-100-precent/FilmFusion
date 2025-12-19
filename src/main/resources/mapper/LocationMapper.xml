@@ -118,19 +118,19 @@
             <if test="dto.status != null">
                 status = #{dto.status},
             </if>
-            <if test="dto.locationDescription != null and dto.locationDescription != ''">
+            <if test="dto.locationDescription != null ">
                 location_description = #{dto.locationDescription},
             </if>
-            <if test="dto.locationPrincipalName != null and dto.locationPrincipalName != ''">
+            <if test="dto.locationPrincipalName != null ">
                 location_principal_name = #{dto.locationPrincipalName},
             </if>
-            <if test="dto.locationPrincipalPhone != null and dto.locationPrincipalPhone != ''">
+            <if test="dto.locationPrincipalPhone != null ">
                 location_principal_phone = #{dto.locationPrincipalPhone},
             </if>
-            <if test="dto.govPrincipalName != null and dto.govPrincipalName != ''">
+            <if test="dto.govPrincipalName != null ">
                 gov_principal_name = #{dto.govPrincipalName},
             </if>
-            <if test="dto.govPrincipalPhone != null and dto.govPrincipalPhone != ''">
+            <if test="dto.govPrincipalPhone != null">
                 gov_principal_phone = #{dto.govPrincipalPhone},
             </if>
             <if test="dto.address != null and dto.address != ''">
@@ -139,19 +139,19 @@
             <if test="dto.price != null and dto.price != ''">
                 price = #{dto.price},
             </if>
-            <if test="dto.image != null and dto.image != ''">
+            <if test="dto.image != null">
                 image = #{dto.image},
             </if>
-            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+            <if test="dto.thumbImage != null ">
                 thumb_image = #{dto.thumbImage},
             </if>
-            <if test="dto.longitude != null and dto.longitude != ''">
+            <if test="dto.longitude != null">
                 longitude = #{dto.longitude},
             </if>
-            <if test="dto.latitude != null and dto.latitude != ''">
+            <if test="dto.latitude != null">
                 latitude = #{dto.latitude},
             </if>
-            <if test="dto.dramaId != null and dto.dramaId != ''">
+            <if test="dto.dramaId != null">
                 drama_id = #{dto.dramaId},
             </if>
         </set>
