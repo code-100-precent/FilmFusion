@@ -390,8 +390,7 @@ const columns = [
           width: 80,
           height: 60,
           objectFit: 'cover',
-          previewDisabled: false,
-          fallbackSrc: '/placeholder.jpg'
+          previewDisabled: false
         })
       }
       return h('span', '无')

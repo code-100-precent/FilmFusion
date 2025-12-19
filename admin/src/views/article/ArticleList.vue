@@ -414,7 +414,6 @@ const handlePageSizeChange = (pageSize) => {
 
 const handleAdd = () => {
   dialogTitle.value = '新增文章'
-  const defaultCover = 'files/origin/1765509426952_picture1.png'
   Object.assign(articleForm, {
     id: null,
     title: '',
@@ -423,19 +422,12 @@ const handleAdd = () => {
     content: '',
     image: '',
     thumbImage: '',
-    cover: defaultCover,
-    thumbCover: defaultCover,
+    cover: '',
+    thumbCover: '',
     userId: userStore.userInfo?.id || null
   })
   
-  coverFileList.value = [{
-    id: 'default-cover',
-    name: '默认封面.jpg',
-    status: 'finished',
-    url: getImageUrl(defaultCover),
-    originUrl: defaultCover,
-    thumbUrl: defaultCover
-  }]
+  coverFileList.value = []
   detailFileList.value = []
   dialogVisible.value = true
 }
