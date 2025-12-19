@@ -239,7 +239,6 @@ CREATE TABLE `fi_tours` (
      `image`           varchar(500)     DEFAULT NULL,
      `thumb_image`     varchar(500)     DEFAULT NULL COMMENT '压缩后图片',
      `location_id`     varchar(255)      NOT NULL COMMENT '景点id',
-     `drama_id`        varchar(255)      NOT NULL COMMENT '关联影视id',
      PRIMARY KEY (`id`),
      KEY `name_deleted` (`name`,`deleted`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;

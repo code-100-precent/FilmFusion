@@ -102,7 +102,7 @@
             <if test="dto.phone != null">
                 phone = #{dto.phone},
             </if>
-            <if test="dto.contactName != null and dto.contactName != ''">
+            <if test="dto.contactName != null">
                 contact_name = #{dto.contactName},
             </if>
             <if test="dto.image != null">

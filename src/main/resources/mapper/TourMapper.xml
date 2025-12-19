@@ -127,7 +127,7 @@
                 thumb_image = #{dto.thumbImage},
             </if>
 
-            <if test="dto.locationId != null and dto.locationId != ''">
+            <if test="dto.locationId != null ">
                 location_id = #{dto.locationId},
             </if>
             <if test="dto.deleted != null">
