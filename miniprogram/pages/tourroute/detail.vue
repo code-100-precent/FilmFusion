@@ -293,18 +293,18 @@ export default {
               const dramaIds = String(res.data.dramaId).split(',').filter(id => id.trim())
               if (dramaIds.length > 0) {
                 const dramaPromises = dramaIds.map(dId => getDramaById(parseInt(dId)))
-                const dramaResults = await Promise.all(dramaPromises)
+                const dramaResults = await Promise.allSettled(dramaPromises)
                 
                 const dramaNames = dramaResults
-                  .filter(r => r.code === 200 && r.data)
-                  .map(r => r.data.name)
+                  .filter(r => r.status === 'fulfilled' && r.value?.code === 200 && r.value?.data)
+                  .map(r => r.value.data.name)
                 
                 if (dramaNames.length > 0) {
                   ipWorksStr = dramaNames.join('、')
                 }
               }
             } catch (e) {
-              console.error('获取关联影视作品失败:', e)
+              console.warn('获取关联影视作品失败:', e)
             }
           }
 
@@ -472,18 +472,18 @@ export default {
         if (ids.length === 0) return []
         
         const dramaPromises = ids.map(id => getDramaById(parseInt(id)))
-        const results = await Promise.all(dramaPromises)
+        const results = await Promise.allSettled(dramaPromises)
         
         return results
-          .filter(res => res.code === 200 && res.data)
-          .map(res => ({
-            id: res.data.id,
-            name: res.data.name,
-            poster: res.data.image || res.data.cover || res.data.poster,
-            type: res.data.type || '影视作品'
+          .filter(r => r.status === 'fulfilled' && r.value?.code === 200 && r.value?.data)
+          .map(r => ({
+            id: r.value.data.id,
+            name: r.value.data.name,
+            poster: r.value.data.image || r.value.data.cover || r.value.data.poster,
+            type: r.value.data.type || '影视作品'
           }))
       } catch (error) {
-        console.error('加载景点相关影视失败:', error)
+        console.warn('加载景点相关影视失败:', error)
         return []
       }
     },

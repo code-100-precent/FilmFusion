@@ -289,19 +289,20 @@ export default {
         
         // 逐个获取drama详情
         const dramaPromises = ids.map(id => getDramaById(parseInt(id)))
-        const results = await Promise.all(dramaPromises)
+        const results = await Promise.allSettled(dramaPromises)
         
         // 过滤成功的结果
         this.relatedDramas = results
-          .filter(res => res.code === 200 && res.data)
-          .map(res => ({
-            id: res.data.id,
-            name: res.data.name,
-            poster: res.data.image || res.data.cover || res.data.poster,
-            type: res.data.type || '影视作品'
+          .filter(r => r.status === 'fulfilled' && r.value?.code === 200 && r.value?.data)
+          .map(r => ({
+            id: r.value.data.id,
+            name: r.value.data.name,
+            poster: r.value.data.image || r.value.data.cover || r.value.data.poster,
+            type: r.value.data.type || '影视作品'
           }))
       } catch (error) {
-        console.error('加载相关影视失败:', error)
+        console.warn('加载相关影视失败:', error)
+        this.relatedDramas = []
       }
     },
     goToDramaDetail(id) {
