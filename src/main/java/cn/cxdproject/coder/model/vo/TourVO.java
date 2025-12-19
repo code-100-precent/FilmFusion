@@ -44,8 +44,6 @@ public class TourVO {
 
     private String locationId;
 
-    private String dramaId;
-
     private Integer deleted;
 
 }

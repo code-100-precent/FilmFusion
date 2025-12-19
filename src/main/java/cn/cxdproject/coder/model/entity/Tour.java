@@ -89,12 +89,6 @@ public class Tour extends BaseEntity implements Serializable {
     @TableField("location_id")
     private String locationId;
 
-    /**
-     * 附近拍摄的影视剧
-     */
-    @TableField("drama_id")
-    private String dramaId;
-
     @Override
     public User clone() {
         try {

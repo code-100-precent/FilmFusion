@@ -96,19 +96,19 @@
             <if test="dto.status != null">
                 status = #{dto.status},
             </if>
-            <if test="dto.address != null and dto.address != ''">
+            <if test="dto.address != null ">
                 address = #{dto.address},
             </if>
-            <if test="dto.phone != null and dto.phone != ''">
+            <if test="dto.phone != null">
                 phone = #{dto.phone},
             </if>
             <if test="dto.contactName != null and dto.contactName != ''">
                 contact_name = #{dto.contactName},
             </if>
-            <if test="dto.image != null and dto.image != ''">
+            <if test="dto.image != null">
                 image = #{dto.image},
             </if>
-            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+            <if test="dto.thumbImage != null">
                 thumb_image = #{dto.thumbImage},
             </if>
         </set>

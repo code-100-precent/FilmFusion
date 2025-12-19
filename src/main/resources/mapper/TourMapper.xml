@@ -19,7 +19,6 @@
         <result column="image" property="image" />
         <result column="thumb_image" property="thumbImage"/>
         <result column="location_id" property="locationId"/>
-        <result column="drama_id" property="dramaId"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -36,8 +35,7 @@
         `deleted`,
         `image`,
         `thumb_image`,
-        `location_id`,
-        `drama_id`
+        `location_id`
     </sql>
 
     <select id="selectIds" resultType="long">
@@ -113,27 +111,24 @@
             <if test="dto.features != null and dto.features != ''">
                 features = #{dto.features},
             </if>
-            <if test="dto.transport != null and dto.transport != ''">
+            <if test="dto.transport != null ">
                 transport = #{dto.transport},
             </if>
-            <if test="dto.hotel != null and dto.hotel != ''">
+            <if test="dto.hotel != null">
                 hotel = #{dto.hotel},
             </if>
-            <if test="dto.food != null and dto.food != ''">
+            <if test="dto.food != null ">
                 food = #{dto.food},
             </if>
-            <if test="dto.image != null and dto.image != ''">
+            <if test="dto.image != null">
                 image = #{dto.image},
             </if>
-            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+            <if test="dto.thumbImage != null">
                 thumb_image = #{dto.thumbImage},
             </if>
 
             <if test="dto.locationId != null and dto.locationId != ''">
                 location_id = #{dto.locationId},
-            </if>
-            <if test="dto.dramaId != null and dto.dramaId != ''">
-                drama_id = #{dto.dramaId},
             </if>
             <if test="dto.deleted != null">
                 deleted = #{dto.deleted},

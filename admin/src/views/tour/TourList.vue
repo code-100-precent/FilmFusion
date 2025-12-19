@@ -188,16 +188,6 @@
         </div>
 
         <div class="form-row">
-          <n-form-item label="关联影视选择" path="dramaId">
-            <n-select
-                v-model:value="tourForm.dramaId"
-                :options="dramaOptions"
-                placeholder="请选择关联影视"
-                filterable
-                clearable
-                multiple
-            />
-          </n-form-item>
           <n-form-item label="状态" path="deleted">
             <n-switch v-model:value="statusSwitch">
               <template #checked>启用</template>
@@ -268,7 +258,7 @@ import {
   NSelect,
   useDialog
 } from 'naive-ui'
-import { getTourPage, createTour, updateTour, deleteTour, getTourById, uploadFile, getLocationList, getDramaList } from '@/api'
+import { getTourPage, createTour, updateTour, deleteTour, getTourById, uploadFile, getLocationList, getHotelPage } from '@/api'
 import { getImageUrl } from '@/utils/image'
 import config from '@/config'
 import dayjs from 'dayjs'
@@ -308,7 +298,6 @@ const tourForm = reactive({
   thumb_image: '',    // 对应 thumb_image (缩略图)
   locationId: [],
 
-  dramaId: [],
   // 辅助字段
   cover: '',
   thumbCover: ''
@@ -337,29 +326,17 @@ const fileMapping = reactive({})
 
 // 下拉选项
 const locationOptions = ref([])
-const dramaOptions = ref([])
 
 // 加载选项数据
 const loadOptions = async () => {
   try {
     // 并行请求
-    const [locRes, dramaRes] = await Promise.all([
-      getLocationList({ current: 1, size: 1000 }), // 获取足够多的景点
-      getDramaList({ current: 1, size: 1000 })
-    ])
+    const locRes = await getLocationList({ current: 1, size: 1000 }) // 获取足够多的景点
 
     if (locRes.data) {
       // 兼容分页结构
       const records = Array.isArray(locRes.data) ? locRes.data : (locRes.data.records || [])
       locationOptions.value = records.map(item => ({
-        label: item.name,
-        value: item.id
-      }))
-    }
-
-    if (dramaRes.data) {
-      const list = Array.isArray(dramaRes.data) ? dramaRes.data : (dramaRes.data.records || [])
-      dramaOptions.value = list.map(item => ({
         label: item.name,
         value: item.id
       }))
@@ -396,9 +373,6 @@ const formRules = {
   ],
   locationId: [
     { type: 'array', required: false, message: '请选择景点', trigger: ['blur', 'change'] }
-  ],
-  dramaId: [
-    { type: 'array', required: false, message: '请选择关联影视', trigger: ['blur', 'change'] }
   ]
 }
 
@@ -435,7 +409,6 @@ const columns = [
   { title: '周边旅馆', key: 'hotel', width: 150, ellipsis: { tooltip: true } },
   { title: '美食推荐', key: 'food', width: 150, ellipsis: { tooltip: true } },
   { title: '景点ID', key: 'locationId', width: 120 },
-  { title: '关联影视ID', key: 'dramaId', width: 120 },
   {
     title: '状态',
     key: 'deleted',
@@ -570,7 +543,7 @@ const resetForm = () => {
     theme: '',
     features: '',
     transport: '',
-    hotel: '',
+    hotel: [],
     food: '',
     deleted: 0,
     image: '',
@@ -897,7 +870,6 @@ const handleDialogSave = async () => {
       food: tourForm.food,
       deleted: tourForm.deleted,
       locationId: Array.isArray(tourForm.locationId) ? tourForm.locationId.join(',') : '',
-      dramaId: Array.isArray(tourForm.dramaId) ? tourForm.dramaId.join(',') : '',
       image: allImages.join(','),
       thumb_image: allThumbImages.join(',')
     }

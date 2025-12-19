@@ -87,7 +87,7 @@
             <if test="dto.type != null and dto.type != ''">
                 type = #{dto.type},
             </if>
-            <if test="dto.issueUnit != null and dto.issueUnit != ''">
+            <if test="dto.issueUnit != null ">
                 issue_unit = #{dto.issueUnit},
             </if>
             <if test="dto.status != null">
@@ -96,13 +96,13 @@
             <if test="dto.issueTime != null">
                 issue_time = #{dto.issueTime},
             </if>
-            <if test="dto.content != null and dto.content != ''">
+            <if test="dto.content != null">
                 content = #{dto.content},
             </if>
-            <if test="dto.image != null and dto.image != ''">
+            <if test="dto.image != null">
                 image = #{dto.image},
             </if>
-            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+            <if test="dto.thumbImage != null">
                 thumb_image = #{dto.thumbImage},
             </if>
         </set>
