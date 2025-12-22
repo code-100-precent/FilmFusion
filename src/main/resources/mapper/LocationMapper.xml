@@ -109,10 +109,10 @@
     <update id="updateLocation">
         UPDATE fi_locations
         <set>
-            <if test="dto.name != null and dto.name != ''">
+            <if test="dto.name != null ">
                 name = #{dto.name},
             </if>
-            <if test="dto.type != null and dto.type != ''">
+            <if test="dto.type != null ">
                 type = #{dto.type},
             </if>
             <if test="dto.status != null">
@@ -133,10 +133,10 @@
             <if test="dto.govPrincipalPhone != null">
                 gov_principal_phone = #{dto.govPrincipalPhone},
             </if>
-            <if test="dto.address != null and dto.address != ''">
+            <if test="dto.address != null ">
                 address = #{dto.address},
             </if>
-            <if test="dto.price != null and dto.price != ''">
+            <if test="dto.price != null ">
                 price = #{dto.price},
             </if>
             <if test="dto.image != null">
