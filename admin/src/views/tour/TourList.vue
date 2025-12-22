@@ -187,17 +187,6 @@
           </n-form-item>
         </div>
 
-        <div class="form-row">
-          <n-form-item label="状态" path="deleted">
-            <n-switch v-model:value="statusSwitch">
-              <template #checked>启用</template>
-              <template #unchecked>禁用</template>
-            </n-switch>
-          </n-form-item>
-        </div>
-
-
-
         <!-- 封面图片上传 -->
         <n-form-item label="封面图片" path="cover">
           <n-upload
@@ -252,7 +241,6 @@ import {
   NSpin,
   NPagination,
   NTag,
-  NSwitch,
   NUpload,
   useMessage,
   NSelect,
@@ -301,13 +289,6 @@ const tourForm = reactive({
   // 辅助字段
   cover: '',
   thumbCover: ''
-})
-
-const statusSwitch = computed({
-  get: () => tourForm.deleted === 0, // 0表示启用，转换为true
-  set: (val) => {
-    tourForm.deleted = val ? 0 : 1 // true转换为0（启用），false转换为1（禁用）
-  }
 })
 
 const pagination = reactive({
