@@ -76,7 +76,7 @@
     <update id="updateArticle">
         UPDATE fi_articles
         <set>
-            <if test="dto.title != null and dto.title != ''">
+            <if test="dto.title != null ">
                 title = #{dto.title},
             </if>
             <if test="dto.issueTime != null">

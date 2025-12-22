@@ -81,10 +81,10 @@
     <update id="updatePolicy">
         UPDATE fi_policy
         <set>
-            <if test="dto.title != null and dto.title != ''">
+            <if test="dto.title != null">
                 title = #{dto.title},
             </if>
-            <if test="dto.type != null and dto.type != ''">
+            <if test="dto.type != null">
                 type = #{dto.type},
             </if>
             <if test="dto.issueUnit != null ">

@@ -92,28 +92,28 @@
     <update id="updateReportByUser">
         UPDATE fi_reports
         <set>
-            <if test="dto.name != null and dto.name != ''">
+            <if test="dto.name != null ">
                 name = #{dto.name},
             </if>
-            <if test="dto.type != null and dto.type != ''">
+            <if test="dto.type != null">
                 type = #{dto.type},
             </if>
-            <if test="dto.genre != null and dto.genre != ''">
+            <if test="dto.genre != null">
                 genre = #{dto.genre},
             </if>
-            <if test="dto.episodes != null and dto.episodes != ''">
+            <if test="dto.episodes != null">
                 episodes = #{dto.episodes},
             </if>
-            <if test="dto.investAmount != null and dto.investAmount != ''">
+            <if test="dto.investAmount != null">
                 invest_amount = #{dto.investAmount},
             </if>
-            <if test="dto.mainCreators != null and dto.mainCreators != ''">
+            <if test="dto.mainCreators != null">
                 main_creators = #{dto.mainCreators},
             </if>
-            <if test="dto.leadProducer != null and dto.leadProducer != ''">
+            <if test="dto.leadProducer != null">
                 lead_producer = #{dto.leadProducer},
             </if>
-            <if test="dto.producerUnit != null and dto.producerUnit != ''">
+            <if test="dto.producerUnit != null ">
                 producer_unit = #{dto.producerUnit},
             </if>
             <if test="dto.startDate != null">
@@ -122,34 +122,34 @@
             <if test="dto.endDate != null">
                 end_date = #{dto.endDate},
             </if>
-            <if test="dto.crewScale != null and dto.crewScale != ''">
+            <if test="dto.crewScale != null ">
                 crew_scale = #{dto.crewScale},
             </if>
-            <if test="dto.contact != null and dto.contact != ''">
+            <if test="dto.contact != null">
                 contact = #{dto.contact},
             </if>
-            <if test="dto.phoneNumber != null and dto.phoneNumber != ''">
+            <if test="dto.phoneNumber != null">
                 phone_number = #{dto.phoneNumber},
             </if>
-            <if test="dto.crewPosition != null and dto.crewPosition != ''">
+            <if test="dto.crewPosition != null">
                 crew_position = #{dto.crewPosition},
             </if>
-            <if test="dto.shootPermit != null and dto.shootPermit != ''">
+            <if test="dto.shootPermit != null ">
                 shoot_permit = #{dto.shootPermit},
             </if>
-            <if test="dto.thumbShootPermit != null and dto.thumbShootPermit != ''">
+            <if test="dto.thumbShootPermit != null">
                 thumb_shoot_permit = #{dto.thumbShootPermit},
             </if>
-            <if test="dto.approvalFile != null and dto.approvalFile != ''">
+            <if test="dto.approvalFile != null">
                 approval_file = #{dto.approvalFile},
             </if>
-            <if test="dto.thumbApprovalFile != null and dto.thumbApprovalFile != ''">
+            <if test="dto.thumbApprovalFile != null">
                 thumb_approval_file = #{dto.thumbApprovalFile},
             </if>
-            <if test="dto.shootApply != null and dto.shootApply != ''">
+            <if test="dto.shootApply != null">
                 shoot_apply = #{dto.shootApply},
             </if>
-            <if test="dto.thumbShootApply != null and dto.thumbShootApply != ''">
+            <if test="dto.thumbShootApply != null ">
                 thumb_shoot_apply = #{dto.thumbShootApply},
             </if>
         </set>

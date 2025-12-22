@@ -99,16 +99,16 @@
     <update id="updateTour">
         UPDATE fi_tours
         <set>
-            <if test="dto.name != null and dto.name != ''">
+            <if test="dto.name != null">
                 name = #{dto.name},
             </if>
-            <if test="dto.description != null and dto.description != ''">
+            <if test="dto.description != null">
                 description = #{dto.description},
             </if>
-            <if test="dto.theme != null and dto.theme != ''">
+            <if test="dto.theme != null">
                 theme = #{dto.theme},
             </if>
-            <if test="dto.features != null and dto.features != ''">
+            <if test="dto.features != null">
                 features = #{dto.features},
             </if>
             <if test="dto.transport != null ">

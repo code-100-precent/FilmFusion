@@ -543,13 +543,12 @@ const resetForm = () => {
     theme: '',
     features: '',
     transport: '',
-    hotel: [],
+    hotel: '',
     food: '',
     deleted: 0,
     image: '',
     thumb_image: '',
     locationId: [],
-    dramaId: [],
     cover: '',
     thumbCover: ''
   })
@@ -592,8 +591,7 @@ const handleEdit = async (row) => {
         deleted: tour.deleted || 0,
         image: tour.image || '',
         thumb_image: tour.thumb_image || tour.thumbImage || '',
-        locationId: tour.locationId ? String(tour.locationId).split(',').map(Number) : [],
-        dramaId: tour.dramaId ? String(tour.dramaId).split(',').map(Number) : []
+        locationId: tour.locationId ? String(tour.locationId).split(',').map(Number) : []
       })
 
       // 初始化文件列表
