@@ -28,7 +28,7 @@
             <uni-icons type="location" size="24" color="#6366f1"></uni-icons>
             <view class="feature-content">
               <text class="feature-title">拍摄场地</text>
-              <text class="feature-desc">提供丰富的拍摄场地资源，包括自然风光、古镇建筑、现代场景等，满足各类影视拍摄需求</text>
+              <text class="feature-desc">提供丰富的拍摄场地资源，包括自然景观、人文景观、城市场景、特色场景等，满足各类影视拍摄需求</text>
             </view>
           </view>
           <view class="feature-item">

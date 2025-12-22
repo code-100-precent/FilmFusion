@@ -1,15 +1,15 @@
 <template>
 	<view class="splash-screen" :class="{ 'slide-out': isSlideOut }">
+		<!-- 使用本地图片，无需加载状态 -->
 		<image 
 			class="splash-image" 
 			:src="splashImage"
+			mode="aspectFill"
 		></image>
 	</view>
 </template>
 
 <script>
-import { getFileUrl } from '../../utils'
-
 export default {
 	data() {
 		return {
@@ -18,7 +18,8 @@ export default {
 	},
 	computed: {
 		splashImage() {
-			return getFileUrl('files/origin/1765768530788_compressed-图片文字修改_compressed.jpg')
+			// 使用本地static目录下的图片，加载速度快
+			return '/static/拍在雅安.png'
 		}
 	},
 	onLoad() {

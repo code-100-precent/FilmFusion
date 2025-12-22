@@ -48,11 +48,14 @@ export const getDramaPage = (params: {
 
 /**
  * 获取影视作品详情
+ * @param id 影视作品ID
+ * @param silentError 是否静默错误（不显示Toast提示）
  */
-export const getDramaById = (id: number) => {
+export const getDramaById = (id: number, silentError: boolean = false) => {
     return httpWithFileUrl<any>({
         url: `/drama/${id}`,
-        method: 'GET'
+        method: 'GET',
+        silentError
     }, ['poster', 'posterUrl', 'images', 'thumbs'])
 }
 

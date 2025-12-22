@@ -88,10 +88,16 @@ type Data<T> = {
   nextCursor?: string
 }
 
+// 扩展请求选项类型，添加静默错误选项
+interface HttpOptions extends UniApp.RequestOptions {
+  silentError?: boolean // 是否静默错误（不显示Toast）
+}
+
 // 添加类型，支持泛型
-export const http = <T>(options: UniApp.RequestOptions) => {
+export const http = <T>(options: HttpOptions) => {
   // 返回 Promise 对象
   return new Promise<Data<T>>((resolve, reject) => {
+    const { silentError = false } = options
     // 处理GET请求的参数，将data转为query string
     let url = options.url || ''
     if (options.method === 'GET' && options.data) {
@@ -153,10 +159,12 @@ export const http = <T>(options: UniApp.RequestOptions) => {
             // 记录原始错误信息以便开发调试
             console.warn(`API业务错误: code=${errorCode}, message=${responseData.message}`)
             
-            uni.showToast({
-              icon: 'none',
-              title: friendlyMsg,
-            })
+            if (!silentError) {
+              uni.showToast({
+                icon: 'none',
+                title: friendlyMsg,
+              })
+            }
             reject(responseData)
           }
         } else if (res.statusCode === 401) {
@@ -185,20 +193,24 @@ export const http = <T>(options: UniApp.RequestOptions) => {
           if (res.statusCode === 403) friendlyMsg = '您没有权限执行此操作'
           if (res.statusCode >= 500) friendlyMsg = '服务器繁忙，请稍后再试'
           
-          uni.showToast({
-            icon: 'none',
-            title: friendlyMsg,
-          })
+          if (!silentError) {
+            uni.showToast({
+              icon: 'none',
+              title: friendlyMsg,
+            })
+          }
           reject(res)
         }
       },
       // 响应失败
       fail(err) {
         console.error('HTTP请求失败:', err)
-        uni.showToast({
-          icon: 'none',
-          title: '网络错误，请检查网络连接',
-        })
+        if (!silentError) {
+          uni.showToast({
+            icon: 'none',
+            title: '网络错误，请检查网络连接',
+          })
+        }
         reject(err)
       },
     })
@@ -212,9 +224,10 @@ export const http = <T>(options: UniApp.RequestOptions) => {
  * @returns Promise
  */
 export const httpWithFileUrl = <T>(
-  options: UniApp.RequestOptions,
+  options: HttpOptions,
   fileFields: string[] = ['image', 'imageUrl', 'thumbImage', 'poster', 'avatar']
 ): Promise<Data<T>> => {
+  const { silentError = false } = options
   // 返回 Promise 对象
   return new Promise<Data<T>>((resolve, reject) => {
     // 处理GET请求的参数，将data转为query string
@@ -284,10 +297,12 @@ export const httpWithFileUrl = <T>(
             // 记录原始错误信息以便开发调试
             console.warn(`API业务错误(带文件URL): code=${errorCode}, message=${responseData.message}`)
             
-            uni.showToast({
-              icon: 'none',
-              title: friendlyMsg,
-            })
+            if (!silentError) {
+              uni.showToast({
+                icon: 'none',
+                title: friendlyMsg,
+              })
+            }
             reject(responseData)
           }
         } else if (res.statusCode === 401) {
@@ -316,20 +331,24 @@ export const httpWithFileUrl = <T>(
           if (res.statusCode === 403) friendlyMsg = '您没有权限执行此操作'
           if (res.statusCode >= 500) friendlyMsg = '服务器繁忙，请稍后再试'
           
-          uni.showToast({
-            icon: 'none',
-            title: friendlyMsg,
-          })
+          if (!silentError) {
+            uni.showToast({
+              icon: 'none',
+              title: friendlyMsg,
+            })
+          }
           reject(res)
         }
       },
       // 响应失败
       fail(err) {
         console.error('HTTP请求失败:', err)
-        uni.showToast({
-          icon: 'none',
-          title: '网络错误，请检查网络连接',
-        })
+        if (!silentError) {
+          uni.showToast({
+            icon: 'none',
+            title: '网络错误，请检查网络连接',
+          })
+        }
         reject(err)
       },
     })

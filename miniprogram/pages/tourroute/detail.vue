@@ -70,76 +70,30 @@
               <text class="map-error-text">位置错误，请联系管理员。</text>
             </view>
           </view>
-          <view class="route-points" v-if="routePoints.length > 0">
-            <view class="points-title">
-              <text>途经景点</text>
-              <text class="points-count">（{{ routePoints.length }}个）</text>
-            </view>
-            <view 
-              v-for="(point, index) in routePoints" 
-              :key="index" 
-              class="point-card-wrapper"
-            >
-              <view class="point-card" @click="onPointClick(index)">
-                <image 
-                  v-if="point.cover || point.thumbCover"
-                  :src="getFileUrl(point.thumbCover || point.cover) || defaultCover" 
-                  class="point-image" 
-                  mode="aspectFill"
-                ></image>
-                <view class="point-content">
-                  <view class="point-header">
-                    <view class="point-number">{{ index + 1 }}</view>
-                    <text class="point-name">{{ point.name }}</text>
-                  </view>
-                  <text v-if="point.address" class="point-address">{{ point.address }}</text>
-                  <text class="point-desc">{{ point.description || point.locationDescription || point.type }}</text>
-                </view>
-                <view class="point-actions">
-                  <view class="point-nav-icon" @click.stop="onPointClick(index)">
-                    <uni-icons type="paperplane" size="20" color="#6366f1"></uni-icons>
-                  </view>
-                  <view 
-                    v-if="point.relatedDramas && point.relatedDramas.length > 0"
-                    class="point-expand-icon" 
-                    @click.stop="togglePointExpand(index)"
-                  >
-                    <uni-icons 
-                      :type="expandedPoints[index] ? 'up' : 'down'" 
-                      size="20" 
-                      color="#6366f1"
-                    ></uni-icons>
-                  </view>
-                </view>
-              </view>
-              
-              <!-- 相关影视下拉内容 -->
-              <view 
-                v-if="point.relatedDramas && point.relatedDramas.length > 0 && expandedPoints[index]" 
-                class="point-dramas"
-              >
-                <view class="dramas-title">相关影视</view>
-                <view 
-                  v-for="drama in point.relatedDramas" 
-                  :key="drama.id" 
-                  class="drama-item-small"
-                  @click="goToDramaDetail(drama.id)"
-                >
-                  <image 
-                    v-if="drama.poster"
-                    :src="getFileUrl(drama.poster)" 
-                    class="drama-poster-small" 
-                    mode="aspectFill"
-                  ></image>
-                  <view class="drama-info-small">
-                    <text class="drama-name-small">{{ drama.name }}</text>
-                    <text class="drama-type-small" v-if="drama.type">{{ drama.type }}</text>
-                  </view>
-                  <uni-icons type="right" size="14" color="#9ca3af"></uni-icons>
-                </view>
-              </view>
-            </view>
+        </view>
+
+        <!-- 沿途打卡（相关景点） -->
+        <view class="info-section">
+          <view class="section-title">
+            <uni-icons type="location" size="18" color="#6366f1"></uni-icons>
+            <text>相关景点</text>
+            <text class="section-subtitle">点击查看取景地影视</text>
           </view>
+          <scroll-view class="attractions-scroll" scroll-x show-scrollbar="false">
+            <view class="attraction-card" v-for="(point, index) in routePoints" :key="index">
+              <view class="attraction-image-wrapper" @click="navigateToPoint(point)">
+                <image :src="point.cover ? getFileUrl(point.cover) : defaultCover" class="attraction-image" mode="aspectFill"></image>
+                <view class="attraction-tag">{{ index + 1 }}</view>
+              </view>
+              <view class="attraction-info">
+                <text class="attraction-name">{{ point.name }}</text>
+                <view class="attraction-btn" @click.stop="openPointDramas(point)">
+                  <uni-icons type="videocam-filled" size="14" color="#fff"></uni-icons>
+                  <text>相关影视</text>
+                </view>
+              </view>
+            </view>
+          </scroll-view>
         </view>
 
         <!-- 交通方式 -->
@@ -182,6 +136,27 @@
         <Empty text="线路不存在"></Empty>
       </view>
     </scroll-view>
+    <!-- 影视列表模态框 -->
+    <view class="movie-modal" v-if="showDramaModal" @click="closeDramaModal">
+      <view class="modal-content" @click.stop="stopProp">
+        <view class="modal-header">
+          <text class="modal-title">{{ currentPointName }} - 相关影视</text>
+          <view class="modal-close" @click="closeDramaModal">
+            <uni-icons type="closeempty" size="20" color="#9ca3af"></uni-icons>
+          </view>
+        </view>
+        <scroll-view scroll-y class="modal-body">
+          <view class="modal-drama-item" v-for="drama in currentPointDramas" :key="drama.id" @click="goToDramaDetail(drama.id)">
+            <image :src="getFileUrl(drama.poster) || defaultCover" class="modal-drama-poster" mode="aspectFill"></image>
+            <view class="modal-drama-info">
+              <text class="modal-drama-name">{{ drama.name }}</text>
+              <text class="modal-drama-type">{{ drama.type }}</text>
+              <view class="modal-drama-btn">查看详情</view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -216,7 +191,12 @@ export default {
       // 周边数据
       nearbyHotels: [],
       // 景点展开状态
-      expandedPoints: {}
+      expandedPoints: {},
+      // 当前选中的景点影视
+      currentPointDramas: [],
+      // 影视模态框显示状态
+      showDramaModal: false,
+      currentPointName: ''
     }
   },
   computed: {
@@ -250,6 +230,25 @@ export default {
       }
       
       return images
+    },
+    // 收集所有途径景点的相关影视，去重并按顺序展示
+    allRelatedDramas() {
+      if (!this.routePoints || this.routePoints.length === 0) return []
+      
+      const dramaMap = new Map()
+      
+      // 按景点顺序收集影视，使用Map去重（保留第一次出现的顺序）
+      this.routePoints.forEach(point => {
+        if (point.relatedDramas && point.relatedDramas.length > 0) {
+          point.relatedDramas.forEach(drama => {
+            if (!dramaMap.has(drama.id)) {
+              dramaMap.set(drama.id, drama)
+            }
+          })
+        }
+      })
+      
+      return Array.from(dramaMap.values())
     }
   },
   onLoad(options) {
@@ -292,7 +291,7 @@ export default {
               // dramaId可能是逗号分隔的字符串
               const dramaIds = String(res.data.dramaId).split(',').filter(id => id.trim())
               if (dramaIds.length > 0) {
-                const dramaPromises = dramaIds.map(dId => getDramaById(parseInt(dId)))
+                const dramaPromises = dramaIds.map(dId => getDramaById(parseInt(dId), true))
                 const dramaResults = await Promise.allSettled(dramaPromises)
                 
                 const dramaNames = dramaResults
@@ -471,7 +470,7 @@ export default {
         const ids = String(dramaIds).split(',').map(id => id.trim()).filter(id => id)
         if (ids.length === 0) return []
         
-        const dramaPromises = ids.map(id => getDramaById(parseInt(id)))
+        const dramaPromises = ids.map(id => getDramaById(parseInt(id), true))
         const results = await Promise.allSettled(dramaPromises)
         
         return results
@@ -923,7 +922,29 @@ export default {
       uni.navigateTo({
         url: `/pages/hotel/detail?id=${id}`
       })
-    }
+    },
+    
+    // 打开景点相关影视模态框
+    openPointDramas(point) {
+      if (!point.relatedDramas || point.relatedDramas.length === 0) {
+        uni.showToast({
+          title: '该景点暂无相关影视',
+          icon: 'none'
+        })
+        return
+      }
+      this.currentPointDramas = point.relatedDramas
+      this.currentPointName = point.name
+      this.showDramaModal = true
+    },
+    
+    // 关闭影视模态框
+    closeDramaModal() {
+      this.showDramaModal = false
+    },
+    
+    // 阻止冒泡
+    stopProp() {}
 
   }
 }
@@ -1092,6 +1113,83 @@ export default {
   padding-top: 16px;
   border-top: 1px solid #e5e7eb;
 }
+
+// 相关影视轮播样式
+.related-dramas {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.dramas-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dramas-count {
+  font-size: 13px;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.dramas-swiper {
+  width: 100%;
+  height: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.drama-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f9fafb;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.drama-card:active {
+  transform: scale(0.98);
+}
+
+.drama-poster {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.drama-info {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+  background: white;
+}
+
+.drama-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drama-type {
+  font-size: 13px;
+  color: #6b7280;
+}
+
 
 .points-title {
   font-size: 14px;
@@ -1406,5 +1504,206 @@ export default {
   margin-top: 8px;
   font-size: 14px;
   color: #6b7280;
+}
+
+/* 沿途打卡模块样式 */
+.attractions-scroll {
+  width: 100%;
+  white-space: nowrap;
+  padding: 4px 0;
+}
+
+.attraction-card {
+  display: inline-block;
+  width: 140px;
+  margin-right: 12px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f3f4f6;
+  vertical-align: top;
+}
+
+.attraction-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100px;
+}
+
+.attraction-image {
+  width: 100%;
+  height: 100%;
+}
+
+.attraction-tag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.attraction-info {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attraction-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attraction-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  padding: 6px 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.attraction-btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+/* 模态框样式 */
+.movie-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 320px;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(20px);
+  animation: slideUp 0.3s forwards;
+}
+
+@keyframes slideUp {
+  to { transform: translateY(0); }
+}
+
+.modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.modal-close {
+  padding: 4px;
+}
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.modal-drama-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+
+.modal-drama-item:last-child {
+  margin-bottom: 0;
+}
+
+.modal-drama-item:active {
+  background: #f3f4f6;
+}
+
+.modal-drama-poster {
+  width: 60px;
+  height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.modal-drama-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.modal-drama-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-drama-type {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.modal-drama-btn {
+  align-self: flex-start;
+  font-size: 12px;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 4px 10px;
+  border-radius: 4px;
 }
 </style>

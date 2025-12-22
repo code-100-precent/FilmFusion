@@ -130,13 +130,10 @@ export default {
       keyword: '',
       selectedCategory: 'natural',
       categories: [
-        { label: '自然风光', value: 'natural', icon: 'image' },
-        { label: '历史建筑', value: 'historical', icon: 'home' },
-        { label: '现代建筑', value: 'modern', icon: 'location' },
-        { label: '文化场所', value: 'cultural', icon: 'star' },
-        { label: '商业场所', value: 'commercial', icon: 'shop' },
-        { label: '公园景点', value: 'park', icon: 'map' },
-        { label: '其他', value: 'other', icon: 'more' }
+        { label: '自然景观', value: 'natural', icon: 'image' },
+        { label: '人文景观', value: 'humanities', icon: 'home' },
+        { label: '城市场景', value: 'urban', icon: 'location' },
+        { label: '特色场景', value: 'feature', icon: 'star' }
       ],
       allLocations: [],
       nextCursor: null, // 游标分页
