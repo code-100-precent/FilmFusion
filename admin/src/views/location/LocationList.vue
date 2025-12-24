@@ -845,6 +845,19 @@ const handleEdit = async (row) => {
       const thumbCoverUrl = allThumbImages[0] || coverUrl
       const detailThumbUrls = allThumbImages.slice(1)
 
+      // 解析 dramaId
+      let dramaIds = []
+      const rawDramaId = res.data.dramaId || res.data.drama_id
+      if (rawDramaId) {
+        if (typeof rawDramaId === 'string') {
+          dramaIds = rawDramaId.split(',').map(id => Number(id.trim()))
+        } else if (typeof rawDramaId === 'number') {
+          dramaIds = [rawDramaId]
+        } else if (Array.isArray(rawDramaId)) {
+          dramaIds = rawDramaId.map(id => Number(id))
+        }
+      }
+
       Object.assign(locationForm, {
         id: res.data.id,
         name: res.data.name || '',
