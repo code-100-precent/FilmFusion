@@ -14,7 +14,7 @@
             v-model="keyword"
             class="search-input"
             type="text"
-            placeholder="搜索酒店名称、地址..."
+            placeholder="搜索"
             @confirm="handleSearch"
             @input="handleSearch"
           />

@@ -14,7 +14,7 @@
             v-model="keyword"
             class="search-input"
             type="text"
-            placeholder="搜索影视作品..."
+            placeholder="搜索"
             @confirm="handleSearch"
             @input="handleSearch"
           />

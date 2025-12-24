@@ -82,7 +82,7 @@
           <scroll-view class="attractions-scroll" scroll-x show-scrollbar="false">
             <view class="attraction-card" v-for="(point, index) in routePoints" :key="index">
               <view class="attraction-image-wrapper" @click="navigateToPoint(point)">
-                <image :src="point.cover ? getFileUrl(point.cover) : defaultCover" class="attraction-image" mode="aspectFill"></image>
+                <image :src="getPointCoverUrl(point)" class="attraction-image" mode="aspectFill"></image>
                 <view class="attraction-tag">{{ index + 1 }}</view>
               </view>
               <view class="attraction-info">
@@ -259,6 +259,37 @@ export default {
   },
   methods: {
     getFileUrl,
+    // 获取景点封面图URL
+    getPointCoverUrl(point) {
+      if (!point) {
+        console.log('景点数据为空，使用默认封面')
+        return this.defaultCover
+      }
+      
+      // 优先使用cover字段，然后是image、thumbCover、thumbImage
+      let coverUrl = point.cover || point.image || point.thumbCover || point.thumbImage
+      
+      console.log('处理景点封面:', point.name, '原始URL:', coverUrl)
+      
+      // 如果coverUrl是数组，取第一个
+      if (Array.isArray(coverUrl) && coverUrl.length > 0) {
+        coverUrl = coverUrl[0]
+        console.log('从数组中取第一个:', coverUrl)
+      }
+      
+      // 如果coverUrl是逗号分隔的字符串，取第一个
+      if (typeof coverUrl === 'string' && coverUrl.includes(',')) {
+        coverUrl = coverUrl.split(',')[0].trim()
+        console.log('从逗号分隔字符串中取第一个:', coverUrl)
+      }
+      
+      // 使用getFileUrl处理URL
+      const processedUrl = coverUrl ? getFileUrl(coverUrl) : this.defaultCover
+      
+      console.log('最终处理后的URL:', processedUrl)
+      
+      return processedUrl || this.defaultCover
+    },
     previewImage(index) {
       if (this.bannerImages && this.bannerImages.length > 0) {
         uni.previewImage({
@@ -431,6 +462,14 @@ export default {
             .filter(res => res.code === 200 && res.data)
             .map(async res => {
               const location = res.data
+              
+              console.log('加载景点数据:', location.name, {
+                cover: location.cover,
+                thumbCover: location.thumbCover,
+                image: location.image,
+                thumbImage: location.thumbImage
+              })
+              
               const point = {
                 id: location.id,
                 name: location.name,
@@ -440,6 +479,8 @@ export default {
                 type: location.type,
                 cover: location.cover,
                 thumbCover: location.thumbCover,
+                image: location.image,
+                thumbImage: location.thumbImage,
                 latitude: parseFloat(location.latitude) || 0,
                 longitude: parseFloat(location.longitude) || 0,
                 dramaId: location.dramaId,

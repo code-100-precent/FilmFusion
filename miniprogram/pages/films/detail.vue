@@ -71,7 +71,27 @@
       <!-- Scenes Section -->
       <view class="scenes-section">
         <view class="section-title">雅安取景地</view>
-        <view class="scene-list">
+        <!-- 如果有关联的景点详情，显示图片卡片 -->
+        <view v-if="relatedLocations.length > 0" class="location-cards">
+          <view 
+            v-for="(location, index) in relatedLocations" 
+            :key="index" 
+            class="location-card"
+            @click="goToLocationDetail(location.id)"
+          >
+            <image 
+              :src="getLocationCoverUrl(location)" 
+              class="location-image" 
+              mode="aspectFill"
+            ></image>
+            <view class="location-info">
+              <text class="location-name">{{ location.name }}</text>
+              <text class="location-address" v-if="location.address">{{ location.address }}</text>
+            </view>
+          </view>
+        </view>
+        <!-- 如果没有关联景点详情，显示文字列表 -->
+        <view v-else class="scene-list">
           <view v-for="(scene, index) in film.scenes" :key="index" class="scene-item">
             <uni-icons type="location-filled" size="20" color="#ef4444"></uni-icons>
             <text class="scene-name">{{ scene }}</text>
@@ -91,7 +111,7 @@
 
 <script>
 import NavBar from '../../components/NavBar/NavBar.vue'
-import { getDramaById } from '../../services/backend-api'
+import { getDramaById, getLocationById } from '../../services/backend-api'
 // 导入文件URL处理函数
 import { getFileUrl } from '../../utils'
 
@@ -102,7 +122,8 @@ export default {
   data() {
     return {
       film: null,
-      loading: true
+      loading: true,
+      relatedLocations: [] // 相关景点详情列表
     }
   },
   computed: {
@@ -184,8 +205,14 @@ export default {
               crewDescription: data.crewDescription,
               releaseDate: data.createdAt ? data.createdAt.substring(0, 10) : '',
               type: '影视备案', // 固定类型
-              genre: data.filingNum // 显示备案号
+              genre: data.filingNum, // 显示备案号
+              locationId: data.locationId // 保存locationId用于加载景点详情
             };
+            
+            // 加载相关景点详情
+            if (data.locationId) {
+              await this.loadRelatedLocations(data.locationId);
+            }
           }
         } else {
           uni.showToast({
@@ -206,6 +233,84 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    
+    // 加载相关景点详情
+    async loadRelatedLocations(locationIds) {
+      try {
+        // locationIds可能是逗号分隔的字符串
+        const ids = String(locationIds).split(',').map(id => id.trim()).filter(id => id);
+        
+        if (ids.length === 0) {
+          console.log('没有关联的景点ID')
+          return;
+        }
+        
+        console.log('开始加载景点详情，IDs:', ids)
+        
+        // 逐个获取location详情
+        const locationPromises = ids.map(id => getLocationById(parseInt(id)));
+        const results = await Promise.allSettled(locationPromises);
+        
+        // 过滤成功的结果
+        this.relatedLocations = results
+          .filter(r => r.status === 'fulfilled' && r.value?.code === 200 && r.value?.data)
+          .map(r => {
+            const location = r.value.data
+            console.log('景点数据:', location.name, {
+              cover: location.cover,
+              thumbCover: location.thumbCover,
+              image: location.image,
+              thumbImage: location.thumbImage
+            })
+            return location
+          });
+        
+        console.log('成功加载景点数量:', this.relatedLocations.length)
+          
+      } catch (error) {
+        console.warn('加载相关景点失败:', error);
+        // 静默失败，不影响主要内容显示
+      }
+    },
+    
+    // 获取景点封面图URL
+    getLocationCoverUrl(location) {
+      if (!location) {
+        console.log('景点数据为空，使用默认封面')
+        return '';
+      }
+      
+      // 优先使用cover字段，然后是image、thumbCover、thumbImage
+      let coverUrl = location.cover || location.image || location.thumbCover || location.thumbImage;
+      
+      console.log('处理景点封面:', location.name, '原始URL:', coverUrl)
+      
+      // 如果coverUrl是数组，取第一个
+      if (Array.isArray(coverUrl) && coverUrl.length > 0) {
+        coverUrl = coverUrl[0];
+        console.log('从数组中取第一个:', coverUrl)
+      }
+      
+      // 如果coverUrl是逗号分隔的字符串，取第一个
+      if (typeof coverUrl === 'string' && coverUrl.includes(',')) {
+        coverUrl = coverUrl.split(',')[0].trim();
+        console.log('从逗号分隔字符串中取第一个:', coverUrl)
+      }
+      
+      // 使用getFileUrl处理URL
+      const processedUrl = coverUrl ? getFileUrl(coverUrl) : '';
+      
+      console.log('最终处理后的URL:', processedUrl)
+      
+      return processedUrl || '';
+    },
+    
+    // 跳转到景点详情
+    goToLocationDetail(id) {
+      uni.navigateTo({
+        url: `/pages/location/detail?id=${id}`
+      });
     },
     previewImage(index) {
       if (this.bannerImages && this.bannerImages.length > 0) {
@@ -365,6 +470,61 @@ export default {
   font-size: 28rpx;
   color: #374151;
   font-weight: 500;
+}
+
+/* 景点卡片样式 */
+.location-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.location-card {
+  display: flex;
+  gap: 16rpx;
+  padding: 16rpx;
+  background: #f9fafb;
+  border-radius: 12rpx;
+  transition: all 0.2s;
+}
+
+.location-card:active {
+  background: #f3f4f6;
+  transform: scale(0.98);
+}
+
+.location-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.location-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.location-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.location-address {
+  font-size: 24rpx;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .loading-wrapper, .error-wrapper {

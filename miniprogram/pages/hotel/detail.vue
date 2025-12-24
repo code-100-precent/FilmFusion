@@ -203,18 +203,46 @@ export default {
     },
     
     navigateToHotel() {
-      if (!this.hotel) return
+      if (!this.hotel) {
+        uni.showToast({
+          title: '住宿信息不存在',
+          icon: 'none'
+        })
+        return
+      }
       
+      // 确保经纬度是有效的数字
       const lat = parseFloat(this.hotel.latitude)
       const lng = parseFloat(this.hotel.longitude)
       
-      if (isNaN(lat) || isNaN(lng) || (Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001)) {
+      // 检查经纬度是否有效
+      if (isNaN(lat) || isNaN(lng)) {
+        uni.showToast({
+          title: '位置信息格式错误',
+          icon: 'none'
+        })
+        return
+      }
+      
+      // 检查经纬度是否为0或接近0
+      if (Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001) {
         uni.showToast({
           title: '暂无位置信息',
           icon: 'none'
         })
         return
       }
+      
+      // 检查经纬度范围是否合理
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        uni.showToast({
+          title: '位置信息超出范围',
+          icon: 'none'
+        })
+        return
+      }
+      
+      console.log('准备打开地图:', { lat, lng, name: this.hotel.name, address: this.hotel.address })
       
       uni.openLocation({
         latitude: lat,
@@ -228,8 +256,9 @@ export default {
         fail: (err) => {
           console.error('打开地图失败:', err)
           uni.showToast({
-            title: '打开地图失败',
-            icon: 'none'
+            title: '打开地图失败，请检查位置权限',
+            icon: 'none',
+            duration: 2000
           })
         }
       })
