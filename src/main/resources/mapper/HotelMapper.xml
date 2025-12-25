@@ -82,31 +82,31 @@
     <update id="updateHotel">
         UPDATE fi_hotel
         <set>
-            <if test="dto.name != null and dto.name != ''">
+            <if test="dto.name != null ">
                 name = #{dto.name},
             </if>
-            <if test="dto.description != null and dto.description != ''">
+            <if test="dto.description != null">
                 description = #{dto.description},
             </if>
-            <if test="dto.address != null and dto.address != ''">
+            <if test="dto.address != null ">
                 address = #{dto.address},
             </if>
-            <if test="dto.managerName != null and dto.managerName != ''">
+            <if test="dto.managerName != null">
                 manager_name = #{dto.managerName},
             </if>
-            <if test="dto.managerPhone != null and dto.managerPhone != ''">
+            <if test="dto.managerPhone != null">
                 manager_phone = #{dto.managerPhone},
             </if>
-            <if test="dto.image != null and dto.image != ''">
+            <if test="dto.image != null ">
                 image = #{dto.image},
             </if>
-            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+            <if test="dto.thumbImage != null ">
                 thumb_image = #{dto.thumbImage},
             </if>
-            <if test="dto.longitude != null and dto.longitude != ''">
+            <if test="dto.longitude != null">
                 longitude = #{dto.longitude},
             </if>
-            <if test="dto.latitude != null and dto.latitude != ''">
+            <if test="dto.latitude != null ">
                 latitude = #{dto.latitude},
             </if>
         </set>

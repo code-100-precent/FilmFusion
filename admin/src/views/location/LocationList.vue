@@ -327,13 +327,10 @@ const locationForm = reactive({
 })
 
 const typeOptions = [
-  { label: '自然风光', value: 'natural' },
-  { label: '历史建筑', value: 'historical' },
-  { label: '现代建筑', value: 'modern' },
-  { label: '文化场所', value: 'cultural' },
-  { label: '商业场所', value: 'commercial' },
-  { label: '公园景点', value: 'park' },
-  { label: '其他', value: 'other' }
+  { label: '自然景观', value: 'natural' },
+  { label: '人文景观', value: 'humanities' },
+  { label: '城市场景', value: 'urban' },
+  { label: '特色场景', value: 'feature' }
 ]
 
 const getTypeLabel = (type) => {
@@ -848,20 +845,16 @@ const handleEdit = async (row) => {
       const thumbCoverUrl = allThumbImages[0] || coverUrl
       const detailThumbUrls = allThumbImages.slice(1)
 
-      // 解析关联影视剧ID
+      // 解析 dramaId
       let dramaIds = []
       const rawDramaId = res.data.dramaId || res.data.drama_id
-      
       if (rawDramaId) {
-        // 如果是逗号分隔的字符串
         if (typeof rawDramaId === 'string') {
-          dramaIds = rawDramaId.split(',').map(id => Number(id))
-        } else if (Array.isArray(rawDramaId)) {
-          // 如果已经是数组
-          dramaIds = rawDramaId.map(id => Number(id))
+          dramaIds = rawDramaId.split(',').map(id => Number(id.trim()))
         } else if (typeof rawDramaId === 'number') {
-          // 单个数字
           dramaIds = [rawDramaId]
+        } else if (Array.isArray(rawDramaId)) {
+          dramaIds = rawDramaId.map(id => Number(id))
         }
       }
 

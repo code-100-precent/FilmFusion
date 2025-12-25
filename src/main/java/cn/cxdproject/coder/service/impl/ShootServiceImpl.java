@@ -10,12 +10,11 @@ import cn.cxdproject.coder.model.dto.UpdateShootDTO;
 import cn.cxdproject.coder.model.entity.Drama;
 import cn.cxdproject.coder.model.entity.Location;
 import cn.cxdproject.coder.model.entity.Shoot;
-import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.mapper.ShootMapper;
-import cn.cxdproject.coder.service.PolicyService;
+import cn.cxdproject.coder.service.LocationService;
 import cn.cxdproject.coder.service.ShootService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
@@ -29,8 +28,6 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.context.annotation.Lazy;
-import javax.annotation.Resource;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -113,7 +110,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public List<ShootVO> getShootPage(Long lastId, int size, String keyword){
+    public List<ShootVO> getShootPage(Long lastId, int size, String keyword) {
         List<Long> ids = shootMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
             return Collections.emptyList();
@@ -216,9 +213,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
             throw (RuntimeException) e;
         }
 
-        ShootVO shoot = redisUtils.get(TaskConstants.SHOOT + id, ShootVO.class);
-        if (shoot != null) {
-            return shoot;
+        Object store = cache.getIfPresent(CaffeineConstants.SHOOT + id);
+        if (store != null) {
+            return toShootVO((Shoot) store);
         }
         return null;
     }
@@ -233,7 +230,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
         try {
             // 从 Redis 获取缓存的全量文章（假设是 ArticleVO[] 的 JSON）
-            String json = (String) redisUtils.get(TaskConstants.SHOOT_PAGE);
+            String json = (String) redisUtils.get(TaskConstants.SHOOT);
             if (json == null || json.isEmpty()) {
                 return Collections.emptyList();
             }
@@ -286,7 +283,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                             throw new RuntimeException(e);
                         }
                     });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return future.get(2, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(shootId, e);
         } catch (Exception e) {
@@ -306,7 +303,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                             throw new RuntimeException(e);
                         }
                     });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return future.get(2, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);
         } catch (Exception e) {

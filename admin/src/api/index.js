@@ -107,20 +107,8 @@ export const uploadAvatarFile = (file) => {
   })
 }
 
-// Mock 登录验证（实际项目中应该调用真实接口）
+// 验证 Token（直接调用获取用户信息接口）
 export const verifyToken = () => {
-  const token = localStorage.getItem('token')
-  if (token && token.startsWith('mock_admin_token_')) {
-    // 返回 mock 数据
-    return Promise.resolve({
-      code: 200,
-      message: '验证成功',
-      data: {
-        visitorId: 'admin',
-        identity: '管理员'
-      }
-    })
-  }
   return getAdminInfo()
 }
 

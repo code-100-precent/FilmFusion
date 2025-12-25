@@ -84,31 +84,31 @@
     <update id="updateShoot">
         UPDATE fi_shoots
         <set>
-            <if test="dto.name != null and dto.name != ''">
+            <if test="dto.name != null ">
                 name = #{dto.name},
             </if>
-            <if test="dto.description != null and dto.description != ''">
+            <if test="dto.description != null">
                 description = #{dto.description},
             </if>
-            <if test="dto.price != null and dto.price != ''">
+            <if test="dto.price != null">
                 price = #{dto.price},
             </if>
             <if test="dto.status != null">
                 status = #{dto.status},
             </if>
-            <if test="dto.address != null and dto.address != ''">
+            <if test="dto.address != null ">
                 address = #{dto.address},
             </if>
-            <if test="dto.phone != null and dto.phone != ''">
+            <if test="dto.phone != null">
                 phone = #{dto.phone},
             </if>
-            <if test="dto.contactName != null and dto.contactName != ''">
+            <if test="dto.contactName != null">
                 contact_name = #{dto.contactName},
             </if>
-            <if test="dto.image != null and dto.image != ''">
+            <if test="dto.image != null">
                 image = #{dto.image},
             </if>
-            <if test="dto.thumbImage != null and dto.thumbImage != ''">
+            <if test="dto.thumbImage != null">
                 thumb_image = #{dto.thumbImage},
             </if>
         </set>
