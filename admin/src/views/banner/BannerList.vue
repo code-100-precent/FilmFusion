@@ -527,6 +527,11 @@ const handleUploadFinish = ({ file, event }) => {
 }
 
 const beforeUpload = (data) => {
+  const isImage = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(data.file.file?.type)
+  if (!isImage) {
+    message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
+    return false
+  }
   if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',

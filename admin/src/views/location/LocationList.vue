@@ -191,6 +191,7 @@
               :max="1"
               :custom-request="handleCoverUpload"
               accept="image/*"
+              @before-upload="beforeUpload"
           >
             点击上传
           </n-upload>
@@ -409,7 +410,7 @@ const handleCoverUpload = async ({ file, fileList }) => {
       const index = coverFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         coverFileList.value[index].status = 'finished'
-        coverFileList.value[index].url = getImageUrl(thumbUrl || originUrl) // 显示用完整路径
+        coverFileList.value[index].url = getImageUrl(originUrl || thumbUrl) // 显示用完整路径，优先原图以保证预览清晰
         coverFileList.value[index].originUrl = originUrl // 保存相对路径
         coverFileList.value[index].thumbUrl = thumbUrl   // 保存相对路径
       }
@@ -447,7 +448,7 @@ const handleImageUpload = async ({ file, fileList }) => {
       const index = imageFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         imageFileList.value[index].status = 'finished'
-        imageFileList.value[index].url = getImageUrl(thumbUrl || originUrl) // 显示用完整路径
+        imageFileList.value[index].url = getImageUrl(originUrl || thumbUrl) // 显示用完整路径，优先原图以保证预览清晰
         imageFileList.value[index].originUrl = originUrl
         imageFileList.value[index].thumbUrl = thumbUrl
       }
@@ -518,19 +519,19 @@ const columns = [
       const cover = getFirstUrl(row.cover)
       const thumbCover = getFirstUrl(row.thumbCover || row.thumb_cover)
 
-      // 显示用的图片（优先缩略图）
-      const displayUrl = thumbCover || thumbImage || cover || image
+      // 列表显示的图片（优先缩略图）
+      const listUrl = thumbCover || thumbImage || cover || image
 
-      // 预览用的图片（优先原图）
-      const previewUrl = cover || image || displayUrl
+      // 预览的大图（优先原图，且优先使用 image 字段）
+      const previewBigUrl = image || cover || listUrl
 
-      if (!displayUrl) return '-'
+      if (!listUrl) return '-'
 
       return h(NImage, {
         width: 60,
         height: 45,
-        src: getImageUrl(displayUrl),
-        previewSrc: getImageUrl(previewUrl),
+        src: getImageUrl(listUrl),
+        previewSrc: getImageUrl(previewBigUrl),
         objectFit: 'cover',
         previewDisabled: false,
         showToolbar: true,
@@ -588,6 +589,23 @@ const columns = [
     }
   }
 ]
+
+const beforeUpload = (data) => {
+  const isImage = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(data.file.file?.type)
+  if (!isImage) {
+    message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
+    return false
+  }
+  if (data.file.file?.size > 5 * 1024 * 1024) {
+    dialog.warning({
+      title: '提示',
+      content: '图片过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
+}
 
 // 获取文件信息的辅助函数
 const getFileInfo = (file) => {
@@ -715,11 +733,11 @@ const handleDialogSave = async () => {
     const finalThumbImageStr = allThumbImages.join(',')
 
     // 处理 dramaId 数组转字符串
-    let dramaIdStr = ''
-    if (Array.isArray(locationForm.dramaId)) {
+    let dramaIdStr = null
+    if (Array.isArray(locationForm.dramaId) && locationForm.dramaId.length > 0) {
       dramaIdStr = locationForm.dramaId.join(',')
-    } else {
-      dramaIdStr = locationForm.dramaId || ''
+    } else if (locationForm.dramaId && !Array.isArray(locationForm.dramaId)) {
+      dramaIdStr = String(locationForm.dramaId)
     }
 
     const data = {
@@ -885,7 +903,7 @@ const handleEdit = async (row) => {
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: getImageUrl(thumbCoverUrl || coverUrl),
+          url: getImageUrl(coverUrl), // 使用原图作为预览图，确保预览清晰
           originUrl: coverUrl,
           thumbUrl: thumbCoverUrl || coverUrl
         }]
@@ -900,7 +918,7 @@ const handleEdit = async (row) => {
           id: `img-${index}`,
           name: `image-${index}.jpg`,
           status: 'finished',
-          url: getImageUrl(thumbUrl),
+          url: getImageUrl(url), // 使用原图作为预览图，确保预览清晰
           originUrl: url,
           thumbUrl: thumbUrl
         }
