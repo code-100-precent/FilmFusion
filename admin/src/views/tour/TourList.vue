@@ -329,6 +329,11 @@ const loadOptions = async () => {
 
 
 const beforeUpload = (data) => {
+  const isImage = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(data.file.file?.type)
+  if (!isImage) {
+    message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
+    return false
+  }
   if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
@@ -854,7 +859,7 @@ const handleDialogSave = async () => {
       hotel: tourForm.hotel,
       food: tourForm.food,
       deleted: tourForm.deleted,
-      locationId: Array.isArray(tourForm.locationId) ? tourForm.locationId.join(',') : '',
+      locationId: (Array.isArray(tourForm.locationId) && tourForm.locationId.length > 0) ? tourForm.locationId.join(',') : null,
       image: allImages.join(','),
       thumb_image: allThumbImages.join(',')
     }
