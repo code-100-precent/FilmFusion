@@ -551,7 +551,7 @@ export default {
         uni.showLoading({ title: '上传中...' })
         
         console.log('4. 开始调用上传API...')
-        console.log('4.1 上传目标URL:', 'http://162.14.106.139:8080/api/file')
+        console.log('4.1 上传目标URL: API_BASE_URL/file')
         
         // 记录开始时间用于监控响应延迟
         const startTime = Date.now()

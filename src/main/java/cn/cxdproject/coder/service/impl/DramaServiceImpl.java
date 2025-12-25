@@ -93,8 +93,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     @CircuitBreaker(name = "dramaGetById", fallbackMethod = "getByIdFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public DramaVO getDramaById(Long dramaId) {
+    public DramaVO getDramaById(Long dramaId) throws InterruptedException {
         Object store = cache.asMap().get(CaffeineConstants.DRAMA + dramaId);
+        Thread.sleep(3000);
         if (store != null) {
             return toDramaVO((Drama) store);
         }else {
@@ -112,12 +113,12 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public List<DramaVO> getDramaPage(Long lastId, int size, String keyword){
+    public List<DramaVO> getDramaPage(Long lastId, int size, String keyword) throws InterruptedException {
         List<Long> ids = dramaMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
             return Collections.emptyList();
         }
-
+        Thread.sleep(3000);
         List<Drama> dramas = dramaMapper.selectBatchIds(ids);
 
         Map<Long, Drama> dramaMap = dramas.stream()

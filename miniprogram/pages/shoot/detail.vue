@@ -3,18 +3,38 @@
     <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y v-if="!loading && shoot">
-      <!-- 服务封面图片 -->
+      <!-- 服务封面图片/轮播图 -->
       <view class="cover-section">
+        <swiper 
+          v-if="bannerImages.length > 1" 
+          class="banner-swiper" 
+          circular 
+          indicator-dots 
+          autoplay 
+          :interval="4000" 
+          :duration="500"
+          indicator-active-color="#6366f1"
+          indicator-color="rgba(255, 255, 255, 0.5)"
+        >
+          <swiper-item v-for="(img, index) in bannerImages" :key="index">
+            <image 
+              :src="img" 
+              class="cover-image" 
+              mode="aspectFill" 
+              @click="previewImage(index)"
+            ></image>
+          </swiper-item>
+        </swiper>
         <image 
-          v-if="getFileUrl(shoot.image || shoot.thumbImage)"
-          :src="getFileUrl(shoot.image || shoot.thumbImage)" 
+          v-else-if="bannerImages.length === 1"
+          :src="bannerImages[0]" 
           class="cover-image" 
           mode="aspectFill" 
-          @click="previewImage"
+          @click="previewImage(0)"
         ></image>
         <view v-else class="cover-placeholder">
           <uni-icons type="image" size="60" color="#d1d5db"></uni-icons>
-          <text class="placeholder-text">暂无封面图片</text>
+          <text class="placeholder-text">暂无图片</text>
         </view>
       </view>
 
@@ -90,6 +110,49 @@ export default {
       loading: false
     }
   },
+  computed: {
+    // 处理封面图片URL
+    coverImageUrl() {
+      if (!this.shoot) return ''
+      return getFileUrl(this.shoot.image || this.shoot.thumbImage)
+    },
+    // 处理轮播图图片
+    bannerImages() {
+      if (!this.shoot) return []
+      
+      let images = []
+      
+      // 1. 如果有images数组，优先使用
+      if (this.shoot.images && Array.isArray(this.shoot.images) && this.shoot.images.length > 0) {
+        images = this.shoot.images.map(img => getFileUrl(img))
+      } 
+      // 2. 如果images是逗号分隔的字符串
+      else if (this.shoot.images && typeof this.shoot.images === 'string') {
+        images = this.shoot.images.split(',').map(img => getFileUrl(img))
+      }
+      
+      // 3. 如果没有images列表，尝试使用封面图
+      if (images.length === 0) {
+        const cover = this.shoot.image || this.shoot.cover || this.shoot.thumbImage
+        if (Array.isArray(cover)) {
+          images = cover.map(img => getFileUrl(img))
+        } else if (typeof cover === 'string' && cover) {
+          images = cover.split(',').map(img => getFileUrl(img))
+        }
+      }
+      
+      // 4. 去重
+      images = [...new Set(images)].filter(img => img)
+      
+      // 用户要求：详情页面展示的图片是除了第一个以外的图片
+      // 如果有多张图片，移除第一张（通常是列表封面）；如果只有一张，保留显示
+      if (images.length > 1) {
+        return images.slice(1)
+      }
+      
+      return images
+    }
+  },
   onLoad(options) {
     const id = parseInt(options.id)
     if (id) {
@@ -120,8 +183,8 @@ export default {
         this.loading = false
       }
     },
-    previewImage() {
-      if (!this.shoot || (!this.shoot.image && !this.shoot.thumbImage)) {
+    previewImage(current = 0) {
+      if (this.bannerImages.length === 0) {
         uni.showToast({
           title: '暂无图片可预览',
           icon: 'none'
@@ -129,10 +192,15 @@ export default {
         return
       }
       
-      const imageUrl = this.getFileUrl(this.shoot.image || this.shoot.thumbImage)
+      // 使用处理过的URL进行预览
+      let currentUrl = this.bannerImages[0]
+      if (typeof current === 'number' && current >= 0 && current < this.bannerImages.length) {
+        currentUrl = this.bannerImages[current]
+      }
+      
       uni.previewImage({
-        urls: [imageUrl],
-        current: imageUrl
+        urls: this.bannerImages,
+        current: currentUrl
       })
     },
     getFileUrl(url) {
@@ -172,6 +240,11 @@ export default {
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.banner-swiper {
+  width: 100%;
+  height: 400rpx;
 }
 
 .cover-image {

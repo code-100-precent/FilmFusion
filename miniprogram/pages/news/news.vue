@@ -14,7 +14,7 @@
             v-model="keyword"
             class="search-input"
             type="text"
-            placeholder="搜索资讯..."
+            placeholder="搜索"
             @confirm="handleSearch"
             @input="handleSearch"
           />
@@ -44,7 +44,7 @@
             @click="goToDetail(article.id)"
           >
             <view class="article-cover-wrapper">
-              <image :src="getArticleCover(article.cover)" class="article-cover" mode="aspectFill"></image>
+              <image :src="getArticleCover(article)" class="article-cover" mode="aspectFill"></image>
             </view>
             <view class="article-info">
               <view class="article-header">
@@ -84,6 +84,7 @@ import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
 // 使用真实后端API
 import { getArticlePage } from '../../services/backend-api'
+import { getFileUrl } from '../../utils'
 
 export default {
   components: {
@@ -186,9 +187,21 @@ export default {
       const day = String(date.getDate()).padStart(2, '0')
       return `${year}-${month}-${day}`
     },
-    getArticleCover(cover) {
-      // 如果 cover 为 null 或空，使用默认图片
-      return cover || 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png'
+    getArticleCover(article) {
+      // 1. 优先使用 thumbImage
+      if (article.thumbImage) {
+        return getFileUrl(article.thumbImage)
+      }
+      // 2. 其次使用 image (如果是数组取第一个)
+      if (article.image) {
+        return getFileUrl(article.image)
+      }
+      // 3. 最后尝试 cover (兼容旧数据)
+      if (article.cover) {
+        return getFileUrl(article.cover)
+      }
+      // 4. 默认图片
+      return getFileUrl('files/origin/1765767098667_%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89_compressed.png')
     },
     getContentPreview(content) {
       if (!content) return ''

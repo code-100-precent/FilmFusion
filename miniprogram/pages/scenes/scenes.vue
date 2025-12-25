@@ -72,7 +72,6 @@
                   <uni-icons type="image" size="32" color="#d1d5db"></uni-icons>
                   <text class="placeholder-text">暂无</text>
                 </view>
-                <view class="location-badge">{{ location.type }}</view>
               </view>
             
             <view class="location-info">
@@ -80,6 +79,12 @@
                 <text class="location-name">{{ location.name }}</text>
               </view>
               <text class="location-desc">{{ formatDescription(location.locationDescription) }}</text>
+              <view class="location-tags" v-if="location.dramaId">
+                <view class="drama-tag">
+                  <uni-icons type="videocam" size="12" color="#ef4444"></uni-icons>
+                  <text>相关影视</text>
+                </view>
+              </view>
               <view class="location-footer">
                 <text class="location-price">¥{{ location.price }}/天</text>
               </view>
@@ -93,6 +98,9 @@
         <view v-if="!hasMore && locations.length > 0" class="no-more">
           <text>没有更多了</text>
         </view>
+        
+        <!-- 底部占位符，防止被 TabBar 遮挡 -->
+        <view class="bottom-spacer"></view>
       </scroll-view>
     </view>
 
@@ -120,15 +128,12 @@ export default {
   data() {
     return {
       keyword: '',
-      selectedCategory: '自然场景',
+      selectedCategory: 'natural',
       categories: [
-        { value: '自然场景', label: '自然场景', icon: 'image' },
-        { value: '自然风光', label: '自然风光', icon: 'image' },
-        { value: '历史建筑', label: '历史建筑', icon: 'home' },
-        { value: '现代建筑', label: '现代建筑', icon: 'location' },
-        { value: '文化场所', label: '文化场所', icon: 'star' },
-        { value: '商业场所', label: '商业场所', icon: 'shop' },
-        { value: '其他', label: '其他', icon: 'more' }
+        { label: '自然景观', value: 'natural', icon: 'image' },
+        { label: '人文景观', value: 'humanities', icon: 'home' },
+        { label: '城市场景', value: 'urban', icon: 'location' },
+        { label: '特色场景', value: 'feature', icon: 'star' }
       ],
       allLocations: [],
       nextCursor: null, // 游标分页
@@ -221,6 +226,10 @@ export default {
         return desc.substring(0, 40) + '...'
       }
       return desc
+    },
+    getCategoryLabel(value) {
+      const category = this.categories.find(c => c.value === value)
+      return category ? category.label : value
     }
   }
 }
@@ -228,7 +237,9 @@ export default {
 
 <style lang="scss" scoped>
 .scenes-page {
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: #f5f7fa;
   padding-top: 132rpx;
   box-sizing: border-box;
@@ -247,8 +258,11 @@ export default {
 }
 
 .content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 16rpx 24rpx;
-  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   width: 100%;
   position: relative;
@@ -265,7 +279,8 @@ export default {
 }
 
 .location-list {
-  height: calc(100vh - 88rpx - 200rpx);
+  flex: 1;
+  height: 0;
   
   /* 隐藏滚动条 */
   &::-webkit-scrollbar {
@@ -293,10 +308,12 @@ export default {
 .search-bar {
   margin-top: 16rpx;
   margin-bottom: 16rpx;
+  flex-shrink: 0;
 }
 
 .category-filter {
   margin-bottom: 16rpx;
+  flex-shrink: 0;
 }
 
 .category-scroll {
@@ -452,6 +469,23 @@ export default {
   flex: 1;
 }
 
+.location-tags {
+  display: flex;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.drama-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 4rpx 12rpx;
+  background: #fef2f2;
+  border-radius: 12rpx;
+  font-size: 20rpx;
+  color: #ef4444;
+}
+
 .location-footer {
   display: flex;
   justify-content: space-between;
@@ -476,5 +510,9 @@ export default {
   padding: 30rpx 0;
   font-size: 24rpx;
   color: #9ca3af;
+}
+.bottom-spacer {
+  height: calc(140rpx + env(safe-area-inset-bottom));
+  width: 100%;
 }
 </style>

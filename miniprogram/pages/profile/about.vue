@@ -5,9 +5,8 @@
     <scroll-view class="content" scroll-y>
       <view class="about-section">
         <view class="logo-section">
-          <view class="logo">
-            <uni-icons type="film" size="60" color="#6366f1"></uni-icons>
-          </view>
+          <!-- <view class="logo">
+          </view> -->
           <text class="app-name">雅安影视服务</text>
           <text class="app-version">版本 1.0.0</text>
         </view>
@@ -29,7 +28,7 @@
             <uni-icons type="location" size="24" color="#6366f1"></uni-icons>
             <view class="feature-content">
               <text class="feature-title">拍摄场地</text>
-              <text class="feature-desc">提供丰富的拍摄场地资源，包括自然风光、古镇建筑、现代场景等，满足各类影视拍摄需求</text>
+              <text class="feature-desc">提供丰富的拍摄场地资源，包括自然景观、人文景观、城市场景、特色场景等，满足各类影视拍摄需求</text>
             </view>
           </view>
           <view class="feature-item">
@@ -151,15 +150,22 @@ export default {
   padding: 40rpx 0;
 }
 
-.logo {
-  width: 120rpx;
-  height: 120rpx;
-  background: #eef2ff;
-  border-radius: 24rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24rpx;
+// .logo {
+//   background-image: url('/static/logo.png');
+//   background-size: cover;
+
+//   width: 120rpx;
+//   height: 120rpx;
+//   border-radius: 24rpx;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   margin-bottom: 24rpx;
+// }
+
+.logo-img {
+  width: 150rpx;
+  height: 150rpx;
 }
 
 .app-name {

@@ -28,7 +28,7 @@ public class DailyLatesTourCacheTask {
         this.redisUtils = redisUtils;
     }
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(cron = "0 * * * * ?")
     public void cacheLatestTourPage() {
         try {
             // 1. 从数据库查询最新10条
@@ -60,7 +60,7 @@ public class DailyLatesTourCacheTask {
         }
     }
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(cron = "0 * * * * ?")
     public void cacheLatestTourId() {
         try {
             // 1. 查询所有未删除的旅游线路数据

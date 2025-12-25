@@ -37,8 +37,10 @@ public class DailyLatesDramaCacheTask {
     }
 
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    // 降低执行频率：每5分钟执行一次，避免频繁操作
+    @Scheduled(cron = "0 * * * * ?")
     public void cacheLatestDramaPage() {
+        long startTime = System.currentTimeMillis();
         try {
             // 1. 从数据库查询最新10条
             List<Drama> latestDramas = dramaMapper.selectLatest10();
@@ -62,14 +64,18 @@ public class DailyLatesDramaCacheTask {
                     json,
                     Duration.ofHours(25)
             );
-            log.info("成功缓存 {} 条影视信息到 Redis", voList.size());
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("成功缓存 {} 条影视信息到 Redis，耗时: {}ms", voList.size(), duration);
         } catch (Exception e) {
-            log.error("缓存失败", e);
+            long duration = System.currentTimeMillis() - startTime;
+            log.error("缓存失败，耗时: {}ms", duration, e);
         }
     }
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    // 降低执行频率：每5分钟执行一次，错开与上面任务的执行时间
+    @Scheduled(cron = "0 * * * * ?")
     public void cacheLatestDrama() {
+        long startTime = System.currentTimeMillis();
         try {
             // 1. 查询所有未删除的剧目
             List<Drama> allDramas = dramaMapper.selectAll();

@@ -436,6 +436,9 @@ onUnmounted(() => {
 // 辅助函数：解析图片字符串
 const parseImages = (imageStr) => {
   if (!imageStr) return []
+  if (Array.isArray(imageStr)) {
+    return imageStr.filter(url => url && typeof url === 'string').map(url => url.trim())
+  }
   if (typeof imageStr !== 'string') return []
   return imageStr.split(',').filter(url => url && url.trim())
 }

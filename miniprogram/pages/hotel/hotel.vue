@@ -14,7 +14,7 @@
             v-model="keyword"
             class="search-input"
             type="text"
-            placeholder="搜索酒店名称、地址..."
+            placeholder="搜索"
             @confirm="handleSearch"
             @input="handleSearch"
           />
@@ -70,7 +70,7 @@
               </view>
               <text class="hotel-desc">{{ formatDescription(hotel.description) }}</text>
               <view class="hotel-footer">
-                <text class="hotel-price">¥{{ hotel.price }}/天</text>
+                <!-- <text class="hotel-price">¥{{ hotel.price }}/天</text> -->
               </view>
             </view>
           </view>

@@ -84,7 +84,7 @@
             class="news-card"
             @click="goToArticleDetail(article.id)"
           >
-            <image :src="getArticleCover(article.cover)" class="news-card-image" mode="aspectFill"></image>
+            <image :src="getArticleCover(article)" class="news-card-image" mode="aspectFill"></image>
             <view class="news-card-content">
               <view class="news-card-header">
                 <text class="news-card-tag">{{ article.issueUnit || '官方发布' }}</text>
@@ -133,7 +133,7 @@
             </view>
             <view class="location-card-info">
               <text class="location-card-name">{{ location.name }}</text>
-              <text class="location-card-type">{{ location.type }}</text>
+              <text class="location-card-type">{{ getLocationTypeLabel(location.type) }}</text>
             </view>
           </view>
         </view>
@@ -145,21 +145,21 @@
           <text class="section-title">雅安印象</text>
         </view>
         <view class="featured-grid">
-          <view class="featured-card nature" @click="goToNature">
+          <view class="featured-card nature">
             <view class="featured-icon">
               <uni-icons type="image-filled" size="40" color="#fff"></uni-icons>
             </view>
-            <text class="featured-title">自然风光</text>
+            <text class="featured-title">自然景观</text>
             <text class="featured-desc">探索自然之美</text>
           </view>
-          <view class="featured-card culture" @click="goToCulture">
+          <view class="featured-card culture">
             <view class="featured-icon">
               <uni-icons type="star-filled" size="40" color="#fff"></uni-icons>
             </view>
             <text class="featured-title">文化底蕴</text>
             <text class="featured-desc">感受历史魅力</text>
           </view>
-          <view class="featured-card modern" @click="goToModern">
+          <view class="featured-card modern">
             <view class="featured-icon">
               <uni-icons type="home-filled" size="40" color="#fff"></uni-icons>
             </view>
@@ -230,10 +230,25 @@ export default {
       ],
       articles: [],
       locations: [],
-      currentBanner: 0
+      currentBanner: 0,
+      locationCategories: [
+        { label: '自然景观', value: 'natural' },
+        { label: '人文景观', value: 'humanities' },
+        { label: '城市场景', value: 'urban' },
+        { label: '特色场景', value: 'feature' }
+      ]
     }
   },
   onLoad() {
+    // 1. 尝试从缓存读取Banner，实现秒开
+    try {
+      const cachedBanners = uni.getStorageSync('index_banners_cache')
+      if (cachedBanners && Array.isArray(cachedBanners)) {
+        this.banners = cachedBanners
+      }
+    } catch (e) {
+      console.error('读取Banner缓存失败', e)
+    }
     this.loadData()
   },
   methods: {
@@ -249,14 +264,57 @@ export default {
 
           // 处理轮播图数据
           if (bannerRes && bannerRes.data) {
-            this.banners = bannerRes.data.map((banner, index) => ({
-              title: banner.imageName || '雅安影视服务',
-              desc: '', // 不再显示任何描述文本
-              imageUrl: banner.imageUrl,
-              tag: index === 0 ? '平台服务' : index === 1 ? '取景胜地' : '专业支持',
-              targetModule: banner.targetModule, // 保存targetModule用于跳转
-              path: this.modulePathMap[banner.targetModule] || '/pages/services/services' // 根据targetModule获取对应路径
-            }))
+            const cachedPaths = uni.getStorageSync('banner_local_paths') || {}
+            const fs = uni.getFileSystemManager ? uni.getFileSystemManager() : null
+            
+            const newBanners = bannerRes.data.map((banner, index) => {
+              let path = '/pages/services/services'
+              const targetModule = banner.targetModule || ''
+              
+              // 处理带参数的targetModule (例如 "政策列表?type=省级")
+              const [moduleName, queryString] = targetModule.split('?')
+              const basePath = this.modulePathMap[moduleName]
+              
+              if (basePath) {
+                path = queryString ? `${basePath}?${queryString}` : basePath
+              }
+
+              const remoteUrl = getFileUrl(banner.imageUrl)
+              let displayUrl = remoteUrl
+              
+              // 尝试使用本地缓存图片
+              if (fs && cachedPaths[remoteUrl]) {
+                try {
+                  fs.accessSync(cachedPaths[remoteUrl])
+                  displayUrl = cachedPaths[remoteUrl]
+                } catch (e) {
+                  // 文件不存在，清除缓存记录
+                  delete cachedPaths[remoteUrl]
+                  uni.setStorageSync('banner_local_paths', cachedPaths)
+                }
+              }
+
+              return {
+                title: banner.imageName || '雅安影视服务',
+                desc: '', // 不再显示任何描述文本
+                imageUrl: displayUrl,
+                originalUrl: remoteUrl, // 保存原始URL用于下载对比
+                tag: index === 0 ? '平台服务' : index === 1 ? '取景胜地' : '专业支持',
+                targetModule: banner.targetModule, // 保存targetModule用于跳转
+                path: path
+              }
+            })
+            
+            this.banners = newBanners
+            // 更新缓存
+            try {
+              uni.setStorageSync('index_banners_cache', newBanners)
+            } catch (e) {
+              console.error('缓存Banner失败', e)
+            }
+            
+            // 触发后台下载更新缓存
+            this.downloadAndCacheBannerImages(newBanners)
           }
 
           // 处理文章数据（游标分页）
@@ -346,28 +404,65 @@ export default {
         url: `/pages/location/detail?id=${id}`
       })
     },
-    goToNature() {
-      uni.navigateTo({
-        url: '/pages/scenes/scenes?type=自然风光'
-      })
-    },
-    goToCulture() {
-      uni.navigateTo({
-        url: '/pages/scenes/scenes?type=文化底蕴'
-      })
-    },
-    goToModern() {
-      uni.navigateTo({
-        url: '/pages/scenes/scenes?type=现代都市'
-      })
-    },
     goToServices() {
       uni.navigateTo({
         url: '/pages/profile/help'
       })
     },
-    getArticleCover(cover) {
-      return (!cover || cover.includes('example.com')) ? 'https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89.png' : cover
+    downloadAndCacheBannerImages(banners) {
+      // 仅在支持文件系统的环境下执行
+      if (!uni.getFileSystemManager) return
+      
+      const cachedPaths = uni.getStorageSync('banner_local_paths') || {}
+      let hasChange = false
+      
+      banners.forEach((banner, index) => {
+        const remoteUrl = banner.originalUrl || banner.imageUrl
+        // 如果已经是本地路径，或者已经缓存且文件存在，则跳过
+        if (remoteUrl.startsWith('http') && (!cachedPaths[remoteUrl] || banner.imageUrl === remoteUrl)) {
+          // 下载文件
+          uni.downloadFile({
+            url: remoteUrl,
+            success: (res) => {
+              if (res.statusCode === 200) {
+                // 保存文件
+                uni.saveFile({
+                  tempFilePath: res.tempFilePath,
+                  success: (saveRes) => {
+                    const savedPath = saveRes.savedFilePath
+                    cachedPaths[remoteUrl] = savedPath
+                    uni.setStorageSync('banner_local_paths', cachedPaths)
+                    
+                    // 更新当前视图中的图片路径（如果还在显示该banner）
+                    // 注意：这里修改this.banners会触发视图更新
+                    if (this.banners[index] && (this.banners[index].originalUrl === remoteUrl || this.banners[index].imageUrl === remoteUrl)) {
+                      this.banners[index].imageUrl = savedPath
+                      // 同时更新页面缓存
+                      uni.setStorageSync('index_banners_cache', this.banners)
+                    }
+                  }
+                })
+              }
+            }
+          })
+        }
+      })
+    },
+    getArticleCover(article) {
+      // 1. 优先使用 thumbImage
+      if (article.thumbImage) {
+        return getFileUrl(article.thumbImage)
+      }
+      // 2. 其次使用 image (如果是数组取第一个)
+      if (article.image) {
+        return getFileUrl(article.image)
+      }
+      // 3. 最后尝试 cover (兼容旧数据)
+      if (article.cover) {
+        return getFileUrl(article.cover)
+      }
+      // 4. 默认图片
+      return getFileUrl('files/origin/1765767098667_%E6%8B%8D%E5%9C%A8%E9%9B%85%E5%AE%89_compressed.png')
     },
     formatDate(dateStr) {
       if (!dateStr) return ''
@@ -388,6 +483,11 @@ export default {
     },
     onScrollToLower() {
       // 可以在这里实现加载更多
+    },
+    getLocationTypeLabel(value) {
+      if (!value) return ''
+      const category = this.locationCategories.find(c => c.value === value)
+      return category ? category.label : value
     }
   }
 }
@@ -924,15 +1024,6 @@ export default {
   opacity: 0.8;
 }
 
-.featured-card:active {
-  transform: translateY(-2rpx);
-  box-shadow: 0 8rpx 28rpx rgba(0, 0, 0, 0.1);
-}
-
-.featured-card:active::before {
-  opacity: 1;
-}
-
 .featured-icon {
   width: 72rpx;
   height: 72rpx;
@@ -944,11 +1035,6 @@ export default {
   background: linear-gradient(135deg, #D4AF37, #2E7D32);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4rpx 16rpx rgba(212, 175, 55, 0.3);
-}
-
-.featured-card:active .featured-icon {
-  transform: scale(1.12) rotate(10deg);
-  box-shadow: 0 6rpx 20rpx rgba(212, 175, 55, 0.4);
 }
 
 .featured-title {

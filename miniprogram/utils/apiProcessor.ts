@@ -22,8 +22,15 @@ export const processApiResponseFileUrls = <T>(
     // 分页响应格式: { code, message, data: [], pagination }
     response.data = processArrayFileUrls(response.data, fileFields)
   } else if (response.data && typeof response.data === 'object') {
-    // 单个对象响应格式: { code, message, data: {} }
-    response.data = processObjectFileUrls(response.data, fileFields)
+    // 检查是否有嵌套的 records 或 list 数组 (针对Page对象)
+    if (Array.isArray(response.data.records)) {
+      response.data.records = processArrayFileUrls(response.data.records, fileFields)
+    } else if (Array.isArray(response.data.list)) {
+      response.data.list = processArrayFileUrls(response.data.list, fileFields)
+    } else {
+      // 单个对象响应格式: { code, message, data: {} }
+      response.data = processObjectFileUrls(response.data, fileFields)
+    }
   } else if (response.records && Array.isArray(response.records)) {
     // 游标分页响应格式: { records: [], nextCursor: ... }
     response.records = processArrayFileUrls(response.records, fileFields)

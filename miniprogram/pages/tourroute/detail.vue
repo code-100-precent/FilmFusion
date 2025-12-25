@@ -9,7 +9,23 @@
       <view v-else-if="route">
         <!-- 封面图 -->
         <view class="cover-wrapper">
-          <image :src="getFileUrl(route.cover) || defaultCover" class="cover" mode="aspectFill"></image>
+          <swiper 
+            v-if="bannerImages.length > 1" 
+            class="banner-swiper" 
+            circular 
+            indicator-dots 
+            autoplay 
+            :interval="4000" 
+            :duration="500"
+            indicator-active-color="#6366f1"
+            indicator-color="rgba(255, 255, 255, 0.5)"
+          >
+            <swiper-item v-for="(img, index) in bannerImages" :key="index">
+              <image :src="img" class="cover" mode="aspectFill" @click="previewImage(index)"></image>
+            </swiper-item>
+          </swiper>
+          <image v-else :src="bannerImages[0] || defaultCover" class="cover" mode="aspectFill" @click="previewImage(0)"></image>
+          
           <view class="cover-overlay">
             <view class="theme-tag">{{ route.theme }}</view>
           </view>
@@ -39,6 +55,7 @@
           <view class="section-title">路线地图</view>
           <view class="map-wrapper">
             <map 
+              v-if="!mapError"
               class="route-map" 
               :latitude="mapCenter.latitude" 
               :longitude="mapCenter.longitude" 
@@ -48,48 +65,35 @@
               show-location
               @markertap="onMarkerTap"
             ></map>
-          </view>
-          <view class="route-points" v-if="routePoints.length > 0">
-            <view class="points-title">
-              <text>途经景点</text>
-              <text class="points-count">（{{ routePoints.length }}个）</text>
-            </view>
-            <view 
-              v-for="(point, index) in routePoints" 
-              :key="index" 
-              class="point-card"
-              @click="onPointClick(index)"
-            >
-              <image 
-                v-if="point.cover || point.thumbCover"
-                :src="getFileUrl(point.thumbCover || point.cover) || defaultCover" 
-                class="point-image" 
-                mode="aspectFill"
-              ></image>
-              <view class="point-content">
-                <view class="point-header">
-                  <view class="point-number">{{ index + 1 }}</view>
-                  <text class="point-name">{{ point.name }}</text>
-                </view>
-                <text v-if="point.address" class="point-address">{{ point.address }}</text>
-                <text class="point-desc">{{ point.description || point.locationDescription || point.type }}</text>
-              </view>
-              <view class="point-nav-icon" @click.stop="onPointClick(index)">
-                <uni-icons type="paperplane" size="20" color="#6366f1"></uni-icons>
-              </view>
+            <view v-else class="map-error-container">
+              <uni-icons type="info-filled" size="40" color="#ef4444"></uni-icons>
+              <text class="map-error-text">位置错误，请联系管理员。</text>
             </view>
           </view>
         </view>
 
-        <!-- 影视场景 -->
+        <!-- 沿途打卡（相关景点） -->
         <view class="info-section">
-          <view class="section-title">影视场景</view>
-          <view class="section-content">
-            <view class="info-item">
-              <uni-icons type="videocam-filled" size="16" color="#ef4444"></uni-icons>
-              <text>相关作品：{{ route.ipWorks }}</text>
-            </view>
+          <view class="section-title">
+            <uni-icons type="location" size="18" color="#6366f1"></uni-icons>
+            <text>相关景点</text>
+            <text class="section-subtitle">点击查看取景地影视</text>
           </view>
+          <scroll-view class="attractions-scroll" scroll-x show-scrollbar="false">
+            <view class="attraction-card" v-for="(point, index) in routePoints" :key="index">
+              <view class="attraction-image-wrapper" @click="navigateToPoint(point)">
+                <image :src="getPointCoverUrl(point)" class="attraction-image" mode="aspectFill"></image>
+                <view class="attraction-tag">{{ index + 1 }}</view>
+              </view>
+              <view class="attraction-info">
+                <text class="attraction-name">{{ point.name }}</text>
+                <view class="attraction-btn" @click.stop="openPointDramas(point)">
+                  <uni-icons type="videocam-filled" size="14" color="#fff"></uni-icons>
+                  <text>相关影视</text>
+                </view>
+              </view>
+            </view>
+          </scroll-view>
         </view>
 
         <!-- 交通方式 -->
@@ -132,6 +136,27 @@
         <Empty text="线路不存在"></Empty>
       </view>
     </scroll-view>
+    <!-- 影视列表模态框 -->
+    <view class="movie-modal" v-if="showDramaModal" @click="closeDramaModal">
+      <view class="modal-content" @click.stop="stopProp">
+        <view class="modal-header">
+          <text class="modal-title">{{ currentPointName }} - 相关影视</text>
+          <view class="modal-close" @click="closeDramaModal">
+            <uni-icons type="closeempty" size="20" color="#9ca3af"></uni-icons>
+          </view>
+        </view>
+        <scroll-view scroll-y class="modal-body">
+          <view class="modal-drama-item" v-for="drama in currentPointDramas" :key="drama.id" @click="goToDramaDetail(drama.id)">
+            <image :src="getFileUrl(drama.poster) || defaultCover" class="modal-drama-poster" mode="aspectFill"></image>
+            <view class="modal-drama-info">
+              <text class="modal-drama-name">{{ drama.name }}</text>
+              <text class="modal-drama-type">{{ drama.type }}</text>
+              <view class="modal-drama-btn">查看详情</view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -139,7 +164,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import { getTourById, getNearbyHotels, getNearbyLocations, getLocationById } from '@/services/backend-api'
+import { getTourById, getNearbyHotels, getNearbyLocations, getLocationById, getDramaById } from '@/services/backend-api'
 import { getFileUrl } from '@/utils'
 
 export default {
@@ -153,8 +178,9 @@ export default {
       route: null,
       loading: true,
       collected: false,
-      defaultCover: 'https://via.placeholder.com/400x200?text=Tour+Route',
-      // 地图相关数据
+      mapError: false,
+      defaultCover: 'https://via.placeholder.com/750x400',
+      mapContext: null,
       mapCenter: {
         latitude: 30.0,
         longitude: 103.0
@@ -163,7 +189,66 @@ export default {
       polyline: [],
       routePoints: [],
       // 周边数据
-      nearbyHotels: []
+      nearbyHotels: [],
+      // 景点展开状态
+      expandedPoints: {},
+      // 当前选中的景点影视
+      currentPointDramas: [],
+      // 影视模态框显示状态
+      showDramaModal: false,
+      currentPointName: ''
+    }
+  },
+  computed: {
+    bannerImages() {
+      if (!this.route) return []
+      let images = []
+      
+      const imgData = this.route.image
+      if (Array.isArray(imgData) && imgData.length > 0) {
+        images = imgData.map(img => getFileUrl(img))
+      } else if (typeof imgData === 'string' && imgData) {
+        images = imgData.split(',').map(img => getFileUrl(img))
+      }
+      
+      // If images list is empty, try to use cover/image
+      if (images.length === 0) {
+        const cover = this.route.image || this.route.cover || this.route.thumbImage
+        if (Array.isArray(cover)) {
+          images = cover.map(img => getFileUrl(img))
+        } else if (typeof cover === 'string' && cover) {
+          images = cover.split(',').map(img => getFileUrl(img))
+        }
+      }
+      
+      images = [...new Set(images)].filter(img => img)
+      
+      // 用户要求：详情页面展示的图片是除了第一个以外的图片
+      // 如果有多张图片，移除第一张（通常是列表封面）；如果只有一张，保留显示
+      if (images.length > 1) {
+        return images.slice(1)
+      }
+      
+      return images
+    },
+    // 收集所有途径景点的相关影视，去重并按顺序展示
+    allRelatedDramas() {
+      if (!this.routePoints || this.routePoints.length === 0) return []
+      
+      const dramaMap = new Map()
+      
+      // 按景点顺序收集影视，使用Map去重（保留第一次出现的顺序）
+      this.routePoints.forEach(point => {
+        if (point.relatedDramas && point.relatedDramas.length > 0) {
+          point.relatedDramas.forEach(drama => {
+            if (!dramaMap.has(drama.id)) {
+              dramaMap.set(drama.id, drama)
+            }
+          })
+        }
+      })
+      
+      return Array.from(dramaMap.values())
     }
   },
   onLoad(options) {
@@ -174,23 +259,96 @@ export default {
   },
   methods: {
     getFileUrl,
+    // 获取景点封面图URL
+    getPointCoverUrl(point) {
+      if (!point) {
+        console.log('景点数据为空，使用默认封面')
+        return this.defaultCover
+      }
+      
+      // 优先使用cover字段，然后是image、thumbCover、thumbImage
+      let coverUrl = point.cover || point.image || point.thumbCover || point.thumbImage
+      
+      console.log('处理景点封面:', point.name, '原始URL:', coverUrl)
+      
+      // 如果coverUrl是数组，取第一个
+      if (Array.isArray(coverUrl) && coverUrl.length > 0) {
+        coverUrl = coverUrl[0]
+        console.log('从数组中取第一个:', coverUrl)
+      }
+      
+      // 如果coverUrl是逗号分隔的字符串，取第一个
+      if (typeof coverUrl === 'string' && coverUrl.includes(',')) {
+        coverUrl = coverUrl.split(',')[0].trim()
+        console.log('从逗号分隔字符串中取第一个:', coverUrl)
+      }
+      
+      // 使用getFileUrl处理URL
+      const processedUrl = coverUrl ? getFileUrl(coverUrl) : this.defaultCover
+      
+      console.log('最终处理后的URL:', processedUrl)
+      
+      return processedUrl || this.defaultCover
+    },
+    previewImage(index) {
+      if (this.bannerImages && this.bannerImages.length > 0) {
+        uni.previewImage({
+          urls: this.bannerImages,
+          current: index
+        })
+      }
+    },
     async loadData(id) {
       this.loading = true
       try {
         const res = await getTourById(id)
         
         if (res.code === 200 && res.data) {
+          // 处理封面图：如果后端未返回cover但返回了image，则使用image的第一张作为封面
+          let coverUrl = res.data.cover
+          if (!coverUrl && res.data.image) {
+            if (Array.isArray(res.data.image) && res.data.image.length > 0) {
+              coverUrl = res.data.image[0]
+            } else if (typeof res.data.image === 'string') {
+              coverUrl = res.data.image
+            }
+          }
+
+          // 处理影视作品名称
+          let ipWorksStr = res.data.ipWorks || '暂无相关影视作品'
+          // 如果有dramaId，优先使用dramaId获取影视作品名称
+          if (res.data.dramaId) {
+            try {
+              // dramaId可能是逗号分隔的字符串
+              const dramaIds = String(res.data.dramaId).split(',').filter(id => id.trim())
+              if (dramaIds.length > 0) {
+                const dramaPromises = dramaIds.map(dId => getDramaById(parseInt(dId), true))
+                const dramaResults = await Promise.allSettled(dramaPromises)
+                
+                const dramaNames = dramaResults
+                  .filter(r => r.status === 'fulfilled' && r.value?.code === 200 && r.value?.data)
+                  .map(r => r.value.data.name)
+                
+                if (dramaNames.length > 0) {
+                  ipWorksStr = dramaNames.join('、')
+                }
+              }
+            } catch (e) {
+              console.warn('获取关联影视作品失败:', e)
+            }
+          }
+
           this.route = {
             id: res.data.id,
             name: res.data.name,
             description: res.data.description,
             theme: res.data.theme,
             features: res.data.features,
-            cover: res.data.cover,
+            cover: coverUrl,
             transportInfo: res.data.transport,
             accommodation: res.data.hotel,
             foodRecommendation: res.data.food,
-            ipWorks: res.data.ipWorks || '暂无相关影视作品',
+            ipWorks: ipWorksStr,
             image: res.data.image,
             latitude: res.data.latitude || 30.075,
             longitude: res.data.longitude || 102.993,
@@ -299,23 +457,44 @@ export default {
         const results = await Promise.all(locationPromises)
         
         // 过滤成功的结果并映射数据
-        this.routePoints = results
-          .filter(res => res.code === 200 && res.data)
-          .map(res => {
-            const location = res.data
-            return {
-              id: location.id,
-              name: location.name,
-              address: location.address,
-              description: location.locationDescription || location.type || '暂无描述',
-              locationDescription: location.locationDescription,
-              type: location.type,
-              cover: location.cover,
-              thumbCover: location.thumbCover,
-              latitude: parseFloat(location.latitude) || 0,
-              longitude: parseFloat(location.longitude) || 0
-            }
-          })
+        this.routePoints = await Promise.all(
+          results
+            .filter(res => res.code === 200 && res.data)
+            .map(async res => {
+              const location = res.data
+              
+              console.log('加载景点数据:', location.name, {
+                cover: location.cover,
+                thumbCover: location.thumbCover,
+                image: location.image,
+                thumbImage: location.thumbImage
+              })
+              
+              const point = {
+                id: location.id,
+                name: location.name,
+                address: location.address,
+                description: location.locationDescription || location.type || '暂无描述',
+                locationDescription: location.locationDescription,
+                type: location.type,
+                cover: location.cover,
+                thumbCover: location.thumbCover,
+                image: location.image,
+                thumbImage: location.thumbImage,
+                latitude: parseFloat(location.latitude) || 0,
+                longitude: parseFloat(location.longitude) || 0,
+                dramaId: location.dramaId,
+                relatedDramas: []
+              }
+              
+              // 加载相关影视
+              if (location.dramaId) {
+                point.relatedDramas = await this.loadDramasForPoint(location.dramaId)
+              }
+              
+              return point
+            })
+        )
         
         // 使用真实的location数据初始化地图
         if (this.routePoints.length > 0) {
@@ -324,6 +503,44 @@ export default {
       } catch (error) {
         console.error('根据ID加载景点失败:', error)
       }
+    },
+    
+    // 为景点加载相关影视
+    async loadDramasForPoint(dramaIds) {
+      try {
+        const ids = String(dramaIds).split(',').map(id => id.trim()).filter(id => id)
+        if (ids.length === 0) return []
+        
+        const dramaPromises = ids.map(id => getDramaById(parseInt(id), true))
+        const results = await Promise.allSettled(dramaPromises)
+        
+        return results
+          .filter(r => r.status === 'fulfilled' && r.value?.code === 200 && r.value?.data)
+          .map(r => ({
+            id: r.value.data.id,
+            name: r.value.data.name,
+            poster: r.value.data.image || r.value.data.cover || r.value.data.poster,
+            type: r.value.data.type || '影视作品'
+          }))
+      } catch (error) {
+        console.warn('加载景点相关影视失败:', error)
+        return []
+      }
+    },
+    
+    // 切换景点展开状态
+    togglePointExpand(index) {
+      this.expandedPoints = {
+        ...this.expandedPoints,
+        [index]: !this.expandedPoints[index]
+      }
+    },
+    
+    // 跳转到影视详情
+    goToDramaDetail(id) {
+      uni.navigateTo({
+        url: `/pages/films/detail?id=${id}`
+      })
     },
     
     // 加载周边的location（当tour没有指定locationId时使用）
@@ -429,6 +646,7 @@ export default {
     
     // 初始化地图标记和路线
     async initMap(points, lineColor = '#6366f1') {
+      this.mapError = false
       if (!points || points.length === 0) return
       
       // 检查经纬度是否规范
@@ -439,11 +657,7 @@ export default {
       })
 
       if (hasInvalidCoord) {
-        uni.showToast({
-          title: '位置不规范，请联系管理员。',
-          icon: 'none',
-          duration: 3000
-        })
+        this.mapError = true
         return
       }
 
@@ -474,117 +688,32 @@ export default {
       this.calculateMapCenter(points)
     },
     
-    // 获取真实道路路线（使用腾讯地图API）
+    // 获取路线（简化版：直接连接景点，显示箭头）
     async fetchRealRoutes(points, lineColor) {
       if (!points || points.length < 2) {
         this.polyline = []
         return
       }
       
-      // 1. 尝试从缓存读取
-      // 生成一个唯一的缓存Key，基于路线ID和点的数量
-      const cacheKey = `route_cache_${this.route.id}_${points.length}`
-      const cachedPolyline = uni.getStorageSync(cacheKey)
+      // 直接使用景点坐标作为路线点
+      // 为了让箭头更明显，我们不使用真实道路，而是使用直线连接
+      // 这样既"简洁"又"方向明确"
       
-      if (cachedPolyline) {
-        console.log('命中本地缓存，无需调用API')
-        this.polyline = JSON.parse(cachedPolyline)
-        // 即使有缓存，也重新设置颜色（因为颜色可能变了）
-        if (this.polyline && this.polyline.length > 0) {
-          this.polyline[0].color = lineColor
-          this.polyline[0].borderColor = lineColor
-        }
-        return
-      }
+      const allRoutePoints = points.map(point => ({
+        latitude: point.latitude,
+        longitude: point.longitude
+      }))
       
-      // 2. 无缓存，调用API
-      uni.showLoading({
-        title: '正在规划路线...',
-        mask: true
-      })
+      const polylineData = [{
+        points: allRoutePoints,
+        color: lineColor,
+        width: 7, // 调整宽度，使其更精致
+        dottedLine: false,
+        arrowLine: true, // 保持箭头
+        // 移除白色边框，减少突兀感，使箭头与线条融合更自然
+      }]
       
-      try {
-        const allRoutePoints = []
-        
-        for (let i = 0; i < points.length - 1; i++) {
-          const from = points[i]
-          const to = points[i + 1]
-          
-          // 进一步增加延迟：1.5秒
-          // 确保绝对安全，特别是在开发工具热重载时
-          if (i > 0) {
-            await new Promise(resolve => setTimeout(resolve, 1500))
-          }
-          
-          let routePoints = await this.getDirectionRoute(from, to)
-          
-          // 失败重试
-          if (!routePoints || routePoints.length === 0) {
-            console.log('请求被限流，等待3秒后重试...')
-            await new Promise(resolve => setTimeout(resolve, 3000))
-            routePoints = await this.getDirectionRoute(from, to)
-          }
-          
-          if (routePoints && routePoints.length > 0) {
-            if (i === 0) {
-              allRoutePoints.push(...routePoints)
-            } else {
-              allRoutePoints.push(...routePoints.slice(1))
-            }
-          } else {
-            // 降级为直线
-            console.log('获取路线失败，降级为直线')
-            if (i === 0) allRoutePoints.push({ latitude: from.latitude, longitude: from.longitude })
-            allRoutePoints.push({ latitude: to.latitude, longitude: to.longitude })
-          }
-        }
-        
-        if (allRoutePoints.length > 0) {
-          console.log('成功获取路线点数量:', allRoutePoints.length)
-          
-          const polylineData = [{
-            points: allRoutePoints,
-            color: lineColor,
-            width: 8, // 加宽一点
-            dottedLine: false,
-            arrowLine: true, // 保持开启，如果还不显示再关掉
-            borderColor: lineColor,
-            borderWidth: 1
-          }]
-          
-          this.polyline = polylineData
-          
-          // 3. 保存到缓存
-          // 只有当获取到了真实路线点（点数明显多于直线）才缓存
-          if (allRoutePoints.length > points.length * 2) {
-            try {
-              uni.setStorageSync(cacheKey, JSON.stringify(polylineData))
-              console.log('路线数据已缓存')
-            } catch (e) {
-              console.error('缓存失败', e)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('获取路线完全失败:', error)
-        // 降级方案
-        const coordinates = points.map(point => ({
-          latitude: point.latitude,
-          longitude: point.longitude
-        }))
-        
-        this.polyline = [{
-          points: coordinates,
-          color: lineColor,
-          width: 4,
-          dottedLine: false,
-          arrowLine: true,
-          borderColor: lineColor,
-          borderWidth: 2
-        }]
-      } finally {
-        uni.hideLoading()
-      }
+      this.polyline = polylineData
     },
     
     // 调用腾讯地图API获取两点之间的真实道路路线
@@ -834,7 +963,29 @@ export default {
       uni.navigateTo({
         url: `/pages/hotel/detail?id=${id}`
       })
-    }
+    },
+    
+    // 打开景点相关影视模态框
+    openPointDramas(point) {
+      if (!point.relatedDramas || point.relatedDramas.length === 0) {
+        uni.showToast({
+          title: '该景点暂无相关影视',
+          icon: 'none'
+        })
+        return
+      }
+      this.currentPointDramas = point.relatedDramas
+      this.currentPointName = point.name
+      this.showDramaModal = true
+    },
+    
+    // 关闭影视模态框
+    closeDramaModal() {
+      this.showDramaModal = false
+    },
+    
+    // 阻止冒泡
+    stopProp() {}
 
   }
 }
@@ -858,6 +1009,11 @@ export default {
   width: 100%;
   height: 240px;
   overflow: hidden;
+}
+
+.banner-swiper {
+  width: 100%;
+  height: 100%;
 }
 
 .cover {
@@ -999,6 +1155,83 @@ export default {
   border-top: 1px solid #e5e7eb;
 }
 
+// 相关影视轮播样式
+.related-dramas {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.dramas-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dramas-count {
+  font-size: 13px;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.dramas-swiper {
+  width: 100%;
+  height: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.drama-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f9fafb;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.drama-card:active {
+  transform: scale(0.98);
+}
+
+.drama-poster {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.drama-info {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+  background: white;
+}
+
+.drama-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drama-type {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+
 .points-title {
   font-size: 14px;
   font-weight: 600;
@@ -1015,6 +1248,14 @@ export default {
   color: #9ca3af;
 }
 
+.point-card-wrapper {
+  margin-bottom: 12px;
+}
+
+.point-card-wrapper:last-child {
+  margin-bottom: 0;
+}
+
 .point-card {
   display: flex;
   align-items: center;
@@ -1022,7 +1263,6 @@ export default {
   padding: 12px;
   background: #f9fafb;
   border-radius: 10px;
-  margin-bottom: 12px;
   transition: all 0.2s;
   cursor: pointer;
 }
@@ -1030,10 +1270,6 @@ export default {
 .point-card:active {
   background: #f3f4f6;
   transform: scale(0.98);
-}
-
-.point-card:last-child {
-  margin-bottom: 0;
 }
 
 .point-image {
@@ -1101,8 +1337,15 @@ export default {
   line-height: 1.4;
 }
 
-.point-nav-icon {
+.point-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+.point-nav-icon,
+.point-expand-icon {
   width: 36px;
   height: 36px;
   display: flex;
@@ -1111,6 +1354,79 @@ export default {
   background: white;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.point-expand-icon:active {
+  transform: scale(0.95);
+  background: #f3f4f6;
+}
+
+.point-dramas {
+  margin-top: 8px;
+  padding: 12px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.dramas-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 12px;
+  padding-left: 8px;
+  border-left: 3px solid #6366f1;
+}
+
+.drama-item-small {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.drama-item-small:last-child {
+  margin-bottom: 0;
+}
+
+.drama-item-small:active {
+  background: #f3f4f6;
+  transform: scale(0.98);
+}
+
+.drama-poster-small {
+  width: 60px;
+  height: 84px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.drama-info-small {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.drama-name-small {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drama-type-small {
+  font-size: 12px;
+  color: #6b7280;
 }
 
 
@@ -1212,5 +1528,223 @@ export default {
   font-size: 22rpx;
   color: #fff;
   font-weight: 500;
+}
+
+.map-error-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+}
+
+.map-error-text {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* 沿途打卡模块样式 */
+.attractions-scroll {
+  width: 100%;
+  white-space: nowrap;
+  padding: 4px 0;
+}
+
+.attraction-card {
+  display: inline-block;
+  width: 140px;
+  margin-right: 12px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f3f4f6;
+  vertical-align: top;
+}
+
+.attraction-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100px;
+}
+
+.attraction-image {
+  width: 100%;
+  height: 100%;
+}
+
+.attraction-tag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.attraction-info {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attraction-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attraction-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  padding: 6px 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.attraction-btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+/* 模态框样式 */
+.movie-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 320px;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(20px);
+  animation: slideUp 0.3s forwards;
+}
+
+@keyframes slideUp {
+  to { transform: translateY(0); }
+}
+
+.modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.modal-close {
+  padding: 4px;
+}
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.modal-drama-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+
+.modal-drama-item:last-child {
+  margin-bottom: 0;
+}
+
+.modal-drama-item:active {
+  background: #f3f4f6;
+}
+
+.modal-drama-poster {
+  width: 60px;
+  height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.modal-drama-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.modal-drama-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-drama-type {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.modal-drama-btn {
+  align-self: flex-start;
+  font-size: 12px;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 4px 10px;
+  border-radius: 4px;
 }
 </style>

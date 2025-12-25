@@ -63,7 +63,8 @@
 import NavBar from '../../components/NavBar/NavBar.vue'
 
 // 使用真实后端API
-import { getUserInfo, updateUserInfo, uploadFile } from '../../services/backend-api'
+import { getUserInfo, updateUserInfo, uploadFile as apiUploadFile } from '../../services/backend-api'
+import { getFileUrl } from '../../utils'
 import { mapGetters, mapActions } from 'vuex'
 
 
@@ -99,7 +100,7 @@ export default {
         if (res.code === 200 && res.data) {
           this.form.username = res.data.username || ''
           this.form.phoneNumber = res.data.phoneNumber || ''
-          this.form.avatar = res.data.avatar || ''
+          this.form.avatar = getFileUrl(res.data.avatar || '')
         }
       } catch (error) {
         console.error('加载用户信息失败:', error)
@@ -111,7 +112,8 @@ export default {
         const res = await uni.chooseImage({
           count: 1,
           sizeType: ['compressed'],
-          sourceType: ['album', 'camera']
+          sourceType: ['album', 'camera'],
+          extension: ['jpg', 'jpeg', 'png']
         })
         
         // 检查图片大小 (4MB)
@@ -129,43 +131,34 @@ export default {
         
         try {
           // 1. 先上传文件
-          const uploadRes = await uploadFile(tempFilePath)
-          console.log('上传接口完整响应:', JSON.stringify(uploadRes))
+          const response = await apiUploadFile(tempFilePath)
+          console.log('上传接口完整响应:', JSON.stringify(response))
           
-          if (uploadRes.code === 200) {
-            let avatarUrl = uploadRes.data
-            console.log('上传接口返回的数据(data):', JSON.stringify(avatarUrl))
+          // 支持code为200或0的成功状态
+          const isSuccess = response.code === 200 || response.code === 0
+          
+          if (isSuccess) {
+            let avatarUrl = response.data
             
-            // 处理返回数据可能是对象的情况
-            if (typeof avatarUrl === 'object' && avatarUrl !== null) {
-              // 尝试从常见字段中获取URL，优先使用 originUrl
-              avatarUrl = avatarUrl.originUrl || avatarUrl.url || avatarUrl.fileUrl || avatarUrl.path || avatarUrl.link || avatarUrl.data || avatarUrl.fileName
-              console.log('提取后的URL:', avatarUrl)
-              
-              // 处理相对路径
-              if (avatarUrl && typeof avatarUrl === 'string' && !avatarUrl.startsWith('http')) {
-                // 假设后端服务运行在 localhost:8080，实际项目中应从配置文件获取
-                const serverUrl = 'http://162.14.106.139:8080'
-                // 如果返回的路径已经包含 /api，则不需要重复拼接 /api
-                // 但这里返回的是 /api/files/...，所以直接拼接到 serverUrl 即可
-                // 注意：如果 serverUrl 结尾有 /，或者 avatarUrl 开头有 /，需要处理
-                if (serverUrl.endsWith('/') && avatarUrl.startsWith('/')) {
-                  avatarUrl = serverUrl + avatarUrl.substring(1)
-                } else if (!serverUrl.endsWith('/') && !avatarUrl.startsWith('/')) {
-                  avatarUrl = serverUrl + '/' + avatarUrl
-                } else {
-                  avatarUrl = serverUrl + avatarUrl
-                }
-                console.log('拼接后的完整URL:', avatarUrl)
-              }
-              
-              // 如果还是对象，可能需要查看具体结构
-              if (typeof avatarUrl === 'object') {
-                console.error('无法从对象中提取URL，对象结构:', JSON.stringify(uploadRes.data))
-                uni.showToast({ title: '上传返回格式错误', icon: 'none' })
-                return
-              }
+            // 确保文件URL是字符串格式
+            if (typeof avatarUrl === 'object') {
+              avatarUrl = avatarUrl.url || avatarUrl.filename || avatarUrl.path || avatarUrl.originUrl || JSON.stringify(avatarUrl)
             }
+            avatarUrl = String(avatarUrl)
+            
+            // 再次检查，如果还是JSON字符串，尝试解析获取originUrl
+            try {
+              if (avatarUrl.startsWith('{') && avatarUrl.includes('originUrl')) {
+                const parsed = JSON.parse(avatarUrl)
+                if (parsed.originUrl) {
+                  avatarUrl = parsed.originUrl
+                }
+              }
+            } catch (e) {
+              // 忽略解析错误
+            }
+            
+            console.log('上传成功，URL:', avatarUrl)
             
             if (!avatarUrl) {
               uni.showToast({ title: '上传失败：未获取到图片地址', icon: 'none' })
@@ -178,11 +171,14 @@ export default {
             })
             
             if (updateRes.code === 200) {
-              this.form.avatar = avatarUrl
+              // 更新本地显示（需要处理完整URL）
+              const fullAvatarUrl = getFileUrl(avatarUrl)
+              this.form.avatar = fullAvatarUrl
+              
               // 更新Vuex中的用户信息
               this.setUserInfo({
                 ...this.userInfo,
-                avatar: avatarUrl
+                avatar: fullAvatarUrl
               })
               uni.showToast({
                 title: '头像更新成功',
@@ -195,8 +191,9 @@ export default {
               })
             }
           } else {
+            const errorMsg = response.message || response.msg || '上传失败'
             uni.showToast({
-              title: uploadRes.message || '上传失败',
+              title: errorMsg,
               icon: 'none'
             })
           }

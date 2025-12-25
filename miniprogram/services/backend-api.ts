@@ -48,11 +48,14 @@ export const getDramaPage = (params: {
 
 /**
  * 获取影视作品详情
+ * @param id 影视作品ID
+ * @param silentError 是否静默错误（不显示Toast提示）
  */
-export const getDramaById = (id: number) => {
+export const getDramaById = (id: number, silentError: boolean = false) => {
     return httpWithFileUrl<any>({
         url: `/drama/${id}`,
-        method: 'GET'
+        method: 'GET',
+        silentError
     }, ['poster', 'posterUrl', 'images', 'thumbs'])
 }
 
@@ -346,6 +349,18 @@ export const deleteReport = (id: number) => {
 
 // ==================== 7. 文件上传 (File) ====================
 
+// 错误码映射表 - 与http.ts保持一致
+const UPLOAD_ERROR_MESSAGES: Record<number, string> = {
+    400: '文件格式不正确',
+    401: '登录已过期，请重新登录',
+    403: '您没有权限上传文件',
+    413: '文件太大，请选择小一点的文件',
+    415: '不支持该文件类型',
+    500: '上传失败，请稍后重试',
+    502: '服务暂不可用',
+    503: '网络服务异常'
+}
+
 /**
  * 文件上传
  * @param filePath 本地文件路径
@@ -368,13 +383,21 @@ export const uploadFile = (filePath: string) => {
                 'Authorization': token ? `Bearer ${token}` : '',
                 'source-client': 'miniapp'
             },
-            timeout: 60000,
+            timeout: 10000,
             success: (res) => {
                 // 检查HTTP状态码
                 if (res.statusCode !== 200) {
+                    const friendlyMsg = UPLOAD_ERROR_MESSAGES[res.statusCode] || '上传失败，请稍后重试'
+                    console.error(`文件上传失败: status=${res.statusCode}`)
+                    
+                    uni.showToast({
+                        icon: 'none',
+                        title: friendlyMsg
+                    })
+                    
                     reject({
                         code: res.statusCode,
-                        message: `上传失败，HTTP状态码: ${res.statusCode}`
+                        message: friendlyMsg
                     })
                     return
                 }
@@ -387,29 +410,60 @@ export const uploadFile = (filePath: string) => {
                     if (data.code === 200 || data.code === 0) {
                         resolve({
                             code: data.code,
-                            message: data.message || '请求成功',
+                            message: data.message || '上传成功',
                             data: data.data
                         })
                     } else {
-                        // 处理失败响应
+                        // 处理失败响应 - 使用友好提示
+                        const errorCode = data.code
+                        const friendlyMsg = UPLOAD_ERROR_MESSAGES[errorCode] || '上传失败，请稍后重试'
+                        
+                        console.warn(`文件上传业务错误: code=${errorCode}, message=${data.message}`)
+                        
+                        uni.showToast({
+                            icon: 'none',
+                            title: friendlyMsg
+                        })
+                        
                         reject({
-                            code: data.code || 500,
-                            message: data.message || data.msg || '上传失败'
+                            code: errorCode || 500,
+                            message: friendlyMsg
                         })
                     }
                 } catch (parseError) {
                     // 响应解析失败
+                    console.error('文件上传响应解析失败:', parseError)
+                    
+                    uni.showToast({
+                        icon: 'none',
+                        title: '服务器响应异常'
+                    })
+                    
                     reject({
                         code: 500,
-                        message: '服务器响应格式错误'
+                        message: '服务器响应异常'
                     })
                 }
             },
             fail: (err) => {
                 // 请求失败
+                console.error('文件上传网络失败:', err)
+                
+                let friendlyMsg = '网络连接失败，请检查网络'
+                if (err.errMsg?.includes('timeout')) {
+                    friendlyMsg = '上传超时，请重试'
+                } else if (err.errMsg?.includes('fail')) {
+                    friendlyMsg = '上传失败，请检查网络连接'
+                }
+                
+                uni.showToast({
+                    icon: 'none',
+                    title: friendlyMsg
+                })
+                
                 reject({
                     code: 1000,
-                    message: err.errMsg || '网络连接失败，请检查网络设置'
+                    message: friendlyMsg
                 })
             }
         })
@@ -526,9 +580,6 @@ export const changePassword = (data: {
 export const uploadAvatar = (filePath: string) => {
     return new Promise<ApiResponse<string>>((resolve, reject) => {
         const token = uni.getStorageSync('token')
-        const baseURL = process.env.NODE_ENV === 'development'
-            ? 'http://162.14.106.139:8080/api'
-            : 'https://your-production-domain.com/api'
 
         uni.uploadFile({
             url: baseURL + '/user/avatar',
@@ -539,22 +590,45 @@ export const uploadAvatar = (filePath: string) => {
                 'source-client': 'miniapp'
             },
             method: 'PUT',
+            timeout: 10000,
             success: (res) => {
-                const data = JSON.parse(res.data)
-                if (data.code === 200) {
-                    resolve(data)
-                } else {
+                try {
+                    const data = JSON.parse(res.data)
+                    if (data.code === 200 || data.code === 0) {
+                        resolve(data)
+                    } else {
+                        const errorCode = data.code
+                        const friendlyMsg = UPLOAD_ERROR_MESSAGES[errorCode] || '头像上传失败，请重试'
+                        
+                        console.warn(`头像上传失败: code=${errorCode}, message=${data.message}`)
+                        
+                        uni.showToast({
+                            icon: 'none',
+                            title: friendlyMsg
+                        })
+                        reject(data)
+                    }
+                } catch (parseError) {
+                    console.error('头像上传响应解析失败:', parseError)
+                    
                     uni.showToast({
                         icon: 'none',
-                        title: data.message || '上传失败'
+                        title: '服务器响应异常'
                     })
-                    reject(data)
+                    reject({ code: 500, message: '服务器响应异常' })
                 }
             },
             fail: (err) => {
+                console.error('头像上传网络失败:', err)
+                
+                let friendlyMsg = '上传失败，请检查网络'
+                if (err.errMsg?.includes('timeout')) {
+                    friendlyMsg = '上传超时，请重试'
+                }
+                
                 uni.showToast({
                     icon: 'none',
-                    title: '上传失败'
+                    title: friendlyMsg
                 })
                 reject(err)
             }
@@ -593,12 +667,11 @@ export const getBannerPage = (params: {
     keyword?: string
 }) => {
     return httpWithFileUrl<any>({
-        url: '/banner/admin/page',
+        url: '/banner/page',
         method: 'GET',
         data: {
             current: params.current || 1,
-            size: params.size || 10,
-            keyword: params.keyword
+            size: params.size || 10
         }
     }, ['imageUrl'])
 }

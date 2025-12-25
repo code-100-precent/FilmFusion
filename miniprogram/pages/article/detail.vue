@@ -3,8 +3,38 @@
     <NavBar :show-back="true"></NavBar>
 
     <scroll-view class="content" scroll-y v-if="!loading && article">
-      <!-- 文章标题 -->
       <view class="article-header">
+        <!-- 轮播图/封面图 -->
+        <view class="banner-section" v-if="bannerImages.length > 0">
+          <swiper 
+            v-if="bannerImages.length > 1" 
+            class="banner-swiper" 
+            circular 
+            indicator-dots 
+            autoplay 
+            :interval="4000" 
+            :duration="500"
+            indicator-active-color="#ef4444"
+            indicator-color="rgba(255, 255, 255, 0.5)"
+          >
+            <swiper-item v-for="(img, index) in bannerImages" :key="index">
+              <image 
+                :src="img" 
+                class="banner-image" 
+                mode="aspectFill" 
+                @click="previewImage(index)"
+              ></image>
+            </swiper-item>
+          </swiper>
+          <image 
+            v-else
+            :src="bannerImages[0]" 
+            class="banner-image" 
+            mode="aspectFill" 
+            @click="previewImage(0)"
+          ></image>
+        </view>
+
         <text class="article-title">{{ article.title }}</text>
         <view class="article-meta">
           <text class="meta-item">{{ article.issueUnit }}</text>
@@ -34,6 +64,7 @@ import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
 import { getArticleById } from '../../services/backend-api'
+import { getFileUrl } from '@/utils'
 
 export default {
   components: {
@@ -47,6 +78,49 @@ export default {
       loading: false
     }
   },
+  computed: {
+    bannerImages() {
+      if (!this.article) return []
+      let images = []
+      
+      // 1. 优先使用 image 字段 (根据用户反馈数据)
+      if (this.article.image) {
+        if (Array.isArray(this.article.image)) {
+           images = this.article.image.map(img => getFileUrl(img))
+        } else if (typeof this.article.image === 'string') {
+           images = this.article.image.split(',').map(img => getFileUrl(img))
+        }
+      }
+
+      // 2. 如果没有 image，尝试使用 images 字段 (兼容旧数据)
+      if (images.length === 0 && this.article.images) {
+        if (Array.isArray(this.article.images)) {
+          images = this.article.images.map(img => getFileUrl(img))
+        } else if (typeof this.article.images === 'string') {
+          images = this.article.images.split(',').map(img => getFileUrl(img))
+        }
+      }
+
+      // 3. 如果还是没有，尝试 thumbImage 或 cover
+      if (images.length === 0) {
+        const cover = this.article.thumbImage || this.article.cover
+        if (cover) {
+           images = [getFileUrl(cover)]
+        }
+      }
+
+      // 4. 去重
+      images = [...new Set(images)].filter(img => img)
+      
+      // 用户要求：详情页面展示的图片是除了第一个以外的图片
+      // 如果有多张图片，移除第一张（通常是列表封面）；如果只有一张，保留显示
+      if (images.length > 1) {
+        return images.slice(1)
+      }
+      
+      return images
+    }
+  },
   onLoad(options) {
     const id = parseInt(options.id)
     if (id) {
@@ -54,6 +128,14 @@ export default {
     }
   },
   methods: {
+    previewImage(index = 0) {
+      if (this.bannerImages && this.bannerImages.length > 0) {
+        uni.previewImage({
+          urls: this.bannerImages,
+          current: index
+        })
+      }
+    },
     async loadArticle(id) {
       this.loading = true
       try {
@@ -134,6 +216,24 @@ export default {
   padding: 40rpx 32rpx;
   margin-bottom: 24rpx;
   box-sizing: border-box;
+}
+
+.banner-section {
+  width: 100%;
+  margin-bottom: 32rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.banner-swiper {
+  width: 100%;
+  height: 400rpx;
+}
+
+.banner-image {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 12rpx;
 }
 
 .article-title {

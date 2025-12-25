@@ -700,12 +700,23 @@ const handleEdit = async (row) => {
       dialogTitle.value = '编辑电视剧'
 
       // 解析图片字段：第一个为封面，后面的是详情图
-      const allImages = (res.data.image || '').split(',').filter(url => url.trim())
+      let allImages = []
+      if (Array.isArray(res.data.image)) {
+        allImages = res.data.image.filter(url => url && typeof url === 'string').map(url => url.trim())
+      } else if (typeof res.data.image === 'string') {
+        allImages = res.data.image.split(',').filter(url => url.trim())
+      }
+      
       const coverUrl = allImages[0] || ''
       const detailUrls = allImages.slice(1)
 
       // 解析缩略图字段
-      const allThumbImages = (res.data.thumbImage || '').split(',').filter(url => url.trim())
+      let allThumbImages = []
+      if (Array.isArray(res.data.thumbImage)) {
+        allThumbImages = res.data.thumbImage.filter(url => url && typeof url === 'string').map(url => url.trim())
+      } else if (typeof res.data.thumbImage === 'string') {
+        allThumbImages = res.data.thumbImage.split(',').filter(url => url.trim())
+      }
       const thumbCoverUrl = allThumbImages[0] || coverUrl
       const detailThumbUrls = allThumbImages.slice(1)
 

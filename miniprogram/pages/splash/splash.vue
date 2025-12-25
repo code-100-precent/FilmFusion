@@ -1,8 +1,10 @@
 <template>
 	<view class="splash-screen" :class="{ 'slide-out': isSlideOut }">
+		<!-- 使用本地图片，无需加载状态 -->
 		<image 
 			class="splash-image" 
-			src="https://xy-work.oss-cn-beijing.aliyuncs.com/uploads/%E5%9B%BE%E7%89%87%E6%96%87%E5%AD%97%E4%BF%AE%E6%94%B9.png"
+			:src="splashImage"
+			mode="aspectFill"
 		></image>
 	</view>
 </template>
@@ -12,6 +14,12 @@ export default {
 	data() {
 		return {
 			isSlideOut: false
+		}
+	},
+	computed: {
+		splashImage() {
+			// 使用本地static目录下的图片，加载速度快
+			return '/static/拍在雅安.png'
 		}
 	},
 	onLoad() {
