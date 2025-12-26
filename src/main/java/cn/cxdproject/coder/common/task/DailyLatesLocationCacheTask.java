@@ -102,7 +102,6 @@ public class DailyLatesLocationCacheTask {
                 .govPrincipalName(location.getGovPrincipalName())
                 .govPrincipalPhone(location.getGovPrincipalPhone())
                 .address(location.getAddress())
-                .price(location.getPrice())
                 .userId(location.getUserId())
                 .createdAt(location.getCreatedAt())
                 .updatedAt(location.getUpdatedAt())

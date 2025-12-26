@@ -31,7 +31,6 @@ public class LocationVO {
     private String govPrincipalPhone;
     private String govPrincipalName;
     private String address;
-    private BigDecimal price;
     private Long userId;
     private String image;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

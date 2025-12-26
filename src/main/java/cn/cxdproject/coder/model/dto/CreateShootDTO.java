@@ -20,9 +20,6 @@ public class CreateShootDTO {
     @NotBlank(message = "服务简介不能为空")
     private String description;
     
-    @NotNull(message = "价格不能为空")
-    private BigDecimal price;
-    
     @NotNull(message = "状态不能为空")
     private Boolean status;
     

@@ -573,10 +573,10 @@ const handleDialogSave = async () => {
       image: finalImageStr,
       thumbImage: finalThumbImageStr,
       // 映射表单字段到后端字段
-      locationId: Array.isArray(dramaForm.locationId) ? dramaForm.locationId.join(',') : dramaForm.locationId,
-      serviceId: Array.isArray(dramaForm.serviceId) ? dramaForm.serviceId.join(',') : dramaForm.serviceId,
-      location_id: Array.isArray(dramaForm.locationId) ? dramaForm.locationId.join(',') : dramaForm.locationId,
-      service_id: Array.isArray(dramaForm.serviceId) ? dramaForm.serviceId.join(',') : dramaForm.serviceId,
+      locationId: (Array.isArray(dramaForm.locationId) && dramaForm.locationId.length > 0) ? dramaForm.locationId.join(',') : null,
+      serviceId: (Array.isArray(dramaForm.serviceId) && dramaForm.serviceId.length > 0) ? dramaForm.serviceId.join(',') : null,
+      location_id: (Array.isArray(dramaForm.locationId) && dramaForm.locationId.length > 0) ? dramaForm.locationId.join(',') : null,
+      service_id: (Array.isArray(dramaForm.serviceId) && dramaForm.serviceId.length > 0) ? dramaForm.serviceId.join(',') : null,
       user_id: dramaForm.userId
     }
 
@@ -745,7 +745,7 @@ const handleEdit = async (row) => {
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: getImageUrl(thumbCoverUrl || coverUrl),
+          url: getImageUrl(coverUrl), // 优先使用原图，保证预览清晰
           originUrl: coverUrl,        // 封面原图相对路径
           thumbUrl: thumbCoverUrl || coverUrl // 封面缩略图相对路径
         }]
@@ -759,7 +759,7 @@ const handleEdit = async (row) => {
         id: `image-${index}`,
         name: `image-${index}.jpg`,
         status: 'finished',
-        url: getImageUrl(url), // 显示用完整路径
+        url: getImageUrl(url), // 显示用完整路径，优先原图以保证预览清晰
         originUrl: url,        // 原图相对路径
         thumbUrl: detailThumbUrls[index] || url // 缩略图相对路径
       }))
@@ -773,6 +773,11 @@ const handleEdit = async (row) => {
 }
 
 const beforeUpload = (data) => {
+  const isImage = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(data.file.file?.type)
+  if (!isImage) {
+    message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
+    return false
+  }
   if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',

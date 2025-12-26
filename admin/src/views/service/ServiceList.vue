@@ -162,18 +162,6 @@
           <n-input v-model:value="serviceForm.name" placeholder="请输入服务名称" />
         </n-form-item>
 
-        <n-form-item label="价格" path="price">
-          <n-input-number
-              v-model:value="serviceForm.price"
-              placeholder="请输入价格"
-              :min="0"
-              :show-button="false"
-              style="width: 100%"
-          >
-            <template #prefix>￥</template>
-          </n-input-number>
-        </n-form-item>
-
         <n-form-item label="封面图片">
           <n-upload
               v-model:file-list="coverFileList"
@@ -267,7 +255,6 @@ const searchForm = reactive({
 const serviceForm = reactive({
   id: null,
   name: '',
-  price: 0,
   contactName: '',
   phone: '',
   address: '',
@@ -293,11 +280,15 @@ const formRules = {
     { required: true, message: '请输入联系电话', trigger: 'blur' },
     { pattern: /(^1[3-9]\d{9}$)|(^0\d{2,3}-\d{7,8}$)/, message: '请输入正确的手机号或座机号', trigger: 'blur' }
   ],
-  price: [{ required: true, type: 'number', message: '请输入价格', trigger: 'blur' }],
   address: [{ required: true, message: '请输入服务地址', trigger: 'blur' }]
 }
 
 const beforeUpload = (data) => {
+  const isImage = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(data.file.file?.type)
+  if (!isImage) {
+    message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
+    return false
+  }
   if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
@@ -410,7 +401,6 @@ const columns = [
       })
     }
   },
-  { title: '价格', key: 'price', width: 120, render: (row) => row.price ? `¥${row.price}` : '-' },
   { title: '联系人', key: 'contactName', width: 120 },
   { title: '联系电话', key: 'phone', width: 150 },
   { title: '服务地址', key: 'address', width: 250, ellipsis: { tooltip: true } },
@@ -533,7 +523,6 @@ const handleEdit = async (row) => {
       Object.assign(serviceForm, {
         id: data.id,
         name: data.name || '',
-        price: data.price || 0,
         contactName: data.contactName || '',
         phone: data.phone || '',
         address: data.address || '',

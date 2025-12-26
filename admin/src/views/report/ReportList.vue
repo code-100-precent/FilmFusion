@@ -330,6 +330,15 @@ const formRules = {
 
 const beforeUpload = (data) => {
   const isImage = data.file.file?.type.startsWith('image/')
+  
+  if (isImage) {
+    const isValidImage = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(data.file.file?.type)
+    if (!isValidImage) {
+      message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
+      return false
+    }
+  }
+
   const limit = isImage ? 5 * 1024 * 1024 : 15 * 1024 * 1024
   
   if (data.file.file?.size > limit) {
