@@ -101,14 +101,7 @@
         </view>
       </view>
 
-      <!-- 价格信息 -->
-      <view class="info-card">
-        <view class="card-title">价格信息</view>
-        <view class="price-wrapper">
-          <text class="price-value">¥{{ location.price }}</text>
-          <text class="price-unit">/天</text>
-        </view>
-      </view>
+
 
       <!-- 设施信息 -->
       <view class="info-card" v-if="location.facilities">
@@ -523,22 +516,7 @@ export default {
   opacity: 0.9;
 }
 
-.price-wrapper {
-  display: flex;
-  align-items: baseline;
-  gap: 8rpx;
-}
 
-.price-value {
-  font-size: 48rpx;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.price-unit {
-  font-size: 28rpx;
-  color: #6b7280;
-}
 
 .loading-wrapper,
 .empty-wrapper {
