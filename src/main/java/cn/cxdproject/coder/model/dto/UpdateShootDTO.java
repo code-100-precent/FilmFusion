@@ -14,7 +14,6 @@ public class UpdateShootDTO {
     
     private String name;
     private String description;
-    private BigDecimal price;
     private Boolean status;
     private String address;
     private String phone;

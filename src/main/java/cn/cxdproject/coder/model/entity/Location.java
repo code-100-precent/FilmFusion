@@ -86,12 +86,6 @@ public class Location extends BaseEntity implements Serializable, Cloneable {
     private String address;
 
     /**
-     * 价格（元）
-     */
-    @TableField("price")
-    private BigDecimal price;
-
-    /**
      * 用户ID，关联到用户表
      */
     @TableField("user_id")
