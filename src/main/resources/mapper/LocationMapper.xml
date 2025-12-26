@@ -15,7 +15,6 @@
         <result column="gov_principal_phone" property="govPrincipalPhone" />
         <result column="gov_principal_name" property="govPrincipalName" />
         <result column="address" property="address" />
-        <result column="price" property="price" />
         <result column="user_id" property="userId" />
         <result column="deleted" property="deleted" />
         <result column="created_at" property="createdAt" />
@@ -39,7 +38,6 @@
             `gov_principal_name`,
             `contact_name`,
             `address`,
-            `price`,
             `user_id`,
             `deleted`,
             `created_at`,
@@ -135,9 +133,6 @@
             </if>
             <if test="dto.address != null ">
                 address = #{dto.address},
-            </if>
-            <if test="dto.price != null ">
-                price = #{dto.price},
             </if>
             <if test="dto.image != null">
                 image = #{dto.image},

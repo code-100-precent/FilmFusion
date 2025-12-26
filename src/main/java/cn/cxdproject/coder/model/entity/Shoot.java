@@ -44,12 +44,6 @@ public class Shoot extends BaseEntity implements Serializable, Cloneable {
     private String description;
 
     /**
-     * 价格（元）
-     */
-    @TableField("price")
-    private BigDecimal price;
-
-    /**
      * 状态（0：下线，1：上线）
      */
     @TableField("status")

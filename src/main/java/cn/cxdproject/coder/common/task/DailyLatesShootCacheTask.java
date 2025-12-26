@@ -95,7 +95,6 @@ public class DailyLatesShootCacheTask {
                 .id(shoot.getId())
                 .name(shoot.getName())
                 .description(shoot.getDescription())
-                .price(shoot.getPrice())
                 .status(shoot.getStatus())
                 .address(shoot.getAddress())
                 .phone(shoot.getPhone())

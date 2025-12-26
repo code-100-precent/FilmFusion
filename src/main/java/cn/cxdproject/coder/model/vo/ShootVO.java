@@ -23,7 +23,6 @@ public class ShootVO {
     private Long id;
     private String name;
     private String description;
-    private BigDecimal price;
     private Boolean status;
     private String address;
     private String phone;

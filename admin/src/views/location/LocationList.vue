@@ -174,16 +174,6 @@
         <n-form-item label="地址" path="address">
           <n-input v-model:value="locationForm.address" placeholder="请输入详细地址" />
         </n-form-item>
-        <n-form-item label="价格" path="price">
-          <n-input-number
-              v-model:value="locationForm.price"
-              placeholder="请输入价格"
-              :min="0"
-              :show-button="false"
-          >
-            <template #prefix>￥</template>
-          </n-input-number>
-        </n-form-item>
         <n-form-item label="封面图片">
           <n-upload
               v-model:file-list="coverFileList"
@@ -569,7 +559,6 @@ const columns = [
   },
   { title: '联系人', key: 'locationPrincipalName', width: 120 },
   { title: '联系电话', key: 'locationPrincipalPhone', width: 130 },
-  { title: '价格', key: 'price', width: 100, render: (row) => row.price ? '¥' + row.price : '-' },
   {
     title: '操作',
     key: 'actions',
