@@ -67,6 +67,7 @@
             :file-list="coverFileList"
             @update:file-list="handleCoverFileListChange"
             :custom-request="handleCoverUpload"
+            @before-upload="beforeUpload"
             accept="image/*"
           >
             <n-button>上传封面图片</n-button>
