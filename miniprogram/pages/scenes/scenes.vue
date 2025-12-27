@@ -85,9 +85,7 @@
                   <text>相关影视</text>
                 </view>
               </view>
-              <view class="location-footer">
-                <text class="location-price">¥{{ location.price }}/天</text>
-              </view>
+
             </view>
           </view>
         </view>
@@ -486,19 +484,7 @@ export default {
   color: #ef4444;
 }
 
-.location-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 0;
-  border-top: none;
-}
 
-.location-price {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #f59e0b;
-}
 
 .view-detail {
   display: none;

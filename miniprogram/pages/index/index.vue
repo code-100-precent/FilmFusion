@@ -129,7 +129,6 @@
               <view v-else class="location-card-overlay" style="background: #f3f4f6; display: flex; align-items: center; justify-content: center;">
                  <uni-icons type="image" size="30" color="#d1d5db"></uni-icons>
               </view>
-              <view class="location-card-price" v-if="location.price">¥{{ location.price }}/天</view>
             </view>
             <view class="location-card-info">
               <text class="location-card-name">{{ location.name }}</text>
@@ -949,19 +948,7 @@ export default {
   opacity: 1;
 }
 
-.location-card-price {
-  position: absolute;
-  top: 12rpx;
-  right: 12rpx;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.98), rgba(212, 175, 55, 0.92));
-  color: #1B3C35;
-  font-size: 22rpx;
-  font-weight: 800;
-  padding: 6rpx 14rpx;
-  border-radius: 16rpx;
-  backdrop-filter: blur(10rpx);
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.25);
-}
+
 
 .location-card-info {
   padding: 16rpx;
