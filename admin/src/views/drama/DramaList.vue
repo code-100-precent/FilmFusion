@@ -745,7 +745,7 @@ const handleEdit = async (row) => {
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: getImageUrl(coverUrl), // 优先使用原图，保证预览清晰
+          url: getImageUrl(thumbCoverUrl || coverUrl),
           originUrl: coverUrl,        // 封面原图相对路径
           thumbUrl: thumbCoverUrl || coverUrl // 封面缩略图相对路径
         }]
@@ -759,7 +759,7 @@ const handleEdit = async (row) => {
         id: `image-${index}`,
         name: `image-${index}.jpg`,
         status: 'finished',
-        url: getImageUrl(url), // 显示用完整路径，优先原图以保证预览清晰
+        url: getImageUrl(url), // 显示用完整路径
         originUrl: url,        // 原图相对路径
         thumbUrl: detailThumbUrls[index] || url // 缩略图相对路径
       }))

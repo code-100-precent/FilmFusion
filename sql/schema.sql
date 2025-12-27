@@ -145,7 +145,7 @@ CREATE TABLE `fi_shoots`
 (
     `id`           BIGINT        NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `name`         VARCHAR(100)  NOT NULL COMMENT '服务名称',
-    `description`  VARCHAR(500)  NOT NULL COMMENT '服务简介',
+    `description`  VARCHAR(500)  NOT NULL COMMENT '服务简介',np
     `status`       TINYINT       NOT NULL DEFAULT 1 COMMENT '状态（0：下线，1：上线）',
     `address`      VARCHAR(255)  NOT NULL COMMENT '服务地址',
     `phone`        VARCHAR(20)   NOT NULL COMMENT '联系电话',
