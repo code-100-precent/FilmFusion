@@ -103,10 +103,7 @@
                     {{ (service.status === true || service.status === 1) ? '上线' : '下线' }}
                   </span>
                 </div>
-                <div class="info-item">
-                  <span class="label">价格：</span>
-                  <span class="price">{{ service.price ? '¥' + service.price : '-' }}</span>
-                </div>
+
                 <div class="info-item">
                   <span class="label">简介：</span>
                   <span class="service-desc">{{ service.description || '-' }}</span>
@@ -161,6 +158,8 @@
         <n-form-item label="服务名称" path="name">
           <n-input v-model:value="serviceForm.name" placeholder="请输入服务名称" />
         </n-form-item>
+
+
 
         <n-form-item label="封面图片">
           <n-upload
@@ -401,6 +400,7 @@ const columns = [
       })
     }
   },
+
   { title: '联系人', key: 'contactName', width: 120 },
   { title: '联系电话', key: 'phone', width: 150 },
   { title: '服务地址', key: 'address', width: 250, ellipsis: { tooltip: true } },
@@ -498,7 +498,7 @@ const handleAdd = () => {
   Object.assign(serviceForm, {
     id: null,
     name: '',
-    price: 0,
+
     contactName: '',
     phone: '',
     address: '',
@@ -835,10 +835,7 @@ onUnmounted(() => {
           flex-shrink: 0;
         }
 
-        .price {
-          color: #f56c6c;
-          font-weight: 500;
-        }
+
 
         .service-desc {
           color: #374151;

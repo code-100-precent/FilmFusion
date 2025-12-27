@@ -580,7 +580,7 @@ const handleEdit = async (row) => {
         id: 'cover',
         name: '封面图',
         status: 'finished',
-        url: getImageUrl(coverUrl), // 优先使用原图，保证预览清晰
+        url: getImageUrl(coverThumbUrl),
         originUrl: coverUrl,
         thumbUrl: coverThumbUrl
       }]
@@ -602,7 +602,7 @@ const handleEdit = async (row) => {
         id: `detail-${index}`,
         name: `详情图-${index + 1}`,
         status: 'finished',
-        url: getImageUrl(url), // 优先使用原图
+        url: getImageUrl(detailThumbUrls[index] || url),
         originUrl: url,
         thumbUrl: detailThumbUrls[index] || url
       }))
@@ -654,7 +654,7 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
       const fileIndex = coverFileList.value.findIndex(f => f.id === file.id)
       if (fileIndex !== -1) {
         const fileItem = coverFileList.value[fileIndex]
-        fileItem.url = getImageUrl(originUrl || thumbUrl) // 优先使用原图
+        fileItem.url = getImageUrl(thumbUrl)
         fileItem.originUrl = originUrl
         fileItem.thumbUrl = thumbUrl
         fileItem.status = 'finished' // 显式设置，虽然 onFinish 也会设置
@@ -664,7 +664,7 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
           id: file.id,
           name: file.name,
           status: 'finished',
-          url: getImageUrl(originUrl || thumbUrl), // 优先使用原图
+          url: getImageUrl(thumbUrl),
           originUrl: originUrl,
           thumbUrl: thumbUrl
         }]
@@ -713,7 +713,7 @@ const handleDetailUpload = async ({file, onFinish, onError}) => {
       const index = detailFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         const fileItem = detailFileList.value[index]
-        fileItem.url = getImageUrl(originUrl || thumbUrl) // 优先使用原图
+        fileItem.url = getImageUrl(thumbUrl)
         fileItem.originUrl = originUrl
         fileItem.thumbUrl = thumbUrl
         fileItem.status = 'finished'
@@ -725,7 +725,7 @@ const handleDetailUpload = async ({file, onFinish, onError}) => {
           id: file.id,
           name: file.name,
           status: 'finished',
-          url: getImageUrl(originUrl || thumbUrl), // 优先使用原图
+          url: getImageUrl(thumbUrl),
           originUrl: originUrl,
           thumbUrl: thumbUrl
         }

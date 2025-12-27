@@ -98,10 +98,7 @@
                   <span class="label">联系电话：</span>
                   <span>{{ location.locationPrincipalPhone || '-' }}</span>
                 </div>
-                <div class="info-item">
-                  <span class="label">价格：</span>
-                  <span class="price">{{ location.price ? '¥' + location.price : '-' }}</span>
-                </div>
+
                 <div class="info-item">
                   <span class="label">状态：</span>
                   <span :class="(location.status === true || location.status === 1) ? 'status-available' : 'status-unavailable'">
@@ -193,6 +190,7 @@
               list-type="image-card"
               :custom-request="handleImageUpload"
               accept="image/*"
+              @before-upload="beforeUpload"
               multiple
           >
             点击上传
@@ -300,7 +298,7 @@ const locationForm = reactive({
   name: '',
   type: '',
   address: '',
-  price: 0,
+
   status: true,
   locationDescription: '',
   locationPrincipalName: '',
@@ -400,7 +398,7 @@ const handleCoverUpload = async ({ file, fileList }) => {
       const index = coverFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         coverFileList.value[index].status = 'finished'
-        coverFileList.value[index].url = getImageUrl(originUrl || thumbUrl) // 显示用完整路径，优先原图以保证预览清晰
+        coverFileList.value[index].url = getImageUrl(thumbUrl || originUrl) // 显示用完整路径
         coverFileList.value[index].originUrl = originUrl // 保存相对路径
         coverFileList.value[index].thumbUrl = thumbUrl   // 保存相对路径
       }
@@ -438,7 +436,7 @@ const handleImageUpload = async ({ file, fileList }) => {
       const index = imageFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         imageFileList.value[index].status = 'finished'
-        imageFileList.value[index].url = getImageUrl(originUrl || thumbUrl) // 显示用完整路径，优先原图以保证预览清晰
+        imageFileList.value[index].url = getImageUrl(thumbUrl || originUrl) // 显示用完整路径
         imageFileList.value[index].originUrl = originUrl
         imageFileList.value[index].thumbUrl = thumbUrl
       }
@@ -509,19 +507,19 @@ const columns = [
       const cover = getFirstUrl(row.cover)
       const thumbCover = getFirstUrl(row.thumbCover || row.thumb_cover)
 
-      // 列表显示的图片（优先缩略图）
-      const listUrl = thumbCover || thumbImage || cover || image
+      // 显示用的图片（优先缩略图）
+      const displayUrl = thumbCover || thumbImage || cover || image
 
-      // 预览的大图（优先原图，且优先使用 image 字段）
-      const previewBigUrl = image || cover || listUrl
+      // 预览用的图片（优先原图）
+      const previewUrl = cover || image || displayUrl
 
-      if (!listUrl) return '-'
+      if (!displayUrl) return '-'
 
       return h(NImage, {
         width: 60,
         height: 45,
-        src: getImageUrl(listUrl),
-        previewSrc: getImageUrl(previewBigUrl),
+        src: getImageUrl(displayUrl),
+        previewSrc: getImageUrl(previewUrl),
         objectFit: 'cover',
         previewDisabled: false,
         showToolbar: true,
@@ -725,7 +723,7 @@ const handleDialogSave = async () => {
     let dramaIdStr = null
     if (Array.isArray(locationForm.dramaId) && locationForm.dramaId.length > 0) {
       dramaIdStr = locationForm.dramaId.join(',')
-    } else if (locationForm.dramaId && !Array.isArray(locationForm.dramaId)) {
+    } else if (locationForm.dramaId) {
       dramaIdStr = String(locationForm.dramaId)
     }
 
@@ -816,7 +814,7 @@ const handleAdd = () => {
     name: '',
     type: '',
     address: '',
-    price: 0,
+
     status: true,
     locationDescription: '',
     locationPrincipalName: '',
@@ -892,7 +890,7 @@ const handleEdit = async (row) => {
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: getImageUrl(coverUrl), // 使用原图作为预览图，确保预览清晰
+          url: getImageUrl(thumbCoverUrl || coverUrl),
           originUrl: coverUrl,
           thumbUrl: thumbCoverUrl || coverUrl
         }]
@@ -907,7 +905,7 @@ const handleEdit = async (row) => {
           id: `img-${index}`,
           name: `image-${index}.jpg`,
           status: 'finished',
-          url: getImageUrl(url), // 使用原图作为预览图，确保预览清晰
+          url: getImageUrl(thumbUrl),
           originUrl: url,
           thumbUrl: thumbUrl
         }
@@ -1071,10 +1069,7 @@ onUnmounted(() => {
           flex-shrink: 0;
         }
 
-        .price {
-          color: #f56c6c;
-          font-weight: 500;
-        }
+
       }
     }
 
