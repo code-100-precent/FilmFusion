@@ -9,12 +9,13 @@
       <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
-          <uni-icons type="search" size="18" color="#9ca3af"></uni-icons>
+          <uni-icons type="search" size="18" color="#999999"></uni-icons>
           <input
             v-model="keyword"
             class="search-input"
             type="text"
             placeholder="搜索"
+            placeholder-style="color: #666666"
             @confirm="handleSearch"
             @input="handleSearch"
           />
@@ -196,8 +197,10 @@ export default {
 
 <style lang="scss" scoped>
 .services-page {
-  min-height: 100vh;
-  background: #f5f7fa;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #121212;
   padding-top: 132rpx;
   box-sizing: border-box;
   position: relative;
@@ -210,7 +213,7 @@ export default {
   left: 0;
   right: 0;
   height: 33.33vh;
-  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  background: linear-gradient(to top, #121212 0%, #000000 100%);
   z-index: 0;
 }
 
@@ -241,7 +244,7 @@ export default {
 .title-text {
   font-size: 36rpx;
   font-weight: 700;
-  color: #1f2937;
+  color: #D4AF37;
   line-height: 1.2;
 }
 
@@ -255,17 +258,18 @@ export default {
   gap: 16rpx;
   padding: 0 20rpx;
   height: 72rpx;
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 16rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
   width: 100%;
   box-sizing: border-box;
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 
 .search-input {
   flex: 1;
   font-size: 28rpx;
-  color: #1f2937;
+  color: #FFFFFF;
 }
 
 .shoot-list {
@@ -289,16 +293,17 @@ export default {
 }
 
 .shoot-card {
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 20rpx;
   margin-bottom: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
   transition: all 0.3s;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
   animation: fadeInUp 0.6s ease-out forwards;
   opacity: 0;
+  border: 1rpx solid rgba(255, 255, 255, 0.05);
 }
 
 @keyframes fadeInUp {
@@ -314,7 +319,7 @@ export default {
 
 .shoot-card:active {
   transform: translateY(-4rpx);
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.4);
 }
 
 .shoot-cover {
@@ -333,7 +338,7 @@ export default {
 .cover-placeholder {
   width: 100%;
   height: 100%;
-  background: #f9fafb;
+  background: #2C2C2C;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -356,7 +361,7 @@ export default {
 .shoot-name {
   font-size: 32rpx;
   font-weight: 700;
-  color: #1f2937;
+  color: #FFFFFF;
 }
 
 
@@ -364,7 +369,7 @@ export default {
 .shoot-desc {
   display: block;
   font-size: 28rpx;
-  color: #6b7280;
+  color: #CCCCCC;
   line-height: 1.8;
   margin-bottom: 16rpx;
   display: -webkit-box;
@@ -379,7 +384,7 @@ export default {
   gap: 12rpx;
   margin-bottom: 16rpx;
   padding: 16rpx;
-  background: #f9fafb;
+  background: #2C2C2C;
   border-radius: 12rpx;
 }
 
@@ -388,7 +393,7 @@ export default {
   align-items: center;
   gap: 12rpx;
   font-size: 26rpx;
-  color: #374151;
+  color: #CCCCCC;
 }
 
 .shoot-footer {
@@ -396,18 +401,18 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding-top: 16rpx;
-  border-top: 1rpx solid #f3f4f6;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 
 .shoot-price {
   font-size: 28rpx;
   font-weight: 700;
-  color: #f59e0b;
+  color: #D4AF37;
 }
 
 .view-detail {
   font-size: 26rpx;
-  color: #6366f1;
+  color: #D4AF37;
   font-weight: 500;
 }
 
@@ -416,6 +421,6 @@ export default {
   text-align: center;
   padding: 40rpx 0;
   font-size: 26rpx;
-  color: #9ca3af;
+  color: #999999;
 }
 </style>

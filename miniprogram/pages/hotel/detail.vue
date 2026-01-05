@@ -6,7 +6,7 @@
       <!-- 封面图 -->
       <view class="cover-section">
         <swiper 
-          v-if="bannerImages.length > 1" 
+          v-if="bannerImages.length > 0" 
           class="banner-swiper" 
           circular 
           indicator-dots 
@@ -20,7 +20,7 @@
             <image :src="img" class="cover-image" mode="aspectFill" @click="previewImage(index)"></image>
           </swiper-item>
         </swiper>
-        <image v-else :src="bannerImages[0] || defaultCover" class="cover-image" mode="aspectFill" @click="previewImage(0)"></image>
+        <image v-else :src="coverImage" class="cover-image" mode="aspectFill" @click="previewImage(0)"></image>
       </view>
 
       <!-- 基本信息 -->
@@ -113,6 +113,31 @@ export default {
     }
   },
   computed: {
+    // 封面图片（第一张）
+    coverImage() {
+      if (!this.hotel) return ''
+      let images = []
+      
+      const imgData = this.hotel.images || this.hotel.image
+      if (Array.isArray(imgData) && imgData.length > 0) {
+        images = imgData.map(img => getFileUrl(img))
+      } else if (typeof imgData === 'string' && imgData) {
+        images = imgData.split(',').map(img => getFileUrl(img))
+      }
+      
+      if (images.length === 0) {
+         const cover = this.hotel.image || this.hotel.cover || this.hotel.thumbImage
+         if (Array.isArray(cover)) {
+           images = cover.map(img => getFileUrl(img))
+         } else if (typeof cover === 'string' && cover) {
+           images = cover.split(',').map(img => getFileUrl(img))
+         }
+      }
+      
+      images = images.filter(img => img)
+      return images.length > 0 ? images[0] : this.defaultCover
+    },
+    // 内容图片（从第二张开始，不去重）
     bannerImages() {
       if (!this.hotel) return []
       let images = []
@@ -124,7 +149,6 @@ export default {
         images = imgData.split(',').map(img => getFileUrl(img))
       }
       
-      // If images list is empty, try to use cover/image
       if (images.length === 0) {
          const cover = this.hotel.image || this.hotel.cover || this.hotel.thumbImage
          if (Array.isArray(cover)) {
@@ -134,16 +158,9 @@ export default {
          }
       }
       
-      // 4. 去重
-      images = [...new Set(images)].filter(img => img)
-      
-      // 用户要求：详情页面展示的图片是除了第一个以外的图片
-      // 如果有多张图片，移除第一张（通常是列表封面）；如果只有一张，保留显示
-      if (images.length > 1) {
-        return images.slice(1)
-      }
-      
-      return images
+      // 不去重，从第二张开始作为内容图片
+      images = images.filter(img => img)
+      return images.length > 1 ? images.slice(1) : []
     }
   },
   onLoad(options) {
@@ -158,7 +175,13 @@ export default {
       try {
         const res = await getHotelById(id)
         if (res.code === 200 && res.data) {
-          this.hotel = res.data
+          // 字段映射：后端返回 managerName/managerPhone，前端使用 contactName/phone
+          const hotelData = res.data
+          this.hotel = {
+            ...hotelData,
+            contactName: hotelData.managerName || hotelData.contactName || '',
+            phone: hotelData.managerPhone || hotelData.phone || ''
+          }
         } else {
           uni.showToast({
             title: res.message || '加载失败',

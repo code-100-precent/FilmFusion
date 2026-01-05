@@ -292,7 +292,8 @@ export default {
 .route-list {
   display: flex;
   flex-direction: column;
-  gap: 32rpx;
+  gap: 24rpx;
+  padding-bottom: 40rpx;
 }
 
 .route-item {
@@ -307,6 +308,7 @@ export default {
   overflow: hidden;
   animation: fadeInUp 0.6s ease-out forwards;
   opacity: 0;
+  margin-bottom: 8rpx;
 
   &:active {
     background: #fff;
@@ -345,15 +347,15 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   min-width: 0;
   height: 200rpx;
-  padding: 20rpx;
+  padding: 24rpx;
   box-sizing: border-box;
+  gap: 12rpx;
 }
 
 .route-header {
-  margin-bottom: 8rpx;
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
@@ -376,26 +378,28 @@ export default {
   font-size: 20rpx;
   color: #6366f1;
   background: rgba(99, 102, 241, 0.1);
-  padding: 2rpx 8rpx;
-  border-radius: 6rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
   margin-left: 0;
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 .route-meta {
   font-size: 24rpx;
   color: #6b7280;
-  line-height: 1.4;
+  line-height: 1.6;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   overflow: hidden;
+  flex: 1;
 }
 
 .load-more,
 .no-more {
   text-align: center;
-  padding: 40rpx 0;
+  padding: 40rpx 0 20rpx 0;
   font-size: 26rpx;
   color: #9ca3af;
 }

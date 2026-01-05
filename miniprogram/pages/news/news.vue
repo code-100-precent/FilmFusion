@@ -57,7 +57,7 @@
               <text class="article-content">{{ getContentPreview(article.content) }}</text>
               <view class="article-footer">
                 <text class="read-more">查看详情</text>
-                <uni-icons type="right" size="14" color="#6366f1"></uni-icons>
+                <uni-icons type="right" size="14" color="#D4AF37"></uni-icons>
               </view>
             </view>
           </view>
@@ -218,7 +218,7 @@ export default {
 <style lang="scss" scoped>
 .news-page {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #121212;
   padding-top: 132rpx;
   box-sizing: border-box;
   position: relative;
@@ -231,7 +231,7 @@ export default {
   left: 0;
   right: 0;
   height: 33.33vh;
-  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  background: linear-gradient(to top, #121212 0%, #000000 100%);
   z-index: 0;
 }
 
@@ -262,7 +262,7 @@ export default {
 .title-text {
   font-size: 36rpx;
   font-weight: 700;
-  color: #1f2937;
+  color: #D4AF37;
   line-height: 1.2;
 }
 
@@ -277,17 +277,18 @@ export default {
   gap: 16rpx;
   padding: 0 24rpx;
   height: 80rpx;
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 16rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
   width: 100%;
   box-sizing: border-box;
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 
 .search-input {
   flex: 1;
   font-size: 28rpx;
-  color: #1f2937;
+  color: #FFFFFF;
 }
 
 .article-list {
@@ -302,21 +303,22 @@ export default {
 }
 
 .article-card {
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 20rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
   transition: all 0.3s;
   width: 100%;
   box-sizing: border-box;
   display: flex;
   gap: 20rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.05);
 }
 
 .article-card:active {
   transform: translateY(-4rpx);
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.4);
 }
 
 .article-cover-wrapper {
@@ -325,7 +327,7 @@ export default {
   border-radius: 16rpx;
   overflow: hidden;
   flex-shrink: 0;
-  background: #f3f4f6;
+  background: #2C2C2C;
 }
 
 .article-cover {
@@ -348,7 +350,7 @@ export default {
 .article-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #1f2937;
+  color: #FFFFFF;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -362,13 +364,13 @@ export default {
   gap: 16rpx;
   margin-bottom: 16rpx;
   font-size: 24rpx;
-  color: #9ca3af;
+  color: #999999;
 }
 
 .article-content {
   display: block;
   font-size: 26rpx;
-  color: #6b7280;
+  color: #CCCCCC;
   line-height: 1.6;
   margin-bottom: 16rpx;
   display: -webkit-box;
@@ -383,12 +385,12 @@ export default {
   justify-content: flex-end;
   gap: 8rpx;
   padding-top: 20rpx;
-  border-top: 1rpx solid #f3f4f6;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 
 .read-more {
   font-size: 26rpx;
-  color: #6366f1;
+  color: #D4AF37;
   font-weight: 500;
 }
 
