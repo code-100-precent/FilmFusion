@@ -84,10 +84,8 @@ export const uploadFile = (file) => {
   return request({
     url: '/file',
     method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    data: formData
+    // 不手动设置 Content-Type，让浏览器自动设置（包括 boundary）
   })
 }
 
@@ -100,10 +98,8 @@ export const uploadAvatarFile = (file) => {
   return request({
     url: '/file/upload/avatar',
     method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    data: formData
+    // 不手动设置 Content-Type，让浏览器自动设置（包括 boundary）
   })
 }
 

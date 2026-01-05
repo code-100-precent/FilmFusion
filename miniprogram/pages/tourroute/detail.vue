@@ -10,7 +10,7 @@
         <!-- 封面图 -->
         <view class="cover-wrapper">
           <swiper 
-            v-if="bannerImages.length > 1" 
+            v-if="bannerImages.length > 0" 
             class="banner-swiper" 
             circular 
             indicator-dots 
@@ -24,7 +24,7 @@
               <image :src="img" class="cover" mode="aspectFill" @click="previewImage(index)"></image>
             </swiper-item>
           </swiper>
-          <image v-else :src="bannerImages[0] || defaultCover" class="cover" mode="aspectFill" @click="previewImage(0)"></image>
+          <image v-else :src="coverImage" class="cover" mode="aspectFill" @click="previewImage(0)"></image>
           
           <view class="cover-overlay">
             <view class="theme-tag">{{ route.theme }}</view>
@@ -200,6 +200,31 @@ export default {
     }
   },
   computed: {
+    // 封面图片（第一张）
+    coverImage() {
+      if (!this.route) return this.defaultCover
+      let images = []
+      
+      const imgData = this.route.image
+      if (Array.isArray(imgData) && imgData.length > 0) {
+        images = imgData.map(img => getFileUrl(img))
+      } else if (typeof imgData === 'string' && imgData) {
+        images = imgData.split(',').map(img => getFileUrl(img))
+      }
+      
+      if (images.length === 0) {
+        const cover = this.route.image || this.route.cover || this.route.thumbImage
+        if (Array.isArray(cover)) {
+          images = cover.map(img => getFileUrl(img))
+        } else if (typeof cover === 'string' && cover) {
+          images = cover.split(',').map(img => getFileUrl(img))
+        }
+      }
+      
+      images = images.filter(img => img)
+      return images.length > 0 ? images[0] : this.defaultCover
+    },
+    // 内容图片（从第二张开始，不去重）
     bannerImages() {
       if (!this.route) return []
       let images = []
@@ -211,7 +236,6 @@ export default {
         images = imgData.split(',').map(img => getFileUrl(img))
       }
       
-      // If images list is empty, try to use cover/image
       if (images.length === 0) {
         const cover = this.route.image || this.route.cover || this.route.thumbImage
         if (Array.isArray(cover)) {
@@ -221,15 +245,9 @@ export default {
         }
       }
       
-      images = [...new Set(images)].filter(img => img)
-      
-      // 用户要求：详情页面展示的图片是除了第一个以外的图片
-      // 如果有多张图片，移除第一张（通常是列表封面）；如果只有一张，保留显示
-      if (images.length > 1) {
-        return images.slice(1)
-      }
-      
-      return images
+      // 不去重，从第二张开始作为内容图片
+      images = images.filter(img => img)
+      return images.length > 1 ? images.slice(1) : []
     },
     // 收集所有途径景点的相关影视，去重并按顺序展示
     allRelatedDramas() {
@@ -996,7 +1014,7 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f8fafc;
+  background: #121212;
 }
 
 .content {
@@ -1030,30 +1048,32 @@ export default {
   background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
   display: flex;
   align-items: flex-end;
+  pointer-events: none; /* 允许触摸事件穿透到轮播图 */
   padding: 16px;
 }
 
 .theme-tag {
-  background: rgba(99, 102, 241, 0.9);
-  color: white;
+  background: #D4AF37;
+  color: #000;
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  pointer-events: auto; /* 标签本身可以接收事件 */
 }
 
 .info-section {
-  background: white;
+  background: #1E1E1E;
   margin: 12px 16px;
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #FFFFFF;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -1063,13 +1083,13 @@ export default {
 .section-subtitle {
   font-size: 13px;
   font-weight: 400;
-  color: #9ca3af;
+  color: #999999;
 }
 
 
 .section-content {
   font-size: 14px;
-  color: #6b7280;
+  color: #CCCCCC;
   line-height: 1.6;
 }
 
@@ -1119,14 +1139,14 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #D4AF37;
+  color: #000;
 }
 
 .btn-secondary {
-  background: white;
-  color: #6366f1;
-  border: 2px solid #6366f1;
+  background: transparent;
+  color: #D4AF37;
+  border: 2px solid #D4AF37;
 }
 
 .loading-wrapper,

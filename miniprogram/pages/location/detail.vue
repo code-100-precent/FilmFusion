@@ -6,7 +6,7 @@
       <!-- 场地封面图片/轮播图 -->
       <view class="cover-section">
         <swiper 
-          v-if="bannerImages.length > 1" 
+          v-if="bannerImages.length > 0" 
           class="banner-swiper" 
           circular 
           indicator-dots 
@@ -26,8 +26,8 @@
           </swiper-item>
         </swiper>
         <image 
-          v-else-if="bannerImages.length === 1"
-          :src="bannerImages[0]" 
+          v-else-if="coverImageUrl"
+          :src="coverImageUrl" 
           class="cover-image" 
           mode="aspectFill" 
           @click="previewImage(0)"
@@ -177,12 +177,30 @@ export default {
     }
   },
   computed: {
-    // 处理封面图片URL
+    // 处理封面图片URL（第一张）
     coverImageUrl() {
       if (!this.location) return ''
-      return getFileUrl(this.location.image || this.location.thumbImage)
+      let images = []
+      
+      if (this.location.images && Array.isArray(this.location.images) && this.location.images.length > 0) {
+        images = this.location.images.map(img => getFileUrl(img))
+      } else if (this.location.images && typeof this.location.images === 'string') {
+        images = this.location.images.split(',').map(img => getFileUrl(img))
+      }
+      
+      if (images.length === 0) {
+        const cover = this.location.image || this.location.thumbImage || this.location.cover
+        if (Array.isArray(cover)) {
+          images = cover.map(img => getFileUrl(img))
+        } else if (typeof cover === 'string' && cover) {
+          images = cover.split(',').map(img => getFileUrl(img))
+        }
+      }
+      
+      images = images.filter(img => img)
+      return images.length > 0 ? images[0] : ''
     },
-    // 处理轮播图图片
+    // 处理轮播图图片（从第二张开始，不去重）
     bannerImages() {
       if (!this.location) return []
       
@@ -207,16 +225,9 @@ export default {
         }
       }
       
-      // 4. 去重
-      images = [...new Set(images)].filter(img => img)
-      
-      // 用户要求：详情页面展示的图片是除了第一个以外的图片
-      // 如果有多张图片，移除第一张（通常是列表封面）；如果只有一张，保留显示
-      if (images.length > 1) {
-        return images.slice(1)
-      }
-      
-      return images
+      // 不去重，从第二张开始作为内容图片
+      images = images.filter(img => img)
+      return images.length > 1 ? images.slice(1) : []
     }
   },
   onLoad(options) {
@@ -348,7 +359,7 @@ export default {
 <style lang="scss" scoped>
 .location-detail-page {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #121212;
   padding-top: 132rpx;
   box-sizing: border-box;
 }
@@ -374,7 +385,7 @@ export default {
   margin: 32rpx 0;
   border-radius: 16rpx;
   overflow: hidden;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
   height: 400rpx; /* 固定高度 */
 }
 
@@ -397,7 +408,7 @@ export default {
 .cover-placeholder {
   width: 100%;
   height: 400rpx;
-  background: #f9fafb;
+  background: #1E1E1E;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -407,12 +418,12 @@ export default {
 
 .placeholder-text {
   font-size: 28rpx;
-  color: #9ca3af;
+  color: #999999;
 }
 
 .info-card {
   width: 100%;
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 16rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
@@ -433,13 +444,13 @@ export default {
 .location-name {
   font-size: 36rpx;
   font-weight: 600;
-  color: #1f2937;
+  color: #FFFFFF;
   flex: 1;
 }
 
 .location-badge {
-  background: #eef2ff;
-  color: #6366f1;
+  background: #333333;
+  color: #D4AF37;
   font-size: 24rpx;
   padding: 8rpx 16rpx;
   border-radius: 8rpx;
@@ -451,11 +462,11 @@ export default {
   font-size: 24rpx;
   padding: 6rpx 16rpx;
   border-radius: 8rpx;
-  background: #fee2e2;
+  background: #333333;
   color: #dc2626;
   
   &.status-available {
-    background: #d1fae5;
+    background: #333333;
     color: #059669;
   }
 }
@@ -463,7 +474,7 @@ export default {
 .card-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #1f2937;
+  color: #D4AF37;
   margin-bottom: 24rpx;
 }
 
@@ -471,7 +482,7 @@ export default {
   display: block;
   font-size: 28rpx;
   line-height: 1.8;
-  color: #374151;
+  color: #CCCCCC;
   white-space: pre-wrap;
 }
 
@@ -488,13 +499,13 @@ export default {
 
 .info-label {
   font-size: 28rpx;
-  color: #6b7280;
+  color: #999999;
   min-width: 120rpx;
 }
 
 .info-value {
   font-size: 28rpx;
-  color: #1f2937;
+  color: #FFFFFF;
   flex: 1;
   word-break: break-all;
 }
@@ -504,9 +515,9 @@ export default {
   align-items: center;
   gap: 4rpx;
   padding: 8rpx 16rpx;
-  background: #6366f1;
+  background: #D4AF37;
   border-radius: 32rpx;
-  color: #fff;
+  color: #000000;
   font-size: 22rpx;
   margin-left: 16rpx;
   flex-shrink: 0;
@@ -526,7 +537,7 @@ export default {
 
 
 .highlight {
-  color: #f59e0b;
+  color: #D4AF37;
   font-weight: 600;
 }
 
@@ -537,15 +548,15 @@ export default {
 .section-subtitle {
   font-size: 26rpx;
   font-weight: 600;
-  color: #374151;
+  color: #CCCCCC;
   margin-bottom: 16rpx;
   padding-left: 16rpx;
-  border-left: 6rpx solid #6366f1;
+  border-left: 6rpx solid #D4AF37;
 }
 
 .divider {
   height: 1rpx;
-  background: #e5e7eb;
+  background: #333333;
   margin: 24rpx 0;
 }
 
@@ -560,13 +571,13 @@ export default {
   align-items: center;
   gap: 16rpx;
   padding: 16rpx;
-  background: #f9fafb;
+  background: #2A2A2A;
   border-radius: 12rpx;
   transition: all 0.3s;
 }
 
 .drama-item:active {
-  background: #f3f4f6;
+  background: #333333;
   transform: scale(0.98);
 }
 
@@ -589,7 +600,7 @@ export default {
 .drama-name {
   font-size: 28rpx;
   font-weight: 600;
-  color: #1f2937;
+  color: #FFFFFF;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -597,7 +608,7 @@ export default {
 
 .drama-type {
   font-size: 24rpx;
-  color: #6b7280;
+  color: #999999;
 }
 </style>
 

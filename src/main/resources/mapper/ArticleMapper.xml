@@ -49,7 +49,7 @@
                 AND id > #{lastId}
             </if>
         </where>
-        ORDER BY issue_time ASC
+        ORDER BY issue_time DESC
         LIMIT #{size}
     </select>
 
@@ -113,5 +113,6 @@
         SELECT *
         FROM fi_articles
         WHERE deleted = 0
+        ORDER BY issue_time DESC
     </select>
 </mapper>

@@ -9,7 +9,7 @@
       <!-- 搜索栏 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
-          <uni-icons type="search" size="18" color="#9ca3af"></uni-icons>
+          <uni-icons type="search" size="18" color="#999999"></uni-icons>
           <input
             v-model="keyword"
             class="search-input"
@@ -30,7 +30,6 @@
             class="category-item"
             :class="{ active: selectedCategory === category.value }"
             @click="selectCategory(category.value)">
-            <uni-icons :type="category.icon" size="20" :color="selectedCategory === category.value ? '#fff' : '#6b7280'"></uni-icons>
             <text>{{ category.label }}</text>
           </view>
         </scroll-view>
@@ -128,10 +127,10 @@ export default {
       keyword: '',
       selectedCategory: 'natural',
       categories: [
-        { label: '自然景观', value: 'natural', icon: 'image' },
-        { label: '人文景观', value: 'humanities', icon: 'home' },
-        { label: '城市场景', value: 'urban', icon: 'location' },
-        { label: '特色场景', value: 'feature', icon: 'star' }
+        { label: '自然景观', value: 'natural' },
+        { label: '人文景观', value: 'humanities' },
+        { label: '城市场景', value: 'urban' },
+        { label: '特色场景', value: 'feature' }
       ],
       allLocations: [],
       nextCursor: null, // 游标分页
@@ -238,7 +237,7 @@ export default {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background: #121212;
   padding-top: 132rpx;
   box-sizing: border-box;
   position: relative;
@@ -251,7 +250,7 @@ export default {
   left: 0;
   right: 0;
   height: 33.33vh;
-  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  background: linear-gradient(to top, #121212 0%, #000000 100%);
   z-index: 0;
 }
 
@@ -299,7 +298,7 @@ export default {
 .title-text {
   font-size: 36rpx;
   font-weight: 700;
-  color: #1f2937;
+  color: #D4AF37;
   line-height: 1.2;
 }
 
@@ -322,20 +321,20 @@ export default {
 .category-item {
   display: inline-flex;
   align-items: center;
-  gap: 8rpx;
   padding: 10rpx 24rpx;
   margin-right: 12rpx;
-  background: #fff;
-  border-radius: 32rpx;
+  background: #1E1E1E;
+  border-radius: 20rpx;
   font-size: 26rpx;
-  color: #6b7280;
+  color: #CCCCCC;
   transition: all 0.3s;
-  border: 1rpx solid transparent;
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
   
   &.active {
-    background: #6366f1;
-    color: #fff;
-    box-shadow: 0 4rpx 12rpx rgba(99, 102, 241, 0.3);
+    background: #D4AF37;
+    color: #000000;
+    box-shadow: 0 4rpx 12rpx rgba(212, 175, 55, 0.3);
+    border-color: #D4AF37;
   }
 }
 
@@ -345,17 +344,18 @@ export default {
   gap: 16rpx;
   padding: 0 20rpx;
   height: 72rpx;
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 16rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
   width: 100%;
   box-sizing: border-box;
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 
 .search-input {
   flex: 1;
   font-size: 28rpx;
-  color: #1f2937;
+  color: #FFFFFF;
 }
 
 .location-list {
@@ -378,14 +378,15 @@ export default {
 
 .location-item {
   display: flex;
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 20rpx;
   overflow: hidden;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
   transition: all 0.3s;
   padding: 0;
   animation: fadeInUp 0.6s ease-out forwards;
   opacity: 0;
+  border: 1rpx solid rgba(255, 255, 255, 0.05);
 }
 
 @keyframes fadeInUp {
@@ -401,14 +402,14 @@ export default {
 
 .location-item:active {
   transform: translateY(-2rpx);
-  box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.4);
 }
 
 .location-cover-wrapper {
   width: 200rpx;
   height: 200rpx;
   position: relative;
-  background: #f3f4f6;
+  background: #2C2C2C;
   flex-shrink: 0;
 }
 
@@ -448,7 +449,7 @@ export default {
 .location-name {
   font-size: 30rpx;
   font-weight: 700;
-  color: #1f2937;
+  color: #FFFFFF;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
@@ -457,7 +458,7 @@ export default {
 
 .location-desc {
   font-size: 24rpx;
-  color: #6b7280;
+  color: #999999;
   line-height: 1.4;
   margin-bottom: 12rpx;
   display: -webkit-box;
@@ -478,7 +479,7 @@ export default {
   align-items: center;
   gap: 4rpx;
   padding: 4rpx 12rpx;
-  background: #fef2f2;
+  background: #3A2A2A;
   border-radius: 12rpx;
   font-size: 20rpx;
   color: #ef4444;
@@ -495,7 +496,7 @@ export default {
   text-align: center;
   padding: 30rpx 0;
   font-size: 24rpx;
-  color: #9ca3af;
+  color: #999999;
 }
 .bottom-spacer {
   height: calc(140rpx + env(safe-area-inset-bottom));

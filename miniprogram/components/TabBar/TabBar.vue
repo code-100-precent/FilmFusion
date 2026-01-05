@@ -46,7 +46,7 @@ export default {
     },
     activeColor: {
       type: String,
-      default: '#20B2AA'
+      default: '#D4AF37'
     },
     inactiveColor: {
       type: String,
@@ -78,15 +78,15 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: #fff;
-  border-top: 1rpx solid #f3f4f6;
+  background: #000000;
+  border-top: 1rpx solid #1E1E1E;
   display: flex;
   align-items: center;
   justify-content: space-around;
   z-index: 999;
   padding: 12rpx 0;
   padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.04);
+  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.5);
 }
 
 .tabbar-item {
@@ -117,7 +117,7 @@ export default {
 
 .icon-wrap.bounce {
   transform: scale(1.15);
-  background: rgba(32, 178, 170, 0.12);
+  background: rgba(212, 175, 55, 0.12);
   animation: bounceIn 0.3s ease;
 }
 
@@ -139,11 +139,11 @@ export default {
   font-weight: 400;
   line-height: 1;
   transition: all 0.3s ease;
-  color: #9CA3AF;
+  color: #999999;
 }
 
 .tabbar-item.active .tabbar-text {
-  color: #20B2AA;
+  color: #D4AF37;
   font-weight: 500;
 }
 </style>

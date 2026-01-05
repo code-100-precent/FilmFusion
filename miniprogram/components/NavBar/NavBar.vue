@@ -7,9 +7,9 @@
 	>
 		<view class="navbar__content">
 			<view v-if="showBack" class="navbar__left" @click="handleBack">
-				<uni-icons type="left" color="#1f2937" size="18" />
+				<uni-icons type="left" :color="color" size="18" />
 			</view>
-			<view class="navbar__title">
+			<view class="navbar__title" :style="{ color: color }">
 				<slot>{{ title }}</slot>
 			</view>
 			<view class="navbar__right">
@@ -125,7 +125,7 @@
 	}
 
 	.navbar__left:active {
-		background: rgba(0, 0, 0, 0.05);
+		background: rgba(255, 255, 255, 0.1);
 	}
 	
 	.navbar__title {
@@ -133,7 +133,7 @@
 		text-align: left;
 		font-size: 36rpx;
 		font-weight: 600;
-		color: #1f2937;
+		color: #FFFFFF;
 		letter-spacing: 0.5rpx;
 	}
 	

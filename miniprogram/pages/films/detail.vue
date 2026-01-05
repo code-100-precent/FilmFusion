@@ -127,11 +127,26 @@ export default {
     }
   },
   computed: {
-    // 处理海报URL
+    // 处理海报URL（第一张图片作为封面）
     posterUrl() {
-      return this.film ? getFileUrl(this.film.poster) : ''
+      if (!this.film) return ''
+      
+      // 优先使用poster字段
+      if (this.film.poster) {
+        return getFileUrl(this.film.poster)
+      }
+      
+      // 如果没有poster，使用images的第一张
+      let images = []
+      if (this.film.images && Array.isArray(this.film.images)) {
+        images = this.film.images
+      } else if (typeof this.film.images === 'string' && this.film.images) {
+        images = this.film.images.split(',')
+      }
+      
+      return images.length > 0 ? getFileUrl(images[0]) : ''
     },
-    // 处理剧照/多图
+    // 处理剧照/多图（从第二张开始，不去重）
     bannerImages() {
       if (!this.film) return []
       let images = []
@@ -141,13 +156,10 @@ export default {
         images = this.film.images.split(',').map(img => getFileUrl(img))
       }
       
-      // 用户要求：详情页面展示的图片是除了第一个以外的图片（第一个通常为封面）
-      // 对于影视作品，封面已在顶部海报区域显示，因此这里总是移除第一张
-      if (images.length > 0) {
-        return images.slice(1)
-      }
-      
-      return images
+      // 不去重，从第二张开始作为内容图片
+      // 第一张已作为海报显示在顶部
+      images = images.filter(img => img)
+      return images.length > 1 ? images.slice(1) : []
     }
   },
   onLoad(options) {
