@@ -131,16 +131,24 @@ export default {
         
         // 后端返回的是游标分页格式：{records, nextCursor, hasMore}
         if (response.records) {
+          const newRecords = response.records || [];
+          
           if (isRefresh) {
-            this.films = response.records;
+            this.films = newRecords;
           } else {
-            this.films = [...this.films, ...response.records];
+            // 加载更多时，使用ID去重，避免重复显示
+            const existingIds = new Set(this.films.map(f => f.id));
+            const uniqueNewRecords = newRecords.filter(record => !existingIds.has(record.id));
+            this.films = [...this.films, ...uniqueNewRecords];
+            
+            console.log('新数据数量:', newRecords.length, '去重后:', uniqueNewRecords.length);
           }
+          
           this.nextCursor = response.nextCursor; // 保存游标
           this.hasMore = response.hasMore !== undefined ? response.hasMore : (response.nextCursor !== null);
           this.totalItems = this.films.length; // 游标分页不返回总数
           
-          console.log('成功加载影视作品，数量:', this.films.length, '下一页游标:', this.nextCursor);
+          console.log('成功加载影视作品，总数量:', this.films.length, '下一页游标:', this.nextCursor, '是否有更多:', this.hasMore);
         } else {
           // 如果是旧的PageResponse格式（有code字段）
           if (response.code === 200 && response.data) {
@@ -148,7 +156,10 @@ export default {
             if (isRefresh) {
               this.films = filmRecords;
             } else {
-              this.films = [...this.films, ...filmRecords];
+              // 加载更多时，使用ID去重
+              const existingIds = new Set(this.films.map(f => f.id));
+              const uniqueNewRecords = filmRecords.filter(record => !existingIds.has(record.id));
+              this.films = [...this.films, ...uniqueNewRecords];
             }
             this.totalItems = response.data.total || filmRecords.length;
             this.currentPage = 1;

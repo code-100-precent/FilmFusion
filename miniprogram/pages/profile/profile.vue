@@ -48,62 +48,62 @@
       <view v-if="isLoggedIn" class="menu-section">
         <view class="menu-group">
           <view class="menu-item" @click="goToMyReports">
-            <view class="menu-icon" style="background: #eef2ff;">
+            <view class="menu-icon" style="background: #2A2A35;">
               <uni-icons type="list" size="24" color="#6366f1"></uni-icons>
             </view>
             <text class="menu-text">我的报备</text>
-            <uni-icons type="right" size="16" color="#d1d5db"></uni-icons>
+            <uni-icons type="right" size="16" color="#999999"></uni-icons>
           </view>
           <view class="menu-item" @click="goToMyFeedback">
-            <view class="menu-icon" style="background: #f3e8ff;">
+            <view class="menu-icon" style="background: #2A2A35;">
               <uni-icons type="chatbubble" size="24" color="#8b5cf6"></uni-icons>
             </view>
             <text class="menu-text">我的反馈</text>
-            <uni-icons type="right" size="16" color="#d1d5db"></uni-icons>
+            <uni-icons type="right" size="16" color="#999999"></uni-icons>
           </view>
         </view>
 
         <view class="menu-group">
           <view class="menu-item" @click="goToEditProfile">
-            <view class="menu-icon" style="background: #fce7f3;">
-              <uni-icons type="person" size="24" color="#ec4899"></uni-icons>
+            <view class="menu-icon" style="background: #352A2A;">
+              <uni-icons type="person" size="24" color="#f472b6"></uni-icons>
             </view>
             <text class="menu-text">个人信息</text>
-            <uni-icons type="right" size="16" color="#d1d5db"></uni-icons>
+            <uni-icons type="right" size="16" color="#999999"></uni-icons>
           </view>
           <view class="menu-item" @click="goToChangePassword">
-            <view class="menu-icon" style="background: #cffafe;">
-              <uni-icons type="locked" size="24" color="#06b6d4"></uni-icons>
+            <view class="menu-icon" style="background: #2A3535;">
+              <uni-icons type="locked" size="24" color="#22d3ee"></uni-icons>
             </view>
             <text class="menu-text">修改密码</text>
-            <uni-icons type="right" size="16" color="#d1d5db"></uni-icons>
+            <uni-icons type="right" size="16" color="#999999"></uni-icons>
           </view>
         </view>
 
         <view class="menu-group">
           <view class="menu-item" @click="goToFeedback">
-            <view class="menu-icon" style="background: #f3e8ff;">
-              <uni-icons type="chatboxes" size="24" color="#8b5cf6"></uni-icons>
+            <view class="menu-icon" style="background: #352A35;">
+              <uni-icons type="chatboxes" size="24" color="#a78bfa"></uni-icons>
             </view>
             <text class="menu-text">意见反馈</text>
-            <uni-icons type="right" size="16" color="#d1d5db"></uni-icons>
+            <uni-icons type="right" size="16" color="#999999"></uni-icons>
           </view>
         </view>
 
         <view class="menu-group">
           <view class="menu-item" @click="goToHelp">
-            <view class="menu-icon" style="background: #ecfdf5;">
-              <uni-icons type="help" size="24" color="#10b981"></uni-icons>
+            <view class="menu-icon" style="background: #2A352A;">
+              <uni-icons type="help" size="24" color="#34d399"></uni-icons>
             </view>
             <text class="menu-text">帮助中心</text>
-            <uni-icons type="right" size="16" color="#d1d5db"></uni-icons>
+            <uni-icons type="right" size="16" color="#999999"></uni-icons>
           </view>
           <view class="menu-item" @click="goToAbout">
-            <view class="menu-icon" style="background: #e5e7eb;">
-              <uni-icons type="info" size="24" color="#6b7280"></uni-icons>
+            <view class="menu-icon" style="background: #333333;">
+              <uni-icons type="info" size="24" color="#9ca3af"></uni-icons>
             </view>
             <text class="menu-text">关于我们</text>
-            <uni-icons type="right" size="16" color="#d1d5db"></uni-icons>
+            <uni-icons type="right" size="16" color="#999999"></uni-icons>
           </view>
         </view>
       </view>
@@ -269,7 +269,7 @@ export default {
 <style lang="scss" scoped>
 .profile-page {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #121212;
   padding-top: 132rpx;
   box-sizing: border-box;
   position: relative;
@@ -282,7 +282,7 @@ export default {
   left: 0;
   right: 0;
   height: 33.33vh;
-  background: linear-gradient(to top, #ffffff 0%, #20b2aa 100%);
+  background: linear-gradient(to top, #121212 0%, #000000 100%);
   z-index: 0;
 }
 
@@ -306,11 +306,11 @@ export default {
 }
 
 .user-card {
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 16rpx;
   padding: 40rpx 32rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
   width: 100%;
   box-sizing: border-box;
 }
@@ -330,8 +330,8 @@ export default {
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  border: 2rpx solid #e5e7eb;
-  background: #f9fafb;
+  border: 2rpx solid #333333;
+  background: #2C2C2C;
 }
 
 .avatar--default {
@@ -350,12 +350,12 @@ export default {
 .username {
   font-size: 32rpx;
   font-weight: 600;
-  color: #1f2937;
+  color: #FFFFFF;
 }
 
 .user-phone {
   font-size: 24rpx;
-  color: #6b7280;
+  color: #999999;
 }
 
 .user-role {
@@ -371,13 +371,13 @@ export default {
 }
 
 .role-badge--user {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: #333333;
+  color: #999999;
 }
 
 .role-badge--admin {
-  background: #eef2ff;
-  color: #6366f1;
+  background: #333333;
+  color: #D4AF37;
 }
 
 .login-prompt {
@@ -397,19 +397,19 @@ export default {
 .login-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #1f2937;
+  color: #FFFFFF;
 }
 
 .login-desc {
   font-size: 24rpx;
-  color: #6b7280;
+  color: #999999;
 }
 
 .login-btn {
   width: 200rpx;
   height: 72rpx;
-  background: #6366f1;
-  color: #fff;
+  background: #D4AF37;
+  color: #000000;
   font-size: 28rpx;
   font-weight: 600;
   border-radius: 12rpx;
@@ -424,10 +424,10 @@ export default {
 }
 
 .menu-group {
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 12rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
   width: 100%;
   box-sizing: border-box;
 }
@@ -437,7 +437,7 @@ export default {
   align-items: center;
   gap: 20rpx;
   padding: 28rpx 24rpx;
-  border-bottom: 1rpx solid #f3f4f6;
+  border-bottom: 1rpx solid #333333;
   transition: all 0.2s;
 }
 
@@ -446,7 +446,7 @@ export default {
 }
 
 .menu-item:active {
-  background: #f9fafb;
+  background: #333333;
 }
 
 .menu-icon {
@@ -462,7 +462,7 @@ export default {
 .menu-text {
   flex: 1;
   font-size: 28rpx;
-  color: #1f2937;
+  color: #FFFFFF;
   font-weight: 500;
 }
 
@@ -473,13 +473,13 @@ export default {
 .logout-btn {
   width: 100%;
   height: 88rpx;
-  background: #fff;
+  background: #1E1E1E;
   color: #ef4444;
   font-size: 28rpx;
   font-weight: 500;
   border-radius: 12rpx;
-  border: 1rpx solid #fee2e2;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  border: 1rpx solid #333333;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
 }
 
@@ -492,7 +492,7 @@ export default {
 .title-text {
   font-size: 36rpx;
   font-weight: 700;
-  color: #1f2937;
+  color: #D4AF37;
   line-height: 1.2;
 }
 </style>

@@ -118,18 +118,13 @@ export const uploadAvatar = (file) => {
  * 文件上传（通用）
  */
 export const uploadFile = (file) => {
-  return uploadLimiter.add(() => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return request({
-      url: '/file',
-      method: 'post',
-      data: formData,
-      timeout: 120000,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/file',
+    method: 'post',
+    data: formData
+    // 不手动设置 Content-Type，让浏览器自动设置（包括 boundary）
   })
 }
 
@@ -137,18 +132,13 @@ export const uploadFile = (file) => {
  * 上传头像
  */
 export const uploadAvatarFile = (file) => {
-  return uploadLimiter.add(() => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return request({
-      url: '/file/upload/avatar',
-      method: 'post',
-      data: formData,
-      timeout: 120000,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/file/upload/avatar',
+    method: 'post',
+    data: formData
+    // 不手动设置 Content-Type，让浏览器自动设置（包括 boundary）
   })
 }
 // 验证 Token（直接调用获取用户信息接口）

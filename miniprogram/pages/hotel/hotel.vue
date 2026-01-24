@@ -141,13 +141,14 @@ export default {
           const newHotels = Array.isArray(res.records) ? res.records : []
           
           // 数据映射，确保字段名称与模板一致
+          // 后端返回 managerName/managerPhone，前端使用 contactName/phone
           const mappedHotels = newHotels.map(hotel => ({
             id: hotel.id,
             name: hotel.name || '',
             description: hotel.description || '',
             address: hotel.address || '',
-            phone: hotel.phone || '',
-            contactName: hotel.contactName || '',
+            phone: hotel.managerPhone || hotel.phone || '',
+            contactName: hotel.managerName || hotel.contactName || '',
             cover: hotel.cover || hotel.image || hotel.thumbCover || '',
             price: hotel.price || '',
             status: hotel.status || 0,
@@ -258,7 +259,7 @@ export default {
 
 .content {
   padding: 16rpx;
-  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+  padding-bottom: 0;
   box-sizing: border-box;
   width: 100%;
   height: calc(100vh - 132rpx);
@@ -270,6 +271,7 @@ export default {
 
 .search-bar {
   margin-bottom: 24rpx;
+  flex-shrink: 0;
 }
 
 .search-input-wrapper {
@@ -291,11 +293,17 @@ export default {
   color: #1f2937;
 }
 
+.hotel-list {
+  flex: 1;
+  height: 0;
+  overflow-y: auto;
+}
+
 .hotel-list-container {
   display: flex;
   flex-direction: column;
   gap: 20rpx;
-  padding-bottom: 20rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 
 .hotel-item {
@@ -443,11 +451,21 @@ export default {
   padding: 30rpx 0;
   font-size: 24rpx;
   color: #9ca3af;
+  flex-shrink: 0;
 }
 
 .load-more {
   color: #667eea;
   font-weight: 500;
+}
+
+.loading-wrapper,
+.empty-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400rpx;
+  padding: 60rpx 0;
 }
 
 /* 响应式布局 */

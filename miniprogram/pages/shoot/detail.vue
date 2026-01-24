@@ -213,7 +213,7 @@ export default {
 <style lang="scss" scoped>
 .shoot-detail-page {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #121212;
   padding-top: 132rpx;
   box-sizing: border-box;
 }
@@ -239,7 +239,7 @@ export default {
   margin: 32rpx 0;
   border-radius: 16rpx;
   overflow: hidden;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
 }
 
 .banner-swiper {
@@ -261,7 +261,7 @@ export default {
 .cover-placeholder {
   width: 100%;
   height: 400rpx;
-  background: #f9fafb;
+  background: #1E1E1E;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -271,12 +271,12 @@ export default {
 
 .placeholder-text {
   font-size: 28rpx;
-  color: #9ca3af;
+  color: #999999;
 }
 
 .info-card {
   width: 100%;
-  background: #fff;
+  background: #1E1E1E;
   border-radius: 16rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
@@ -296,7 +296,7 @@ export default {
 .shoot-name {
   font-size: 36rpx;
   font-weight: 600;
-  color: #1f2937;
+  color: #FFFFFF;
   flex: 1;
 }
 
@@ -305,11 +305,11 @@ export default {
   font-size: 24rpx;
   padding: 6rpx 16rpx;
   border-radius: 8rpx;
-  background: #fee2e2;
+  background: #333333;
   color: #dc2626;
   
   &.status-online {
-    background: #d1fae5;
+    background: #333333;
     color: #059669;
   }
 }
@@ -317,7 +317,7 @@ export default {
 .card-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #1f2937;
+  color: #D4AF37;
   margin-bottom: 24rpx;
 }
 
@@ -325,7 +325,7 @@ export default {
   display: block;
   font-size: 28rpx;
   line-height: 1.8;
-  color: #374151;
+  color: #CCCCCC;
   white-space: pre-wrap;
 }
 
@@ -342,13 +342,13 @@ export default {
 
 .info-label {
   font-size: 28rpx;
-  color: #6b7280;
+  color: #999999;
   min-width: 120rpx;
 }
 
 .info-value {
   font-size: 28rpx;
-  color: #1f2937;
+  color: #FFFFFF;
   flex: 1;
   word-break: break-all;
 }
@@ -362,12 +362,12 @@ export default {
 .price-value {
   font-size: 48rpx;
   font-weight: 600;
-  color: #1f2937;
+  color: #D4AF37;
 }
 
 .price-unit {
   font-size: 28rpx;
-  color: #6b7280;
+  color: #999999;
 }
 
 .loading-wrapper,
