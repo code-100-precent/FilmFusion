@@ -660,23 +660,31 @@ const getFileInfo = (file) => {
     }
   }
 
-  // 统一处理去除域名
-  if (info.originUrl && info.originUrl.startsWith('http')) {
+  // 统一处理去除域名（如果有的话）
+  if (info.originUrl && info.originUrl.startsWith('http') && config.fileBaseURL) {
     info.originUrl = info.originUrl.replace(config.fileBaseURL, '')
   }
-  if (info.thumbUrl && info.thumbUrl.startsWith('http')) {
+  if (info.thumbUrl && info.thumbUrl.startsWith('http') && config.fileBaseURL) {
     info.thumbUrl = info.thumbUrl.replace(config.fileBaseURL, '')
   }
 
+  console.log('=== getFileInfo 返回 ===', info)
   return info
 }
 
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file)
+    console.log('=== 封面图上传返回数据 ===', res)
+    console.log('res.data:', res.data)
+    
     if (res.code === 200 && res.data) {
-      const originUrl = res.data.originUrl || res.data.url
-      const thumbUrl = res.data.thumbUrl || originUrl
+      // 尝试多种可能的字段名
+      const originUrl = res.data.originUrl || res.data.origin_url || res.data.url || res.data.path
+      const thumbUrl = res.data.thumbUrl || res.data.thumb_url || res.data.thumbnailUrl || originUrl
+      
+      console.log('解析后的 originUrl:', originUrl)
+      console.log('解析后的 thumbUrl:', thumbUrl)
 
       fileMapping[file.id] = { originUrl, thumbUrl }
 
@@ -728,9 +736,16 @@ const handleCoverFileListChange = (files) => {
 const handleDetailUpload = async ({ file, onFinish, onError }) => {
   try {
     const res = await uploadFile(file.file)
+    console.log('=== 详情图上传返回数据 ===', res)
+    console.log('res.data:', res.data)
+    
     if (res.code === 200 && res.data) {
-      const originUrl = res.data.originUrl || res.data.url
-      const thumbUrl = res.data.thumbUrl || originUrl
+      // 尝试多种可能的字段名
+      const originUrl = res.data.originUrl || res.data.origin_url || res.data.url || res.data.path
+      const thumbUrl = res.data.thumbUrl || res.data.thumb_url || res.data.thumbnailUrl || originUrl
+      
+      console.log('解析后的 originUrl:', originUrl)
+      console.log('解析后的 thumbUrl:', thumbUrl)
 
       fileMapping[file.id] = { originUrl, thumbUrl }
 
@@ -780,75 +795,36 @@ const handleDialogSave = async () => {
   try {
     dialogLoading.value = true
 
-    // 合并图片
-    const allImages = []
+    // 收集所有图片的原图和缩略图
+    const allOriginImages = []
     const allThumbImages = []
 
-    let coverOrigin = ''
-    let coverThumb = ''
-
-    // 1. 封面图
+    // 1. 处理封面图
     if (coverFileList.value.length > 0) {
       const coverFile = coverFileList.value[0]
       const info = getFileInfo(coverFile)
+      console.log('=== 保存时封面图信息 ===', info)
       if (info.originUrl) {
-        coverOrigin = info.originUrl
-        coverThumb = info.thumbUrl || info.originUrl
-        
-        // 强制转换为原图路径
-        let url = coverOrigin
-        if (url && url.includes('/files/thumb/')) {
-          url = url.replace('/files/thumb/', '/files/origin/')
-        }
-        allImages.push(url)
+        allOriginImages.push(info.originUrl)
+        allThumbImages.push(info.thumbUrl || info.originUrl)
       }
     }
 
-    const detailOrigins = []
-    const detailThumbs = []
-
-    // 2. 详情图
+    // 2. 处理详情图
     if (detailFileList.value.length > 0) {
-      // 收集详情图信息
-      const validDetails = detailFileList.value
-        .map(file => getFileInfo(file))
-        .filter(info => info.originUrl)
-
-      validDetails.forEach(info => {
-        detailOrigins.push(info.originUrl)
-        detailThumbs.push(info.thumbUrl || info.originUrl)
-        
-        // 强制转换为原图路径
-        let url = info.originUrl
-        if (url && url.includes('/files/thumb/')) {
-          url = url.replace('/files/thumb/', '/files/origin/')
+      detailFileList.value.forEach((file, index) => {
+        const info = getFileInfo(file)
+        console.log(`=== 保存时详情图${index + 1}信息 ===`, info)
+        if (info.originUrl) {
+          allOriginImages.push(info.originUrl)
+          allThumbImages.push(info.thumbUrl || info.originUrl)
         }
-        allImages.push(url)
       })
     }
 
-    // 辅助函数：从URL提取原始文件名（忽略时间戳）
-    const getOriginalFileName = (url) => {
-      if (!url) return ''
-      const parts = url.split('/')
-      const fileName = parts[parts.length - 1]
-      // 假设格式为 timestamp_filename，找到第一个下划线
-      const index = fileName.indexOf('_')
-      if (index !== -1 && index < fileName.length - 1) {
-        return fileName.substring(index + 1)
-      }
-      return fileName
-    }
-
-    // 处理封面缩略图
-    if (coverOrigin) {
-      allThumbImages.push(coverThumb)
-    }
-
-    // 处理详情缩略图
-    if (detailOrigins.length > 0) {
-      allThumbImages.push(...detailThumbs)
-    }
+    console.log('=== 最终提交的数据 ===')
+    console.log('image (原图):', allOriginImages.join(','))
+    console.log('thumbImage (缩略图):', allThumbImages.join(','))
 
     const data = {
       name: tourForm.name,
@@ -860,9 +836,11 @@ const handleDialogSave = async () => {
       food: tourForm.food,
       deleted: tourForm.deleted,
       locationId: (Array.isArray(tourForm.locationId) && tourForm.locationId.length > 0) ? tourForm.locationId.join(',') : null,
-      image: allImages.join(','),
-      thumb_image: allThumbImages.join(',')
+      image: allOriginImages.join(','),
+      thumbImage: allThumbImages.join(',')  // 改为驼峰命名
     }
+
+    console.log('=== 提交到后端的完整数据 ===', data)
 
     if (tourForm.id) {
       const res = await updateTour(tourForm.id, data)

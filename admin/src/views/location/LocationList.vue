@@ -868,7 +868,6 @@ const handleEdit = async (row) => {
         name: res.data.name || '',
         type: res.data.type || '',
         address: res.data.address || '',
-        price: res.data.price || 0,
         status: res.data.status === 1 || res.data.status === true,
         locationDescription: res.data.locationDescription || '',
         locationPrincipalName: res.data.locationPrincipalName || '',

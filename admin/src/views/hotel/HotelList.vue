@@ -674,9 +674,6 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
       hotelForm.cover = originUrl
       hotelForm.thumbCover = thumbUrl
 
-      // 强制更新 coverFileList 以确保视图刷新
-      coverFileList.value = [...coverFileList.value]
-
       onFinish();
       message.success('封面图上传成功');
     } else {
@@ -717,8 +714,6 @@ const handleDetailUpload = async ({file, onFinish, onError}) => {
         fileItem.originUrl = originUrl
         fileItem.thumbUrl = thumbUrl
         fileItem.status = 'finished'
-        // 强制触发更新
-        detailFileList.value = [...detailFileList.value]
       } else {
         // 如果文件列表中找不到（可能是 v-model 更新延迟），手动添加
         const newItem = {
@@ -729,7 +724,7 @@ const handleDetailUpload = async ({file, onFinish, onError}) => {
           originUrl: originUrl,
           thumbUrl: thumbUrl
         }
-        detailFileList.value = [...detailFileList.value, newItem]
+        detailFileList.value.push(newItem)
       }
 
       onFinish();
@@ -771,6 +766,15 @@ const handleDialogSave = async () => {
     return
   }
 
+  // 检查是否有正在上传的文件
+  const isUploading = coverFileList.value.some(f => f.status === 'uploading') || 
+                     detailFileList.value.some(f => f.status === 'uploading')
+  
+  if (isUploading) {
+    message.warning('图片正在上传中，请等待上传完成后再提交')
+    return
+  }
+
   try {
     dialogLoading.value = true
     // 辅助函数：获取文件信息
@@ -809,8 +813,8 @@ const handleDialogSave = async () => {
     let coverThumbUrl = ''
 
     // 优先从文件列表获取
-    // 只要有 url 就可以，不强制 status === 'finished'，防止状态同步问题
-    const coverFile = coverFileList.value.find(f => f.url || f.originUrl || fileMapping[f.id])
+    // 必须检查 status === 'finished'，防止提交未完成或失败的文件
+    const coverFile = coverFileList.value.find(f => f.status === 'finished')
     if (coverFile) {
       const info = getFileInfo(coverFile)
       coverUrl = info.url
@@ -835,8 +839,8 @@ const handleDialogSave = async () => {
     const detailUrls = []
     const detailThumbUrls = []
 
-    // 同样放宽条件，只要有 url 即可
-    const validDetails = detailFileList.value.filter(f => f.url || f.originUrl || fileMapping[f.id])
+    // 同样严格检查 status === 'finished'
+    const validDetails = detailFileList.value.filter(f => f.status === 'finished')
 
     validDetails.forEach(file => {
       const info = getFileInfo(file)
@@ -850,19 +854,6 @@ const handleDialogSave = async () => {
     // 3. 合并
     const allImages = []
     const allThumbImages = []
-
-    // 辅助函数：从URL提取原始文件名（忽略时间戳）
-    const getOriginalFileName = (url) => {
-      if (!url) return ''
-      const parts = url.split('/')
-      const fileName = parts[parts.length - 1]
-      // 假设格式为 timestamp_filename，找到第一个下划线
-      const index = fileName.indexOf('_')
-      if (index !== -1 && index < fileName.length - 1) {
-        return fileName.substring(index + 1)
-      }
-      return fileName
-    }
 
     if (coverUrl) {
       // 强制转换为原图路径
