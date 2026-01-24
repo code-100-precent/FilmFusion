@@ -1,5 +1,44 @@
 import request from '@/utils/request'
 
+// 简单的并发控制器
+class ConcurrencyLimiter {
+  constructor(limit) {
+    this.limit = limit
+    this.running = 0
+    this.queue = []
+  }
+
+  async add(fn) {
+    if (this.running < this.limit) {
+      this.running++
+      try {
+        return await fn()
+      } finally {
+        this.running--
+        this.next()
+      }
+    } else {
+      return new Promise((resolve, reject) => {
+        this.queue.push({ fn, resolve, reject })
+      })
+    }
+  }
+
+  next() {
+    if (this.running < this.limit && this.queue.length > 0) {
+      const { fn, resolve, reject } = this.queue.shift()
+      this.running++
+      fn().then(resolve).catch(reject).finally(() => {
+        this.running--
+        this.next()
+      })
+    }
+  }
+}
+
+// 限制同时上传数为 1，减轻服务器压力
+const uploadLimiter = new ConcurrencyLimiter(1)
+
 // ==================== 管理员相关接口 ====================
 
 /**
@@ -79,15 +118,18 @@ export const uploadAvatar = (file) => {
  * 文件上传（通用）
  */
 export const uploadFile = (file) => {
-  const formData = new FormData()
-  formData.append('file', file)
-  return request({
-    url: '/file',
-    method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+  return uploadLimiter.add(() => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request({
+      url: '/file',
+      method: 'post',
+      data: formData,
+      timeout: 120000,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
   })
 }
 
@@ -95,15 +137,18 @@ export const uploadFile = (file) => {
  * 上传头像
  */
 export const uploadAvatarFile = (file) => {
-  const formData = new FormData()
-  formData.append('file', file)
-  return request({
-    url: '/file/upload/avatar',
-    method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+  return uploadLimiter.add(() => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request({
+      url: '/file/upload/avatar',
+      method: 'post',
+      data: formData,
+      timeout: 120000,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
   })
 }
 
@@ -655,7 +700,8 @@ export const createHotel = (data) => {
   return request({
     url: '/hotel/admin/create',
     method: 'post',
-    data
+    data,
+    timeout: 120000
   })
 }
 
@@ -666,7 +712,8 @@ export const updateHotel = (id, data) => {
   return request({
     url: `/hotel/admin/update/${id}`,
     method: 'put',
-    data
+    data,
+    timeout: 120000
   })
 }
 
