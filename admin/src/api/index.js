@@ -151,7 +151,6 @@ export const uploadAvatarFile = (file) => {
     })
   })
 }
-
 // 验证 Token（直接调用获取用户信息接口）
 export const verifyToken = () => {
   return getAdminInfo()
