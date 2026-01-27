@@ -896,3 +896,77 @@ export const getLogPage = (current = 1, size = 10, keyword = '') => {
     }
   })
 }
+
+// ==================== Module管理 ====================
+
+/**
+ * 分页获取模块列表
+ */
+export const getModulePage = (current = 1, size = 10, keyword = '') => {
+  return request({
+    url: '/module/admin/page',
+    method: 'get',
+    params: {
+      current,
+      size,
+      keyword
+    }
+  })
+}
+
+/**
+ * 获取所有模块列表（用于下拉选择）
+ */
+export const getModuleList = () => {
+  return request({
+    url: '/module/admin/page',
+    method: 'get',
+    params: {
+      current: 1,
+      size: 1000
+    },
+    silent: true  // 静默请求，不显示错误提示
+  })
+}
+
+/**
+ * 根据ID获取模块
+ */
+export const getModuleById = (id) => {
+  return request({
+    url: `/module/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 创建模块
+ */
+export const createModule = (data) => {
+  return request({
+    url: '/module/admin/create',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新模块
+ */
+export const updateModule = (id, data) => {
+  return request({
+    url: `/module/admin/update/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除模块
+ */
+export const deleteModule = (id) => {
+  return request({
+    url: `/module/admin/delete/${id}`,
+    method: 'delete'
+  })
+}

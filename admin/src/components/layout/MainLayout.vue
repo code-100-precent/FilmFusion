@@ -197,6 +197,11 @@ const menuOptions = [
     icon: 'mdi:file-document-multiple-outline'
   },
   {
+    label: '模块管理',
+    key: '/module',
+    icon: 'mdi:view-grid-outline'
+  },
+  {
     label: '个人中心',
     key: '/profile',
     icon: 'mdi:account-circle-outline'

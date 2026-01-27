@@ -222,7 +222,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     //客户端批量查询降级接口
     @Override
-    public List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+    public List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Long moduleId, Throwable e) {
 
         if (e instanceof NotFoundException || e instanceof BusinessException) {
             throw (RuntimeException) e;
@@ -305,7 +305,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                     });
             return future.get(2, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            return getPageFallback(lastId, size, keyword, e);
+            return getPageFallback(lastId, size, keyword, moduleId, e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

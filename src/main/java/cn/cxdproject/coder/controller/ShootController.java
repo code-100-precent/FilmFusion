@@ -58,7 +58,7 @@ public class ShootController {
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = true) Long moduleId) {
+            @RequestParam(required = false) Long moduleId) {
 
         Long lastId = null;
         if (cursor != null && !cursor.trim().isEmpty()) {

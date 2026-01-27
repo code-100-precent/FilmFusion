@@ -112,6 +112,15 @@ const routes = [
           title: '政策管理',
           icon: 'Document'
         }
+      },
+      {
+        path: 'module',
+        name: 'module',
+        component: () => import('../views/module/ModuleList.vue'),
+        meta: {
+          title: '模块管理',
+          icon: 'Grid'
+        }
       }
     ]
   }

@@ -67,7 +67,7 @@ public interface ShootService extends IService<Shoot> {
     /**
      * 分页查询报备列表的降级方法
      */
-    List<ShootVO> getPageFallback(Long lastId, int size, String keyword,Throwable e);
+    List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Long moduleId, Throwable e);
 
     /**
      * 管理员分页查询报备
