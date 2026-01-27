@@ -35,5 +35,7 @@ public class CreateShootDTO {
     private String image;
 
     private String thumbImage;
+
+    private Long moduleId;
 }
 

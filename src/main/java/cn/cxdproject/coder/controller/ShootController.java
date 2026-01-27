@@ -57,7 +57,8 @@ public class ShootController {
     public CursorPageResponseVO<ShootVO> page(
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = true) Long moduleId) {
 
         Long lastId = null;
         if (cursor != null && !cursor.trim().isEmpty()) {
@@ -68,7 +69,7 @@ public class ShootController {
             }
         }
 
-        List<ShootVO> list = shootService.getShootPageWithTimeout(lastId, size, keyword);
+        List<ShootVO> list = shootService.getShootPageWithTimeout(lastId, size, keyword,moduleId);
 
         String nextCursor = null;
         if (list.size() == size && !list.isEmpty()) {

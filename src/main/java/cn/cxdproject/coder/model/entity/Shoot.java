@@ -85,6 +85,9 @@ public class Shoot extends BaseEntity implements Serializable, Cloneable {
     @TableField("thumb_image")
     private String thumbImage;
 
+    @TableField("module_id")
+    private Long moduleId;
+
     @Override
     public Shoot clone() {
         try {

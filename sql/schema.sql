@@ -258,3 +258,13 @@ CREATE TABLE `fi_policy` (
     KEY `title_type_deleted_status` (`title`,`type`,`deleted`,`status`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE `fi_module` (
+    `id`           int(11)         NOT NULL AUTO_INCREMENT,
+    `name`         varchar(50)     NOT NULL,
+    `description`  varchar(255)    DEFAULT NULL,
+    `deleted`      tinyint(4)      NOT NULL,
+    `created_at`   datetime        NOT NULL,
+    `updated_at`   datetime        NOT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

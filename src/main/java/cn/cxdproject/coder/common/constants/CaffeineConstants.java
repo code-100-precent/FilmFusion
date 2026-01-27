@@ -10,4 +10,5 @@ public interface CaffeineConstants {
     String HOTEL = "hotel";
     String TOUR = "tour";
     String POLICY = "policy";
+    String MODULE = "module";
 }
