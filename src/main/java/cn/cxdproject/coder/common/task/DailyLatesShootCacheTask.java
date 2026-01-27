@@ -33,8 +33,8 @@ public class DailyLatesShootCacheTask {
     @Scheduled(cron = "0 0 2 * * ?")
     public void cacheLatestShootPage() {
         try {
-            // 1. 从数据库查询最新10条
-            List<Shoot> latestShoots = shootMapper.selectLatest10();
+            // 1. 从数据库查询最新30条
+            List<Shoot> latestShoots = shootMapper.selectLatest30();
 
             if (latestShoots == null || latestShoots.isEmpty()) {
                 log.warn("未查到协拍服务，跳过缓存");
@@ -104,6 +104,7 @@ public class DailyLatesShootCacheTask {
                 .updatedAt(shoot.getUpdatedAt())
                 .image(shoot.getImage())
                 .thumbImage(shoot.getThumbImage())
+                .moduleId(shoot.getModuleId())
                 .build();
     }
 }

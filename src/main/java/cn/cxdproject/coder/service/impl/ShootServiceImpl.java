@@ -78,6 +78,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .userId(userId)
                 .image(createDTO.getImage())
                 .thumbImage(createDTO.getThumbImage())
+                .moduleId(createDTO.getModuleId())
                 .build();
 
         shoot.setCreatedAt(LocalDateTime.now());
@@ -109,8 +110,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
     @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
-    public List<ShootVO> getShootPage(Long lastId, int size, String keyword) {
-        List<Long> ids = shootMapper.selectIds(lastId, size, keyword);
+    public List<ShootVO> getShootPage(Long lastId, int size, String keyword,Long moduleId) {
+        List<Long> ids = shootMapper.selectIds(lastId, size, keyword,moduleId);
         if (ids.isEmpty()) {
             return Collections.emptyList();
         }
@@ -200,6 +201,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
                 .updatedAt(shoot.getUpdatedAt())
                 .image(shoot.getImage())
                 .thumbImage(shoot.getThumbImage())
+                .moduleId(shoot.getModuleId())
                 .build();
     }
 
@@ -220,7 +222,7 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
 
     //客户端批量查询降级接口
     @Override
-    public List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
+    public List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Long moduleId, Throwable e) {
 
         if (e instanceof NotFoundException || e instanceof BusinessException) {
             throw (RuntimeException) e;
@@ -290,20 +292,20 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    public List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword) {
+    public List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword,Long moduleId) {
         try {
             CompletableFuture<List<ShootVO>> future =
                     CompletableFuture.supplyAsync(() -> {
                         try {
                             return shootServiceProvider.getObject()
-                                    .getShootPage(lastId, size, keyword);
+                                    .getShootPage(lastId, size, keyword,moduleId);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
                     });
             return future.get(2, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            return getPageFallback(lastId, size, keyword, e);
+            return getPageFallback(lastId, size, keyword, moduleId, e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

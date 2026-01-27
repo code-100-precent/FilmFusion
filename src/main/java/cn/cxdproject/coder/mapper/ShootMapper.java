@@ -20,7 +20,8 @@ public interface ShootMapper extends BaseMapper<Shoot> {
 
     List<Long> selectIds(@Param("lastId") Long lastId,
                          @Param("size") int size,
-                         @Param("keyword") String keyword);
+                         @Param("keyword") String keyword,
+                         @Param("moduleId") Long moduleId);
 
     List<Shoot> getAdminPage(
             @Param("keyword") String keyword,
@@ -28,7 +29,7 @@ public interface ShootMapper extends BaseMapper<Shoot> {
             @Param("size") long size
     );
 
-    List<Shoot> selectLatest10();
+    List<Shoot> selectLatest30();
 
     int updateShoot(
             @Param("id") Long id,

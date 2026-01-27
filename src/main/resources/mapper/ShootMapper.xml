@@ -18,6 +18,7 @@
         <result column="updated_at" property="updatedAt" />
         <result column="image" property="image" />
         <result column="thumb_image" property="thumbImage"/>
+        <result column="module_id" property="moduleId"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -33,7 +34,8 @@
             `created_at`,
             `updated_at`,
             `image`,
-            `thumb_image`
+            `thumb_image`,
+            `module_id`
     </sql>
 
     <select id="selectIds" resultType="long">
@@ -41,6 +43,10 @@
         FROM fi_shoots
         <where>
             deleted = 0
+            <!-- 模块ID过滤 -->
+            <if test="moduleId != null">
+                AND module_id = #{moduleId}
+            </if>
             <!-- 模糊搜索 -->
             <if test="keyword != null and keyword != ''">
                 AND (
@@ -53,7 +59,7 @@
                 AND id > #{lastId}
             </if>
         </where>
-        ORDER BY created_at ASC
+        ORDER BY created_at DESC
         LIMIT #{size}
     </select>
 
@@ -67,16 +73,16 @@
             OR description LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        ORDER BY created_at ASC
+        ORDER BY created_at DESC
         LIMIT #{offset}, #{size}
     </select>
 
-    <select id="selectLatest10" resultType="cn.cxdproject.coder.model.entity.Shoot">
+    <select id="selectLatest30" resultType="cn.cxdproject.coder.model.entity.Shoot">
         SELECT *
         FROM fi_shoots
         WHERE deleted = 0
         ORDER BY created_at DESC
-            LIMIT 10
+            LIMIT 30
     </select>
 
     <update id="updateShoot">
@@ -105,6 +111,9 @@
             </if>
             <if test="dto.thumbImage != null">
                 thumb_image = #{dto.thumbImage},
+            </if>
+            <if test="dto.moduleId != null">
+                module_id = #{dto.moduleId},
             </if>
         </set>
         WHERE id = #{id}

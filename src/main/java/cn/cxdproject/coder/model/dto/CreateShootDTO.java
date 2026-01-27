@@ -35,5 +35,8 @@ public class CreateShootDTO {
     private String image;
 
     private String thumbImage;
+
+    // moduleId 改为可选，兼容旧数据
+    private Long moduleId;
 }
 

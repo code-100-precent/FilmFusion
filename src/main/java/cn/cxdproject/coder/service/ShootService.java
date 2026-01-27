@@ -37,12 +37,12 @@ public interface ShootService extends IService<Shoot> {
     /**
      * 分页获取拍摄报备列表（按时间倒序，公开接口）
      */
-    List<ShootVO> getShootPage(Long lastId, int size, String keyword) throws InterruptedException;
+    List<ShootVO> getShootPage(Long lastId, int size, String keyword,Long moduleId) throws InterruptedException;
 
     /**
      * 分页获取拍摄报备列表（带超时控制和降级）
      */
-    List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword);
+    List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword,Long moduleId);
 
     /**
      * 管理员更新拍摄报备信息
@@ -67,7 +67,7 @@ public interface ShootService extends IService<Shoot> {
     /**
      * 分页查询报备列表的降级方法
      */
-    List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Throwable e);
+    List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Long moduleId, Throwable e);
 
     /**
      * 管理员分页查询报备
