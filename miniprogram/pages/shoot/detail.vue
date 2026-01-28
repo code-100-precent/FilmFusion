@@ -71,14 +71,6 @@
         </view>
       </view>
 
-      <!-- 价格信息 -->
-      <view class="info-card">
-        <view class="card-title">价格信息</view>
-        <view class="price-wrapper">
-          <text class="price-value">¥{{ shoot.price }}</text>
-          <text class="price-unit">/次</text>
-        </view>
-      </view>
     </scroll-view>
 
     <view v-if="loading" class="loading-wrapper">
