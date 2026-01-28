@@ -51,7 +51,7 @@
                 v-if="getFileUrl(shoot.image || shoot.thumbImage)"
                 :src="getFileUrl(shoot.image || shoot.thumbImage)" 
                 class="cover-image" 
-                mode="aspectFill"
+                mode="widthFix"
               ></image>
               <view v-else class="cover-placeholder">
                 <uni-icons type="image" size="40" color="#d1d5db"></uni-icons>
@@ -80,7 +80,6 @@
                 </view>
               </view>
               <view class="shoot-footer">
-                <text class="shoot-price">¥{{ shoot.price }}</text>
                 <text class="view-detail">查看详情</text>
               </view>
             </view>
@@ -324,14 +323,19 @@ export default {
 
 .shoot-cover {
   width: 100%;
-  height: 200rpx;
+  min-height: 300rpx;
+  max-height: 500rpx;
   position: relative;
   overflow: hidden;
+  background: #2C2C2C;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cover-image {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: block;
 }
 
