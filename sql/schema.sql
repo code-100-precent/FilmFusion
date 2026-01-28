@@ -145,7 +145,7 @@ CREATE TABLE `fi_shoots`
 (
     `id`           BIGINT        NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `name`         VARCHAR(100)  NOT NULL COMMENT '服务名称',
-    `description`  VARCHAR(500)  NOT NULL COMMENT '服务简介',np
+    `description`  VARCHAR(500)  NOT NULL COMMENT '服务简介',
     `status`       TINYINT       NOT NULL DEFAULT 1 COMMENT '状态（0：下线，1：上线）',
     `address`      VARCHAR(255)  NOT NULL COMMENT '服务地址',
     `phone`        VARCHAR(20)   NOT NULL COMMENT '联系电话',
@@ -156,8 +156,10 @@ CREATE TABLE `fi_shoots`
     `updated_at`   DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `image`        varchar(500) DEFAULT NULL COMMENT '图片',
     `thumb_image`  varchar(500) DEFAULT NULL COMMENT '压缩后图片',
+    `module_id`    BIGINT       DEFAULT NULL COMMENT '模块ID，关联到模块表',
     PRIMARY KEY (`id`),
-    KEY `name_status_deleted` (`name`,`status`,`deleted`)
+    KEY `name_status_deleted` (`name`,`status`,`deleted`),
+    KEY `module_id` (`module_id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='协拍服务表';
