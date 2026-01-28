@@ -14,7 +14,7 @@
             v-model="keyword"
             class="search-input"
             type="text"
-            placeholder="搜索"
+            placeholder="搜索服务"
             placeholder-style="color: #666666"
             @confirm="handleSearch"
             @input="handleSearch"
@@ -22,75 +22,88 @@
         </view>
       </view>
 
-      <!-- 服务列表 -->
+      <!-- 模块分组列表 -->
       <scroll-view
-        class="shoot-list"
+        class="module-list-scroll"
         scroll-y
-        @scrolltolower="loadMore"
         :refresher-enabled="true"
         :refresher-triggered="refreshing"
         @refresherrefresh="handleRefresh"
       >
-        <view v-if="loading && shoots.length === 0" class="loading-wrapper">
+        <view v-if="loading && moduleGroups.length === 0" class="loading-wrapper">
           <Loading></Loading>
         </view>
-        <view v-else-if="shoots.length === 0" class="empty-wrapper">
+        <view v-else-if="moduleGroups.length === 0" class="empty-wrapper">
           <Empty text="暂无服务"></Empty>
         </view>
-        <view v-else>
+        <view v-else class="module-groups">
+          <!-- 遍历每个模块分组 -->
           <view
-            v-for="(shoot, index) in shoots"
-            :key="shoot.id"
-            class="shoot-card"
-            :style="{ 'animation-delay': index * 0.05 + 's' }"
-            @click="goToDetail(shoot.id)"
+            v-for="(group, groupIndex) in moduleGroups"
+            :key="group.module.id"
+            class="module-group"
+            :style="{ 'animation-delay': groupIndex * 0.05 + 's' }"
           >
-            <!-- 服务封面图片 -->
-            <view class="shoot-cover">
-              <image 
-                v-if="getFileUrl(shoot.image || shoot.thumbImage)"
-                :src="getFileUrl(shoot.image || shoot.thumbImage)" 
-                class="cover-image" 
-                mode="widthFix"
-              ></image>
-              <view v-else class="cover-placeholder">
-                <uni-icons type="image" size="40" color="#d1d5db"></uni-icons>
+            <!-- 模块标题 -->
+            <view class="module-header">
+              <view class="module-title-row">
+                <uni-icons type="flag-filled" size="20" color="#D4AF37"></uni-icons>
+                <text class="module-name">{{ group.module.name }}</text>
+                <text class="module-count">({{ group.totalCount }})</text>
+              </view>
+              <text v-if="group.module.description" class="module-desc">{{ group.module.description }}</text>
+            </view>
+
+            <!-- 服务卡片 -->
+            <view
+              v-if="group.shoot"
+              class="shoot-card-compact"
+              @click="goToDetail(group.shoot.id)"
+            >
+              <!-- 服务封面图片 -->
+              <view class="shoot-cover-compact">
+                <image 
+                  v-if="getFileUrl(group.shoot.thumbImage || group.shoot.image)"
+                  :src="getFileUrl(group.shoot.thumbImage || group.shoot.image)" 
+                  class="cover-image-compact" 
+                  mode="aspectFill"
+                ></image>
+                <view v-else class="cover-placeholder-compact">
+                  <uni-icons type="image" size="32" color="#666666"></uni-icons>
+                </view>
+              </view>
+              
+              <view class="shoot-content-compact">
+                <text class="shoot-name-compact">{{ group.shoot.name }}</text>
+                <text class="shoot-desc-compact">{{ group.shoot.description }}</text>
+                <view class="shoot-info-compact">
+                  <view class="info-item-compact">
+                    <uni-icons type="location" size="14" color="#999999"></uni-icons>
+                    <text>{{ group.shoot.address }}</text>
+                  </view>
+                  <view class="info-item-compact">
+                    <uni-icons type="phone" size="14" color="#999999"></uni-icons>
+                    <text>{{ group.shoot.phone }}</text>
+                  </view>
+                </view>
               </view>
             </view>
-            
-            <view class="shoot-content">
-              <view class="shoot-header">
-                <view class="shoot-title-row">
-                  <text class="shoot-name">{{ shoot.name }}</text>
-                </view>
-              </view>
-              <text class="shoot-desc">{{ shoot.description }}</text>
-              <view class="shoot-info">
-                <view class="info-item">
-                  <uni-icons type="location" size="16" color="#6366f1"></uni-icons>
-                  <text>{{ shoot.address }}</text>
-                </view>
-                <view class="info-item">
-                  <uni-icons type="phone" size="16" color="#6366f1"></uni-icons>
-                  <text>{{ shoot.phone }}</text>
-                </view>
-                <view class="info-item">
-                  <uni-icons type="person" size="16" color="#6366f1"></uni-icons>
-                  <text>{{ shoot.contactName }}</text>
-                </view>
-              </view>
-              <view class="shoot-footer">
-                <text class="view-detail">查看详情</text>
-              </view>
+
+            <!-- 查看更多按钮 -->
+            <view
+              v-if="group.totalCount > 1"
+              class="view-more-btn"
+              @click="goToModuleList(group.module.id, group.module.name)"
+            >
+              <text>查看全部 {{ group.totalCount }} 个服务</text>
+              <uni-icons type="arrowright" size="16" color="#D4AF37"></uni-icons>
+            </view>
+
+            <!-- 无服务提示 -->
+            <view v-if="!group.shoot" class="no-shoot-tip">
+              <text>暂无服务</text>
             </view>
           </view>
-        </view>
-
-        <view v-if="hasMore && !loading" class="load-more">
-          <text>上拉加载更多</text>
-        </view>
-        <view v-if="!hasMore && shoots.length > 0" class="no-more">
-          <text>没有更多了</text>
         </view>
       </scroll-view>
     </view>
@@ -106,7 +119,7 @@ import TabBar from '../../components/TabBar/TabBar.vue'
 import Loading from '../../components/Loading/Loading.vue'
 import Empty from '../../components/Empty/Empty.vue'
 // 使用真实后端API
-import { getShootPage } from '../../services/backend-api'
+import { getShootPage, getModulePage } from '../../services/backend-api'
 import { getFileUrl } from '../../utils'
 
 export default {
@@ -119,48 +132,141 @@ export default {
   data() {
     return {
       keyword: '',
-      shoots: [],
-      nextCursor: null, // 游标分页
+      moduleGroups: [], // 模块分组数据
       loading: false,
-      refreshing: false,
-      hasMore: true
+      refreshing: false
     }
   },
   onLoad() {
-    this.loadShoots()
+    this.loadModuleGroups()
   },
   methods: {
-    async loadShoots(reset = false) {
+    async loadModuleGroups(reset = false) {
       if (this.loading) return
 
       if (reset) {
-        this.shoots = []
-        this.nextCursor = null
-        this.hasMore = true
+        this.moduleGroups = []
       }
 
       this.loading = true
       try {
-        const res = await getShootPage({
-          cursor: reset ? null : this.nextCursor,
-          size: 10,
-          keyword: this.keyword || undefined
+        // 1. 加载所有模块
+        let modules = []
+        try {
+          const moduleRes = await getModulePage({
+            size: 100,
+            keyword: this.keyword || undefined
+          })
+
+          if (moduleRes && moduleRes.records) {
+            modules = Array.isArray(moduleRes.records) ? moduleRes.records : []
+          }
+        } catch (moduleError) {
+          console.error('加载模块失败，使用降级方案:', moduleError)
+          // 降级方案：如果模块接口不可用，直接加载所有服务并按 moduleId 分组
+          try {
+            const allShootsRes = await getShootPage({
+              size: 1000,
+              keyword: this.keyword || undefined
+            })
+            
+            if (allShootsRes && allShootsRes.records) {
+              const shoots = Array.isArray(allShootsRes.records) ? allShootsRes.records : []
+              
+              // 按 moduleId 分组
+              const groupMap = new Map()
+              shoots.forEach(shoot => {
+                const moduleId = shoot.moduleId || 0
+                const moduleName = shoot.moduleName || '未分类服务'
+                
+                if (!groupMap.has(moduleId)) {
+                  groupMap.set(moduleId, {
+                    module: {
+                      id: moduleId,
+                      name: moduleName,
+                      description: ''
+                    },
+                    shoots: []
+                  })
+                }
+                groupMap.get(moduleId).shoots.push(shoot)
+              })
+              
+              // 转换为 moduleGroups 格式
+              this.moduleGroups = Array.from(groupMap.values()).map(group => ({
+                module: group.module,
+                shoot: group.shoots[0],
+                totalCount: group.shoots.length
+              }))
+              
+              this.loading = false
+              this.refreshing = false
+              return
+            }
+          } catch (fallbackError) {
+            console.error('降级方案也失败:', fallbackError)
+            throw moduleError // 抛出原始错误
+          }
+        }
+
+        if (modules.length === 0) {
+          this.moduleGroups = []
+          return
+        }
+
+        // 2. 为每个模块加载对应的服务
+        const groupPromises = modules.map(async (module) => {
+          try {
+            const shootRes = await getShootPage({
+              moduleId: module.id,
+              size: 1, // 只加载第一个
+              keyword: this.keyword || undefined
+            })
+
+            // 获取该模块的总数
+            let totalCount = 0
+            let firstShoot = null
+
+            if (shootRes && shootRes.records) {
+              const shoots = Array.isArray(shootRes.records) ? shootRes.records : []
+              firstShoot = shoots.length > 0 ? shoots[0] : null
+              
+              // 如果后端返回了总数，使用它；否则再请求一次获取总数
+              if (shootRes.total !== undefined) {
+                totalCount = shootRes.total
+              } else {
+                // 请求获取总数（不带size限制）
+                const countRes = await getShootPage({
+                  moduleId: module.id,
+                  size: 1000,
+                  keyword: this.keyword || undefined
+                })
+                totalCount = countRes && countRes.records ? countRes.records.length : 0
+              }
+            }
+
+            return {
+              module: module,
+              shoot: firstShoot,
+              totalCount: totalCount
+            }
+          } catch (error) {
+            console.error(`加载模块 ${module.name} 的服务失败:`, error)
+            return {
+              module: module,
+              shoot: null,
+              totalCount: 0
+            }
+          }
         })
 
-        // 处理游标分页响应
-        if (res && res.records) {
-          const dataList = Array.isArray(res.records) ? res.records : []
-          
-          if (reset) {
-            this.shoots = dataList
-          } else {
-            this.shoots = [...this.shoots, ...dataList]
-          }
-          this.nextCursor = res.nextCursor
-          this.hasMore = res.hasMore || false
-        }
+        this.moduleGroups = await Promise.all(groupPromises)
+        
+        // 过滤掉没有服务的模块（可选）
+        // this.moduleGroups = this.moduleGroups.filter(g => g.totalCount > 0)
+
       } catch (error) {
-        console.error('加载服务失败:', error)
+        console.error('加载模块分组失败:', error)
         uni.showToast({
           title: '加载失败，请稍后重试',
           icon: 'none'
@@ -171,22 +277,26 @@ export default {
       }
     },
     handleSearch() {
-      this.loadShoots(true)
+      this.loadModuleGroups(true)
     },
     
     handleRefresh() {
       this.refreshing = true
-      this.loadShoots(true)
+      this.loadModuleGroups(true)
     },
-    loadMore() {
-      if (!this.hasMore || this.loading) return
-      this.loadShoots()
-    },
+    
     goToDetail(id) {
       uni.navigateTo({
         url: `/pages/shoot/detail?id=${id}`
       })
     },
+    
+    goToModuleList(moduleId, moduleName) {
+      uni.navigateTo({
+        url: `/pages/services/module-list?moduleId=${moduleId}&moduleName=${encodeURIComponent(moduleName)}`
+      })
+    },
+    
     getFileUrl(url) {
       return getFileUrl(url)
     }
@@ -223,32 +333,15 @@ export default {
   width: 100%;
   position: relative;
   z-index: 1;
-  
-  /* 隐藏滚动条 */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  /* 兼容火狐浏览器 */
-  scrollbar-width: none;
-  /* 兼容IE浏览器 */
-  -ms-overflow-style: none;
-}
-
-/* 页面标题样式 */
-.page-title {
-  padding: 32rpx 0 8rpx 0;
-  width: 100%;
-}
-
-.title-text {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #D4AF37;
-  line-height: 1.2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .search-bar {
   margin-bottom: 24rpx;
+  flex-shrink: 0;
 }
 
 .search-input-wrapper {
@@ -271,38 +364,33 @@ export default {
   color: #FFFFFF;
 }
 
-.shoot-list {
-  height: calc(100vh - 88rpx - 200rpx);
+.module-list-scroll {
+  flex: 1;
+  min-height: 0;
   
   /* 隐藏滚动条 */
   &::-webkit-scrollbar {
     display: none;
   }
-  /* 兼容火狐浏览器 */
   scrollbar-width: none;
-  /* 兼容IE浏览器 */
   -ms-overflow-style: none;
 }
 
-.loading-wrapper,
-.empty-wrapper {
-  padding: 100rpx 0;
+.module-groups {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 24rpx;
+  padding-bottom: 20rpx;
 }
 
-.shoot-card {
+.module-group {
   background: #1E1E1E;
   border-radius: 20rpx;
-  margin-bottom: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
-  transition: all 0.3s;
-  width: 100%;
-  box-sizing: border-box;
   overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+  border: 1rpx solid rgba(255, 255, 255, 0.05);
   animation: fadeInUp 0.6s ease-out forwards;
   opacity: 0;
-  border: 1rpx solid rgba(255, 255, 255, 0.05);
 }
 
 @keyframes fadeInUp {
@@ -316,115 +404,163 @@ export default {
   }
 }
 
-.shoot-card:active {
-  transform: translateY(-4rpx);
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.4);
+.module-header {
+  padding: 24rpx 24rpx 16rpx;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.08);
 }
 
-.shoot-cover {
-  width: 100%;
-  min-height: 300rpx;
-  max-height: 500rpx;
-  position: relative;
-  overflow: hidden;
-  background: #2C2C2C;
+.module-title-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
 }
 
-.cover-image {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.cover-placeholder {
-  width: 100%;
-  height: 100%;
-  background: #2C2C2C;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.shoot-content {
-  padding: 24rpx;
-}
-
-.shoot-header {
-  margin-bottom: 16rpx;
-}
-
-.shoot-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.shoot-name {
+.module-name {
   font-size: 32rpx;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #D4AF37;
+  flex: 1;
 }
 
+.module-count {
+  font-size: 24rpx;
+  color: #999999;
+  font-weight: 500;
+}
 
-
-.shoot-desc {
-  display: block;
-  font-size: 28rpx;
+.module-desc {
+  font-size: 24rpx;
   color: #CCCCCC;
-  line-height: 1.8;
-  margin-bottom: 16rpx;
+  line-height: 1.6;
+  display: block;
+}
+
+.shoot-card-compact {
+  display: flex;
+  padding: 20rpx;
+  gap: 20rpx;
+  transition: background 0.3s;
+}
+
+.shoot-card-compact:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.shoot-cover-compact {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  background: #2C2C2C;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-image-compact {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cover-placeholder-compact {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2C2C2C;
+}
+
+.shoot-content-compact {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.shoot-name-compact {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 8rpx;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.shoot-desc-compact {
+  font-size: 26rpx;
+  color: #CCCCCC;
+  line-height: 1.6;
+  margin-bottom: 12rpx;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  flex: 1;
 }
 
-.shoot-info {
+.shoot-info-compact {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
-  margin-bottom: 16rpx;
-  padding: 16rpx;
-  background: #2C2C2C;
-  border-radius: 12rpx;
+  gap: 8rpx;
 }
 
-.info-item {
+.info-item-compact {
   display: flex;
   align-items: center;
-  gap: 12rpx;
-  font-size: 26rpx;
-  color: #CCCCCC;
-}
-
-.shoot-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 16rpx;
-  border-top: 1rpx solid rgba(255, 255, 255, 0.1);
-}
-
-.shoot-price {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #D4AF37;
-}
-
-.view-detail {
-  font-size: 26rpx;
-  color: #D4AF37;
-  font-weight: 500;
-}
-
-.load-more,
-.no-more {
-  text-align: center;
-  padding: 40rpx 0;
-  font-size: 26rpx;
+  gap: 8rpx;
+  font-size: 24rpx;
   color: #999999;
+  
+  text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.view-more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 20rpx;
+  background: rgba(212, 175, 55, 0.08);
+  border-top: 1rpx solid rgba(212, 175, 55, 0.15);
+  transition: all 0.3s;
+  
+  text {
+    font-size: 26rpx;
+    color: #D4AF37;
+    font-weight: 500;
+  }
+  
+  &:active {
+    background: rgba(212, 175, 55, 0.15);
+  }
+}
+
+.no-shoot-tip {
+  padding: 40rpx 20rpx;
+  text-align: center;
+  
+  text {
+    font-size: 26rpx;
+    color: #666666;
+  }
+}
+
+.loading-wrapper,
+.empty-wrapper {
+  padding: 100rpx 0;
+  display: flex;
+  justify-content: center;
 }
 </style>
