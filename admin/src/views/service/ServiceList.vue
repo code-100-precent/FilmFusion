@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <template>
   <div class="service-management">
     <n-card class="management-card">
@@ -941,4 +942,1002 @@ onUnmounted(() => {
     transform: translateY(0);
   }
 }
+=======
+<template>
+  <div class="service-management">
+    <n-card class="management-card">
+      <div class="search-header">
+        <n-form :model="searchForm" inline class="search-form">
+          <n-form-item label="服务名称">
+            <n-input v-model:value="searchForm.keyword" placeholder="请输入服务名称" clearable @keyup.enter="handleSearch" />
+          </n-form-item>
+          <n-form-item>
+            <n-button type="primary" @click="handleSearch">
+              <template #icon>
+                <Icon icon="mdi:magnify" />
+              </template>
+              搜索
+            </n-button>
+            <n-button @click="handleReset" style="margin-left: 12px">重置</n-button>
+          </n-form-item>
+        </n-form>
+        <div class="action-buttons">
+          <n-button type="primary" @click="handleAdd">
+            <template #icon>
+              <Icon icon="mdi:plus" />
+            </template>
+            新增服务
+          </n-button>
+        </div>
+      </div>
+
+      <!-- 桌面端表格 -->
+      <template v-if="!isMobile">
+        <n-data-table
+            :columns="columns"
+            :data="serviceList"
+            :loading="loading"
+            :row-key="row => row.id"
+            :scroll-x="1400"
+        />
+
+        <!-- 独立分页组件 -->
+        <div class="pagination-container" v-if="pagination.itemCount > 0">
+          <n-pagination
+              v-model:page="pagination.page"
+              v-model:page-size="pagination.pageSize"
+              :page-count="Math.ceil(pagination.itemCount / pagination.pageSize)"
+              :item-count="pagination.itemCount"
+              :page-sizes="pagination.pageSizes"
+              show-size-picker
+              show-quick-jumper
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+          />
+        </div>
+      </template>
+
+      <!-- 移动端卡片列表 -->
+      <div v-else class="mobile-list">
+        <n-spin :show="loading">
+          <div v-if="serviceList.length === 0 && !loading" class="empty-state">
+            <Icon icon="mdi:services" :width="48" style="color: #d1d5db; margin-bottom: 16px;" />
+            <p style="color: #9ca3af;">暂无数据</p>
+          </div>
+          <div v-else class="card-list">
+            <n-card
+                v-for="service in serviceList"
+                :key="service.id"
+                class="mobile-card"
+                hoverable
+            >
+              <div class="card-header">
+                <div class="service-info">
+                  <h3 class="service-name">{{ service.name }}</h3>
+                </div>
+                <div class="service-cover">
+                  <n-image
+                      v-if="service.cover"
+                      :src="service.cover"
+                      width="80"
+                      height="60"
+                      object-fit="cover"
+                      preview-disabled
+                  />
+                  <div v-else class="no-cover">
+                    <Icon icon="mdi:services" :width="32" />
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="info-item">
+                  <span class="label">联系人：</span>
+                  <span>{{ service.contactName || '-' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">联系电话：</span>
+                  <span>{{ service.phone || '-' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">服务地址：</span>
+                  <span>{{ service.address || '-' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">状态：</span>
+                  <span :class="(service.status === true || service.status === 1) ? 'status-available' : 'status-unavailable'">
+                    {{ (service.status === true || service.status === 1) ? '上线' : '下线' }}
+                  </span>
+                </div>
+
+                <div class="info-item">
+                  <span class="label">简介：</span>
+                  <span class="service-desc">{{ service.description || '-' }}</span>
+                </div>
+              </div>
+              <div class="card-actions">
+                <n-button size="small" @click="handleEdit(service)" block style="margin-bottom: 8px">
+                  编辑
+                </n-button>
+                <n-popconfirm @positive-click="handleDelete(service.id)">
+                  <template #trigger>
+                    <n-button size="small" type="error" quaternary block>
+                      删除
+                    </n-button>
+                  </template>
+                  确定要删除这个服务吗？
+                </n-popconfirm>
+              </div>
+            </n-card>
+          </div>
+
+          <!-- 移动端分页 -->
+          <div class="mobile-pagination">
+            <n-pagination
+                :page="pagination.page"
+                :page-size="pagination.pageSize"
+                :item-count="pagination.itemCount"
+                :page-sizes="[10, 20, 50]"
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange"
+            />
+          </div>
+        </n-spin>
+      </div>
+    </n-card>
+
+    <n-modal
+        v-model:show="dialogVisible"
+        preset="card"
+        :title="dialogTitle"
+        style="width: 90%; max-width: 900px"
+        :mask-closable="false"
+    >
+      <n-form
+          ref="formRef"
+          :model="serviceForm"
+          :rules="formRules"
+          :label-placement="isMobile ? 'top' : 'left'"
+          :label-width="isMobile ? 'auto' : '120'"
+      >
+        <n-form-item label="服务名称" path="name">
+          <n-input v-model:value="serviceForm.name" placeholder="请输入服务名称" />
+        </n-form-item>
+
+        <n-form-item label="所属模块" path="moduleId">
+          <n-select
+              v-model:value="serviceForm.moduleId"
+              :options="moduleOptions"
+              placeholder="请选择所属模块"
+              filterable
+              clearable
+              :disabled="moduleOptions.length === 0"
+          />
+          <template #feedback v-if="moduleOptions.length === 0">
+            <span style="color: #f0a020; font-size: 12px;">
+              模块功能暂未启用，请先在"模块管理"中创建模块
+            </span>
+          </template>
+        </n-form-item>
+
+        <n-form-item label="封面图片">
+          <n-upload
+              v-model:file-list="coverFileList"
+              list-type="image-card"
+              :custom-request="handleCoverUpload"
+              @before-upload="beforeUpload"
+              accept="image/*"
+              :max="1"
+          >
+            点击上传
+          </n-upload>
+        </n-form-item>
+
+        <n-form-item label="详情图片">
+          <n-upload
+              v-model:file-list="imageFileList"
+              list-type="image-card"
+              :custom-request="handleImageUpload"
+              @before-upload="beforeUpload"
+              accept="image/*"
+              multiple
+              :max="9"
+          >
+            点击上传
+          </n-upload>
+        </n-form-item>
+
+        <n-form-item label="可用状态" path="status">
+          <n-switch v-model:value="serviceForm.status" />
+        </n-form-item>
+
+        <n-form-item label="服务简介" path="description">
+          <n-input v-model:value="serviceForm.description" type="textarea" :rows="3" placeholder="请输入服务简介" />
+        </n-form-item>
+
+        <div style="display: flex; gap: 16px;">
+          <n-form-item label="联系人" path="contactName" style="flex: 1;">
+            <n-input v-model:value="serviceForm.contactName" placeholder="姓名" />
+          </n-form-item>
+          <n-form-item label="联系电话" path="phone" style="flex: 1;">
+            <n-input v-model:value="serviceForm.phone" placeholder="电话" />
+          </n-form-item>
+        </div>
+
+        <n-form-item label="服务地址" path="address">
+          <n-input v-model:value="serviceForm.address" placeholder="请输入服务地址" />
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <n-button @click="dialogVisible = false">取消</n-button>
+          <n-button type="primary" @click="handleDialogSave" :loading="dialogLoading">保存</n-button>
+        </div>
+      </template>
+    </n-modal>
+
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
+import {
+  NButton, NForm, NFormItem, NInput, NSelect, NInputNumber,
+  NModal, NDataTable, NPagination, NSpace, NSpin, useMessage,
+  NTag, NPopconfirm, NUpload, NImage, NSwitch, useDialog
+} from 'naive-ui'
+import { Icon } from '@iconify/vue'
+import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile, getModuleList } from '@/api/index'
+import { getImageUrl } from '@/utils/image'
+import { useUserStore } from '@/store/user'
+import config from '@/config'
+
+const message = useMessage()
+const dialog = useDialog()
+const userStore = useUserStore()
+
+const isMobile = ref(false)
+const loading = ref(false)
+const serviceList = ref([])
+const dialogVisible = ref(false)
+const dialogLoading = ref(false)
+const dialogTitle = ref('新增服务')
+const formRef = ref(null)
+const coverFileList = ref([])
+const imageFileList = ref([])
+
+const searchForm = reactive({
+  keyword: ''
+})
+
+const serviceForm = reactive({
+  id: null,
+  name: '',
+  contactName: '',
+  phone: '',
+  address: '',
+  description: '',
+  status: true,
+  image: '',
+  thumbImage: '',
+  userId: null,
+  moduleId: null
+})
+
+const moduleOptions = ref([])
+
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  itemCount: 0,
+  showSizePicker: true,
+  pageSizes: [10, 20, 50, 100]
+})
+
+const formRules = {
+  name: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
+  moduleId: [
+    { 
+      required: false, // 改为非必填，因为模块功能可能还未启用
+      message: '请选择所属模块', 
+      trigger: ['blur', 'change'], 
+      type: 'number' 
+    }
+  ],
+  contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入联系电话', trigger: 'blur' },
+    { pattern: /(^1[3-9]\d{9}$)|(^0\d{2,3}-\d{7,8}$)/, message: '请输入正确的手机号或座机号', trigger: 'blur' }
+  ],
+  address: [{ required: true, message: '请输入服务地址', trigger: 'blur' }]
+}
+
+const beforeUpload = (data) => {
+  const isImage = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(data.file.file?.type)
+  if (!isImage) {
+    message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
+    return false
+  }
+  if (data.file.file?.size > 5 * 1024 * 1024) {
+    dialog.warning({
+      title: '提示',
+      content: '图片过大，请重新上传',
+      positiveText: '确定'
+    })
+    return false
+  }
+  return true
+}
+
+const handleCoverUpload = async ({ file, fileList }) => {
+  try {
+    const res = await uploadFile(file.file)
+
+    if (res.code === 200) {
+      const url = res.data.url || res.data
+      const originUrl = res.data.originUrl || url
+      const thumbUrl = res.data.thumbUrl || url
+
+      const index = coverFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        coverFileList.value[index].status = 'finished'
+        coverFileList.value[index].url = getImageUrl(thumbUrl || originUrl)
+        coverFileList.value[index].originUrl = originUrl
+        coverFileList.value[index].thumbUrl = thumbUrl
+      }
+
+      message.success('封面上传成功')
+      return url
+    } else {
+      message.error('封面上传失败')
+      const index = coverFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        coverFileList.value.splice(index, 1)
+      }
+      return false
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    message.error('封面上传失败')
+    const index = coverFileList.value.findIndex(f => f.id === file.id)
+    if (index !== -1) {
+      coverFileList.value.splice(index, 1)
+    }
+    return false
+  }
+}
+
+const handleImageUpload = async ({ file, fileList }) => {
+  try {
+    const res = await uploadFile(file.file)
+
+    if (res.code === 200) {
+      const url = res.data.url || res.data
+      const originUrl = res.data.originUrl || url
+      const thumbUrl = res.data.thumbUrl || url
+
+      const index = imageFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        imageFileList.value[index].status = 'finished'
+        imageFileList.value[index].url = getImageUrl(thumbUrl || originUrl)
+        imageFileList.value[index].originUrl = originUrl
+        imageFileList.value[index].thumbUrl = thumbUrl
+      }
+
+      message.success('图片上传成功')
+      return url
+    } else {
+      message.error('图片上传失败')
+      const index = imageFileList.value.findIndex(f => f.id === file.id)
+      if (index !== -1) {
+        imageFileList.value.splice(index, 1)
+      }
+      return false
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    message.error('图片上传失败')
+    const index = imageFileList.value.findIndex(f => f.id === file.id)
+    if (index !== -1) {
+      imageFileList.value.splice(index, 1)
+    }
+    return false
+  }
+}
+
+const columns = [
+  { title: 'ID', key: 'id', width: 80, fixed: 'left' },
+  { title: '服务名称', key: 'name', width: 180, ellipsis: { tooltip: true }, fixed: 'left' },
+  {
+    title: '图片',
+    key: 'image',
+    width: 100,
+    render: (row) => {
+      const images = (row.image || '').split(',').filter(u => u)
+      const thumbs = (row.thumbImage || '').split(',').filter(u => u)
+      const displayUrl = thumbs[0] || images[0]
+      const previewUrl = images[0] || displayUrl
+
+      if (!displayUrl) return '-'
+
+      return h(NImage, {
+        width: 60,
+        height: 45,
+        src: getImageUrl(displayUrl),
+        previewSrc: getImageUrl(previewUrl),
+        objectFit: 'cover',
+        style: { borderRadius: '4px' }
+      })
+    }
+  },
+
+  { title: '联系人', key: 'contactName', width: 120 },
+  { title: '联系电话', key: 'phone', width: 150 },
+  { title: '服务地址', key: 'address', width: 250, ellipsis: { tooltip: true } },
+  { title: '简介', key: 'description', width: 200, ellipsis: { tooltip: true } },
+  {
+    title: '状态',
+    key: 'status',
+    width: 100,
+    render: (row) => {
+      // status是Boolean类型
+      const isActive = row.status === true || row.status === 1
+      return h(
+          'span',
+          { class: isActive ? 'status-available' : 'status-unavailable' },
+          isActive ? '上线' : '下线'
+      )
+    }
+  },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 150,
+    fixed: 'right',
+    render: (row) => {
+      return h('div', { style: 'display: flex; gap: 8px;' }, [
+        h(NButton, {
+          size: 'small',
+          onClick: () => handleEdit(row)
+        }, { default: () => '编辑' }),
+        h(NPopconfirm, {
+          onPositiveClick: () => handleDelete(row.id)
+        }, {
+          trigger: () => h(NButton, {
+            size: 'small',
+            type: 'error',
+            quaternary: true
+          }, { default: () => '删除' }),
+          default: () => '确定要删除这个服务吗？'
+        })
+      ])
+    }
+  }
+]
+
+// 检测移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// 加载模块选项（静默处理，不显示错误）
+const loadModuleOptions = async () => {
+  try {
+    const res = await getModuleList()
+    if (res.code === 200) {
+      const modules = res.data?.records || res.data?.list || res.data || []
+      moduleOptions.value = modules.map(m => ({
+        label: m.name,
+        value: m.id
+      }))
+    }
+  } catch (error) {
+    // 静默处理错误，不显示提示，只在控制台记录
+    console.log('模块功能暂未启用，跳过加载模块列表')
+    moduleOptions.value = []
+  }
+}
+
+const loadData = async () => {
+  try {
+    loading.value = true
+    const res = await getServiceList({
+      current: pagination.page,
+      size: pagination.pageSize,
+      keyword: searchForm.keyword
+    })
+    if (res.code === 200) {
+      serviceList.value = res.data || []
+      // 兼容多种API返回格式
+      pagination.itemCount = res.pagination?.totalItems || res.data?.total || res.total || 0
+    }
+  } catch (error) {
+    console.error('加载服务列表失败:', error)
+    message.error('加载服务列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSearch = () => {
+  pagination.page = 1
+  loadData()
+}
+
+const handleReset = () => {
+  searchForm.keyword = ''
+  pagination.page = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  pagination.page = page
+  loadData()
+}
+
+const handlePageSizeChange = (pageSize) => {
+  pagination.pageSize = pageSize
+  pagination.page = 1
+  loadData()
+}
+
+const handleAdd = () => {
+  dialogTitle.value = '新增服务'
+  Object.assign(serviceForm, {
+    id: null,
+    name: '',
+    contactName: '',
+    phone: '',
+    address: '',
+    description: '',
+    status: true,
+    image: '',
+    thumbImage: '',
+    userId: userStore.userInfo?.id || null,
+    moduleId: null
+  })
+  coverFileList.value = []
+  imageFileList.value = []
+  
+  // 打开对话框时才加载模块列表
+  loadModuleOptions()
+  
+  dialogVisible.value = true
+}
+
+const handleEdit = async (row) => {
+  try {
+    const res = await getServiceById(row.id)
+    if (res.code === 200 && res.data) {
+      dialogTitle.value = '编辑服务'
+      const data = res.data
+
+      Object.assign(serviceForm, {
+        id: data.id,
+        name: data.name || '',
+        contactName: data.contactName || '',
+        phone: data.phone || '',
+        address: data.address || '',
+        description: data.description || '',
+        status: data.status === 1 || data.status === true,
+        image: data.image || '',
+        thumbImage: data.thumbImage || '',
+        userId: data.userId || data.user_id,
+        moduleId: data.moduleId || null
+      })
+
+      const urls = (data.image || '').split(',').filter(u => u.trim())
+      const thumbUrls = (data.thumbImage || '').split(',').filter(u => u.trim())
+
+      // 封面图 (第一张)
+      if (urls.length > 0) {
+        const coverUrl = urls[0]
+        const coverThumb = thumbUrls[0] || coverUrl
+        coverFileList.value = [{
+          id: 'cover-img',
+          name: 'cover.jpg',
+          status: 'finished',
+          url: getImageUrl(coverThumb || coverUrl),
+          originUrl: coverUrl,
+          thumbUrl: coverThumb
+        }]
+      } else {
+        coverFileList.value = []
+      }
+
+      // 详情图 (第二张开始)
+      const detailUrls = urls.slice(1)
+      const detailThumbUrls = thumbUrls.slice(1)
+
+      imageFileList.value = detailUrls.map((url, index) => ({
+        id: `img-${index}`,
+        name: `image-${index}.jpg`,
+        status: 'finished',
+        url: getImageUrl(detailThumbUrls[index] || url),
+        originUrl: url,
+        thumbUrl: detailThumbUrls[index] || url
+      }))
+
+      // 打开对话框时才加载模块列表
+      loadModuleOptions()
+
+      dialogVisible.value = true
+    }
+  } catch (e) {
+    console.error(e)
+    message.error('获取详情失败')
+  }
+}
+
+const handleDialogSave = async () => {
+  if (!formRef.value) return
+  try {
+    await formRef.value.validate()
+  } catch (error) {
+    return
+  }
+
+  try {
+    dialogLoading.value = true
+
+    // 1. 获取封面图信息
+    let coverOrigin = ''
+    let coverThumb = ''
+    if (coverFileList.value.length > 0) {
+      const file = coverFileList.value[0]
+      if (file.status === 'finished') {
+        if (file.originUrl) coverOrigin = file.originUrl
+        else coverOrigin = file.url
+
+        if (coverOrigin && coverOrigin.startsWith('http')) {
+          coverOrigin = coverOrigin.replace(config.fileBaseURL, '')
+        }
+
+        if (file.thumbUrl) coverThumb = file.thumbUrl
+        else if (file.url && file.url.startsWith('http')) coverThumb = file.url.replace(config.fileBaseURL, '')
+        else coverThumb = file.url
+      }
+    }
+
+    // 2. 获取详情图信息
+    const detailOrigins = imageFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          let url = f.url
+          if (f.originUrl) url = f.originUrl
+          
+          if (url && url.startsWith('http')) {
+            url = url.replace(config.fileBaseURL, '')
+          }
+          
+          // 强制转换为原图路径
+          if (url && url.includes('/files/thumb/')) {
+            return url.replace('/files/thumb/', '/files/origin/')
+          }
+          return url
+        })
+        
+    const detailThumbs = imageFileList.value
+        .filter(f => f.status === 'finished')
+        .map(f => {
+          if (f.thumbUrl) return f.thumbUrl
+          if (f.originUrl) return f.originUrl // 如果没有缩略图，用原图
+          if (f.url && f.url.startsWith('http')) return f.url.replace(config.fileBaseURL, '')
+          return f.url
+        })
+
+    const allImages = []
+    // 封面图强制使用原图
+    if (coverOrigin) {
+      if (coverOrigin.includes('/files/thumb/')) {
+        allImages.push(coverOrigin.replace('/files/thumb/', '/files/origin/'))
+      } else {
+        allImages.push(coverOrigin)
+      }
+    }
+    if (detailOrigins.length > 0) allImages.push(...detailOrigins)
+    
+    // 辅助函数：从URL提取原始文件名（忽略时间戳）
+    const getOriginalFileName = (url) => {
+      if (!url) return ''
+      const parts = url.split('/')
+      const fileName = parts[parts.length - 1]
+      // 假设格式为 timestamp_filename，找到第一个下划线
+      const index = fileName.indexOf('_')
+      if (index !== -1 && index < fileName.length - 1) {
+        return fileName.substring(index + 1)
+      }
+      return fileName
+    }
+
+    const allThumbImages = []
+    
+    // 处理封面缩略图
+    if (coverOrigin) {
+        allThumbImages.push(coverThumb || coverOrigin)
+    }
+    
+    // 处理详情缩略图
+    if (detailOrigins.length > 0) {
+        allThumbImages.push(...detailThumbs)
+    }
+
+    const data = {
+      ...serviceForm,
+      status: serviceForm.status, // 直接传递Boolean值
+      image: allImages.join(','),
+      thumbImage: allThumbImages.join(','),
+      user_id: serviceForm.userId,
+      moduleId: serviceForm.moduleId
+    }
+
+    let res
+    if (data.id) {
+      res = await updateService(data)
+    } else {
+      res = await addService(data)
+    }
+    if (res.code === 200) {
+      message.success(serviceForm.id ? '更新成功' : '创建成功')
+      dialogVisible.value = false
+      loadData()
+    }
+  } catch (error) {
+    console.error('保存失败:', error)
+    message.error('保存失败')
+  } finally {
+    dialogLoading.value = false
+  }
+}
+
+const handleDelete = async (id) => {
+  try {
+    const res = await deleteService(id)
+    if (res.code === 200) {
+      message.success('删除成功')
+      loadData()
+    }
+  } catch (error) {
+    console.error('删除失败:', error)
+    message.error('删除失败')
+  }
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  // 移除页面加载时的模块列表加载，改为在打开对话框时加载
+  loadData()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+</script>
+
+<style scoped lang="scss">
+.service-management {
+  animation: fadeIn 0.3s ease;
+}
+
+.management-card {
+  :deep(.n-card__content) {
+    padding: 16px;
+  }
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-form {
+  flex: 1;
+  min-width: 300px;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pagination-container {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.status-available {
+  color: #18a058;
+  font-weight: 500;
+}
+
+.status-unavailable {
+  color: #d03050;
+  font-weight: 500;
+}
+
+// 移动端卡片列表
+.mobile-list {
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mobile-card {
+    :deep(.n-card__content) {
+      padding: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+
+      .service-info {
+        flex: 1;
+        margin-right: 12px;
+
+        .service-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          margin: 0 0 4px 0;
+        }
+      }
+
+      .service-cover {
+        flex-shrink: 0;
+
+        .no-cover {
+          width: 80px;
+          height: 60px;
+          background: #f3f4f6;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #9ca3af;
+        }
+      }
+    }
+
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+
+      .info-item {
+        display: flex;
+        font-size: 13px;
+
+        .label {
+          color: #6b7280;
+          min-width: 80px;
+          flex-shrink: 0;
+        }
+
+
+
+        .service-desc {
+          color: #374151;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+
+    .card-actions {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+  }
+
+  .mobile-pagination {
+    margin-top: 16px;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 8px;
+
+    :deep(.n-pagination) {
+      justify-content: center;
+    }
+  }
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .search-header {
+    flex-direction: column;
+    gap: 12px;
+
+    .search-form {
+      width: 100%;
+      min-width: auto;
+
+      :deep(.n-form-item) {
+        margin-bottom: 12px;
+
+        .n-form-item-label {
+          width: auto !important;
+          margin-bottom: 4px;
+        }
+      }
+    }
+
+    .action-buttons {
+      width: 100%;
+
+      button {
+        flex: 1;
+      }
+    }
+  }
+
+  .management-card {
+    :deep(.n-card__content) {
+      padding: 12px;
+    }
+  }
+
+  // 移动端表单优化
+  :deep(.n-modal) {
+    .n-dialog {
+      margin: 20px auto;
+    }
+
+    .n-form-item {
+      margin-bottom: 16px;
+
+      .n-form-item-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+
+      .n-input,
+      .n-select {
+        width: 100%;
+      }
+    }
+
+    .n-dialog__action {
+      padding: 12px 16px;
+
+      .n-button {
+        flex: 1;
+        margin: 0 4px;
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+>>>>>>> f7b314f7e19336244787b8fdba614d851af57076
 </style>

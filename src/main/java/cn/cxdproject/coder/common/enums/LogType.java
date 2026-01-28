@@ -88,6 +88,14 @@ public enum LogType {
     TOUR_UPDATE("TOUR_UPDATE", "更新旅游路线"),
     TOUR_DELETE("TOUR_DELETE", "删除旅游路线"),
     TOUR_CREATE("TOUR_CREATE", "新建旅游路线"),
+
+    //模块相关操作
+    MODULE_GET("MODULE_GET", "根据ID查找模块"),
+    MODULE_ADMIN_GET_PAGE("MODULE_ADMIN_GET_PAGE", "管理员分页查询模块"),
+    MODULE_USER_GET_PAGE("MODULE_USER_GET_PAGE", "用户分页查询模块"),
+    MODULE_UPDATE("MODULE_UPDATE", "更新模块"),
+    MODULE_DELETE("MODULE_DELETE", "删除模块"),
+    MODULE_CREATE("MODULE_CREATE", "新建模块"),
     ;
 
     /**
