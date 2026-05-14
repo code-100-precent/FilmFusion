@@ -5,6 +5,7 @@ import cn.cxdproject.coder.common.constants.*;
 import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
+import cn.cxdproject.coder.exception.SystemException;
 import cn.cxdproject.coder.mapper.HotelMapper;
 import cn.cxdproject.coder.mapper.LocationMapper;
 import cn.cxdproject.coder.model.dto.CreateDramaDTO;
@@ -18,14 +19,18 @@ import cn.cxdproject.coder.model.vo.HotelVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.service.DramaService;
 import cn.cxdproject.coder.service.HotelService;
+import cn.cxdproject.coder.utils.AsyncTimeoutUtils;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.NOT_FOUND;
+import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SERVICE_UNAVAILABLE;
 
 @Slf4j
 @Service
@@ -94,7 +100,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     //根据id查询
     @Override
     @CircuitBreaker(name = "hotelGetById", fallbackMethod = "getByIdFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "hotelGet")
+    @Bulkhead(name = "hotelGet", type = Bulkhead.Type.SEMAPHORE)
     public HotelVO getHotelById(Long hotelId){
         Object store = cache.asMap().get(CaffeineConstants.HOTEL + hotelId);
         if (store != null) {
@@ -113,7 +120,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "hotelGetPage", fallbackMethod = "getPageFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "hotelGet")
+    @Bulkhead(name = "hotelGet", type = Bulkhead.Type.SEMAPHORE)
     public List<HotelVO> getHotelPage(Long lastId, int size, String keyword)  {
         List<Long> ids = hotelMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -213,7 +221,8 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     public HotelVO getByIdFallback(Long id,Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -221,14 +230,15 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
         if (hotel != null) {
             return hotel;
         }
-        return null;
+        throw new SystemException(SERVICE_UNAVAILABLE.code(), "服务暂时不可用，请稍后重试");
     }
 
     //客户端游标分页降级接口
     @Override
     public List<HotelVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -279,16 +289,9 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     public HotelVO getHotelByIdWithTimeout(Long hotelId) {
         try {
-            CompletableFuture<HotelVO> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return hotelServiceProvider.getObject().
-                                    getHotelById(hotelId);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> hotelServiceProvider.getObject().getHotelById(hotelId),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(hotelId, e);
         } catch (Exception e) {
@@ -299,16 +302,9 @@ public class HotelServiceImpl extends ServiceImpl<HotelMapper, Hotel> implements
     @Override
     public List<HotelVO> getHotelPageWithTimeout(Long lastId, int size, String keyword) {
         try {
-            CompletableFuture<List<HotelVO>> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return hotelServiceProvider.getObject()
-                                    .getHotelPage(lastId, size, keyword);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> hotelServiceProvider.getObject().getHotelPage(lastId, size, keyword),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);
         } catch (Exception e) {

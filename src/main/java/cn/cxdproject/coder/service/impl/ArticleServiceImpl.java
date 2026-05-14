@@ -6,6 +6,7 @@ import cn.cxdproject.coder.common.context.AuthContext;
 import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
+import cn.cxdproject.coder.exception.SystemException;
 import cn.cxdproject.coder.model.dto.CreateArticleDTO;
 import cn.cxdproject.coder.model.dto.UpdateArticleDTO;
 import cn.cxdproject.coder.model.entity.Article;
@@ -13,14 +14,18 @@ import cn.cxdproject.coder.model.entity.User;
 import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.mapper.ArticleMapper;
 import cn.cxdproject.coder.service.ArticleService;
+import cn.cxdproject.coder.utils.AsyncTimeoutUtils;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -68,7 +73,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     //单个文章查询，支持降级熔断，限流，数据进行本地缓存
     @Override
     @CircuitBreaker(name = "articleGetById", fallbackMethod = "getByIdFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "articleGet")
+    @Bulkhead(name = "articleGet", type = Bulkhead.Type.SEMAPHORE)
     public ArticleVO getArticleById(Long articleId){
         Object store = cache.getIfPresent(CaffeineConstants.ARTICLE + articleId);
         if (store != null) {
@@ -88,7 +94,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     //用户文章批量查询，采用游标分页
     @Override
     @CircuitBreaker(name = "articleGetPage", fallbackMethod = "getPageFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "articleGet")
+    @Bulkhead(name = "articleGet", type = Bulkhead.Type.SEMAPHORE)
     public List<ArticleVO> getArticlePage(Long lastId, int size, String keyword) {
         List<Long> ids = articleMapper.selectIds(lastId, size, keyword);
 
@@ -222,7 +229,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public ArticleVO getByIdFallback(Long id,Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -231,14 +239,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (article != null) {
             return article;
         }
-        return null;
+        throw new SystemException(SERVICE_UNAVAILABLE.code(), "服务暂时不可用，请稍后重试");
     }
 
     //游标查询降级策略
     @Override
     public List<ArticleVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -289,16 +298,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public ArticleVO getArticleByIdWithTimeout(Long articleId) {
         try {
-            CompletableFuture<ArticleVO> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return articleServiceProvider.getObject()
-                                    .getArticleById(articleId);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> articleServiceProvider.getObject().getArticleById(articleId),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(articleId, e);
         } catch (Exception e) {
@@ -309,16 +311,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public List<ArticleVO> getArticlePageWithTimeout(Long lastId, int size, String keyword) {
         try {
-            CompletableFuture<List<ArticleVO>> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return articleServiceProvider.getObject()
-                                    .getArticlePage(lastId, size, keyword);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> articleServiceProvider.getObject().getArticlePage(lastId, size, keyword),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);
         } catch (Exception e) {

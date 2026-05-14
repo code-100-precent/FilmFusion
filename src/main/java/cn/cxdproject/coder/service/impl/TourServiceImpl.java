@@ -5,6 +5,7 @@ import cn.cxdproject.coder.common.constants.*;
 import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
+import cn.cxdproject.coder.exception.SystemException;
 import cn.cxdproject.coder.model.dto.CreateTourDTO;
 import cn.cxdproject.coder.model.dto.UpdateTourDTO;
 import cn.cxdproject.coder.model.entity.Drama;
@@ -14,6 +15,7 @@ import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.PolicyVO;
 import cn.cxdproject.coder.model.vo.TourVO;
 import cn.cxdproject.coder.service.PolicyService;
+import cn.cxdproject.coder.utils.AsyncTimeoutUtils;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -23,8 +25,11 @@ import cn.cxdproject.coder.model.entity.Tour;
 import cn.cxdproject.coder.mapper.TourMapper;
 import cn.cxdproject.coder.service.TourService;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -38,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.NOT_FOUND;
+import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SERVICE_UNAVAILABLE;
 
 /**
  * Tour 服务实现类
@@ -89,7 +95,8 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     //根据id单个数据查询
     @Override
     @CircuitBreaker(name = "tourGetById", fallbackMethod = "getByIdFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "tourGet")
+    @Bulkhead(name = "tourGet", type = Bulkhead.Type.SEMAPHORE)
     public TourVO getTourById(Long tourId) {
         Object store = cache.asMap().get(CaffeineConstants.TOUR + tourId);
         if (store != null) {
@@ -107,7 +114,8 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "tourGetPage", fallbackMethod = "getPageFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "tourGet")
+    @Bulkhead(name = "tourGet", type = Bulkhead.Type.SEMAPHORE)
     public List<TourVO> getTourPage(Long lastId, int size, String keyword) {
         List<Long> ids = tourMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -209,7 +217,9 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     public TourVO getByIdFallback(Long id,Throwable e)  {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        // 业务异常 / 限流 / 并发隔离：原样透传，不去查缓存，让全局异常处理器返回对应状态码。
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -217,14 +227,17 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
         if (tour != null) {
             return tour;
         }
-        return null;
+        // 熔断 / 限流触发且 Redis 兜底也无数据：明确告诉前端服务暂时不可用，
+        // 避免返回 200 + null 让前端误以为是“正常的空数据”。
+        throw new SystemException(SERVICE_UNAVAILABLE.code(), "服务暂时不可用，请稍后重试");
     }
 
     //客户端批量查询降级接口
     @Override
     public List<TourVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -273,16 +286,9 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     public TourVO getTourByIdWithTimeout(Long tourId) {
         try {
-            CompletableFuture<TourVO> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return tourServiceProvider.getObject()
-                                    .getTourById(tourId);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> tourServiceProvider.getObject().getTourById(tourId),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(tourId, e);
         } catch (Exception e) {
@@ -293,16 +299,9 @@ public class TourServiceImpl extends ServiceImpl<TourMapper, Tour> implements To
     @Override
     public List<TourVO> getTourPageWithTimeout(Long lastId, int size, String keyword) {
         try {
-            CompletableFuture<List<TourVO>> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return tourServiceProvider.getObject()
-                                    .getTourPage(lastId, size, keyword);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> tourServiceProvider.getObject().getTourPage(lastId, size, keyword),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);
         } catch (Exception e) {

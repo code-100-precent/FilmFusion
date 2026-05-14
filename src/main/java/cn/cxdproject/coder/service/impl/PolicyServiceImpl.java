@@ -5,6 +5,7 @@ import cn.cxdproject.coder.common.constants.*;
 import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
+import cn.cxdproject.coder.exception.SystemException;
 import cn.cxdproject.coder.mapper.LocationMapper;
 import cn.cxdproject.coder.model.dto.CreatePolicyDTO;
 import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
@@ -16,6 +17,7 @@ import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.model.vo.PolicyVO;
 import cn.cxdproject.coder.service.DramaService;
+import cn.cxdproject.coder.utils.AsyncTimeoutUtils;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -25,8 +27,11 @@ import cn.cxdproject.coder.model.entity.Policy;
 import cn.cxdproject.coder.mapper.PolicyMapper;
 import cn.cxdproject.coder.service.PolicyService;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Lazy;
@@ -40,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.NOT_FOUND;
+import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SERVICE_UNAVAILABLE;
 
 /**
  * Policy 服务实现类
@@ -90,7 +96,8 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     //根据id获取id
     @Override
     @CircuitBreaker(name = "policyGetById", fallbackMethod = "getByIdFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "policyGet")
+    @Bulkhead(name = "policyGet", type = Bulkhead.Type.SEMAPHORE)
     public PolicyVO getPolicyById(Long policyId){
         Object store = cache.asMap().get(CaffeineConstants.POLICY + policyId);
         if (store != null) {
@@ -111,7 +118,8 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "policyGetPage", fallbackMethod = "getPageFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "policyGet")
+    @Bulkhead(name = "policyGet", type = Bulkhead.Type.SEMAPHORE)
     public List<PolicyVO> getPolicyPage(Long lastId, int size, String keyword) {
         List<Long> ids = policyMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
@@ -211,7 +219,8 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @Override
     public PolicyVO getByIdFallback(Long id, Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -220,14 +229,15 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
         if (policy != null) {
             return policy;
         }
-        return null;
+        throw new SystemException(SERVICE_UNAVAILABLE.code(), "服务暂时不可用，请稍后重试");
     }
 
     //客户端批量查询降级接口
     @Override
     public List<PolicyVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -277,16 +287,9 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @Override
     public List<PolicyVO> getPolicyPageWithTimeout(Long lastId, int size, String keyword) {
         try {
-            CompletableFuture<List<PolicyVO>> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return policyServiceProvider.getObject()
-                                    .getPolicyPage(lastId, size, keyword);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> policyServiceProvider.getObject().getPolicyPage(lastId, size, keyword),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);
         } catch (Exception e) {
@@ -297,16 +300,9 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
     @Override
     public PolicyVO getPolicyByIdWithTimeout(Long policyId) {
         try {
-            CompletableFuture<PolicyVO> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return policyServiceProvider.getObject()
-                                    .getPolicyById(policyId);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> policyServiceProvider.getObject().getPolicyById(policyId),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(policyId, e);
         } catch (Exception e) {

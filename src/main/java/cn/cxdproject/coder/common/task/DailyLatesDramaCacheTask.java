@@ -37,8 +37,9 @@ public class DailyLatesDramaCacheTask {
     }
 
 
-    // 降低执行频率：每5分钟执行一次，避免频繁操作
-    @Scheduled(cron = "0 * * * * ?")
+    // 每日凌晨 2 点跑一次。之前 cron 注释写 "每5分钟" 但实际是每分钟，
+    // 全表 selectAll + 逐条 Redis 写，表一大就严重。
+    @Scheduled(cron = "0 0 2 * * ?")
     public void cacheLatestDramaPage() {
         long startTime = System.currentTimeMillis();
         try {
@@ -72,8 +73,7 @@ public class DailyLatesDramaCacheTask {
         }
     }
 
-    // 降低执行频率：每5分钟执行一次，错开与上面任务的执行时间
-    @Scheduled(cron = "0 * * * * ?")
+    @Scheduled(cron = "0 5 2 * * ?")
     public void cacheLatestDrama() {
         long startTime = System.currentTimeMillis();
         try {

@@ -70,12 +70,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new AuthException(UNAUTHORIZED.code(), "用户已被禁用");
         }
 
-        // 验证密码
-        log.debug("验证密码 - 用户ID: {}, 用户名: {}, 密码hash: {}", user.getId(), user.getUsername(), user.getPassword());
+        // 验证密码（不打印密码 hash，避免日志泄露）
         boolean passwordMatches = passwordEncryptionService.matchesBCrypt(password, user.getPassword());
-        log.debug("密码验证结果: {}", passwordMatches);
         if (!passwordMatches) {
-            log.warn("密码验证失败 - 用户ID: {}, 用户名: {}", user.getId(), user.getUsername());
+            log.warn("密码验证失败 - 用户ID: {}", user.getId());
             throw new AuthException(UNAUTHORIZED.code(), "用户名或密码错误");
         }
 
@@ -345,8 +343,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setDeleted(true);
         this.updateById(user);
 
-        // 使该用户的所有token失效
-        jwtConfig.invalidateToken(jwtConfig.generateToken(user));
+        // 使该用户之前签发的所有 token 失效（修复之前重新签发新 token 再加黑名单的错误逻辑）
+        jwtConfig.invalidateAllUserTokens(user.getUsername());
     }
 
     @Override

@@ -3,6 +3,7 @@ package cn.cxdproject.coder.utils;
 import cn.cxdproject.coder.common.constants.Constants;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.extra.servlet.ServletUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -24,6 +25,7 @@ import java.util.Map;
  *
  * @author heathcetide
  */
+@Slf4j
 public class ServletUtils {
 
     /**
@@ -123,7 +125,7 @@ public class ServletUtils {
             response.setCharacterEncoding("utf-8");
             response.getWriter().print(string);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("renderString failed", e);
         }
     }
 
