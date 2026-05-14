@@ -171,71 +171,28 @@
         <view class="form-section">
           <view class="section-title">相关材料</view>
           
-          <view class="form-item">
-            <text class="label required">影视拍摄许可证</text>
-            <view class="upload-area" @click="uploadFile('permit')">
-              <view v-if="!form.shootPermit" class="upload-placeholder">
+          <!-- 动态渲染文件上传项 -->
+          <view 
+            v-for="config in fileConfigs" 
+            :key="config.key" 
+            class="form-item"
+          >
+            <text class="label" :class="{ required: config.required }">{{ config.label }}</text>
+            <view class="upload-area" @click="uploadFile(config.key)">
+              <view v-if="!form[config.originField]" class="upload-placeholder">
                 <uni-icons type="upload" size="24" color="#6366f1"></uni-icons>
                 <text>点击上传</text>
               </view>
               <view v-else class="file-preview">
-                <view class="file-info" @click.stop="previewFile(form.shootPermit, '影视拍摄许可证')">
+                <view class="file-info" @click.stop="previewFile(form[config.originField], config.label)">
                   <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
                   <text class="file-name">已上传文件</text>
                 </view>
                 <view class="file-actions">
-                  <view @click.stop="previewFile(form.shootPermit, '影视拍摄许可证')" style="padding: 8rpx;">
+                  <view @click.stop="previewFile(form[config.originField], config.label)" style="padding: 8rpx;">
                     <uni-icons type="eye" size="20" color="#6366f1"></uni-icons>
                   </view>
-                  <view @click.stop="removeFile('permit')" style="padding: 8rpx;">
-                    <uni-icons type="close" size="20" color="#ef4444"></uni-icons>
-                  </view>
-                </view>
-              </view>
-            </view>
-          </view>
-          
-          <view class="form-item">
-            <text class="label required">立项审批文件</text>
-            <view class="upload-area" @click="uploadFile('approval')">
-              <view v-if="!form.approvalFile" class="upload-placeholder">
-                <uni-icons type="upload" size="24" color="#6366f1"></uni-icons>
-                <text>点击上传</text>
-              </view>
-              <view v-else class="file-preview">
-                <view class="file-info" @click.stop="previewFile(form.approvalFile, '立项审批文件')">
-                  <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
-                  <text class="file-name">已上传文件</text>
-                </view>
-                <view class="file-actions">
-                  <view @click.stop="previewFile(form.approvalFile, '立项审批文件')" style="padding: 8rpx;">
-                    <uni-icons type="eye" size="20" color="#6366f1"></uni-icons>
-                  </view>
-                  <view @click.stop="removeFile('approval')" style="padding: 8rpx;">
-                    <uni-icons type="close" size="20" color="#ef4444"></uni-icons>
-                  </view>
-                </view>
-              </view>
-            </view>
-          </view>
-          
-          <view class="form-item">
-            <text class="label">协拍服务申请表</text>
-            <view class="upload-area" @click="uploadFile('application')">
-              <view v-if="!form.shootApply" class="upload-placeholder">
-                <uni-icons type="upload" size="24" color="#6366f1"></uni-icons>
-                <text>点击上传</text>
-              </view>
-              <view v-else class="file-preview">
-                <view class="file-info" @click.stop="previewFile(form.shootApply, '协拍服务申请表')">
-                  <uni-icons type="paperclip" size="20" color="#6366f1"></uni-icons>
-                  <text class="file-name">已上传文件</text>
-                </view>
-                <view class="file-actions">
-                  <view @click.stop="previewFile(form.shootApply, '协拍服务申请表')" style="padding: 8rpx;">
-                    <uni-icons type="eye" size="20" color="#6366f1"></uni-icons>
-                  </view>
-                  <view @click.stop="removeFile('application')" style="padding: 8rpx;">
+                  <view @click.stop="removeFile(config.key)" style="padding: 8rpx;">
                     <uni-icons type="close" size="20" color="#ef4444"></uni-icons>
                   </view>
                 </view>
@@ -283,6 +240,52 @@ export default {
       typeIndex: -1,
       genreIndex: -1,
       crewScaleIndex: -1,
+      // 文件上传配置 - 只需在这里添加新的文件类型即可
+      // 配置说明：
+      // - key: 唯一标识符，用于区分不同的文件类型
+      // - label: 显示在页面上的文件名称
+      // - required: 是否必填（true/false）
+      // - originField: 后端原图字段名
+      // - thumbField: 后端缩略图字段名
+      // 
+      // 添加新文件示例：
+      // {
+      //   key: 'newFile',
+      //   label: '新文件名称',
+      //   required: false,
+      //   originField: 'newFileUrl',
+      //   thumbField: 'thumbNewFileUrl'
+      // }
+      fileConfigs: [
+        {
+          key: 'permit',
+          label: '《雅安市视听拍摄服务申报表》（1）（2）（加盖公章后扫描PDF文档及电子文档）',
+          required: true,
+          originField: 'shootPermit',
+          thumbField: 'thumbShootPermit'
+        },
+        {
+          key: 'approval',
+          label: '《广播电视节目制作经营许可证》（复印件加盖公章后扫描PDF文档）',
+          required: true,
+          originField: 'approvalFile',
+          thumbField: 'thumbApprovalFile'
+        },
+        {
+          key: 'application',
+          label: '《企业营业执照》（复印件加盖公章后扫描PDF文档）',
+          required: false,
+          originField: 'shootApply',
+          thumbField: 'thumbShootApply'
+        },
+        {
+          key: 'receipt',
+          label: '项目备案公示表/回执单（复印件加盖公章后扫描PDF文档）',
+          required: false,
+          originField: 'projectReceipt',
+          thumbField: 'thumbProjectReceipt'
+        }
+      ],
       form: {
         name: '',
         type: '',
@@ -297,21 +300,22 @@ export default {
         crewScale: '',
         contact: '',
         phoneNumber: '',
-        crewPosition: '',
-        // 使用后端期望的字段名
-        shootPermit: '',
-        thumbShootPermit: '',
-        approvalFile: '',
-        thumbApprovalFile: '',
-        shootApply: '',
-        thumbShootApply: ''
+        crewPosition: ''
       }
     }
+  },
+  created() {
+    // 动态初始化文件字段
+    this.fileConfigs.forEach(config => {
+      this.$set(this.form, config.originField, '')
+      this.$set(this.form, config.thumbField, '')
+    })
   },
   computed: {
     ...mapGetters(['isLoggedIn']),
     canSubmit() {
-      return (
+      // 检查基本字段
+      const basicFieldsValid = (
         this.form.name &&
         this.form.type &&
         this.form.genre &&
@@ -325,10 +329,15 @@ export default {
         this.form.crewScale &&
         this.form.contact &&
         this.form.phoneNumber &&
-        this.form.crewPosition &&
-        this.form.shootPermit &&
-        this.form.approvalFile
+        this.form.crewPosition
       )
+      
+      // 检查必填文件
+      const requiredFilesValid = this.fileConfigs
+        .filter(config => config.required)
+        .every(config => this.form[config.originField])
+      
+      return basicFieldsValid && requiredFilesValid
     }
   },
   onLoad(options) {
@@ -361,29 +370,27 @@ export default {
         
         if (res.code === 200 && res.data) {
           const reportData = res.data
-          this.form = {
-            name: reportData.name || '',
-            type: reportData.type || '',
-            genre: reportData.genre || '',
-            episodes: reportData.episodes || null,
-            investAmount: reportData.investAmount || null,
-            mainCreators: reportData.mainCreators || '',
-            leadProducer: reportData.leadProducer || '',
-            producerUnit: reportData.producerUnit || '',
-            startDate: reportData.startDate || '',
-            endDate: reportData.endDate || '',
-            crewScale: reportData.crewScale || '',
-            contact: reportData.contact || '',
-            phoneNumber: reportData.phoneNumber || '',
-            crewPosition: reportData.crewPosition || '',
-            // 使用后端返回的字段名
-            shootPermit: reportData.shootPermit || '',
-            thumbShootPermit: reportData.thumbShootPermit || '',
-            approvalFile: reportData.approvalFile || '',
-            thumbApprovalFile: reportData.thumbApprovalFile || '',
-            shootApply: reportData.shootApply || '',
-            thumbShootApply: reportData.thumbShootApply || ''
-          }
+          // 设置基本字段
+          this.form.name = reportData.name || ''
+          this.form.type = reportData.type || ''
+          this.form.genre = reportData.genre || ''
+          this.form.episodes = reportData.episodes || null
+          this.form.investAmount = reportData.investAmount || null
+          this.form.mainCreators = reportData.mainCreators || ''
+          this.form.leadProducer = reportData.leadProducer || ''
+          this.form.producerUnit = reportData.producerUnit || ''
+          this.form.startDate = reportData.startDate || ''
+          this.form.endDate = reportData.endDate || ''
+          this.form.crewScale = reportData.crewScale || ''
+          this.form.contact = reportData.contact || ''
+          this.form.phoneNumber = reportData.phoneNumber || ''
+          this.form.crewPosition = reportData.crewPosition || ''
+          
+          // 动态设置文件字段
+          this.fileConfigs.forEach(config => {
+            this.form[config.originField] = reportData[config.originField] || ''
+            this.form[config.thumbField] = reportData[config.thumbField] || ''
+          })
           
           // 设置选项索引
           this.typeIndex = this.typeOptions.indexOf(this.form.type)
@@ -475,8 +482,15 @@ export default {
               
               console.log('3. 准备上传图片:', fileName)
               
+              // 查找文件配置
+              const fileConfig = this.fileConfigs.find(c => c.key === field)
+              if (!fileConfig) {
+                console.error('未找到文件配置:', field)
+                return
+              }
+              
               // 调用上传方法
-              await this.processFileUpload(tempFilePath, fileName, field)
+              await this.processFileUpload(tempFilePath, fileName, fileConfig)
               
             } else {
               // 从文件选择
@@ -525,8 +539,15 @@ export default {
               }
               
               if (filePath) {
+                // 查找文件配置
+                const fileConfig = this.fileConfigs.find(c => c.key === field)
+                if (!fileConfig) {
+                  console.error('未找到文件配置:', field)
+                  return
+                }
+                
                 // 调用上传方法
-                await this.processFileUpload(filePath, fileName, field)
+                await this.processFileUpload(filePath, fileName, fileConfig)
               }
             }
           } catch (error) {
@@ -544,8 +565,8 @@ export default {
     },
     
     // 处理文件上传的通用方法
-    async processFileUpload(filePath, fileName, field) {
-      console.log('开始处理文件上传:', filePath, fileName, field)
+    async processFileUpload(filePath, fileName, fileConfig) {
+      console.log('开始处理文件上传:', filePath, fileName, fileConfig.key)
       
       try {
         uni.showLoading({ title: '上传中...' })
@@ -574,17 +595,9 @@ export default {
             }
             fileUrl = String(fileUrl)
             
-            // 根据field类型设置对应的后端字段
-            if (field === 'permit') {
-              this.form.shootPermit = fileUrl
-              this.form.thumbShootPermit = fileUrl
-            } else if (field === 'approval') {
-              this.form.approvalFile = fileUrl
-              this.form.thumbApprovalFile = fileUrl
-            } else if (field === 'application') {
-              this.form.shootApply = fileUrl
-              this.form.thumbShootApply = fileUrl
-            }
+            // 动态设置对应的后端字段
+            this.form[fileConfig.originField] = fileUrl
+            this.form[fileConfig.thumbField] = fileUrl
             
             console.log(`6. 文件上传成功，文件名:`, fileUrl)
             console.log(`6.1 文件存储路径:`, fileUrl)
@@ -640,23 +653,23 @@ export default {
     },
     
     removeFile(field) {
+      // 查找文件配置
+      const fileConfig = this.fileConfigs.find(c => c.key === field)
+      if (!fileConfig) {
+        console.error('未找到文件配置:', field)
+        return
+      }
+      
       // 显示确认对话框
       uni.showModal({
         title: '确认删除',
         content: '确定要移除该文件吗？',
         success: (res) => {
           if (res.confirm) {
-            // 根据field类型清空对应的后端字段
-            if (field === 'permit') {
-              this.form.shootPermit = ''
-              this.form.thumbShootPermit = ''
-            } else if (field === 'approval') {
-              this.form.approvalFile = ''
-              this.form.thumbApprovalFile = ''
-            } else if (field === 'application') {
-              this.form.shootApply = ''
-              this.form.thumbShootApply = ''
-            }
+            // 动态清空对应的后端字段
+            this.form[fileConfig.originField] = ''
+            this.form[fileConfig.thumbField] = ''
+            
             uni.showToast({ 
               title: '文件已移除', 
               icon: 'success',
@@ -939,39 +952,46 @@ export default {
         return
       }
 
-      // 验证文件上传
-      if (!this.form.shootPermit || !this.form.approvalFile) {
-        uni.showToast({ title: '请上传必要的文件材料', icon: 'none' })
+      // 验证必填文件上传
+      const missingFiles = this.fileConfigs
+        .filter(config => config.required && !this.form[config.originField])
+        .map(config => config.label)
+      
+      if (missingFiles.length > 0) {
+        uni.showToast({ 
+          title: `请上传：${missingFiles[0]}`, 
+          icon: 'none',
+          duration: 2000
+        })
         return
       }
 
       this.submitting = true
       try {
         // 准备提交数据，确保数据类型与后端匹配
-      const reportData = {
-        name: this.form.name,
-        type: this.form.type,
-        genre: this.form.genre,
-        episodes: parseInt(this.form.episodes) || 0,
-        investAmount: parseFloat(this.form.investAmount) || 0,
-        mainCreators: this.form.mainCreators,
-        leadProducer: this.form.leadProducer,
-        producerUnit: this.form.producerUnit,
-        startDate: this.form.startDate,
-        endDate: this.form.endDate,
-        crewScale: this.form.crewScale,
-        contact: this.form.contact,
-        phoneNumber: this.form.phoneNumber,
-        crewPosition: this.form.crewPosition,
-        status: this.reportId ? undefined : 'PENDING', // 新增报备设置为'PENDING'，编辑时保持原状态
-        // 确保文件字段都是字符串类型
-        shootPermit: this.ensureString(this.form.shootPermit),
-        thumbShootPermit: this.ensureString(this.form.thumbShootPermit),
-        approvalFile: this.ensureString(this.form.approvalFile),
-        thumbApprovalFile: this.ensureString(this.form.thumbApprovalFile),
-        shootApply: this.ensureString(this.form.shootApply),
-        thumbShootApply: this.ensureString(this.form.thumbShootApply)
-      }
+        const reportData = {
+          name: this.form.name,
+          type: this.form.type,
+          genre: this.form.genre,
+          episodes: parseInt(this.form.episodes) || 0,
+          investAmount: parseFloat(this.form.investAmount) || 0,
+          mainCreators: this.form.mainCreators,
+          leadProducer: this.form.leadProducer,
+          producerUnit: this.form.producerUnit,
+          startDate: this.form.startDate,
+          endDate: this.form.endDate,
+          crewScale: this.form.crewScale,
+          contact: this.form.contact,
+          phoneNumber: this.form.phoneNumber,
+          crewPosition: this.form.crewPosition,
+          status: this.reportId ? undefined : 'PENDING' // 新增报备设置为'PENDING'，编辑时保持原状态
+        }
+        
+        // 动态添加文件字段
+        this.fileConfigs.forEach(config => {
+          reportData[config.originField] = this.ensureString(this.form[config.originField])
+          reportData[config.thumbField] = this.ensureString(this.form[config.thumbField])
+        })
         
         console.log('提交数据:', reportData)
         
@@ -1068,15 +1088,15 @@ export default {
         crewScale: '',
         contact: '',
         phoneNumber: '',
-        crewPosition: '',
-        // 使用后端期望的字段名
-        shootPermit: '',
-        thumbShootPermit: '',
-        approvalFile: '',
-        thumbApprovalFile: '',
-        shootApply: '',
-        thumbShootApply: ''
+        crewPosition: ''
       }
+      
+      // 动态重置文件字段
+      this.fileConfigs.forEach(config => {
+        this.form[config.originField] = ''
+        this.form[config.thumbField] = ''
+      })
+      
       this.typeIndex = -1
       this.genreIndex = -1
       this.crewScaleIndex = -1

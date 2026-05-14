@@ -271,6 +271,7 @@ export const getShootPage = (params: {
     size?: number
     keyword?: string
     category?: string
+    moduleId?: number
 }) => {
     return httpWithFileUrl<PageResponse<any>>({
         url: '/shoot/page',
@@ -686,6 +687,33 @@ export const getBannerById = (id: number) => {
     }, ['imageUrl'])
 }
 
+// ==================== 10. 模块管理 (Module) ====================
+
+/**
+ * 获取模块列表（分页）
+ */
+export const getModulePage = (params: {
+    cursor?: string
+    size?: number
+    keyword?: string
+}) => {
+    return httpWithFileUrl<any>({
+        url: '/module/page',
+        method: 'GET',
+        data: params
+    }, [])
+}
+
+/**
+ * 获取模块详情
+ */
+export const getModuleById = (id: number) => {
+    return httpWithFileUrl<any>({
+        url: `/module/${id}`,
+        method: 'GET'
+    }, [])
+}
+
 // ==================== 导出所有API ====================
 export default {
     // 光影雅安
@@ -743,5 +771,9 @@ export default {
 
     // 首页配置
     getBannerPage,
-    getBannerById
+    getBannerById,
+
+    // 模块管理
+    getModulePage,
+    getModuleById
 }
