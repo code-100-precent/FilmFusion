@@ -75,7 +75,8 @@ mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml               # Mapper XML 文件路径
   configuration:
     map-underscore-to-camel-case: true                        # 开启驼峰命名自动映射
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl     # 控制台打印 SQL
+    # 生产环境关闭 SQL stdout 打印，避免严重 IO 开销；如需调试改为 slf4j 并通过 logging.level 控制
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
     lazy-loading-enabled: true
     aggressive-lazy-loading: false
     local-cache-scope: session
@@ -110,7 +111,7 @@ management:
         include: health,info,metrics,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: when_authorized
     prometheus:
       enabled: true
 
@@ -119,98 +120,85 @@ management:
 resilience4j:
 
   # Bulkhead：并发隔离 / 限并发
+  # 注意：每个业务模块使用独立实例，避免一个模块被打爆拖垮其他模块。
   bulkhead:
     configs:
       default:
-        max-concurrent-calls: 25
-        max-wait-duration: 100ms
+        max-concurrent-calls: 30
+        max-wait-duration: 50ms
 
     instances:
-      get:
-        base-config: default
-        max-concurrent-calls: 50
-        max-wait-duration: 50ms
+      tourGet:        { base-config: default }
+      shootGet:       { base-config: default }
+      policyGet:      { base-config: default }
+      locationGet:    { base-config: default }
+      hotelGet:       { base-config: default }
+      dramaGet:       { base-config: default }
+      articleGet:     { base-config: default }
+
+  # RateLimiter：服务级限流
+  # Resilience4j 内部按 instance 名独立计数，所以每个业务模块各自一个实例。
+  ratelimiter:
+    configs:
+      default:
+        # 每个刷新周期允许通过的请求数
+        limit-for-period: 200
+        # 计数刷新周期
+        limit-refresh-period: 1s
+        # 超过限额时等待获取许可的最大时长。0 = 快速失败（推荐）
+        timeout-duration: 0
+        register-health-indicator: true
+        # 暴露 metric，对接 actuator / Prometheus
+        allow-health-indicator-to-fail: false
+
+    instances:
+      tourGet:        { base-config: default }
+      shootGet:       { base-config: default }
+      policyGet:      { base-config: default }
+      locationGet:    { base-config: default }
+      hotelGet:       { base-config: default }
+      dramaGet:       { base-config: default }
+      articleGet:     { base-config: default }
 
   circuitbreaker:
     configs:
       default:
         sliding-window-type: COUNT_BASED
         sliding-window-size: 50
+        # 至少累计 20 次调用才开始统计失败率，避免冷启动误判
+        minimum-number-of-calls: 20
         failure-rate-threshold: 50
         slow-call-rate-threshold: 50
-        slow-call-duration-threshold: 2s
-        wait-duration-in-open-state: 2s
+        # 慢调用阈值要小于外层 *WithTimeout 的硬超时（2s），否则永远来不及计入
+        slow-call-duration-threshold: 800ms
+        # 熔断打开后保持 15s，避免 2s 这种过短窗口导致频繁抖动
+        wait-duration-in-open-state: 15s
         permitted-number-of-calls-in-half-open-state: 5
         automatic-transition-from-open-to-half-open-enabled: true
+        # 关键：限流 / 隔离 / 熔断打开本身抛出的异常不应该被记入失败率，
+        # 否则会形成“限流触发 → 失败率上升 → 熔断打开 → 更多请求被拒”的恶性循环。
+        ignore-exceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
+          - io.github.resilience4j.bulkhead.BulkheadFullException
+          - io.github.resilience4j.circuitbreaker.CallNotPermittedException
+          - cn.cxdproject.coder.exception.NotFoundException
+          - cn.cxdproject.coder.exception.BusinessException
 
+    # 注意：所有 instance 都不重复声明 ignore-exceptions，
+    # 否则会覆盖（而非合并） default 中的列表，导致 RequestNotPermitted /
+    # BulkheadFullException 再次被计入失败率，形成熔断器自我放大。
     instances:
-      articleGetPage:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      articleGetById:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      dramaGetPage:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      dramaGetById:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      locationGetPage:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      locationGetById:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      shootGetPage:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      shootGetById:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      hotelGetPage:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      hotelGetById:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      tourGetPage:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      tourGetById:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-
-      policyGetPage:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
-
-      policyGetById:
-        base-config: default
-        ignore-exceptions:
-          - cn.cxdproject.coder.exception.NotFoundException
+      articleGetPage:  { base-config: default }
+      articleGetById:  { base-config: default }
+      dramaGetPage:    { base-config: default }
+      dramaGetById:    { base-config: default }
+      locationGetPage: { base-config: default }
+      locationGetById: { base-config: default }
+      shootGetPage:    { base-config: default }
+      shootGetById:    { base-config: default }
+      hotelGetPage:    { base-config: default }
+      hotelGetById:    { base-config: default }
+      tourGetPage:     { base-config: default }
+      tourGetById:     { base-config: default }
+      policyGetPage:   { base-config: default }
+      policyGetById:   { base-config: default }

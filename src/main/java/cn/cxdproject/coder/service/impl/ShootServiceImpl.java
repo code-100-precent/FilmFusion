@@ -5,6 +5,7 @@ import cn.cxdproject.coder.common.constants.*;
 import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
+import cn.cxdproject.coder.exception.SystemException;
 import cn.cxdproject.coder.model.dto.CreateShootDTO;
 import cn.cxdproject.coder.model.dto.UpdateShootDTO;
 import cn.cxdproject.coder.model.entity.Drama;
@@ -16,14 +17,18 @@ import cn.cxdproject.coder.model.vo.ShootVO;
 import cn.cxdproject.coder.mapper.ShootMapper;
 import cn.cxdproject.coder.service.LocationService;
 import cn.cxdproject.coder.service.ShootService;
+import cn.cxdproject.coder.utils.AsyncTimeoutUtils;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -91,7 +96,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     //根据id获取单个数据
     @Override
     @CircuitBreaker(name = "shootGetById", fallbackMethod = "getByIdFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "shootGet")
+    @Bulkhead(name = "shootGet", type = Bulkhead.Type.SEMAPHORE)
     public ShootVO getShootById(Long shootId) {
         Object store = cache.asMap().get(CaffeineConstants.SHOOT + shootId);
         if (store != null) {
@@ -109,7 +115,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     //客户端批量查询数据（游标分页）
     @Override
     @CircuitBreaker(name = "shootGetPage", fallbackMethod = "getPageFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "shootGet")
+    @Bulkhead(name = "shootGet", type = Bulkhead.Type.SEMAPHORE)
     public List<ShootVO> getShootPage(Long lastId, int size, String keyword,Long moduleId) {
         List<Long> ids = shootMapper.selectIds(lastId, size, keyword,moduleId);
         if (ids.isEmpty()) {
@@ -209,7 +216,8 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     public ShootVO getByIdFallback(Long id,Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -217,14 +225,15 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
         if (store != null) {
             return toShootVO((Shoot) store);
         }
-        return null;
+        throw new SystemException(SERVICE_UNAVAILABLE.code(), "服务暂时不可用，请稍后重试");
     }
 
     //客户端批量查询降级接口
     @Override
     public List<ShootVO> getPageFallback(Long lastId, int size, String keyword, Long moduleId, Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -274,16 +283,9 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     @Override
     public ShootVO getShootByIdWithTimeout(Long shootId) {
         try {
-            CompletableFuture<ShootVO> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return shootServiceProvider.getObject()
-                                    .getShootById(shootId);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(2, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> shootServiceProvider.getObject().getShootById(shootId),
+                    2, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(shootId, e);
         } catch (Exception e) {
@@ -292,18 +294,11 @@ public class ShootServiceImpl extends ServiceImpl<ShootMapper, Shoot> implements
     }
 
     @Override
-    public List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword,Long moduleId) {
+    public List<ShootVO> getShootPageWithTimeout(Long lastId, int size, String keyword, Long moduleId) {
         try {
-            CompletableFuture<List<ShootVO>> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return shootServiceProvider.getObject()
-                                    .getShootPage(lastId, size, keyword,moduleId);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(2, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> shootServiceProvider.getObject().getShootPage(lastId, size, keyword, moduleId),
+                    2, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, moduleId, e);
         } catch (Exception e) {

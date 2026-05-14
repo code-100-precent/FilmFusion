@@ -29,87 +29,64 @@ public class AuthInterceptor implements HandlerInterceptor {
         this.jwtConfig = jwtConfig;
     }
 
-    /**
-     * 获取Token类型（admin或visitor）
-     */
-    private String getTokenType(String token) {
-        try {
-            Claims claims = jwtConfig.getClaimsFromToken(token);
-            return claims.get("type", String.class);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
-        String requestUri = request.getRequestURI();
-        log.debug("AuthInterceptor拦截请求: {}", requestUri);
-        
-        // 先检查是否有PublicAccess注解，如果有则直接放行
+        // 公开接口直接放行
         if (handler instanceof HandlerMethod) {
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             if (handlerMethod.hasMethodAnnotation(PublicAccess.class)) {
-                log.debug("接口 {} 标记为公开访问，直接放行", requestUri);
                 return true;
             }
         }
-        
-        // 如果不是HandlerMethod（如静态资源），直接放行
+
+        // 如果不是 HandlerMethod（如静态资源），直接放行
         if (!(handler instanceof HandlerMethod)) {
-            log.debug("非HandlerMethod请求，直接放行: {}", requestUri);
             return true;
         }
-        
+
+        String requestUri = request.getRequestURI();
         try {
-            // 从请求头中获取token
+            // 从请求头中获取 token
             String authHeader = request.getHeader("Authorization");
-            log.debug("请求 {} 的Authorization头: {}", requestUri, authHeader != null ? "存在" : "不存在");
-            
             if (authHeader == null || authHeader.trim().isEmpty()) {
-                log.warn("请求 {} 缺少Authorization头", requestUri);
                 throw new AuthorizationException("未登录或token已过期");
             }
-            
-            // 验证token
+
+            // 提取 token
             String token = authHeader;
             if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
-            log.debug("提取的token: {}", token.substring(0, Math.min(20, token.length())) + "...");
-            
-            if (!jwtConfig.validateToken(token)) {
-                log.warn("请求 {} 的token验证失败", requestUri);
+
+            // 一次解析完成签名验证 + 黑名单 + 用户级失效检查，
+            // 后续 getTokenType / 构造 User 都复用同一份 Claims，避免重复签名校验。
+            Claims claims = jwtConfig.parseAndValidate(token);
+            if (claims == null) {
                 throw new AuthorizationException("token无效");
             }
-            log.debug("token验证通过");
 
-            // 根据token类型设置对应的上下文
-            String tokenType = getTokenType(token);
-            log.debug("token类型: {}", tokenType);
-            
-            if ("user".equals(tokenType)) {
-                cn.cxdproject.coder.model.entity.User user;
-                try {
-                    user = jwtConfig.getUserFromToken(token);
-                    log.debug("从token解析用户: userId={}, username={}", user != null ? user.getId() : "null", user != null ? user.getUsername() : "null");
-                } catch (Exception e) {
-                    log.error("从token中解析用户信息失败", e);
-                    throw new AuthorizationException("token无效");
-                }
-                if (user == null) {
-                    log.error("从token中解析用户信息为null");
-                    throw new AuthorizationException("token无效");
-                }
-                AuthContext.setCurrentUser(user);
-                log.info("成功设置用户上下文: userId={}, username={}, URI={}", user.getId(), user.getUsername(), requestUri);
-            } else {
+            String tokenType = jwtConfig.getTokenType(claims);
+            if (!"user".equals(tokenType)) {
                 log.warn("token类型无效: {}, URI={}", tokenType, requestUri);
                 throw new AuthorizationException("token类型无效");
             }
 
+            cn.cxdproject.coder.model.entity.User user;
+            try {
+                user = jwtConfig.getUserFromClaims(claims);
+            } catch (Exception e) {
+                log.warn("从token中解析用户信息失败: {}", e.getMessage());
+                throw new AuthorizationException("token无效");
+            }
+            if (user == null) {
+                throw new AuthorizationException("token无效");
+            }
+            AuthContext.setCurrentUser(user);
             AuthContext.setCurrentToken(token);
-            log.debug("成功设置token到上下文");
+            // 不在每个请求都打 info 日志，避免日志量爆炸 + username 泄露到 info 级别
+            if (log.isDebugEnabled()) {
+                log.debug("auth ok userId={}, URI={}", user.getId(), requestUri);
+            }
             return true;
         } catch (AuthorizationException e) {
             // 返回401未授权错误

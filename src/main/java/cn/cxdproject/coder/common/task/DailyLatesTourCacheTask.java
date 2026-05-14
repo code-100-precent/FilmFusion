@@ -28,7 +28,9 @@ public class DailyLatesTourCacheTask {
         this.redisUtils = redisUtils;
     }
 
-    @Scheduled(cron = "0 * * * * ?")
+    // 每日凌晨 2 点刷一次降级缓存，与其它模块对齐。
+    // 之前 "0 * * * * ?" 每分钟全表扫一遍，表一大就会持续给 DB / Redis 加压。
+    @Scheduled(cron = "0 0 2 * * ?")
     public void cacheLatestTourPage() {
         try {
             // 1. 从数据库查询最新10条
@@ -60,7 +62,7 @@ public class DailyLatesTourCacheTask {
         }
     }
 
-    @Scheduled(cron = "0 * * * * ?")
+    @Scheduled(cron = "0 0 2 * * ?")
     public void cacheLatestTourId() {
         try {
             // 1. 查询所有未删除的旅游线路数据

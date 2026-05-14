@@ -5,6 +5,7 @@ import cn.cxdproject.coder.common.constants.*;
 import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
+import cn.cxdproject.coder.exception.SystemException;
 import cn.cxdproject.coder.model.dto.CreateLocationDTO;
 import cn.cxdproject.coder.model.dto.UpdateLocationDTO;
 import cn.cxdproject.coder.model.entity.Article;
@@ -17,14 +18,18 @@ import cn.cxdproject.coder.model.vo.HotelVO;
 import cn.cxdproject.coder.model.vo.LocationVO;
 import cn.cxdproject.coder.mapper.LocationMapper;
 import cn.cxdproject.coder.service.LocationService;
+import cn.cxdproject.coder.utils.AsyncTimeoutUtils;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -98,7 +103,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     //根据id查询
     @Override
     @CircuitBreaker(name = "locationGetById", fallbackMethod = "getByIdFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "locationGet")
+    @Bulkhead(name = "locationGet", type = Bulkhead.Type.SEMAPHORE)
     public LocationVO getLocationById(Long locationId) {
         Object store = cache.asMap().get(CaffeineConstants.LOCATION + locationId);
         if (store != null) {
@@ -116,7 +122,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     //客户端批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "locationGetPage", fallbackMethod = "getPageFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "locationGet")
+    @Bulkhead(name = "locationGet", type = Bulkhead.Type.SEMAPHORE)
     public List<LocationVO> getLocationPage(Long lastId, int size, String keyword) {
         List<Long> ids = locationMapper.selectIds(lastId, size, keyword);
 
@@ -224,7 +231,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     @Override
     public LocationVO getByIdFallback(Long id,Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -232,14 +240,15 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
         if (location != null) {
             return location;
         }
-        return null;
+        throw new SystemException(SERVICE_UNAVAILABLE.code(), "服务暂时不可用，请稍后重试");
     }
 
     //客户端批量查询降级接口
     @Override
     public List<LocationVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -289,16 +298,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     @Override
     public List<LocationVO> getLocationPageWithTimeout(Long lastId, int size, String keyword) {
         try {
-            CompletableFuture<List<LocationVO>> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return locationServiceProvider.getObject()
-                                    .getLocationPage(lastId, size, keyword);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> locationServiceProvider.getObject().getLocationPage(lastId, size, keyword),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);
         } catch (Exception e) {
@@ -309,16 +311,9 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, Location> i
     @Override
     public LocationVO getLocationByIdWithTimeout(Long locationId) {
         try {
-            CompletableFuture<LocationVO> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return locationServiceProvider.getObject()
-                                    .getLocationById(locationId);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> locationServiceProvider.getObject().getLocationById(locationId),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(locationId, e);
         } catch (Exception e) {

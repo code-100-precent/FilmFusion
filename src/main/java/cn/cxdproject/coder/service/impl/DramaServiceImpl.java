@@ -5,6 +5,7 @@ import cn.cxdproject.coder.common.constants.*;
 import cn.cxdproject.coder.common.enums.LogType;
 import cn.cxdproject.coder.exception.BusinessException;
 import cn.cxdproject.coder.exception.NotFoundException;
+import cn.cxdproject.coder.exception.SystemException;
 import cn.cxdproject.coder.model.dto.CreateDramaDTO;
 import cn.cxdproject.coder.model.dto.UpdateDramaDTO;
 import cn.cxdproject.coder.model.entity.Article;
@@ -14,14 +15,18 @@ import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.DramaVO;
 import cn.cxdproject.coder.mapper.DramaMapper;
 import cn.cxdproject.coder.service.DramaService;
+import cn.cxdproject.coder.utils.AsyncTimeoutUtils;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -92,10 +97,10 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     //根据id获取drama
     @Override
     @CircuitBreaker(name = "dramaGetById", fallbackMethod = "getByIdFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "dramaGet")
+    @Bulkhead(name = "dramaGet", type = Bulkhead.Type.SEMAPHORE)
     public DramaVO getDramaById(Long dramaId) throws InterruptedException {
         Object store = cache.asMap().get(CaffeineConstants.DRAMA + dramaId);
-        Thread.sleep(3000);
         if (store != null) {
             return toDramaVO((Drama) store);
         }else {
@@ -112,13 +117,13 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     //用户批量查询（游标分页）
     @Override
     @CircuitBreaker(name = "dramaGetPage", fallbackMethod = "getPageFallback")
-    @Bulkhead(name = "get", type = Bulkhead.Type.SEMAPHORE)
+    @RateLimiter(name = "dramaGet")
+    @Bulkhead(name = "dramaGet", type = Bulkhead.Type.SEMAPHORE)
     public List<DramaVO> getDramaPage(Long lastId, int size, String keyword) throws InterruptedException {
         List<Long> ids = dramaMapper.selectIds(lastId, size, keyword);
         if (ids.isEmpty()) {
             return Collections.emptyList();
         }
-        Thread.sleep(3000);
         List<Drama> dramas = dramaMapper.selectBatchIds(ids);
 
         Map<Long, Drama> dramaMap = dramas.stream()
@@ -218,23 +223,24 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     public DramaVO getByIdFallback(Long id,Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
-        DramaVO drama = redisUtils.get(TaskConstants.DRAMA+id,DramaVO.class);
-        if(drama != null){
+        DramaVO drama = redisUtils.get(TaskConstants.DRAMA + id, DramaVO.class);
+        if (drama != null) {
             return drama;
         }
-
-        return null;
+        throw new SystemException(SERVICE_UNAVAILABLE.code(), "服务暂时不可用，请稍后重试");
     }
 
     //用户批量查询降级
     @Override
     public List<DramaVO> getPageFallback(Long lastId, int size, String keyword, Throwable e) {
 
-        if (e instanceof NotFoundException || e instanceof BusinessException) {
+        if (e instanceof NotFoundException || e instanceof BusinessException
+                || e instanceof RequestNotPermitted || e instanceof BulkheadFullException) {
             throw (RuntimeException) e;
         }
 
@@ -284,16 +290,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     public DramaVO getDramaByIdWithTimeout(Long dramaId) {
         try {
-            CompletableFuture<DramaVO> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return dramaServiceProvider.getObject()
-                                    .getDramaById(dramaId);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> dramaServiceProvider.getObject().getDramaById(dramaId),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getByIdFallback(dramaId, e);
         } catch (Exception e) {
@@ -304,16 +303,9 @@ public class DramaServiceImpl extends ServiceImpl<DramaMapper, Drama> implements
     @Override
     public List<DramaVO> getDramaPageWithTimeout(Long lastId, int size, String keyword) {
         try {
-            CompletableFuture<List<DramaVO>> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return dramaServiceProvider.getObject()
-                                    .getDramaPage(lastId, size, keyword);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            return future.get(Constants.TIME, TimeUnit.SECONDS);
+            return AsyncTimeoutUtils.runWithTimeout(
+                    () -> dramaServiceProvider.getObject().getDramaPage(lastId, size, keyword),
+                    Constants.TIME, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             return getPageFallback(lastId, size, keyword, e);
         } catch (Exception e) {

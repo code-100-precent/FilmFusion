@@ -1,6 +1,10 @@
 package cn.cxdproject.coder.exception;
 
 import cn.cxdproject.coder.common.ApiResponse;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -8,6 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.RATE_LIMIT_EXCEEDED;
+import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SERVICE_UNAVAILABLE;
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.UNAUTHORIZED;
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SYSTEM_ERROR;
 
@@ -17,8 +23,38 @@ import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SYSTEM_ERROR;
  *
  * @author heathcetide
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 限流：返回 429。注意不要打印堆栈，避免日志爆炸。
+     */
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ApiResponse<?> handleRateLimit(RequestNotPermitted ex) {
+        log.warn("rate-limit triggered: {}", ex.getMessage());
+        return ApiResponse.error(RATE_LIMIT_EXCEEDED.code(), "请求过于频繁，请稍后再试");
+    }
+
+    /**
+     * Bulkhead 满载：当前模块并发已达上限，等同 503。
+     */
+    @ExceptionHandler(BulkheadFullException.class)
+    public ApiResponse<?> handleBulkheadFull(BulkheadFullException ex) {
+        log.warn("bulkhead full: {}", ex.getMessage());
+        return ApiResponse.error(SERVICE_UNAVAILABLE.code(), "服务繁忙，请稍后重试");
+    }
+
+    /**
+     * 熔断器处于 OPEN 状态时拒绝调用。
+     * 一般情况下 Service 层的 fallbackMethod 会先兜底；只有当 fallback 本身也抛异常
+     * 或者方法上没配 fallback 时才会冒到这里。
+     */
+    @ExceptionHandler(CallNotPermittedException.class)
+    public ApiResponse<?> handleCircuitOpen(CallNotPermittedException ex) {
+        log.warn("circuit breaker open: {}", ex.getMessage());
+        return ApiResponse.error(SERVICE_UNAVAILABLE.code(), "服务暂时不可用，请稍后重试");
+    }
 
     /**
      * Handle business anomalies (such as insufficient balance, state conflict, etc.)
@@ -81,9 +117,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public ApiResponse<?> handleRuntimeException(RuntimeException e) {
-        // 记录详细错误日志
-        e.printStackTrace();
-        // 返回系统错误，而不是认证错误
+        // 之前用 e.printStackTrace() 写到 stderr，会绕过日志框架且 System.err 内部带锁，
+        // 在高并发异常场景下会成为瓶颈。改为 log.error 走 SLF4J / Logback。
+        log.error("unhandled runtime exception", e);
         return ApiResponse.error(SYSTEM_ERROR.code(), e.getMessage() != null ? e.getMessage() : "系统内部错误");
     }
 
