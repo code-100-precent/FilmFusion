@@ -3,7 +3,6 @@
 // 优先使用 build 注入的环境变量，如果没有则使用默认值
 // 注意：在小程序环境中，process.env 可能会被替换为具体的值，或者为空
  const ENV_BASE_URL = process.env.VUE_APP_SERVER_BASE_URL;
-   // const ENV_BASE_URL = 'http://localhost:8080';
 // 默认服务器地址 (作为兜底)
 const DEFAULT_SERVER_URL = 'https://filmingfilmsinyaan.com';
 

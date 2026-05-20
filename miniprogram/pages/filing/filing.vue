@@ -171,6 +171,12 @@
         <view class="form-section">
           <view class="section-title">相关材料</view>
           
+          <!-- 模板下载按钮 -->
+          <view class="template-download" @click="downloadTemplate">
+            <uni-icons type="download" size="20" color="#6366f1"></uni-icons>
+            <text class="download-text">模板下载</text>
+          </view>
+          
           <!-- 动态渲染文件上传项 -->
           <view 
             v-for="config in fileConfigs" 
@@ -769,6 +775,92 @@ export default {
       }
     },
     
+    // 下载模板文件
+    downloadTemplate() {
+      uni.showLoading({
+        title: '下载中...'
+      })
+      
+      // 模板文件的服务器地址
+      const templateUrl = 'https://filmingfilmsinyaan.com/api/files/origin/1770089209326_plQmUroV4jm5ff3282aecdb3bdecbe5b4a53299465a7.xlsx'
+      
+      console.log('开始下载模板:', templateUrl)
+      
+      // 下载文件
+      uni.downloadFile({
+        url: templateUrl,
+        success: (res) => {
+          console.log('下载响应:', res)
+          if (res.statusCode === 200) {
+            // 保存文件到本地
+            uni.saveFile({
+              tempFilePath: res.tempFilePath,
+              success: (saveRes) => {
+                uni.hideLoading()
+                uni.showToast({
+                  title: '下载成功',
+                  icon: 'success'
+                })
+                
+                console.log('文件保存成功:', saveRes.savedFilePath)
+                
+                // 提示用户文件已保存
+                setTimeout(() => {
+                  uni.showModal({
+                    title: '下载完成',
+                    content: '模板已保存到本地，是否立即打开？',
+                    confirmText: '打开',
+                    cancelText: '稍后',
+                    success: (modalRes) => {
+                      if (modalRes.confirm) {
+                        uni.openDocument({
+                          filePath: saveRes.savedFilePath,
+                          showMenu: true,
+                          success: () => {
+                            console.log('模板打开成功')
+                          },
+                          fail: (err) => {
+                            console.error('模板打开失败:', err)
+                            uni.showToast({
+                              title: '无法打开该文件',
+                              icon: 'none'
+                            })
+                          }
+                        })
+                      }
+                    }
+                  })
+                }, 500)
+              },
+              fail: (err) => {
+                uni.hideLoading()
+                console.error('文件保存失败:', err)
+                uni.showToast({
+                  title: '保存失败',
+                  icon: 'none'
+                })
+              }
+            })
+          } else {
+            uni.hideLoading()
+            console.error('下载失败，状态码:', res.statusCode)
+            uni.showToast({
+              title: '下载失败，请重试',
+              icon: 'none'
+            })
+          }
+        },
+        fail: (err) => {
+          uni.hideLoading()
+          console.error('模板下载失败:', err)
+          uni.showToast({
+            title: '下载失败，请检查网络',
+            icon: 'none'
+          })
+        }
+      })
+    },
+    
     // 下载文件
     downloadFile(fileUrl, fileName) {
       if (!fileUrl) {
@@ -1190,6 +1282,30 @@ export default {
   margin-bottom: 24rpx;
   padding-bottom: 16rpx;
   border-bottom: 2rpx solid #f3f4f6;
+}
+
+.template-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 32rpx;
+  background: #f0f4ff;
+  border: 2rpx solid #6366f1;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.template-download:active {
+  background: #e0e7ff;
+  transform: scale(0.98);
+}
+
+.download-text {
+  font-size: 28rpx;
+  color: #6366f1;
+  font-weight: 500;
 }
 
 .form-item {
