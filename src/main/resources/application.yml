@@ -18,8 +18,12 @@ code100:
 
   # 对象存储
   storage:
-    type: local  # 支持 local
+    type: cos  # 支持 local、cos
     local-base-path: app_uploads
+    cos-secret-id:
+    cos-secret-key:
+    cos-region:
+    cos-bucket:
 
 # 基础服务器配置
 server:

@@ -2,7 +2,9 @@ package cn.cxdproject.coder.common.storage;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
+import static cn.cxdproject.coder.common.constants.Constants.STORAGE_TYPE_COS;
 import static cn.cxdproject.coder.common.constants.Constants.STORAGE_TYPE_LOCAL;
 
 
@@ -18,13 +20,16 @@ public class StorageConfig {
      */
     private final LocalStorageService localStorageService;
 
+    private final OssStorageService ossStorageService;
+
     /**
      * 文件存储属性
      */
     private final FileStorageProperties properties;
 
-    public StorageConfig(LocalStorageService localStorageService, FileStorageProperties properties) {
+    public StorageConfig(LocalStorageService localStorageService, OssStorageService ossStorageService, FileStorageProperties properties) {
         this.localStorageService = localStorageService;
+        this.ossStorageService = ossStorageService;
         this.properties = properties;
     }
 
@@ -32,9 +37,11 @@ public class StorageConfig {
      * 获取文件存储服务
      */
     @Bean
+    @Primary
     public FileStorageAdapter fileStorageAdapter() {
         return switch (properties.getType()) {
             case STORAGE_TYPE_LOCAL -> localStorageService;
+            case STORAGE_TYPE_COS -> ossStorageService;
             default -> throw new IllegalArgumentException("不支持的存储类型: " + properties.getType());
         };
     }
