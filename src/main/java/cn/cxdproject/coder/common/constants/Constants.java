@@ -178,5 +178,7 @@ public interface Constants {
      */
     String STORAGE_TYPE_LOCAL = "local";
 
+    String STORAGE_TYPE_COS = "cos";
+
     Long TIME = 2L;
 }
