@@ -159,21 +159,7 @@
           <n-input v-model:value="serviceForm.name" placeholder="请输入服务名称" />
         </n-form-item>
 
-        <n-form-item label="所属模块" path="moduleId">
-          <n-select
-              v-model:value="serviceForm.moduleId"
-              :options="moduleOptions"
-              placeholder="请选择所属模块"
-              filterable
-              clearable
-              :disabled="moduleOptions.length === 0"
-          />
-          <template #feedback v-if="moduleOptions.length === 0">
-            <span style="color: #f0a020; font-size: 12px;">
-              模块功能暂未启用，请先在"模块管理"中创建模块
-            </span>
-          </template>
-        </n-form-item>
+
 
         <n-form-item label="封面图片">
           <n-upload
@@ -242,7 +228,7 @@ import {
   NTag, NPopconfirm, NUpload, NImage, NSwitch, useDialog
 } from 'naive-ui'
 import { Icon } from '@iconify/vue'
-import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile, getModuleList } from '@/api/index'
+import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile } from '@/api/index'
 import { getImageUrl } from '@/utils/image'
 import { useUserStore } from '@/store/user'
 import config from '@/config'
@@ -275,11 +261,8 @@ const serviceForm = reactive({
   status: true,
   image: '',
   thumbImage: '',
-  userId: null,
-  moduleId: null
+  userId: null
 })
-
-const moduleOptions = ref([])
 
 const pagination = reactive({
   page: 1,
@@ -291,14 +274,6 @@ const pagination = reactive({
 
 const formRules = {
   name: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
-  moduleId: [
-    { 
-      required: false, // 改为非必填，因为模块功能可能还未启用
-      message: '请选择所属模块', 
-      trigger: ['blur', 'change'], 
-      type: 'number' 
-    }
-  ],
   contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
   phone: [
     { required: true, message: '请输入联系电话', trigger: 'blur' },
@@ -475,24 +450,6 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
 
-// 加载模块选项（静默处理，不显示错误）
-const loadModuleOptions = async () => {
-  try {
-    const res = await getModuleList()
-    if (res.code === 200) {
-      const modules = res.data?.records || res.data?.list || res.data || []
-      moduleOptions.value = modules.map(m => ({
-        label: m.name,
-        value: m.id
-      }))
-    }
-  } catch (error) {
-    // 静默处理错误，不显示提示，只在控制台记录
-    console.log('模块功能暂未启用，跳过加载模块列表')
-    moduleOptions.value = []
-  }
-}
-
 const loadData = async () => {
   try {
     loading.value = true
@@ -541,6 +498,7 @@ const handleAdd = () => {
   Object.assign(serviceForm, {
     id: null,
     name: '',
+
     contactName: '',
     phone: '',
     address: '',
@@ -548,15 +506,10 @@ const handleAdd = () => {
     status: true,
     image: '',
     thumbImage: '',
-    userId: userStore.userInfo?.id || null,
-    moduleId: null
+    userId: userStore.userInfo?.id || null
   })
   coverFileList.value = []
   imageFileList.value = []
-  
-  // 打开对话框时才加载模块列表
-  loadModuleOptions()
-  
   dialogVisible.value = true
 }
 
@@ -577,8 +530,7 @@ const handleEdit = async (row) => {
         status: data.status === 1 || data.status === true,
         image: data.image || '',
         thumbImage: data.thumbImage || '',
-        userId: data.userId || data.user_id,
-        moduleId: data.moduleId || null
+        userId: data.userId || data.user_id
       })
 
       const urls = (data.image || '').split(',').filter(u => u.trim())
@@ -612,9 +564,6 @@ const handleEdit = async (row) => {
         originUrl: url,
         thumbUrl: detailThumbUrls[index] || url
       }))
-
-      // 打开对话框时才加载模块列表
-      loadModuleOptions()
 
       dialogVisible.value = true
     }
@@ -722,8 +671,7 @@ const handleDialogSave = async () => {
       status: serviceForm.status, // 直接传递Boolean值
       image: allImages.join(','),
       thumbImage: allThumbImages.join(','),
-      user_id: serviceForm.userId,
-      moduleId: serviceForm.moduleId
+      user_id: serviceForm.userId
     }
 
     let res
@@ -761,7 +709,6 @@ const handleDelete = async (id) => {
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
-  // 移除页面加载时的模块列表加载，改为在打开对话框时加载
   loadData()
 })
 

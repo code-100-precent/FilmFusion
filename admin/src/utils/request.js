@@ -118,10 +118,8 @@ service.interceptors.response.use(
           router.push('/login')
         }, 1000)
       } else {
-        // 检查是否是静默请求（不显示错误提示）
-        if (!response.config.silent) {
-          showMessage(errorMsg, 'error')
-        }
+        // 非认证类错误正常提示
+        showMessage(errorMsg, 'error')
       }
       // 构建详细的错误对象
       const error = new Error(errorMsg)
@@ -183,9 +181,8 @@ service.interceptors.response.use(
       errorMsg = error.message || '请求配置错误'
     }
 
-    // 检查是否是静默请求（不显示错误提示）
     // 401 认证错误不再弹出提示，只做静默处理
-    if (error.httpStatus !== 401 && !error.config?.silent) {
+    if (error.httpStatus !== 401) {
       showMessage(errorMsg, 'error')
     }
     return Promise.reject(error)

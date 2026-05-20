@@ -44,6 +44,13 @@
 			}
 		},
 		{
+			"path": "pages/services/module-list",
+			"style": {
+				"navigationBarTitleText": "服务列表",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/news/news",
 			"style": {
 				"navigationBarTitleText": "影视资讯",

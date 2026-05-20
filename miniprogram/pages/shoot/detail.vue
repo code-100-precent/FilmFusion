@@ -43,6 +43,10 @@
         <view class="card-header">
           <text class="shoot-name">{{ shoot.name }}</text>
         </view>
+        <view v-if="shoot.moduleId && moduleInfo" class="module-tag">
+          <uni-icons type="flag" size="16" color="#D4AF37"></uni-icons>
+          <text>{{ moduleInfo.name }}</text>
+        </view>
       </view>
 
       <!-- 服务描述 -->
@@ -71,14 +75,6 @@
         </view>
       </view>
 
-      <!-- 价格信息 -->
-      <view class="info-card">
-        <view class="card-title">价格信息</view>
-        <view class="price-wrapper">
-          <text class="price-value">¥{{ shoot.price }}</text>
-          <text class="price-unit">/次</text>
-        </view>
-      </view>
     </scroll-view>
 
     <view v-if="loading" class="loading-wrapper">
@@ -95,7 +91,7 @@
 import NavBar from '@/components/NavBar/NavBar.vue'
 import Loading from '@/components/Loading/Loading.vue'
 import Empty from '@/components/Empty/Empty.vue'
-import { getShootById } from '../../services/backend-api'
+import { getShootById, getModuleById } from '../../services/backend-api'
 import { getFileUrl } from '../../utils'
 
 export default {
@@ -107,7 +103,8 @@ export default {
   data() {
     return {
       shoot: null,
-      loading: false
+      loading: false,
+      moduleInfo: null // 模块信息
     }
   },
   computed: {
@@ -167,6 +164,11 @@ export default {
         
         if (res.code === 200 && res.data) {
           this.shoot = res.data
+          
+          // 如果有模块ID，加载模块信息
+          if (this.shoot.moduleId) {
+            this.loadModuleInfo(this.shoot.moduleId)
+          }
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -181,6 +183,16 @@ export default {
         })
       } finally {
         this.loading = false
+      }
+    },
+    async loadModuleInfo(moduleId) {
+      try {
+        const res = await getModuleById(moduleId)
+        if (res.code === 200 && res.data) {
+          this.moduleInfo = res.data
+        }
+      } catch (error) {
+        console.error('加载模块信息失败:', error)
       }
     },
     previewImage(current = 0) {
@@ -298,6 +310,23 @@ export default {
   font-weight: 600;
   color: #FFFFFF;
   flex: 1;
+}
+
+.module-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 16rpx;
+  padding: 8rpx 20rpx;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(244, 208, 63, 0.15) 100%);
+  border: 1rpx solid rgba(212, 175, 55, 0.3);
+  border-radius: 24rpx;
+  
+  text {
+    font-size: 24rpx;
+    color: #D4AF37;
+    font-weight: 500;
+  }
 }
 
 .shoot-status {

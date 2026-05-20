@@ -70,6 +70,10 @@
             <text>查看全部</text>
             <uni-icons type="arrowright" size="16" color="#D4AF37"></uni-icons>
           </view>
+          <!-- 调试按钮 -->
+          <view class="debug-btn" @click="showColorPicker = true">
+            <uni-icons type="color" size="20" color="#D4AF37"></uni-icons>
+          </view>
         </view>
 
         <view v-if="loading" class="loading-wrapper">
@@ -189,6 +193,121 @@
 
     <!-- 底部导航栏 -->
     <TabBar :current="'index'"></TabBar>
+
+    <!-- 颜色选择器弹窗 -->
+    <view v-if="showColorPicker" class="color-picker-modal" @click="showColorPicker = false">
+      <view class="color-picker-content" @click.stop>
+        <view class="picker-header">
+          <text class="picker-title">背景颜色调试</text>
+          <view class="close-btn" @click="showColorPicker = false">
+            <uni-icons type="closeempty" size="24" color="#666"></uni-icons>
+          </view>
+        </view>
+
+        <!-- 影视资讯模块 -->
+        <view class="color-section">
+          <text class="section-label">影视资讯模块</text>
+          
+          <!-- 颜色1 -->
+          <view class="color-item">
+            <view class="color-item-header">
+              <text class="color-label">颜色1</text>
+              <text class="rgb-text">{{ hexToRgb(newsColor1) }}</text>
+            </view>
+            <view class="color-preview" :style="{ background: newsColor1 }"></view>
+            <view class="color-palette">
+              <view
+                v-for="(color, index) in colorPalette"
+                :key="'news1-' + index"
+                class="palette-item"
+                :style="{ background: color }"
+                @click="newsColor1 = color"
+              >
+                <view v-if="newsColor1 === color" class="selected-mark">
+                  <uni-icons type="checkmarkempty" size="16" color="#fff"></uni-icons>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 颜色2 -->
+          <view class="color-item">
+            <view class="color-item-header">
+              <text class="color-label">颜色2</text>
+              <text class="rgb-text">{{ hexToRgb(newsColor2) }}</text>
+            </view>
+            <view class="color-preview" :style="{ background: newsColor2 }"></view>
+            <view class="color-palette">
+              <view
+                v-for="(color, index) in colorPalette"
+                :key="'news2-' + index"
+                class="palette-item"
+                :style="{ background: color }"
+                @click="newsColor2 = color"
+              >
+                <view v-if="newsColor2 === color" class="selected-mark">
+                  <uni-icons type="checkmarkempty" size="16" color="#fff"></uni-icons>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 热门取景地模块 -->
+        <view class="color-section">
+          <text class="section-label">热门取景地模块</text>
+          
+          <!-- 颜色1 -->
+          <view class="color-item">
+            <view class="color-item-header">
+              <text class="color-label">颜色1</text>
+              <text class="rgb-text">{{ hexToRgb(locationColor1) }}</text>
+            </view>
+            <view class="color-preview" :style="{ background: locationColor1 }"></view>
+            <view class="color-palette">
+              <view
+                v-for="(color, index) in colorPalette"
+                :key="'loc1-' + index"
+                class="palette-item"
+                :style="{ background: color }"
+                @click="locationColor1 = color"
+              >
+                <view v-if="locationColor1 === color" class="selected-mark">
+                  <uni-icons type="checkmarkempty" size="16" color="#fff"></uni-icons>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 颜色2 -->
+          <view class="color-item">
+            <view class="color-item-header">
+              <text class="color-label">颜色2</text>
+              <text class="rgb-text">{{ hexToRgb(locationColor2) }}</text>
+            </view>
+            <view class="color-preview" :style="{ background: locationColor2 }"></view>
+            <view class="color-palette">
+              <view
+                v-for="(color, index) in colorPalette"
+                :key="'loc2-' + index"
+                class="palette-item"
+                :style="{ background: color }"
+                @click="locationColor2 = color"
+              >
+                <view v-if="locationColor2 === color" class="selected-mark">
+                  <uni-icons type="checkmarkempty" size="16" color="#fff"></uni-icons>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="picker-actions">
+          <view class="action-btn reset-btn" @click="resetColors">重置</view>
+          <view class="action-btn confirm-btn" @click="showColorPicker = false">确定</view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -239,6 +358,45 @@ export default {
         { label: '人文景观', value: 'humanities' },
         { label: '城市场景', value: 'urban' },
         { label: '特色场景', value: 'feature' }
+      ],
+      // 颜色调试相关
+      showColorPicker: false,
+      newsColor1: '#c7d373',
+      newsColor2: '#2ea47c',
+      locationColor1: '#90aadf',
+      locationColor2: '#90aadf',
+      // 色板颜色
+      colorPalette: [
+        // 第一行 - 绿色系
+        '#2ea47c', '#3cb371', '#20b2aa', '#00c9a7', '#00d084',
+        '#48d1cc', '#40e0d0', '#7fffd4', '#66cdaa', '#98fb98',
+        // 第二行 - 蓝色系
+        '#4169e1', '#4682b4', '#5f9ea0', '#6495ed', '#87ceeb',
+        '#87cefa', '#90aadf', '#add8e6', '#b0c4de', '#b0e0e6',
+        // 第三行 - 紫色系
+        '#8a2be2', '#9370db', '#9966cc', '#ba55d3', '#da70d6',
+        '#dda0dd', '#ee82ee', '#d8bfd8', '#e6e6fa', '#f0e6ff',
+        // 第四行 - 粉红色系
+        '#ff1493', '#ff69b4', '#ff6eb4', '#ffb6c1', '#ffc0cb',
+        '#ffb3d9', '#ffd1dc', '#ffe4e1', '#fff0f5', '#ffe4f0',
+        // 第五行 - 红色系
+        '#dc143c', '#ff0000', '#ff4500', '#ff6347', '#ff7f50',
+        '#ff8c69', '#ffa07a', '#ffb6c1', '#ffc1cc', '#ffd7d7',
+        // 第六行 - 橙黄色系
+        '#ff8c00', '#ffa500', '#ffb347', '#ffc125', '#ffd700',
+        '#ffe135', '#ffec8b', '#fff68f', '#fffacd', '#ffffe0',
+        // 第七行 - 黄绿色系
+        '#c7d373', '#d4d55c', '#daa520', '#bdb76b', '#f0e68c',
+        '#eee8aa', '#f5deb3', '#ffe4b5', '#ffefd5', '#fff8dc',
+        // 第八行 - 棕色系
+        '#8b4513', '#a0522d', '#a52a2a', '#bc8f8f', '#cd853f',
+        '#d2691e', '#deb887', '#f4a460', '#f5deb3', '#ffe4c4',
+        // 第九行 - 灰色系
+        '#2f4f4f', '#696969', '#708090', '#778899', '#808080',
+        '#a9a9a9', '#c0c0c0', '#d3d3d3', '#dcdcdc', '#f5f5f5',
+        // 第十行 - 特殊色
+        '#000000', '#1a1a1a', '#333333', '#4d4d4d', '#666666',
+        '#800000', '#8b0000', '#006400', '#00008b', '#ffffff'
       ]
     }
   },
@@ -252,7 +410,43 @@ export default {
     } catch (e) {
       console.error('读取Banner缓存失败', e)
     }
+    
+    // 2. 尝试从缓存读取颜色配置
+    try {
+      const cachedColors = uni.getStorageSync('index_colors_cache')
+      if (cachedColors) {
+        this.newsColor1 = cachedColors.newsColor1 || this.newsColor1
+        this.newsColor2 = cachedColors.newsColor2 || this.newsColor2
+        this.locationColor1 = cachedColors.locationColor1 || this.locationColor1
+        this.locationColor2 = cachedColors.locationColor2 || this.locationColor2
+      }
+    } catch (e) {
+      console.error('读取颜色缓存失败', e)
+    }
+    
     this.loadData()
+  },
+  computed: {
+    newsGradient() {
+      return `linear-gradient(160deg, ${this.newsColor1} 0%, ${this.newsColor2} 100%)`
+    },
+    locationGradient() {
+      return `linear-gradient(160deg, ${this.locationColor1} 0%, ${this.locationColor2} 100%)`
+    }
+  },
+  watch: {
+    newsColor1() {
+      this.saveColors()
+    },
+    newsColor2() {
+      this.saveColors()
+    },
+    locationColor1() {
+      this.saveColors()
+    },
+    locationColor2() {
+      this.saveColors()
+    }
   },
   methods: {
     getFileUrl, // Expose helper to template
@@ -491,6 +685,34 @@ export default {
       if (!value) return ''
       const category = this.locationCategories.find(c => c.value === value)
       return category ? category.label : value
+    },
+    hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+      if (result) {
+        const r = parseInt(result[1], 16)
+        const g = parseInt(result[2], 16)
+        const b = parseInt(result[3], 16)
+        return `rgb(${r}, ${g}, ${b})`
+      }
+      return hex
+    },
+    saveColors() {
+      try {
+        uni.setStorageSync('index_colors_cache', {
+          newsColor1: this.newsColor1,
+          newsColor2: this.newsColor2,
+          locationColor1: this.locationColor1,
+          locationColor2: this.locationColor2
+        })
+      } catch (e) {
+        console.error('保存颜色配置失败', e)
+      }
+    },
+    resetColors() {
+      this.newsColor1 = '#c7d373'
+      this.newsColor2 = '#2ea47c'
+      this.locationColor1 = '#90aadf'
+      this.locationColor2 = '#90aadf'
     }
   }
 }
@@ -890,7 +1112,7 @@ export default {
    模块1：影视资讯 - 竹青色调 (Bamboo Green)
    ========================================= */
 .news-section {
-  background: linear-gradient(160deg, #2E5C55 0%, #1A3C35 100%);
+  background: linear-gradient(160deg, rgb(0, 0, 139) 0%, rgb(218, 165, 32) 100%);
   border: 1rpx solid rgba(46, 92, 85, 0.3);
 }
 
@@ -902,7 +1124,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.05) 0%, transparent 20%);
+  background-image: radial-gradient(circle at 100% 0%, rgba(148, 146, 198, 0.05) 0%, transparent 20%);
   pointer-events: none;
 }
 
@@ -923,7 +1145,7 @@ export default {
   overflow: hidden;
   padding: 12rpx;
   transition: all 0.3s ease;
-  border: 1rpx solid rgba(255, 255, 255, 0.05);
+  border: 5rpx solid rgba(252, 248, 248, 0.1);
   vertical-align: top;
   white-space: normal;
 }
@@ -981,7 +1203,7 @@ export default {
 .news-card-title {
   font-size: 26rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #ffffff;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -995,17 +1217,17 @@ export default {
    模块2：热门取景地 - 淡黄色调
    ========================================= */
 .location-section {
-  background: linear-gradient(160deg, #ded78f 0%, #8b8138 100%);
+  background: linear-gradient(160deg, rgba(218, 165, 32, 0.8) 0%, rgba(0, 0, 139, 0.8) 100%);
   border: 1rpx solid rgba(255, 235, 59, 0.3);
 }
 
 .location-section .section-title {
-  color: #5D4037;
+  color: #ffffff;
   text-shadow: none;
 }
 
 .location-section .section-more {
-  color: rgba(93, 64, 55, 0.7);
+  color: rgba(176, 153, 145, 0.7);
 }
 
 .location-section .section-more:active {
@@ -1135,9 +1357,9 @@ export default {
 }
 
 .featured-section .section-title {
-  color: #333333; /* 恢复深色标题 */
+  color: rgb(96, 197, 129); /* 恢复深色标题 */
   text-shadow: none;
-  border-left: 8rpx solid #D4AF37;
+  border-left: 8rpx solid #d9c06f;
   padding-left: 16rpx;
   font-size: 32rpx;
   line-height: 1;
@@ -1347,6 +1569,209 @@ export default {
   .banner-title {
     font-size: 34rpx;
   }
+}
+
+/* 调试按钮样式 */
+.debug-btn {
+  width: 56rpx;
+  height: 56rpx;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  transition: all 0.3s ease;
+  border: 2rpx solid rgba(212, 175, 55, 0.3);
+  backdrop-filter: blur(10rpx);
+}
+
+.debug-btn:active {
+  background: rgba(0, 0, 0, 0.5);
+  transform: scale(0.95);
+}
+
+/* 颜色选择器弹窗 */
+.color-picker-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.color-picker-content {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  width: 100%;
+  max-width: 600rpx;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.3);
+}
+
+.picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 32rpx 24rpx;
+  border-bottom: 2rpx solid #F0F0F0;
+}
+
+.picker-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333333;
+}
+
+.close-btn {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.close-btn:active {
+  background: #F5F5F5;
+}
+
+.color-section {
+  padding: 32rpx;
+  border-bottom: 2rpx solid #F0F0F0;
+}
+
+.color-section:last-of-type {
+  border-bottom: none;
+}
+
+.section-label {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #333333;
+  display: block;
+  margin-bottom: 24rpx;
+  padding-left: 16rpx;
+  border-left: 6rpx solid #D4AF37;
+}
+
+.color-item {
+  margin-bottom: 32rpx;
+}
+
+.color-item:last-child {
+  margin-bottom: 0;
+}
+
+.color-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.color-label {
+  font-size: 24rpx;
+  color: #666666;
+  font-weight: 600;
+}
+
+.rgb-text {
+  font-size: 20rpx;
+  color: #999999;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.color-preview {
+  width: 100%;
+  height: 60rpx;
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  border: 2rpx solid #E0E0E0;
+}
+
+.color-palette {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 8rpx;
+}
+
+.palette-item {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8rpx;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2rpx solid rgba(0, 0, 0, 0.1);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.palette-item:active {
+  transform: scale(0.9);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
+}
+
+.selected-mark {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6rpx;
+}
+
+.picker-actions {
+  display: flex;
+  gap: 16rpx;
+  padding: 24rpx 32rpx 32rpx;
+}
+
+.action-btn {
+  flex: 1;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.reset-btn {
+  background: #F5F5F5;
+  color: #666666;
+  border: 2rpx solid #E0E0E0;
+}
+
+.reset-btn:active {
+  background: #E8E8E8;
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, #D4AF37, #C9A961);
+  color: #000000;
+  box-shadow: 0 6rpx 20rpx rgba(212, 175, 55, 0.3);
+}
+
+.confirm-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 14rpx rgba(212, 175, 55, 0.2);
 }
 </style>
 
