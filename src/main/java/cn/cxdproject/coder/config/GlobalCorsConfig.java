@@ -1,10 +1,16 @@
 package cn.cxdproject.coder.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Global CORS (Cross-Origin Resource Sharing) configuration class
@@ -15,37 +21,55 @@ import org.springframework.web.filter.CorsFilter;
 @Configuration
 public class GlobalCorsConfig {
 
-    /**
-     * Creates a global CORS filter Bean.
-     * Spring Boot will automatically register this filter to the container to handle cross-origin requests before each request.
-     *
-     * @return CorsFilter cross-origin filter
-     */
+    @Value("${code100.security.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000}")
+    private String allowedOrigins;
+
+    @Value("${code100.security.cors.allowed-origin-patterns:}")
+    private String allowedOriginPatterns;
+
     @Bean
     public CorsFilter corsFilter() {
-        // Create a CORS configuration object
         CorsConfiguration config = new CorsConfiguration();
 
-        // Set allowed frontend domain (supports wildcard, such as http://localhost:3000)
-        // Here we allow all domains to access (not recommended for production)
-        config.addAllowedOriginPattern("*");
+        List<String> originList = splitConfig(allowedOrigins);
+        if (!originList.isEmpty()) {
+            config.setAllowedOrigins(originList);
+        }
 
-        // Whether to allow sending cookies (e.g., session, token)
+        List<String> originPatternList = splitConfig(allowedOriginPatterns);
+        if (!originPatternList.isEmpty()) {
+            config.setAllowedOriginPatterns(originPatternList);
+        }
+
         config.setAllowCredentials(true);
 
-        // Set allowed request headers (e.g., Authorization, custom Token headers, etc.)
-        config.addAllowedHeader("*"); // Allow all request headers
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
+        config.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-Requested-With",
+                "X-Auth-Token",
+                "X-Trace-Id"
+        ));
+        config.setExposedHeaders(Arrays.asList("Authorization", "X-Auth-Token", "X-Trace-Id"));
+        config.setMaxAge(3600L);
 
-        // Set allowed HTTP request methods
-        config.addAllowedMethod("*"); // Allow all HTTP methods: GET, POST, PUT, DELETE, etc.
-
-        // Create URL mapping source object
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        // Apply the above CORS configuration to all request paths (/**)
         source.registerCorsConfiguration("/**", config);
 
-        // Create and return a CorsFilter instance, applying global cross-origin configuration
         return new CorsFilter(source);
+    }
+
+    private List<String> splitConfig(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && !"*".equals(s))
+                .collect(Collectors.toList());
     }
 }
