@@ -4,6 +4,7 @@ import cn.cxdproject.coder.interceptor.AdminInterceptor;
 import cn.cxdproject.coder.interceptor.AuthInterceptor;
 import cn.cxdproject.coder.interceptor.RegistrationInterceptor;
 import cn.cxdproject.coder.common.storage.FileStorageProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -40,6 +41,9 @@ public class WebConfig extends WebMvcConfigurationSupport {
     private final RegistrationInterceptor registrationInterceptor;
 
     private final FileStorageProperties fileStorageProperties;
+
+    @Value("${code100.swagger.enabled:false}")
+    private boolean swaggerEnabled;
 
     public WebConfig(AuthInterceptor jwtInterceptor, AdminInterceptor adminInterceptor, RegistrationInterceptor registrationInterceptor, FileStorageProperties fileStorageProperties) {
         this.jwtInterceptor = jwtInterceptor;
@@ -126,6 +130,7 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .build();
 
         return new Docket(DocumentationType.SWAGGER_2)
+                .enable(swaggerEnabled)
                 .apiInfo(apiInfo)
                 .select()
                 //指定生成接口需要扫描的包
@@ -136,8 +141,10 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     @Override
     protected void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/doc.html").addResourceLocations("classpath:/META-INF/resources/");
-        registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
+        if (swaggerEnabled) {
+            registry.addResourceHandler("/doc.html").addResourceLocations("classpath:/META-INF/resources/");
+            registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
+        }
         registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/");
         registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/");
         registry.addResourceHandler("/images/**").addResourceLocations("classpath:/static/images/");
