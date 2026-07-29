@@ -228,17 +228,9 @@ CREATE TABLE `fi_tours` (
      `id`              int               NOT NULL AUTO_INCREMENT,
      `name`            varchar(255)      NOT NULL COMMENT '体验游名称',
      `description`     varchar(2550)     NOT NULL COMMENT '介绍',
-     `theme`           varchar(50)       NOT NULL COMMENT '主题',
-     `features`        varchar(2550)     NOT NULL COMMENT '特点',
-     `transport`       varchar(2550)     NOT NULL COMMENT '交通方式',
-     `hotel`          varchar(2550)     NOT NULL COMMENT '周边旅馆',
-     `food`            varchar(2550)     NOT NULL COMMENT '美食推荐',
      `created_at`      datetime          NOT NULL,
      `updated_at`      datetime          NOT NULL,
      `deleted`         tinyint           NOT NULL,
-     `image`           varchar(500)     DEFAULT NULL,
-     `thumb_image`     varchar(500)     DEFAULT NULL COMMENT '压缩后图片',
-     `location_id`     varchar(255)      NOT NULL COMMENT '景点id',
      PRIMARY KEY (`id`),
      KEY `name_deleted` (`name`,`deleted`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
@@ -270,3 +262,30 @@ CREATE TABLE `fi_module` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `fi_days` (
+     `id`           BIGINT ( 20 )  NOT NULL AUTO_INCREMENT,
+     `tour_id`      INT ( 11 )     NOT NULL COMMENT '关联tourid',
+     `name`         VARCHAR ( 50 ) NOT NULL COMMENT '旅游每日专题名称',
+     `day`          VARCHAR ( 10 ) NOT NULL COMMENT '第几天',
+     `created_at`   DATETIME       DEFAULT NULL,
+     `updated_at`   DATETIME       DEFAULT NULL,
+     `deleted`      TINYINT ( 4 )  NOT NULL,
+     PRIMARY KEY ( `id` )
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `fi_attractions` (
+     `id`           BIGINT ( 20 )   NOT NULL AUTO_INCREMENT,
+     `day_id`       BIGINT ( 20 )   NOT NULL COMMENT '关联tour_id',
+     `tour_id`      BIGINT ( 20 )   NOT NULL COMMENT '关联每个day_id',
+     `name`         VARCHAR ( 100 ) NOT NULL COMMENT '名称',
+     `highlights`   VARCHAR ( 255 ) DEFAULT NULL COMMENT '亮点',
+     `location_id`  VARCHAR ( 50 )  DEFAULT NULL COMMENT '附近景点',
+     `drama_id`     VARCHAR ( 50 )  DEFAULT NULL COMMENT '相关影视作品',
+     `hotel_id`     VARCHAR ( 50 )  DEFAULT NULL COMMENT '附近酒店',
+     `image`        varchar(500)    DEFAULT NULL,
+     `thumb_image`  varchar(500)    DEFAULT NULL,
+     `created_at`   DATETIME        DEFAULT NULL,
+     `updated_at`   DATETIME        DEFAULT NULL,
+     `deleted`      TINYINT ( 4 )   NOT NULL,
+     PRIMARY KEY ( `id` )
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

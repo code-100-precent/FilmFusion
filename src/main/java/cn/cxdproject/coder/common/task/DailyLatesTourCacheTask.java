@@ -2,10 +2,9 @@ package cn.cxdproject.coder.common.task;
 
 import cn.cxdproject.coder.common.constants.TaskConstants;
 import cn.cxdproject.coder.mapper.TourMapper;
-import cn.cxdproject.coder.model.entity.Article;
 import cn.cxdproject.coder.model.entity.Tour;
-import cn.cxdproject.coder.model.vo.ArticleVO;
 import cn.cxdproject.coder.model.vo.TourVO;
+import cn.cxdproject.coder.service.TourService;
 import cn.cxdproject.coder.utils.JsonUtils;
 import cn.cxdproject.coder.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -15,21 +14,27 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
-//Tour的定时任务（用于分页降级时查询的数据）
+
+/**
+ * Tour的定时任务（用于分页降级时查询的数据）
+ */
 @Component
 @Slf4j
 public class DailyLatesTourCacheTask {
 
     private final TourMapper tourMapper;
     private final RedisUtils redisUtils;
+    private final TourService tourService;
 
-    public DailyLatesTourCacheTask(TourMapper tourMapper, RedisUtils redisUtils) {
+    public DailyLatesTourCacheTask(TourMapper tourMapper, RedisUtils redisUtils, TourService tourService) {
         this.tourMapper = tourMapper;
         this.redisUtils = redisUtils;
+        this.tourService = tourService;
     }
 
-    // 每日凌晨 2 点刷一次降级缓存，与其它模块对齐。
-    // 之前 "0 * * * * ?" 每分钟全表扫一遍，表一大就会持续给 DB / Redis 加压。
+    /**
+     * 每日凌晨 2 点刷一次降级缓存（分页数据）
+     */
     @Scheduled(cron = "0 0 2 * * ?")
     public void cacheLatestTourPage() {
         try {
@@ -41,11 +46,10 @@ public class DailyLatesTourCacheTask {
                 return;
             }
 
-            // 2. 转为VO
+            // 2. 转为VO（包含关联的 Days 和 Attractions）
             List<TourVO> voList = latestTours.stream()
-                    .map(this::toTourVO)
+                    .map(tourService::toTourVO)
                     .collect(Collectors.toList());
-
 
             // 3. 序列化
             String json = JsonUtils.toJson(voList);
@@ -56,12 +60,15 @@ public class DailyLatesTourCacheTask {
                     json,
                     Duration.ofHours(25)
             );
-            log.info("成功缓存 {} 条文章到 Redis", voList.size());
+            log.info("成功缓存 {} 条旅游路线到 Redis", voList.size());
         } catch (Exception e) {
-            log.error("缓存失败", e);
+            log.error("缓存旅游路线分页数据失败", e);
         }
     }
 
+    /**
+     * 每日凌晨 2 点刷一次降级缓存（单个数据）
+     */
     @Scheduled(cron = "0 0 2 * * ?")
     public void cacheLatestTourId() {
         try {
@@ -73,9 +80,9 @@ public class DailyLatesTourCacheTask {
                 return;
             }
 
-            // 2. 遍历每一条，单独存入 Redis
+            // 2. 遍历每一条，单独存入 Redis（包含关联的 Days 和 Attractions）
             for (Tour tour : allTours) {
-                TourVO vo = toTourVO(tour);
+                TourVO vo = tourService.toTourVO(tour);
                 String key = TaskConstants.TOUR + tour.getId();
 
                 redisUtils.set(key, vo, Duration.ofHours(25));
@@ -87,25 +94,5 @@ public class DailyLatesTourCacheTask {
             log.error("全量缓存旅游线路到 Redis 失败", e);
         }
     }
-
-    public TourVO toTourVO(Tour tour) {
-        if (tour == null) {
-            return null;
-        }
-        return TourVO.builder()
-                .id(tour.getId())
-                .name(tour.getName())
-                .description(tour.getDescription())
-                .theme(tour.getTheme())
-                .features(tour.getFeatures())
-                .transport(tour.getTransport())
-                .hotel(tour.getHotel())
-                .food(tour.getFood())
-                .image(tour.getImage())
-                .createdAt(tour.getCreatedAt())
-                .updatedAt(tour.getUpdatedAt())
-                .thumbImage(tour.getThumbImage())
-                .locationId(tour.getLocationId())
-                .build();
-    }
 }
+

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.cxdproject.coder.mapper.AttractionMapper">
+
+    <resultMap id="BaseResultMap" type="cn.cxdproject.coder.model.entity.Attraction">
+        <id column="id" property="id" />
+        <result column="day_id" property="dayId" />
+        <result column="tour_id" property="tourId" />
+        <result column="name" property="name" />
+        <result column="highlights" property="highlights" />
+        <result column="location_id" property="locationId" />
+        <result column="drama_id" property="dramaId" />
+        <result column="hotel_id" property="hotelId" />
+        <result column="image" property="image" />
+        <result column="thumb_image" property="thumbImage" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="deleted" property="deleted" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `day_id`,
+        `tour_id`,
+        `name`,
+        `highlights`,
+        `location_id`,
+        `drama_id`,
+        `hotel_id`,
+        `image`,
+        `thumb_image`,
+        `created_at`,
+        `updated_at`,
+        `deleted`
+    </sql>
+
+    <!-- 根据 day_id 查询所有 Attraction（未删除） -->
+    <select id="selectByDayId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM fi_attractions
+        WHERE day_id = #{dayId}
+        AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- 根据 tour_id 查询所有 Attraction（未删除） -->
+    <select id="selectByTourId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM fi_attractions
+        WHERE tour_id = #{tourId}
+        AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- 根据 day_id 批量逻辑删除 -->
+    <update id="logicDeleteByDayId">
+        UPDATE fi_attractions
+        SET deleted = 1,
+            updated_at = NOW()
+        WHERE day_id = #{dayId}
+        AND deleted = 0
+    </update>
+
+    <!-- 根据 tour_id 批量逻辑删除 -->
+    <update id="logicDeleteByTourId">
+        UPDATE fi_attractions
+        SET deleted = 1,
+            updated_at = NOW()
+        WHERE tour_id = #{tourId}
+        AND deleted = 0
+    </update>
+
+    <!-- 根据 day_id 列表批量查询 -->
+    <select id="selectByDayIds" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM fi_attractions
+        WHERE deleted = 0
+        AND day_id IN
+        <foreach item="dayId" collection="dayIds" open="(" separator="," close=")">
+            #{dayId}
+        </foreach>
+        ORDER BY day_id ASC, id ASC
+    </select>
+
+</mapper>

@@ -18,18 +18,29 @@ code100:
 
   # 对象存储
   storage:
-    type: cos  # 支持 local、cos
+    type: local  # 支持 local、cos（本地开发使用 local）
     local-base-path: app_uploads
     cos-secret-id: AKIDNceT5UgMyNcljX8WafgWFrHgt2Rs7B5p
     cos-secret-key: e2HLLBpIZdVBeuxJUTI3e2DBwTYUEnAM
     cos-region: ap-guangzhou
     cos-bucket: filmingfilmsinyaan-1389816353
+  swagger:
+    enabled: false
+  security:
+    cors:
+      allowed-origins: http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://162.14.106.139
+      allowed-origin-patterns:
 
 # 基础服务器配置
 server:
   port: 8080
   servlet:
     context-path:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+        same-site: strict
   compression:
     enabled: true  # 启用压缩
     mime-types: application/java-archive,application/octet-stream  # 对JAR文件压缩
