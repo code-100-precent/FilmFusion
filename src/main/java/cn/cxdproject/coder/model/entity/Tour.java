@@ -1,13 +1,11 @@
 package cn.cxdproject.coder.model.entity;
 
+import java.io.Serial;
 import java.io.Serializable;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
-
-import java.time.LocalDateTime;
-
 
 /**
  * Tour 实体类
@@ -19,84 +17,35 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @TableName("fi_tours")
 @EqualsAndHashCode(callSuper = true)
-public class Tour extends BaseEntity implements Serializable {
+public class Tour extends BaseEntity implements Serializable, Cloneable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
-    * id
-    */
+     * 主键ID
+     */
     @TableId
     private Long id;
 
     /**
-    * 体验游名称
-    */
+     * 体验游名称
+     */
     @TableField("name")
     private String name;
 
     /**
-    * 介绍
-    */
+     * 介绍
+     */
     @TableField("description")
     private String description;
 
-    /**
-    * 主题
-    */
-    @TableField("theme")
-    private String theme;
-
-    /**
-    * 特点
-    */
-    @TableField("features")
-    private String features;
-
-    /**
-    * 交通方式
-    */
-    @TableField("transport")
-    private String transport;
-
-    /**
-    * 周边旅馆
-    */
-    @TableField("hotel")
-    private String hotel;
-
-    /**
-    * 美食推荐
-    */
-    @TableField("food")
-    private String food;
-
-    /**
-     * 图片url(第一张为封面)
-     */
-    @TableField("image")
-    private String image;
-
-    /**
-     * 压缩后图片url(第一张为封面)
-     */
-    @TableField("thumb_image")
-    private String thumbImage;
-
-    /**
-     * 附近的景点
-     */
-    @TableField("location_id")
-    private String locationId;
-
     @Override
-    public User clone() {
+    public Tour clone() {
         try {
-            return (User) super.clone();
+            return (Tour) super.clone();
         } catch (CloneNotSupportedException e) {
-            // This should never happen since we implement Cloneable
-            throw new RuntimeException("Failed to clone User object", e);
+            throw new RuntimeException("Failed to clone Tour object", e);
         }
     }
-
 }
