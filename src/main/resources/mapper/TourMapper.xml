@@ -8,34 +8,18 @@
         <id column="id" property="id" />
         <result column="name" property="name" />
         <result column="description" property="description" />
-        <result column="theme" property="theme" />
-        <result column="features" property="features" />
-        <result column="transport" property="transport" />
-        <result column="hotel" property="hotel" />
-        <result column="food" property="food" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
         <result column="deleted" property="deleted" />
-        <result column="image" property="image" />
-        <result column="thumb_image" property="thumbImage"/>
-        <result column="location_id" property="locationId"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         `id`,
         `name`,
         `description`,
-        `theme`,
-        `features`,
-        `transport`,
-        `hotel`,
-        `food`,
         `created_at`,
         `updated_at`,
-        `deleted`,
-        `image`,
-        `thumb_image`,
-        `location_id`
+        `deleted`
     </sql>
 
     <select id="selectIds" resultType="long">
@@ -48,7 +32,6 @@
                 AND (
                 name LIKE CONCAT('%', #{keyword}, '%')
                 OR description LIKE CONCAT('%', #{keyword}, '%')
-                OR theme LIKE CONCAT('%', #{keyword}, '%')
                 )
             </if>
 
@@ -68,7 +51,6 @@
             AND (
             name LIKE CONCAT('%', #{keyword}, '%')
             OR description LIKE CONCAT('%', #{keyword}, '%')
-            OR theme LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
         ORDER BY created_at ASC
@@ -83,7 +65,6 @@
             AND (
             name LIKE CONCAT('%', #{keyword}, '%')
             OR description LIKE CONCAT('%', #{keyword}, '%')
-            OR theme LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
     </select>
@@ -105,34 +86,7 @@
             <if test="dto.description != null">
                 description = #{dto.description},
             </if>
-            <if test="dto.theme != null">
-                theme = #{dto.theme},
-            </if>
-            <if test="dto.features != null">
-                features = #{dto.features},
-            </if>
-            <if test="dto.transport != null ">
-                transport = #{dto.transport},
-            </if>
-            <if test="dto.hotel != null">
-                hotel = #{dto.hotel},
-            </if>
-            <if test="dto.food != null ">
-                food = #{dto.food},
-            </if>
-            <if test="dto.image != null">
-                image = #{dto.image},
-            </if>
-            <if test="dto.thumbImage != null">
-                thumb_image = #{dto.thumbImage},
-            </if>
-
-            <if test="dto.locationId != null ">
-                location_id = #{dto.locationId},
-            </if>
-            <if test="dto.deleted != null">
-                deleted = #{dto.deleted},
-            </if>
+            updated_at = NOW()
         </set>
         WHERE id = #{id}
         AND deleted = 0
@@ -146,7 +100,6 @@
             AND (
             name LIKE CONCAT('%', #{keyword}, '%')
             OR description LIKE CONCAT('%', #{keyword}, '%')
-            OR theme LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
     </select>
