@@ -13,6 +13,7 @@ import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.region.Region;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +28,7 @@ import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SYSTEM_ERROR;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "code100.storage.type", havingValue = "cos")
 public class OssStorageService implements FileStorageAdapter {
     private final FileStorageProperties properties;
     private final COSClient cosClient;
