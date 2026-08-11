@@ -411,7 +411,7 @@ const columns = [
     render: (row) => {
       return h('div', { style: 'display: flex; gap: 8px;' }, [
         h(NButton, { size: 'small', type: 'info', onClick: () => handleAudit(row) }, { default: () => '审核' }),
-        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
+        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '查看' }),
         h(
           NPopconfirm,
           { onPositiveClick: () => handleDelete(row.id) },
@@ -542,7 +542,7 @@ const handleEdit = async (row) => {
   try {
     const res = await getReportById(row.id)
     if (res.code === 200 && res.data) {
-      dialogTitle.value = '编辑报备'
+      dialogTitle.value = '查看报备'
       Object.assign(reportForm, {
         id: res.data.id,
         name: res.data.name,
