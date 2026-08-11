@@ -390,9 +390,9 @@ const handleCoverUpload = async ({ file, fileList }) => {
     const res = await uploadFile(file.file)
 
     if (res.code === 200) {
-      const url = res.data.url || res.data
-      const originUrl = res.data.originUrl || url
-      const thumbUrl = res.data.thumbUrl || url
+      const originUrl = res.data.originUrl
+      const thumbUrl = res.data.thumbUrl || originUrl
+      const url = thumbUrl || originUrl
 
       // 更新文件列表状态和URL
       const index = coverFileList.value.findIndex(f => f.id === file.id)
@@ -429,9 +429,9 @@ const handleImageUpload = async ({ file, fileList }) => {
     const res = await uploadFile(file.file)
 
     if (res.code === 200) {
-      const url = res.data.url || res.data
-      const originUrl = res.data.originUrl || url
-      const thumbUrl = res.data.thumbUrl || url
+      const originUrl = res.data.originUrl
+      const thumbUrl = res.data.thumbUrl || originUrl
+      const url = thumbUrl || originUrl
 
       const index = imageFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
