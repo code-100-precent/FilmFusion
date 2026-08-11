@@ -347,6 +347,10 @@ const formRules = {
     { required: true, message: '请输入电视剧名称', trigger: 'blur' },
     { min: 1, max: 100, message: '电视剧名称长度在 1 到 100 个字符', trigger: 'blur' }
   ],
+  filingNum: [
+    { required: true, message: '请输入备案号', trigger: 'blur' },
+    { min: 1, max: 100, message: '备案号长度在 1 到 100 个字符', trigger: 'blur' }
+  ],
   prodCompany: [
     { required: true, message: '请输入出品公司', trigger: 'blur' },
     { min: 1, max: 100, message: '出品公司长度在 1 到 100 个字符', trigger: 'blur' }

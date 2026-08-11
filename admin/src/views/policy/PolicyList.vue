@@ -307,6 +307,9 @@ const formRules = {
     { required: true, message: '请输入发布单位', trigger: 'blur' },
     { min: 1, max: 100, message: '发布单位长度在 1 到 100 个字符', trigger: 'blur' }
   ],
+  issueTime: [
+    { required: true, message: '请选择发布时间', trigger: 'change', type: 'number' }
+  ],
   content: [
     { required: true, message: '请输入政策内容', trigger: 'blur' },
     { min: 10, max: 5000, message: '政策内容长度在 10 到 5000 个字符', trigger: 'blur' }
