@@ -159,7 +159,14 @@
           <n-input v-model:value="serviceForm.name" placeholder="请输入服务名称" />
         </n-form-item>
 
-
+        <n-form-item label="所属模块" path="moduleId">
+          <n-select
+              v-model:value="serviceForm.moduleId"
+              :options="moduleOptions"
+              clearable
+              placeholder="请选择所属模块"
+          />
+        </n-form-item>
 
         <n-form-item label="封面图片">
           <n-upload
@@ -228,7 +235,7 @@ import {
   NTag, NPopconfirm, NUpload, NImage, NSwitch, useDialog
 } from 'naive-ui'
 import { Icon } from '@iconify/vue'
-import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile } from '@/api/index'
+import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile, getModuleList } from '@/api/index'
 import { getImageUrl } from '@/utils/image'
 import { useUserStore } from '@/store/user'
 import config from '@/config'
@@ -246,6 +253,7 @@ const dialogTitle = ref('新增服务')
 const formRef = ref(null)
 const coverFileList = ref([])
 const imageFileList = ref([])
+const moduleOptions = ref([])
 
 const searchForm = reactive({
   keyword: ''
@@ -261,7 +269,8 @@ const serviceForm = reactive({
   status: true,
   image: '',
   thumbImage: '',
-  userId: null
+  userId: null,
+  moduleId: null
 })
 
 const pagination = reactive({
@@ -304,9 +313,9 @@ const handleCoverUpload = async ({ file, fileList }) => {
     const res = await uploadFile(file.file)
 
     if (res.code === 200) {
-      const url = res.data.url || res.data
-      const originUrl = res.data.originUrl || url
-      const thumbUrl = res.data.thumbUrl || url
+      const originUrl = res.data.originUrl
+      const thumbUrl = res.data.thumbUrl || originUrl
+      const url = thumbUrl || originUrl
 
       const index = coverFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
@@ -342,9 +351,9 @@ const handleImageUpload = async ({ file, fileList }) => {
     const res = await uploadFile(file.file)
 
     if (res.code === 200) {
-      const url = res.data.url || res.data
-      const originUrl = res.data.originUrl || url
-      const thumbUrl = res.data.thumbUrl || url
+      const originUrl = res.data.originUrl
+      const thumbUrl = res.data.thumbUrl || originUrl
+      const url = thumbUrl || originUrl
 
       const index = imageFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
@@ -506,7 +515,8 @@ const handleAdd = () => {
     status: true,
     image: '',
     thumbImage: '',
-    userId: userStore.userInfo?.id || null
+    userId: userStore.userInfo?.id || null,
+    moduleId: null
   })
   coverFileList.value = []
   imageFileList.value = []
@@ -530,7 +540,8 @@ const handleEdit = async (row) => {
         status: data.status === 1 || data.status === true,
         image: data.image || '',
         thumbImage: data.thumbImage || '',
-        userId: data.userId || data.user_id
+        userId: data.userId || data.user_id,
+        moduleId: data.moduleId || data.module_id || null
       })
 
       const urls = (data.image || '').split(',').filter(u => u.trim())
@@ -706,10 +717,26 @@ const handleDelete = async (id) => {
   }
 }
 
+const fetchModuleOptions = async () => {
+  try {
+    const res = await getModuleList()
+    if (res.code === 200) {
+      const records = res.data?.records || res.data || []
+      moduleOptions.value = records.map(item => ({
+        label: item.name,
+        value: item.id
+      }))
+    }
+  } catch (error) {
+    console.error('获取模块列表失败:', error)
+  }
+}
+
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
   loadData()
+  fetchModuleOptions()
 })
 
 onUnmounted(() => {
