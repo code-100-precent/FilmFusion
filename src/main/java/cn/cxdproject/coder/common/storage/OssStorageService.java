@@ -55,7 +55,7 @@ public class OssStorageService implements FileStorageAdapter {
             String originalUrl = getUrl(originKey);
             String thumbnailUrl = null;
 
-            if (isImageFile(file)) {
+            if (isImageFile(file) && !isWebp(file)) {
                 uploadThumbnail(file, thumbKey);
                 thumbnailUrl = getUrl(thumbKey);
             }
@@ -83,7 +83,7 @@ public class OssStorageService implements FileStorageAdapter {
             String originalUrl = getUrl(originKey);
             String thumbnailUrl = null;
 
-            if (isImageFile(file)) {
+            if (isImageFile(file) && !isWebp(file)) {
                 uploadThumbnail(file, thumbKey);
                 thumbnailUrl = getUrl(thumbKey);
             }
@@ -245,6 +245,13 @@ public class OssStorageService implements FileStorageAdapter {
         boolean validExtension = originalFilename.matches(".*\\.(?i)(jpg|jpeg|png|gif|webp)$");
 
         return validContentType && validExtension;
+    }
+
+    private boolean isWebp(MultipartFile file) {
+        String contentType = file.getContentType();
+        String originalFilename = file.getOriginalFilename();
+        return "image/webp".equalsIgnoreCase(contentType)
+                || (originalFilename != null && originalFilename.toLowerCase().endsWith(".webp"));
     }
 
     private void uploadThumbnail(MultipartFile file, String key) throws IOException {

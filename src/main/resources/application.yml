@@ -18,13 +18,12 @@ code100:
 
   # 对象存储
   storage:
-    type: local  # 支持 local、cos（本地开发使用 local）
+    type: cos  # 支持 local、cos（本地开发使用 local）
     local-base-path: app_uploads
-    # 腾讯云 COS 配置（生产环境使用）
-    # cos-secret-id:
-    # cos-secret-key:
-    # cos-region:
-    # cos-bucket:
+    cos-secret-id: AKIDNceT5UgMyNcljX8WafgWFrHgt2Rs7B5p
+    cos-secret-key: e2HLLBpIZdVBeuxJUTI3e2DBwTYUEnAM
+    cos-region: ap-guangzhou
+    cos-bucket: filmingfilmsinyaan-1389816353
   swagger:
     enabled: false
   security:

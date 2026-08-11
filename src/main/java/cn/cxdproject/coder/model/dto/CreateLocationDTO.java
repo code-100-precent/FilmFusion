@@ -26,17 +26,13 @@ public class CreateLocationDTO {
     
     @NotBlank(message = "场地介绍不能为空")
     private String locationDescription;
-    
-    @NotBlank(message = "景区联系人电话不能为空")
+
     private String locationPrincipalPhone;
-    
-    @NotBlank(message = "景区联系人不能为空")
+
     private String locationPrincipalName;
 
-    @NotBlank(message = "政府联系人电话不能为空")
     private String govPrincipalPhone;
 
-    @NotBlank(message = "政府联系人不能为空")
     private String govPrincipalName;
     
     @NotBlank(message = "地址不能为空")
