@@ -22,25 +22,25 @@ public class CreateDramaDTO {
     @NotBlank(message = "出品公司不能为空")
     private String prodCompany;
     
-    @NotBlank(message = "公司简介不能为空")
+
     private String crewDescription;
     
-    @NotBlank(message = "电视剧简介不能为空")
+
     private String dramaDescription;
     
-    @NotBlank(message = "演员名单不能为空")
+
     private String cast;
     
-    @NotBlank(message = "拍摄地不能为空")
+
     private String shootLocation;
     
-    @NotNull(message = "拍摄地ID不能为空")
+
     private String locationId;
     
-    @NotBlank(message = "协拍服务不能为空")
+
     private String service;
     
-    @NotNull(message = "协拍服务ID不能为空")
+
     private String serviceId;
 
     private String image;
