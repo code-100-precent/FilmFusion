@@ -339,7 +339,7 @@ const beforeUpload = (data) => {
     }
   }
 
-  const limit = isImage ? 5 * 1024 * 1024 : 15 * 1024 * 1024
+  const limit = isImage ? 2 * 1024 * 1024 : 3 * 1024 * 1024
   
   if (data.file.file?.size > limit) {
     dialog.warning({
