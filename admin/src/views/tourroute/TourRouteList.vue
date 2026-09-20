@@ -72,7 +72,10 @@
           >
             <n-button>上传封面图片</n-button>
           </n-upload>
-          <div v-if="tourRouteForm.cover" style="margin-top: 12px;">
+          <div v-if="coverUploading" style="margin-top: 12px; width: 200px; height: 120px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 6px; background: #fafafa;">
+            <n-spin size="medium" description="上传中..." />
+          </div>
+          <div v-else-if="tourRouteForm.cover" style="margin-top: 12px;">
             <n-image
               :src="getImageUrl(tourRouteForm.thumbCover || tourRouteForm.cover)"
               width="200"
@@ -107,6 +110,7 @@ import {
   NModal,
   NSelect,
   NUpload,
+  NSpin,
   useMessage,
   NImage,
   NTag
@@ -144,6 +148,8 @@ const tourRouteForm = reactive({
 })
 
 const coverFileList = ref([])
+// 封面图片上传中状态（控制预览位置的转圈动画）
+const coverUploading = ref(false)
 
 const pagination = reactive({
   page: 1,
@@ -348,6 +354,7 @@ const handleEdit = async (row) => {
 
 // 处理封面图片上传
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
+  coverUploading.value = true
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
@@ -383,6 +390,8 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
     console.error('上传封面图片失败:', error)
     onError()
     message.error('上传失败')
+  } finally {
+    coverUploading.value = false
   }
 }
 

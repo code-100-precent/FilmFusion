@@ -19,6 +19,10 @@
               <Icon icon="mdi:camera" :width="24" />
               <span>更换头像</span>
             </div>
+            <div v-if="avatarUploading" class="avatar-uploading-mask">
+              <n-spin size="medium" />
+              <span>上传中...</span>
+            </div>
             <input 
               ref="avatarInput" 
               type="file" 
@@ -183,6 +187,8 @@ const loading = ref(false)
 const passwordLoading = ref(false)
 const passwordFormRef = ref(null)
 const avatarInput = ref(null)
+// 头像上传中状态（控制头像位置的转圈动画）
+const avatarUploading = ref(false)
 
 const passwordForm = reactive({
   oldPassword: '',
@@ -263,6 +269,7 @@ const handleAvatarChange = async (event) => {
   }
   
   try {
+    avatarUploading.value = true
     const res = await uploadAvatar(file)
     if (res.code === 200 && res.data) {
       const avatarUrl = res.data.originUrl || res.data.thumbUrl || res.data.url || res.data.path
@@ -271,7 +278,7 @@ const handleAvatarChange = async (event) => {
         userInfo.value.avatar = avatarUrl
         userStore.setUserInfo({ ...userInfo.value, avatar: avatarUrl })
         message.success('头像更新成功')
-        
+
         // 重新加载用户信息以确保数据同步
         await loadUserInfo()
       } else {
@@ -281,6 +288,8 @@ const handleAvatarChange = async (event) => {
   } catch (error) {
     console.error('上传头像失败:', error)
     message.error('上传头像失败')
+  } finally {
+    avatarUploading.value = false
   }
   
   // 清空文件选择
@@ -381,6 +390,25 @@ const handleChangePassword = async () => {
           white-space: nowrap;
         }
       }
+    }
+
+    .avatar-uploading-mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.75);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #6b7280;
+      z-index: 2;
+      cursor: not-allowed;
     }
   }
 

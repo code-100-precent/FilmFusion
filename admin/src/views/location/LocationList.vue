@@ -172,31 +172,40 @@
           <n-input v-model:value="locationForm.address" placeholder="请输入详细地址" />
         </n-form-item>
         <n-form-item label="封面图片">
-          <n-upload
-              v-model:file-list="coverFileList"
-              list-type="image-card"
-              :max="1"
-              :custom-request="handleCoverUpload"
-              accept="image/*"
-              @before-upload="beforeUpload"
-          >
-            点击上传
-          </n-upload>
+          <div class="upload-wrapper">
+            <n-upload
+                v-model:file-list="coverFileList"
+                list-type="image-card"
+                :max="1"
+                :custom-request="handleCoverUpload"
+                accept="image/*"
+                @before-upload="beforeUpload"
+            >
+              点击上传
+            </n-upload>
+            <div v-if="coverUploading" class="upload-mask">
+              <n-spin size="medium" />
+              <span>上传中...</span>
+            </div>
+          </div>
         </n-form-item>
 
         <n-form-item label="场地图片">
-          <n-upload
-              v-model:file-list="imageFileList"
-              list-type="image-card"
-              :custom-request="handleImageUpload"
-              accept="image/*"
-              @before-upload="beforeUpload"
-              multiple
-          >
-            点击上传
-          </n-upload>
-          <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-            <!-- 预览区域 -->
+          <div class="upload-wrapper">
+            <n-upload
+                v-model:file-list="imageFileList"
+                list-type="image-card"
+                :custom-request="handleImageUpload"
+                accept="image/*"
+                @before-upload="beforeUpload"
+                multiple
+            >
+              点击上传
+            </n-upload>
+            <div v-if="imageUploading" class="upload-mask">
+              <n-spin size="medium" />
+              <span>上传中...</span>
+            </div>
           </div>
         </n-form-item>
 
@@ -287,6 +296,9 @@ const dialogTitle = ref('新增场地')
 const formRef = ref(null)
 const coverFileList = ref([])
 const imageFileList = ref([])
+// 图片上传中状态（控制上传区域的转圈动画）
+const coverUploading = ref(false)
+const imageUploading = ref(false)
 const dramaOptions = ref([])
 
 const searchForm = reactive({
@@ -386,6 +398,7 @@ const formRules = {
 }
 
 const handleCoverUpload = async ({ file, fileList }) => {
+  coverUploading.value = true
   try {
     const res = await uploadFile(file.file)
 
@@ -421,10 +434,13 @@ const handleCoverUpload = async ({ file, fileList }) => {
       coverFileList.value.splice(index, 1)
     }
     return false
+  } finally {
+    coverUploading.value = false
   }
 }
 
 const handleImageUpload = async ({ file, fileList }) => {
+  imageUploading.value = true
   try {
     const res = await uploadFile(file.file)
 
@@ -459,6 +475,8 @@ const handleImageUpload = async ({ file, fileList }) => {
       imageFileList.value.splice(index, 1)
     }
     return false
+  } finally {
+    imageUploading.value = false
   }
 }
 
@@ -948,6 +966,29 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .location-management {
   animation: fadeIn 0.3s ease;
+}
+
+.upload-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.upload-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 6px;
+  z-index: 10;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .pagination-container {

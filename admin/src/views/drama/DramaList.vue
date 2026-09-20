@@ -186,7 +186,10 @@
           >
             <n-button>上传封面图片</n-button>
           </n-upload>
-          <div v-if="dramaForm.cover" style="margin-top: 12px;">
+          <div v-if="coverUploading" style="margin-top: 12px; width: 200px; height: 120px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 6px; background: #fafafa;">
+            <n-spin size="medium" description="上传中..." />
+          </div>
+          <div v-else-if="dramaForm.cover" style="margin-top: 12px;">
             <n-image
                 :src="getImageUrl(dramaForm.thumbCover || dramaForm.cover)"
                 width="200"
@@ -208,15 +211,22 @@
             <n-button>上传详情图片（可多张）</n-button>
           </n-upload>
           <div v-if="imageFileList.length > 0" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-            <n-image
-                v-for="(file, index) in imageFileList"
-                :key="index"
+            <template v-for="(file, index) in imageFileList" :key="index">
+              <div
+                v-if="file.status === 'pending' || file.status === 'uploading'"
+                style="width: 100px; height: 75px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 4px; background: #fafafa;"
+              >
+                <n-spin size="small" />
+              </div>
+              <n-image
+                v-else
                 :src="file.url"
                 width="100"
                 height="75"
                 object-fit="cover"
                 style="border-radius: 4px;"
-            />
+              />
+            </template>
           </div>
         </n-form-item>
       </n-form>
@@ -282,6 +292,8 @@ const dialogTitle = ref('新增电视剧')
 const formRef = ref(null)
 const coverFileList = ref([])
 const imageFileList = ref([])
+// 封面图片上传中状态（控制预览位置的转圈动画）
+const coverUploading = ref(false)
 const locationOptions = ref([])
 const serviceOptions = ref([])
 
@@ -795,6 +807,7 @@ const beforeUpload = (data) => {
 
 // 处理封面图片上传
 const handleCoverUpload = async ({file, onFinish, onError}) => {
+  coverUploading.value = true
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
@@ -828,6 +841,8 @@ const handleCoverUpload = async ({file, onFinish, onError}) => {
     console.error('上传封面图片失败:', error)
     onError()
     message.error('上传失败')
+  } finally {
+    coverUploading.value = false
   }
 }
 
