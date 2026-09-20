@@ -168,32 +168,44 @@
 
         <!-- 封面图片上传 -->
         <n-form-item label="封面图片" path="cover">
-          <n-upload
-              :max="1"
-              :file-list="coverFileList"
-              @update:file-list="handleCoverFileListChange"
-              @before-upload="beforeUpload"
-              :custom-request="handleCoverUpload"
-              accept="image/*"
-              list-type="image-card"
-          >
-            点击上传封面
-          </n-upload>
+          <div class="upload-wrapper">
+            <n-upload
+                :max="1"
+                :file-list="coverFileList"
+                @update:file-list="handleCoverFileListChange"
+                @before-upload="beforeUpload"
+                :custom-request="handleCoverUpload"
+                accept="image/*"
+                list-type="image-card"
+            >
+              点击上传封面
+            </n-upload>
+            <div v-if="coverUploading" class="upload-mask">
+              <n-spin size="medium" />
+              <span>上传中...</span>
+            </div>
+          </div>
         </n-form-item>
 
         <!-- 详情图片上传 -->
         <n-form-item label="详情图片" path="detailImages">
-          <n-upload
-              v-model:file-list="detailFileList"
-              @update:file-list="handleDetailFileListChange"
-              @before-upload="beforeUpload"
-              :custom-request="handleDetailUpload"
-              accept="image/*"
-              list-type="image-card"
-              multiple
-          >
-            点击上传详情图
-          </n-upload>
+          <div class="upload-wrapper">
+            <n-upload
+                v-model:file-list="detailFileList"
+                @update:file-list="handleDetailFileListChange"
+                @before-upload="beforeUpload"
+                :custom-request="handleDetailUpload"
+                accept="image/*"
+                list-type="image-card"
+                multiple
+            >
+              点击上传详情图
+            </n-upload>
+            <div v-if="detailUploading" class="upload-mask">
+              <n-spin size="medium" />
+              <span>上传中...</span>
+            </div>
+          </div>
         </n-form-item>
 
       </n-form>
@@ -287,6 +299,9 @@ const pagination = reactive({
 // 文件列表
 const coverFileList = ref([])
 const detailFileList = ref([])
+// 图片上传中状态（控制上传区域的转圈动画）
+const coverUploading = ref(false)
+const detailUploading = ref(false)
 // 存储上传文件的详细信息 (id -> { originUrl, thumbUrl })，解决 Naive UI 文件列表可能丢失自定义属性的问题
 const fileMapping = reactive({})
 
@@ -643,6 +658,7 @@ const beforeUpload = (data) => {
 }
 
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
+  coverUploading.value = true
   try {
     const res = await uploadFile(file.file);
 
@@ -691,6 +707,8 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
     console.error('上传失败:', error);
     onError();
     message.error('上传失败');
+  } finally {
+    coverUploading.value = false
   }
 };
 
@@ -703,6 +721,7 @@ const handleCoverFileListChange = (newList) => {
 }
 
 const handleDetailUpload = async ({file, onFinish, onError}) => {
+  detailUploading.value = true
   try {
     const res = await uploadFile(file.file);
 
@@ -745,6 +764,8 @@ const handleDetailUpload = async ({file, onFinish, onError}) => {
     console.error('上传失败:', error);
     onError();
     message.error('上传失败');
+  } finally {
+    detailUploading.value = false
   }
 };
 
@@ -958,6 +979,29 @@ const handleDelete = async (id) => {
 <style scoped>
 .management-card {
   min-height: calc(100vh - 100px);
+}
+
+.upload-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.upload-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 6px;
+  z-index: 10;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .search-header {

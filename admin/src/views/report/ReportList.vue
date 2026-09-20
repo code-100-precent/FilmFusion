@@ -121,7 +121,10 @@
               >
                 <n-button>上传文件</n-button>
               </n-upload>
-              <div v-if="reportForm.thumbShootPermit" style="margin-top: 8px;">
+              <div v-if="uploadingField === 'shootPermit'" style="margin-top: 8px; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 6px; background: #fafafa;">
+                <n-spin size="small" />
+              </div>
+              <div v-else-if="reportForm.thumbShootPermit" style="margin-top: 8px;">
                  <n-image :src="getImageUrl(reportForm.thumbShootPermit)" width="100" height="100" object-fit="cover" />
               </div>
             </n-form-item>
@@ -137,7 +140,10 @@
               >
                 <n-button>上传文件</n-button>
               </n-upload>
-              <div v-if="reportForm.thumbApprovalFile" style="margin-top: 8px;">
+              <div v-if="uploadingField === 'approvalFile'" style="margin-top: 8px; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 6px; background: #fafafa;">
+                <n-spin size="small" />
+              </div>
+              <div v-else-if="reportForm.thumbApprovalFile" style="margin-top: 8px;">
                  <n-image :src="getImageUrl(reportForm.thumbApprovalFile)" width="100" height="100" object-fit="cover" />
               </div>
             </n-form-item>
@@ -153,7 +159,10 @@
               >
                 <n-button>上传文件</n-button>
               </n-upload>
-              <div v-if="reportForm.thumbShootApply" style="margin-top: 8px;">
+              <div v-if="uploadingField === 'shootApply'" style="margin-top: 8px; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 6px; background: #fafafa;">
+                <n-spin size="small" />
+              </div>
+              <div v-else-if="reportForm.thumbShootApply" style="margin-top: 8px;">
                  <n-image :src="getImageUrl(reportForm.thumbShootApply)" width="100" height="100" object-fit="cover" />
               </div>
             </n-form-item>
@@ -206,6 +215,7 @@ import {
   NDatePicker,
   NUpload,
   NImage,
+  NSpin,
   useMessage,
   useDialog
 } from 'naive-ui'
@@ -220,6 +230,8 @@ const loading = ref(false)
 const reportList = ref([])
 const dialogVisible = ref(false)
 const dialogLoading = ref(false)
+// 当前正在上传的附件字段（控制对应缩略图位置的转圈动画）
+const uploadingField = ref('')
 const dialogTitle = ref('新增报备')
 const formRef = ref(null)
 
@@ -472,6 +484,7 @@ const getImageUrl = (url) => {
 }
 
 const handleUpload = async ({ file, onFinish, onError, field, thumbField, fileListRef }) => {
+  uploadingField.value = field
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
@@ -500,6 +513,8 @@ const handleUpload = async ({ file, onFinish, onError, field, thumbField, fileLi
     console.error('上传失败:', error)
     onError()
     message.error('上传失败')
+  } finally {
+    uploadingField.value = ''
   }
 }
 

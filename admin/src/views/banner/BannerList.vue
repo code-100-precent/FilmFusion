@@ -157,7 +157,10 @@
           >
             <n-button>上传图片</n-button>
           </n-upload>
-          <div v-if="bannerForm.imageUrl" style="margin-top: 12px;">
+          <div v-if="imageUploading" style="margin-top: 12px; width: 200px; height: 120px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 6px; background: #fafafa;">
+            <n-spin size="medium" description="上传中..." />
+          </div>
+          <div v-else-if="bannerForm.imageUrl" style="margin-top: 12px;">
             <n-image
                 :src="getImageUrl(bannerForm.imageUrl)"
                 width="200"
@@ -270,6 +273,8 @@ const checkMobile = () => {
 const bannerList = ref([])
 const dialogVisible = ref(false)
 const dialogLoading = ref(false)
+// 图片上传中状态（控制预览位置的转圈动画）
+const imageUploading = ref(false)
 const dialogTitle = ref('新增Banner')
 const formRef = ref(null)
 const fileList = ref([])
@@ -544,6 +549,7 @@ const beforeUpload = (data) => {
 }
 
 const handleUpload = async ({ file, onFinish, onError }) => {
+  imageUploading.value = true
   try {
     const res = await uploadFile(file.file)
     if (res.code === 200 && res.data) {
@@ -558,6 +564,8 @@ const handleUpload = async ({ file, onFinish, onError }) => {
     console.error('上传图片失败:', error)
     onError()
     message.error('上传失败')
+  } finally {
+    imageUploading.value = false
   }
 }
 
