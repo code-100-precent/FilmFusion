@@ -247,7 +247,8 @@ import {
   NTag, NPopconfirm, NUpload, NImage, NSwitch, useDialog
 } from 'naive-ui'
 import { Icon } from '@iconify/vue'
-import { deleteService, updateService, addService, getServiceList, getServiceById, uploadFile, getModuleList } from '@/api/index'
+import { deleteService, updateService, addService, getServiceList, getServiceById, getModuleList } from '@/api/index'
+import { uploadImageDirect } from '@/utils/upload'
 import { getImageUrl } from '@/utils/image'
 import { useUserStore } from '@/store/user'
 import config from '@/config'
@@ -312,7 +313,7 @@ const beforeUpload = (data) => {
     message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
     return false
   }
-  if (data.file.file?.size > 2 * 1024 * 1024) {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
       content: '图片过大，请重新上传',
@@ -326,17 +327,17 @@ const beforeUpload = (data) => {
 const handleCoverUpload = async ({ file, fileList }) => {
   coverUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
 
     if (res.code === 200) {
       const originUrl = res.data.originUrl
       const thumbUrl = res.data.thumbUrl || originUrl
-      const url = thumbUrl || originUrl
+      const url = originUrl || thumbUrl
 
       const index = coverFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         coverFileList.value[index].status = 'finished'
-        coverFileList.value[index].url = getImageUrl(thumbUrl || originUrl)
+        coverFileList.value[index].url = getImageUrl(originUrl || thumbUrl)
         coverFileList.value[index].originUrl = originUrl
         coverFileList.value[index].thumbUrl = thumbUrl
       }
@@ -367,17 +368,17 @@ const handleCoverUpload = async ({ file, fileList }) => {
 const handleImageUpload = async ({ file, fileList }) => {
   imageUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
 
     if (res.code === 200) {
       const originUrl = res.data.originUrl
       const thumbUrl = res.data.thumbUrl || originUrl
-      const url = thumbUrl || originUrl
+      const url = originUrl || thumbUrl
 
       const index = imageFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         imageFileList.value[index].status = 'finished'
-        imageFileList.value[index].url = getImageUrl(thumbUrl || originUrl)
+        imageFileList.value[index].url = getImageUrl(originUrl || thumbUrl)
         imageFileList.value[index].originUrl = originUrl
         imageFileList.value[index].thumbUrl = thumbUrl
       }
@@ -415,7 +416,7 @@ const columns = [
     render: (row) => {
       const images = (row.image || '').split(',').filter(u => u)
       const thumbs = (row.thumbImage || '').split(',').filter(u => u)
-      const displayUrl = thumbs[0] || images[0]
+      const displayUrl = images[0] || thumbs[0]
       const previewUrl = images[0] || displayUrl
 
       if (!displayUrl) return '-'
@@ -576,7 +577,7 @@ const handleEdit = async (row) => {
           id: 'cover-img',
           name: 'cover.jpg',
           status: 'finished',
-          url: getImageUrl(coverThumb || coverUrl),
+          url: getImageUrl(coverUrl || coverThumb),
           originUrl: coverUrl,
           thumbUrl: coverThumb
         }]
@@ -592,7 +593,7 @@ const handleEdit = async (row) => {
         id: `img-${index}`,
         name: `image-${index}.jpg`,
         status: 'finished',
-        url: getImageUrl(detailThumbUrls[index] || url),
+        url: getImageUrl(url),
         originUrl: url,
         thumbUrl: detailThumbUrls[index] || url
       }))

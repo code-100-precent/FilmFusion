@@ -37,6 +37,7 @@
         :columns="columns"
         :data="userList"
         :loading="loading"
+        remote
         :pagination="pagination"
         :row-key="row => row.id"
         @update:page="handlePageChange"

@@ -191,7 +191,7 @@
           </div>
           <div v-else-if="dramaForm.cover" style="margin-top: 12px;">
             <n-image
-                :src="getImageUrl(dramaForm.thumbCover || dramaForm.cover)"
+                :src="getImageUrl(dramaForm.cover || dramaForm.thumbCover)"
                 width="200"
                 height="120"
                 object-fit="cover"
@@ -265,10 +265,10 @@ import {
   updateDrama,
   deleteDrama,
   getDramaById,
-  uploadFile,
   getLocationList,
   getServiceList
 } from '@/api'
+import { uploadImageDirect } from '@/utils/upload'
 import { getImageUrl } from '@/utils/image'
 import config from '@/config'
 import dayjs from 'dayjs'
@@ -421,9 +421,9 @@ const columns = [
       const cover = getFirstUrl(row.cover)
       const thumbCover = getFirstUrl(row.thumbCover || row.thumb_cover)
 
-      // 优先级：封面缩略 -> 封面原图 -> 详情缩略 -> 详情原图
-      // 显示用的图片（优先缩略图）
-      const displayUrl = thumbCover || thumbImage || cover || image
+      // 优先级：封面原图 -> 详情原图 -> 封面缩略 -> 详情缩略
+      // 显示用的图片（管理端统一展示原图）
+      const displayUrl = cover || image || thumbCover || thumbImage
 
       // 预览用的图片（优先原图）
       const previewUrl = cover || image || displayUrl
@@ -761,9 +761,9 @@ const handleEdit = async (row) => {
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: getImageUrl(thumbCoverUrl || coverUrl),
+          url: getImageUrl(coverUrl || thumbCoverUrl),
           originUrl: coverUrl,        // 封面原图相对路径
-          thumbUrl: thumbCoverUrl || coverUrl // 封面缩略图相对路径
+          thumbUrl: thumbCoverUrl || coverUrl // 封面缩略图相对路径（落库用）
         }]
       } else {
         coverFileList.value = []
@@ -794,7 +794,7 @@ const beforeUpload = (data) => {
     message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
     return false
   }
-  if (data.file.file?.size > 2 * 1024 * 1024) {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
       content: '图片过大，请重新上传',
@@ -809,7 +809,7 @@ const beforeUpload = (data) => {
 const handleCoverUpload = async ({file, onFinish, onError}) => {
   coverUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
@@ -849,7 +849,7 @@ const handleCoverUpload = async ({file, onFinish, onError}) => {
 // 处理详情图片上传
 const handleImageUpload = async ({file, onFinish, onError}) => {
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl // 获取缩略图路径

@@ -214,7 +214,7 @@ import {
   useDialog
 } from 'naive-ui'
 import request from '@/utils/request'
-import { uploadFile } from '@/api'
+import { uploadImageDirect } from '@/utils/upload'
 import { getImageUrl } from '@/utils/image'
 // Banner相关API函数
 const getBannerPage = (current = 1, size = 10) => {
@@ -338,15 +338,15 @@ const columns = [
     key: 'imageUrl',
     width: 120,
     render: (row) => {
-      // 优先使用缩略图URL（thumbUrl属性），如果没有则使用原图URL
+      // 管理端统一展示原图，缩略图仅作兜底
       const thumbnailUrl = row.thumbUrl;
-      // 获取原图URL用于预览
+      // 获取原图URL
       const originalUrl = row.imageUrl || '';
 
       return h(NImage, {
         width: 80,
         height: 50,
-        src: getImageUrl(thumbnailUrl || originalUrl), // 显示压缩后的图片
+        src: getImageUrl(originalUrl || thumbnailUrl), // 显示原图
         objectFit: 'cover',
         previewDisabled: false, // 启用预览功能
         showToolbar: false,
@@ -537,7 +537,7 @@ const beforeUpload = (data) => {
     message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
     return false
   }
-  if (data.file.file?.size > 2 * 1024 * 1024) {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
       content: '图片过大，请重新上传',
@@ -551,7 +551,7 @@ const beforeUpload = (data) => {
 const handleUpload = async ({ file, onFinish, onError }) => {
   imageUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
     if (res.code === 200 && res.data) {
       bannerForm.imageUrl = res.data.originUrl || res.data.url
       onFinish()

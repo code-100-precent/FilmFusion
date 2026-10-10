@@ -77,7 +77,7 @@
           </div>
           <div v-else-if="tourRouteForm.cover" style="margin-top: 12px;">
             <n-image
-              :src="getImageUrl(tourRouteForm.thumbCover || tourRouteForm.cover)"
+              :src="getImageUrl(tourRouteForm.cover || tourRouteForm.thumbCover)"
               width="200"
               height="120"
               object-fit="cover"
@@ -115,7 +115,8 @@ import {
   NImage,
   NTag
 } from 'naive-ui'
-import { getTourRoutePage, addTourRoute, updateTourRoute, deleteTourRoute, getTourById, uploadFile } from '@/api'
+import { getTourRoutePage, addTourRoute, updateTourRoute, deleteTourRoute, getTourById } from '@/api'
+import { uploadImageDirect } from '@/utils/upload'
 import { getImageUrl } from '@/utils/image'
 
 const message = useMessage()
@@ -328,7 +329,7 @@ const handleEdit = async (row) => {
             id: 'cover',
             name: 'cover.jpg',
             status: 'finished',
-            url: res.data.thumbCover || res.data.cover
+            url: res.data.cover || res.data.thumbCover
           }]
         } else {
           coverFileList.value = []
@@ -356,7 +357,7 @@ const handleEdit = async (row) => {
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
   coverUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
@@ -367,19 +368,19 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
       // 更新文件列表中的URL，用于预览显示
       const fileIndex = coverFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
       if (fileIndex !== -1) {
-        coverFileList.value[fileIndex].url = thumbUrl
+        coverFileList.value[fileIndex].url = originUrl
         coverFileList.value[fileIndex].status = 'finished'
       } else {
         coverFileList.value.push({
           id: file.id || 'cover',
           name: file.name || 'cover.jpg',
           status: 'finished',
-          url: thumbUrl
+          url: originUrl
         })
       }
       
       onFinish({
-        url: thumbUrl
+        url: originUrl
       })
       message.success('封面图片上传成功')
     } else {
@@ -410,7 +411,7 @@ const beforeUpload = (data) => {
     message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
     return false
   }
-  if (data.file.file?.size > 2 * 1024 * 1024) {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
       content: '图片过大，请重新上传',

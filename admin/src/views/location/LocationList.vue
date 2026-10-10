@@ -271,7 +271,8 @@ import {
   useMessage,
   useDialog
 } from 'naive-ui'
-import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById, uploadFile, getDramaPage } from '@/api'
+import { getLocationPage, addLocation, updateLocation, deleteLocation, getLocationById, getDramaPage } from '@/api'
+import { uploadImageDirect } from '@/utils/upload'
 import { getImageUrl } from '@/utils/image'
 import { useUserStore } from '@/store/user'
 import config from '@/config'
@@ -400,18 +401,18 @@ const formRules = {
 const handleCoverUpload = async ({ file, fileList }) => {
   coverUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
 
     if (res.code === 200) {
       const originUrl = res.data.originUrl
       const thumbUrl = res.data.thumbUrl || originUrl
-      const url = thumbUrl || originUrl
+      const url = originUrl || thumbUrl
 
       // 更新文件列表状态和URL
       const index = coverFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         coverFileList.value[index].status = 'finished'
-        coverFileList.value[index].url = getImageUrl(thumbUrl || originUrl) // 显示用完整路径
+        coverFileList.value[index].url = getImageUrl(originUrl || thumbUrl) // 显示用完整路径（原图）
         coverFileList.value[index].originUrl = originUrl // 保存相对路径
         coverFileList.value[index].thumbUrl = thumbUrl   // 保存相对路径
       }
@@ -442,17 +443,17 @@ const handleCoverUpload = async ({ file, fileList }) => {
 const handleImageUpload = async ({ file, fileList }) => {
   imageUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
 
     if (res.code === 200) {
       const originUrl = res.data.originUrl
       const thumbUrl = res.data.thumbUrl || originUrl
-      const url = thumbUrl || originUrl
+      const url = originUrl || thumbUrl
 
       const index = imageFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         imageFileList.value[index].status = 'finished'
-        imageFileList.value[index].url = getImageUrl(thumbUrl || originUrl) // 显示用完整路径
+        imageFileList.value[index].url = getImageUrl(originUrl || thumbUrl) // 显示用完整路径（原图）
         imageFileList.value[index].originUrl = originUrl
         imageFileList.value[index].thumbUrl = thumbUrl
       }
@@ -525,8 +526,8 @@ const columns = [
       const cover = getFirstUrl(row.cover)
       const thumbCover = getFirstUrl(row.thumbCover || row.thumb_cover)
 
-      // 显示用的图片（优先缩略图）
-      const displayUrl = thumbCover || thumbImage || cover || image
+      // 显示用的图片（管理端统一展示原图）
+      const displayUrl = cover || image || thumbCover || thumbImage
 
       // 预览用的图片（优先原图）
       const previewUrl = cover || image || displayUrl
@@ -601,7 +602,7 @@ const beforeUpload = (data) => {
     message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
     return false
   }
-  if (data.file.file?.size > 2 * 1024 * 1024) {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
       content: '图片过大，请重新上传',
@@ -908,7 +909,7 @@ const handleEdit = async (row) => {
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: getImageUrl(thumbCoverUrl || coverUrl),
+          url: getImageUrl(coverUrl || thumbCoverUrl),
           originUrl: coverUrl,
           thumbUrl: thumbCoverUrl || coverUrl
         }]
@@ -923,7 +924,7 @@ const handleEdit = async (row) => {
           id: `img-${index}`,
           name: `image-${index}.jpg`,
           status: 'finished',
-          url: getImageUrl(thumbUrl),
+          url: getImageUrl(url),
           originUrl: url,
           thumbUrl: thumbUrl
         }

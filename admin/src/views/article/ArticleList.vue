@@ -73,8 +73,8 @@
                 </div>
                 <div class="article-cover">
                   <n-image
-                      v-if="getCover(article, 'thumb')"
-                      :src="getImageUrl(getCover(article, 'thumb'))"
+                      v-if="getCover(article, 'origin')"
+                      :src="getImageUrl(getCover(article, 'origin'))"
                       :preview-src="getImageUrl(getCover(article, 'origin'))"
                       width="80"
                       height="60"
@@ -229,7 +229,8 @@ import {
   NDatePicker
 } from 'naive-ui'
 import { useUserStore } from '@/store/user'
-import { getArticlePage, addArticle, updateArticle, deleteArticle, getArticleById, uploadFile } from '@/api'
+import { getArticlePage, addArticle, updateArticle, deleteArticle, getArticleById } from '@/api'
+import { uploadImageDirect } from '@/utils/upload'
 import { getImageUrl } from '@/utils/image'
 import config from '@/config'
 import dayjs from 'dayjs'
@@ -325,9 +326,9 @@ const columns = [
       const thumbStr = row.thumbImage || row.thumb_image || ''
       const originStr = row.image || ''
 
-      // 优先展示缩略图，如果没有缩略图则展示原图
-      const firstThumb = thumbStr ? thumbStr.split(',')[0] : (originStr ? originStr.split(',')[0] : '')
-      // 预览时展示原图，如果没有原图则展示缩略图
+      // 管理端统一展示原图，如果没有原图则展示缩略图
+      const firstThumb = originStr ? originStr.split(',')[0] : (thumbStr ? thumbStr.split(',')[0] : '')
+      // 预览同样展示原图
       const firstOrigin = originStr ? originStr.split(',')[0] : (thumbStr ? thumbStr.split(',')[0] : '')
 
       if (!firstThumb) return '-'
@@ -483,7 +484,7 @@ const handleEdit = async (row) => {
           id: 'cover',
           name: 'cover.jpg',
           status: 'finished',
-          url: getImageUrl(thumbCoverUrl || coverUrl),
+          url: getImageUrl(coverUrl || thumbCoverUrl),
           originUrl: coverUrl,
           thumbUrl: thumbCoverUrl || coverUrl
         }]
@@ -498,7 +499,7 @@ const handleEdit = async (row) => {
           id: `detail-${index}`,
           name: `detail-${index}.jpg`,
           status: 'finished',
-          url: getImageUrl(thumb),
+          url: getImageUrl(url),
           originUrl: url,
           thumbUrl: thumb
         }
@@ -517,7 +518,7 @@ const beforeUpload = (data) => {
     message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
     return false
   }
-  if (data.file.file?.size > 2 * 1024 * 1024) {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
       content: '图片过大，请重新上传',
@@ -531,7 +532,7 @@ const beforeUpload = (data) => {
 const handleCoverUpload = async ({file, onFinish, onError}) => {
   coverUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
@@ -569,7 +570,7 @@ const handleCoverUpload = async ({file, onFinish, onError}) => {
 const handleDetailUpload = async ({file, onFinish, onError}) => {
   detailUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl

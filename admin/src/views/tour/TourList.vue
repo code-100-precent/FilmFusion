@@ -292,7 +292,8 @@ import {
   NScrollbar,
   NSelect
 } from 'naive-ui'
-import { getTourPage, createTour, updateTour, deleteTour, getTourById, uploadFile, getLocationList, getDramaList, getHotelPage } from '@/api'
+import { getTourPage, createTour, updateTour, deleteTour, getTourById, getLocationList, getDramaList, getHotelPage } from '@/api'
+import { uploadImageDirect } from '@/utils/upload'
 import { getImageUrl } from '@/utils/image'
 import config from '@/config'
 import dayjs from 'dayjs'
@@ -523,7 +524,7 @@ const handleEdit = async (row) => {
               id: `attr-${attr.id || Date.now()}-${index}`,
               name: `image-${index}.jpg`,
               status: 'finished',
-              url: getImageUrl(thumbImages[index] || url),
+              url: getImageUrl(url),
               originUrl: url,
               thumbUrl: thumbImages[index] || url
             }))
@@ -571,7 +572,7 @@ const beforeUpload = (data) => {
     message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
     return false
   }
-  if (data.file.file?.size > 2 * 1024 * 1024) {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
       content: '图片过大，请重新上传',
@@ -584,12 +585,12 @@ const beforeUpload = (data) => {
 
 const handleAttractionUpload = async (dayIndex, attrIndex, {file, onFinish, onError}) => {
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || originUrl
 
-      file.url = getImageUrl(thumbUrl)
+      file.url = getImageUrl(originUrl)
       file.originUrl = originUrl
       file.thumbUrl = thumbUrl
       file.status = 'finished'

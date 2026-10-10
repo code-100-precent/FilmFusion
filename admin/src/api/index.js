@@ -129,6 +129,28 @@ export const uploadFile = (file) => {
 }
 
 /**
+ * 签发前端直传 COS 的预签名凭证
+ */
+export const presignUpload = (data) => {
+  return request({
+    url: '/file/presign',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 前端直传完成后确认，返回最终访问地址
+ */
+export const confirmUpload = (data) => {
+  return request({
+    url: '/file/confirm',
+    method: 'post',
+    data
+  })
+}
+
+/**
  * 上传头像
  */
 export const uploadAvatarFile = (file) => {

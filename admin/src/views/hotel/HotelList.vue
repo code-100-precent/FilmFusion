@@ -74,7 +74,7 @@
                 <div class="hotel-cover">
                   <n-image
                       v-if="hotel.cover"
-                      :src="getImageUrl(hotel.thumbCover || hotel.cover)"
+                      :src="getImageUrl(hotel.cover || hotel.thumbCover)"
                       :preview-src="getImageUrl(hotel.cover)"
                       width="80"
                       height="60"
@@ -242,9 +242,9 @@ import {
   createHotel,
   updateHotel,
   deleteHotel,
-  getHotelById,
-  uploadFile
+  getHotelById
 } from '@/api'
+import { uploadImageDirect } from '@/utils/upload'
 import { getImageUrl } from '@/utils/image'
 import config from '@/config'
 import { useUserStore } from '@/store/user'
@@ -398,8 +398,8 @@ const columns = [
     key: 'cover',
     width: 120,
     render(row) {
-      // 优先显示缩略图，预览显示原图
-      const displayUrl = row.thumbCover || row.thumbImage || row.cover || row.image;
+      // 管理端统一展示原图，预览同样使用原图
+      const displayUrl = row.cover || row.image || row.thumbCover || row.thumbImage;
       const previewUrl = row.cover || row.image;
 
       if (displayUrl) {
@@ -599,7 +599,7 @@ const handleEdit = async (row) => {
         id: 'cover',
         name: '封面图',
         status: 'finished',
-        url: getImageUrl(coverThumbUrl),
+        url: getImageUrl(coverUrl || coverThumbUrl),
         originUrl: coverUrl,
         thumbUrl: coverThumbUrl
       }]
@@ -621,7 +621,7 @@ const handleEdit = async (row) => {
         id: `detail-${index}`,
         name: `详情图-${index + 1}`,
         status: 'finished',
-        url: getImageUrl(detailThumbUrls[index] || url),
+        url: getImageUrl(url),
         originUrl: url,
         thumbUrl: detailThumbUrls[index] || url
       }))
@@ -646,7 +646,7 @@ const beforeUpload = (data) => {
     message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
     return false
   }
-  if (data.file.file?.size > 2 * 1024 * 1024) {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
       content: '图片过大，请重新上传',
@@ -660,7 +660,7 @@ const beforeUpload = (data) => {
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
   coverUploading.value = true
   try {
-    const res = await uploadFile(file.file);
+    const res = await uploadImageDirect(file.file);
 
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url;
@@ -674,7 +674,7 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
       const fileIndex = coverFileList.value.findIndex(f => f.id === file.id)
       if (fileIndex !== -1) {
         const fileItem = coverFileList.value[fileIndex]
-        fileItem.url = getImageUrl(thumbUrl)
+        fileItem.url = getImageUrl(originUrl)
         fileItem.originUrl = originUrl
         fileItem.thumbUrl = thumbUrl
         fileItem.status = 'finished' // 显式设置，虽然 onFinish 也会设置
@@ -684,7 +684,7 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
           id: file.id,
           name: file.name,
           status: 'finished',
-          url: getImageUrl(thumbUrl),
+          url: getImageUrl(originUrl),
           originUrl: originUrl,
           thumbUrl: thumbUrl
         }]
@@ -723,7 +723,7 @@ const handleCoverFileListChange = (newList) => {
 const handleDetailUpload = async ({file, onFinish, onError}) => {
   detailUploading.value = true
   try {
-    const res = await uploadFile(file.file);
+    const res = await uploadImageDirect(file.file);
 
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url;
@@ -736,7 +736,7 @@ const handleDetailUpload = async ({file, onFinish, onError}) => {
       const index = detailFileList.value.findIndex(f => f.id === file.id)
       if (index !== -1) {
         const fileItem = detailFileList.value[index]
-        fileItem.url = getImageUrl(thumbUrl)
+        fileItem.url = getImageUrl(originUrl)
         fileItem.originUrl = originUrl
         fileItem.thumbUrl = thumbUrl
         fileItem.status = 'finished'
@@ -748,7 +748,7 @@ const handleDetailUpload = async ({file, onFinish, onError}) => {
           id: file.id,
           name: file.name,
           status: 'finished',
-          url: getImageUrl(thumbUrl),
+          url: getImageUrl(originUrl),
           originUrl: originUrl,
           thumbUrl: thumbUrl
         }

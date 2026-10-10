@@ -300,6 +300,14 @@ public class LocalStorageService implements FileStorageAdapter {
         }
     }
 
+    /**
+     * 本地存储不支持浏览器直传，需切换到 COS
+     */
+    @Override
+    public String generatePresignedPutUrl(String key, int expireSeconds) {
+        throw new UnsupportedOperationException("本地存储不支持前端直传，请将 code100.storage.type 设为 cos");
+    }
+
     private boolean isImageFile(MultipartFile file) {
         String contentType = file.getContentType();
         String originalFilename = file.getOriginalFilename();

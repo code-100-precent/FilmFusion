@@ -7,7 +7,9 @@ import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
 import com.qcloud.cos.auth.COSCredentials;
 import com.qcloud.cos.exception.CosClientException;
+import com.qcloud.cos.http.HttpMethodName;
 import com.qcloud.cos.model.COSObject;
+import com.qcloud.cos.model.GeneratePresignedUrlRequest;
 import com.qcloud.cos.model.ObjectMetadata;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.region.Region;
@@ -21,8 +23,10 @@ import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Date;
 
 import static cn.cxdproject.coder.common.enums.ResponseCodeEnum.SYSTEM_ERROR;
 
@@ -149,6 +153,16 @@ public class OssStorageService implements FileStorageAdapter {
     @Override
     public boolean exists(String path) {
         return cosClient.doesObjectExist(properties.getCosBucket(), extractKey(path));
+    }
+
+    @Override
+    public String generatePresignedPutUrl(String key, int expireSeconds) {
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(
+                properties.getCosBucket(), extractKey(key), HttpMethodName.PUT);
+        request.setExpiration(new Date(System.currentTimeMillis() + expireSeconds * 1000L));
+        // 不签名 Content-Type：避免前端请求头与签名值不一致导致 403，COS 会按客户端发送的值存储
+        URL url = cosClient.generatePresignedUrl(request);
+        return url.toString();
     }
 
     @Override
