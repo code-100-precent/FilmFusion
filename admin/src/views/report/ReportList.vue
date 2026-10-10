@@ -124,8 +124,8 @@
               <div v-if="uploadingField === 'shootPermit'" style="margin-top: 8px; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 6px; background: #fafafa;">
                 <n-spin size="small" />
               </div>
-              <div v-else-if="reportForm.thumbShootPermit" style="margin-top: 8px;">
-                 <n-image :src="getImageUrl(reportForm.thumbShootPermit)" width="100" height="100" object-fit="cover" />
+              <div v-else-if="reportForm.shootPermit" style="margin-top: 8px;">
+                 <n-image :src="getImageUrl(reportForm.shootPermit)" width="100" height="100" object-fit="cover" />
               </div>
             </n-form-item>
           </n-gi>
@@ -143,8 +143,8 @@
               <div v-if="uploadingField === 'approvalFile'" style="margin-top: 8px; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 6px; background: #fafafa;">
                 <n-spin size="small" />
               </div>
-              <div v-else-if="reportForm.thumbApprovalFile" style="margin-top: 8px;">
-                 <n-image :src="getImageUrl(reportForm.thumbApprovalFile)" width="100" height="100" object-fit="cover" />
+              <div v-else-if="reportForm.approvalFile" style="margin-top: 8px;">
+                 <n-image :src="getImageUrl(reportForm.approvalFile)" width="100" height="100" object-fit="cover" />
               </div>
             </n-form-item>
           </n-gi>
@@ -162,8 +162,8 @@
               <div v-if="uploadingField === 'shootApply'" style="margin-top: 8px; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9; border-radius: 6px; background: #fafafa;">
                 <n-spin size="small" />
               </div>
-              <div v-else-if="reportForm.thumbShootApply" style="margin-top: 8px;">
-                 <n-image :src="getImageUrl(reportForm.thumbShootApply)" width="100" height="100" object-fit="cover" />
+              <div v-else-if="reportForm.shootApply" style="margin-top: 8px;">
+                 <n-image :src="getImageUrl(reportForm.shootApply)" width="100" height="100" object-fit="cover" />
               </div>
             </n-form-item>
           </n-gi>
@@ -219,7 +219,8 @@ import {
   useMessage,
   useDialog
 } from 'naive-ui'
-import { getReportPage, addReport, updateReport, deleteReport, getReportById, uploadFile, updateReportStatus } from '@/api'
+import { getReportPage, addReport, updateReport, deleteReport, getReportById, updateReportStatus } from '@/api'
+import { uploadImageDirect } from '@/utils/upload'
 import dayjs from 'dayjs'
 import config from '@/config'
 
@@ -351,7 +352,7 @@ const beforeUpload = (data) => {
     }
   }
 
-  const limit = isImage ? 2 * 1024 * 1024 : 3 * 1024 * 1024
+  const limit = isImage ? 5 * 1024 * 1024 : 8 * 1024 * 1024
   
   if (data.file.file?.size > limit) {
     dialog.warning({
@@ -486,7 +487,7 @@ const getImageUrl = (url) => {
 const handleUpload = async ({ file, onFinish, onError, field, thumbField, fileListRef }) => {
   uploadingField.value = field
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl || res.data.url
       const thumbUrl = res.data.thumbUrl || '' // If doc, this might be empty

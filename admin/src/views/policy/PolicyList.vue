@@ -73,7 +73,7 @@
                 <div class="policy-cover">
                   <n-image
                       v-if="policy.image"
-                      :src="getImageUrl(policy.thumbImage || policy.image)"
+                      :src="getImageUrl(policy.image || policy.thumbImage)"
                       width="80"
                       height="60"
                       object-fit="cover"
@@ -184,7 +184,7 @@
           </div>
           <div v-else-if="policyForm.image" style="margin-top: 12px;">
             <n-image
-                :src="getImageUrl(policyForm.thumbImage || policyForm.image)"
+                :src="getImageUrl(policyForm.image || policyForm.thumbImage)"
                 width="200"
                 height="120"
                 object-fit="cover"
@@ -226,7 +226,8 @@ import {
   useDialog
 } from 'naive-ui'
 import dayjs from 'dayjs'
-import { uploadFile, getPolicyPage, getPolicyById, createPolicy, updatePolicy, deletePolicy } from '@/api'
+import { getPolicyPage, getPolicyById, createPolicy, updatePolicy, deletePolicy } from '@/api'
+import { uploadImageDirect } from '@/utils/upload'
 import config from '@/config'
 
 const message = useMessage()
@@ -238,7 +239,7 @@ const beforeUpload = (data) => {
     message.error('只能上传 PNG/JPG/GIF/WEBP 格式的图片文件，请重新上传')
     return false
   }
-  if (data.file.file?.size > 2 * 1024 * 1024) {
+  if (data.file.file?.size > 5 * 1024 * 1024) {
     dialog.warning({
       title: '提示',
       content: '图片过大，请重新上传',
@@ -344,7 +345,7 @@ const columns = computed(() => [
       return h(NImage, {
         width: 60,
         height: 45,
-        src: getImageUrl(row.thumbImage || row.image),
+        src: getImageUrl(row.image || row.thumbImage),
         objectFit: 'cover',
         style: { borderRadius: '4px' },
         previewDisabled: true
@@ -535,7 +536,7 @@ const handleEdit = async (row) => {
           id: 'image',
           name: 'image.jpg',
           status: 'finished',
-          url: res.data.thumbImage || res.data.image
+          url: res.data.image || res.data.thumbImage
         }]
       } else {
         imageFileList.value = []
@@ -602,7 +603,7 @@ const handleDialogSave = async () => {
 const handleImageUpload = async ({ file, onFinish, onError }) => {
   imageUploading.value = true
   try {
-    const res = await uploadFile(file.file)
+    const res = await uploadImageDirect(file.file)
     if (res.code === 200 && res.data) {
       const originUrl = res.data.originUrl
       const thumbUrl = res.data.thumbUrl
@@ -613,19 +614,19 @@ const handleImageUpload = async ({ file, onFinish, onError }) => {
       // 更新文件列表中的URL，用于预览显示
       const fileIndex = imageFileList.value.findIndex(f => f.id === file.id || f.name === file.name)
       if (fileIndex !== -1) {
-        imageFileList.value[fileIndex].url = thumbUrl
+        imageFileList.value[fileIndex].url = originUrl
         imageFileList.value[fileIndex].status = 'finished'
       } else {
         imageFileList.value.push({
           id: file.id || 'image',
           name: file.name || 'image.jpg',
           status: 'finished',
-          url: thumbUrl
+          url: originUrl
         })
       }
 
       onFinish({
-        url: thumbUrl
+        url: originUrl
       })
       message.success('封面图片上传成功')
     } else {

@@ -69,4 +69,13 @@ public interface FileStorageAdapter {
      * 上传文件
      */
     String uploadFile(File file, String filename);
+
+    /**
+     * 生成 PUT 预签名上传地址，供浏览器直传使用
+     *
+     * @param key           对象键，例如 origin/xxx.jpg
+     * @param expireSeconds 有效期（秒）
+     * @return 可直接 PUT 的完整地址
+     */
+    String generatePresignedPutUrl(String key, int expireSeconds);
 }

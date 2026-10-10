@@ -85,7 +85,10 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 .addPathPatterns("/api/tour/**")
                 .excludePathPatterns("/api/tour/admin/**")
                 .addPathPatterns("/api/policy/**")
-                .excludePathPatterns("/api/policy/admin/**");
+                .excludePathPatterns("/api/policy/admin/**")
+                // 文件直传凭证接口 - 仅管理端使用
+                // 注意：老的 POST /api/file 小程序仍在使用，必须保持放行，不要加进来
+                .addPathPatterns("/api/file/presign", "/api/file/confirm");
         
         // 管理员权限拦截器
         registry.addInterceptor(adminInterceptor)
@@ -113,7 +116,9 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 //banner模块接口 - 只拦截需要管理员权限的接口，排除公开接口
                 .addPathPatterns("/api/banner/admin/**")
                 //操作日志相关接口
-                .addPathPatterns("/api/operationlog/admin/**");
+                .addPathPatterns("/api/operationlog/admin/**")
+                // 文件直传凭证接口 - 需要管理员权限
+                .addPathPatterns("/api/file/presign", "/api/file/confirm");
         registry.addInterceptor(registrationInterceptor);
     }
 
